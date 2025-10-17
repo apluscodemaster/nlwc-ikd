@@ -1,61 +1,55 @@
+import { google } from "googleapis";
 import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
 import { normalizeColumnsFromSheets, groupColumnsToDates } from "@/lib/sheets";
 
-const SHEET_ID =
-  process.env.NEXT_PUBLIC_GOOGLE_SHEETS_ID || process.env.GOOGLE_SHEETS_ID;
-const API_KEY =
-  process.env.NEXT_PUBLIC_GOOGLE_SHEETS_API_KEY ||
-  process.env.GOOGLE_SHEETS_API_KEY;
+const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "Sheet1";
 
-if (!SHEET_ID || !API_KEY) {
-  // This check runs at build/run time on the server
-  // We'll still allow route to run but will return error if missing
-}
-
 export async function GET() {
-  if (!SHEET_ID || !API_KEY) {
+  if (!SHEET_ID) {
     return NextResponse.json(
-      { error: "Missing GOOGLE_SHEETS_ID or API_KEY" },
+      { error: "Missing GOOGLE_SHEETS_ID" },
       { status: 500 }
     );
   }
 
   try {
-    // Use batchGet with majorDimension=COLUMNS and range as sheet name to get all used columns
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?majorDimension=COLUMNS&key=${API_KEY}&ranges=${encodeURIComponent(
-      SHEET_NAME
-    )}`;
+    // Authenticate using Service Account
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        type: process.env.GOOGLE_TYPE,
+        project_id: process.env.GOOGLE_PROJECT_ID,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
 
-    const res = await fetch(url);
-    if (!res.ok) {
-      const text = await res.text();
-      return NextResponse.json(
-        { error: "Sheets API error", details: text },
-        { status: res.status }
-      );
-    }
-    const data = await res.json();
+    const sheets = google.sheets({ version: "v4", auth });
 
-    // data.valueRanges[0].values is an array of column arrays
-    const columnsRaw = data?.valueRanges?.[0]?.values ?? [];
+    // Fetch the values from the sheet
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: SHEET_NAME,
+      majorDimension: "COLUMNS",
+    });
 
-    // Normalize and group
+    const columnsRaw = response.data.values ?? [];
     const normalized = normalizeColumnsFromSheets(columnsRaw);
     const grouped = groupColumnsToDates(normalized, 12);
 
-    // Return grouped dates (chronological ascending)
     return NextResponse.json({ dates: grouped });
   } catch (err: unknown) {
+    console.error("Sheets API Error:", err);
     const message =
       err instanceof Error
         ? err.message
         : typeof err === "string"
         ? err
         : JSON.stringify(err);
+
     return NextResponse.json(
-      { error: "Unexpected server error", details: message },
+      { error: "Sheets API error", details: message },
       { status: 500 }
     );
   }

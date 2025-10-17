@@ -1,4 +1,3 @@
-// components/TabPaginator.tsx
 "use client";
 import React from "react";
 
