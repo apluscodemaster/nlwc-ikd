@@ -1,4 +1,3 @@
-// components/TabGallery.tsx
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -10,6 +9,27 @@ type Props = {
   dates: DateColumns[];
 };
 
+// Helper function to format date like "Sunday, 31st Aug. 2025"
+function formatDisplayDate(dateString: string) {
+  const date = new Date(dateString);
+  const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const year = date.getFullYear();
+
+  // Add ordinal suffix (st, nd, rd, th)
+  const suffix =
+    day % 10 === 1 && day !== 11
+      ? "st"
+      : day % 10 === 2 && day !== 12
+      ? "nd"
+      : day % 10 === 3 && day !== 13
+      ? "rd"
+      : "th";
+
+  return `${dayName}, ${day}${suffix} ${month}. ${year}`;
+}
+
 export default function TabGallery({ dates }: Props) {
   // group dates into pages of 4
   const pageSize = 4;
@@ -19,21 +39,18 @@ export default function TabGallery({ dates }: Props) {
   const [pageIndex, setPageIndex] = useState(Math.max(0, totalPages - 1));
   const [selectedDateIdx, setSelectedDateIdx] = useState<number | null>(null);
 
-  // When pages change, reset selected index to first tab on that page
+  // Group page data
   const pageDates = useMemo(() => {
     const start = pageIndex * pageSize;
     return dates.slice(start, start + pageSize);
   }, [dates, pageIndex]);
 
-  // If nothing selected, default to the last date globally
+  // If nothing selected, default to last date
   React.useEffect(() => {
-    // if selected is outside current page, pick first item of page
     if (selectedDateIdx === null) {
-      // select the last date overall by default
       setSelectedDateIdx(dates.length - 1);
       setPageIndex(Math.max(0, totalPages - 1));
     } else {
-      // ensure selection is within visible page; if not, change page
       const selectedOnPage =
         Math.floor(selectedDateIdx / pageSize) === pageIndex;
       if (!selectedOnPage) {
@@ -68,8 +85,9 @@ export default function TabGallery({ dates }: Props) {
       <div className="mt-6">
         {selectedDateIdx !== null ? (
           <div>
-            <div className="mb-4 text-sm text-gray-600">
-              Viewing date: <strong>{dates[selectedDateIdx].date}</strong>
+            <div className="mb-4 text-sm text-white-600">
+              Viewing date:{" "}
+              <strong>{formatDisplayDate(dates[selectedDateIdx].date)}</strong>
             </div>
 
             <MasonryGrid images={dates[selectedDateIdx].images} />
