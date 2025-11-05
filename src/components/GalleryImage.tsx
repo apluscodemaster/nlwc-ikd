@@ -1,37 +1,52 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HiDownload } from "react-icons/hi";
 import Image from "next/image";
 
 type Props = {
   src: string;
   alt?: string;
+  width?: number;
+  height?: number;
 };
 
-export default function GalleryImage({ src, alt = "" }: Props) {
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    "landscape"
-  );
-  const [loading, setLoading] = useState(true);
+const DEFAULT_WIDTH = 600;
+const DEFAULT_HEIGHT = 400;
+
+const GalleryImage: React.FC<Props> = ({
+  src,
+  alt,
+  width: initialWidth,
+  height: initialHeight,
+}) => {
+  const [imgDims, setImgDims] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
+    // If caller provided dimensions, use them
+    if (initialWidth && initialHeight) {
+      setImgDims({ width: initialWidth, height: initialHeight });
+      return;
+    }
 
-    const handleOrientation = () => {
-      setLoading(false);
-      if (img.naturalHeight > img.naturalWidth) setOrientation("portrait");
-      else setOrientation("landscape");
+    // Try to auto-detect image dimensions for remote images
+    const img = new window.Image();
+    img.src = src;
+    img.onload = () => {
+      setImgDims({
+        width: img.naturalWidth || DEFAULT_WIDTH,
+        height: img.naturalHeight || DEFAULT_HEIGHT,
+      });
     };
-
-    if (img.complete) handleOrientation();
-    else img.addEventListener("load", handleOrientation);
-
-    return () => img.removeEventListener("load", handleOrientation);
-  }, [src]);
+    // fallback if error
+    img.onerror = () => {
+      setImgDims({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+    };
+  }, [src, initialWidth, initialHeight]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -66,17 +81,21 @@ export default function GalleryImage({ src, alt = "" }: Props) {
     }
   };
 
+  // Use detected or default dimensions
+  const width = imgDims?.width || DEFAULT_WIDTH;
+  const height = imgDims?.height || DEFAULT_HEIGHT;
+
   return (
     <figure className="relative group">
       <Image
-        ref={imgRef}
-        src={src}
-        alt={alt}
-        className={`w-full block rounded-md shadow-sm object-cover ${
-          orientation === "portrait" ? "aspect-[3/4]" : "aspect-video"
-        }`}
+        src={src.trim()}
+        alt={alt || "Gallery image"}
+        width={width}
+        height={height}
+        className="w-full block rounded-md shadow-sm object-cover"
+        style={{ aspectRatio: `${width}/${height}` }}
+        unoptimized // allow external images like Google Drive
       />
-
       {/* Overlay Button */}
       <div className="absolute inset-0 flex items-end justify-end p-2 pointer-events-none">
         <div className="pointer-events-auto">
@@ -91,4 +110,6 @@ export default function GalleryImage({ src, alt = "" }: Props) {
       </div>
     </figure>
   );
-}
+};
+
+export default GalleryImage;
