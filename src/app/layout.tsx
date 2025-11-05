@@ -3,8 +3,8 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "Next.js Image Gallery",
-  description: "Dynamic image gallery using Google Sheets",
+  title: "NLWC IKORODU Church Image Gallery",
+  description: "Dynamic image gallery of joyful moments in churcch programmes.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

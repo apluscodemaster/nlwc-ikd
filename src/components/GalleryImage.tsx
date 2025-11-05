@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { HiDownload } from "react-icons/hi"; // ✅ added icon
+import { HiDownload } from "react-icons/hi";
+import Image from "next/image";
 
 type Props = {
   src: string;
   alt?: string;
 };
 
-export default function GalleryImage({ src, alt }: Props) {
+export default function GalleryImage({ src, alt = "" }: Props) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [orientation, setOrientation] = useState<"portrait" | "landscape">(
     "landscape"
@@ -67,7 +68,7 @@ export default function GalleryImage({ src, alt }: Props) {
 
   return (
     <figure className="relative group">
-      <img
+      <Image
         ref={imgRef}
         src={src}
         alt={alt}
