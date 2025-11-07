@@ -94,7 +94,7 @@ const GalleryImage: React.FC<Props> = ({
         height={height}
         className="w-full block rounded-md shadow-sm object-cover"
         style={{ aspectRatio: `${width}/${height}` }}
-        unoptimized // allow external images like Google Drive
+        unoptimized
       />
       {/* Overlay Button */}
       <div className="absolute inset-0 flex items-end justify-end p-2 pointer-events-none">
