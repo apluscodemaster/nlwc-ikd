@@ -65,7 +65,7 @@ export default function TabGallery({ dates }: Props) {
     setPageIndex(Math.floor(globalIndex / pageSize));
   };
 
-  const globalIndicesForPage = (_idx: number) => {
+  const globalIndicesForPage = () => {
     const start = pageIndex * pageSize;
     return dates.map((_, i) => i).slice(start, start + pageSize);
   };
@@ -77,7 +77,7 @@ export default function TabGallery({ dates }: Props) {
         pageIndex={pageIndex}
         totalPages={totalPages}
         onPageChange={setPageIndex}
-        globalIndices={globalIndicesForPage(pageIndex)}
+        globalIndices={globalIndicesForPage()}
         selectedGlobalIndex={selectedDateIdx}
         onSelectGlobalIndex={selectDateByGlobalIndex}
       />

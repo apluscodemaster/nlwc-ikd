@@ -1,10 +1,24 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
-import { normalizeColumnsFromSheets, groupColumnsToDates } from "@/lib/sheets";
+import {
+  normalizeColumnsFromSheets,
+  groupColumnsToDates,
+  RawColumn,
+} from "@/lib/sheets";
 import { toGoogleImageURL } from "@/utils/driveImage";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
+
+//  type NormalizedColumn = {
+//    date?: string;
+//    images?: string[];
+//    [key: string]: unknown;
+//  };
+
+type NormalizedColumn = RawColumn & {
+  images?: string[];
+};
 
 export async function GET() {
   if (!SHEET_ID) {
@@ -62,15 +76,12 @@ export async function GET() {
     const normalized = normalizeColumnsFromSheets(columnsRaw);
 
     // ✅ Step 2: Transform image URLs to proper Googleusercontent links
-    const cleaned = normalized.map((col) => {
-      const images = (col as any).images;
+
+    const cleaned: RawColumn[] = normalized.map((col: NormalizedColumn) => {
+      const images = Array.isArray(col.images) ? col.images : [];
       return {
         ...col,
-        images: Array.isArray(images)
-          ? (images as string[]).map((url: string) =>
-              toGoogleImageURL(url.trim())
-            )
-          : [],
+        images: images.map((url) => toGoogleImageURL(url.trim())),
       };
     });
 
