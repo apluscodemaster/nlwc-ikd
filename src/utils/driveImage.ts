@@ -1,4 +1,5 @@
 // utils/driveImage.ts
+import type { NormalizedColumn } from "@/app/api/sheet/route";
 
 /**
  * Convert a Google Drive file URL into a direct high-quality Googleusercontent image link.
@@ -38,17 +39,15 @@ export function convertGoogleImageArray(urls: string[] = []): string[] {
 }
 
 /**
- * Clean any object with an `images` array — deeply converts all image URLs.
- * Use this on normalized data objects from your Google Sheets.
+ * Clean any object with an `images` array — converts all image URLs safely.
  */
-export function cleanImageColumns<T extends Record<string, any>>(
-  columns: T[]
-): T[] {
-  return columns.map((col) => {
-    const images = Array.isArray(col.images) ? col.images : [];
-    return {
-      ...col,
-      images: convertGoogleImageArray(images),
-    };
-  });
+export function cleanImageColumns(
+  columns: NormalizedColumn[]
+): NormalizedColumn[] {
+  return columns.map((col) => ({
+    ...col,
+    images: Array.isArray(col.images)
+      ? convertGoogleImageArray(col.images)
+      : [],
+  }));
 }
