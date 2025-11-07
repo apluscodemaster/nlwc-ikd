@@ -2,14 +2,14 @@ export type Orientation = "portrait" | "landscape";
 
 export type RawColumn = {
   header: string;
-  values: string[]; // includes header as values[0] in API response format but we'll strip it
+  values: string[];
 };
 
 export type DateColumns = {
-  date: string; // YYYY-MM-DD
+  date: string;
   portrait?: RawColumn;
   landscape?: RawColumn;
-  images: string[]; // combined up to a cap (e.g. 12)
+  images: string[];
 };
 
 const HEADER_RE = /^(\d{4}-\d{2}-\d{2})\s*-\s*(Portrait|Landscape)$/i;

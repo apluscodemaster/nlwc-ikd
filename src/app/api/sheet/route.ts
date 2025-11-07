@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { normalizeColumnsFromSheets, groupColumnsToDates } from "@/lib/sheets";
+import { toGoogleImageURL } from "@/utils/driveImage";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
@@ -13,7 +14,6 @@ export async function GET() {
     );
   }
 
-  // Validate required GOOGLE_* env variables early with clearer errors
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
   const GOOGLE_PRIVATE_KEY_RAW = process.env.GOOGLE_PRIVATE_KEY;
 
@@ -32,8 +32,7 @@ export async function GET() {
   }
 
   try {
-    // Authenticate using Service Account
-    // Make private key handling robust: support both literal newlines and escaped "\\n" sequences
+    // Handle escaped newlines in private key
     const privateKey = GOOGLE_PRIVATE_KEY_RAW.includes("\\n")
       ? GOOGLE_PRIVATE_KEY_RAW.replace(/\\n/g, "\n")
       : GOOGLE_PRIVATE_KEY_RAW;
@@ -50,7 +49,7 @@ export async function GET() {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Fetch the values from the sheet
+    // Fetch data from the Google Sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: SHEET_NAME,
@@ -58,9 +57,27 @@ export async function GET() {
     });
 
     const columnsRaw = response.data.values ?? [];
-    const normalized = normalizeColumnsFromSheets(columnsRaw);
-    const grouped = groupColumnsToDates(normalized, 12);
 
+    // ✅ Step 1: Normalize column data
+    const normalized = normalizeColumnsFromSheets(columnsRaw);
+
+    // ✅ Step 2: Transform image URLs to proper Googleusercontent links
+    const cleaned = normalized.map((col) => {
+      const images = (col as any).images;
+      return {
+        ...col,
+        images: Array.isArray(images)
+          ? (images as string[]).map((url: string) =>
+              toGoogleImageURL(url.trim())
+            )
+          : [],
+      };
+    });
+
+    // ✅ Step 3: Group columns by date (12 per page)
+    const grouped = groupColumnsToDates(cleaned, 12);
+
+    // ✅ Step 4: Return JSON response
     return NextResponse.json({ dates: grouped });
   } catch (err: unknown) {
     console.error("Sheets API Error:", err);
