@@ -41,4 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 #API
-/src/app/api
+/src/app/api/sheet/.env.local
+/src/app/api/sheet/.env.development
