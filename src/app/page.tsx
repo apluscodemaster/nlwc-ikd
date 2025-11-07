@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import type { DateColumns } from "@/lib/sheets";
-import TabGallery from "@/components/TabGallery";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import TabGallery from "@/components/TabGallery";
 
 export default function Page() {
   const [dates, setDates] = useState<DateColumns[]>([]);
@@ -41,7 +41,7 @@ export default function Page() {
       <main className="pt-20">
         <Hero />
 
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 justify-center py-12">
           {loading && (
             <div className="text-center py-20">Loading gallery...</div>
           )}

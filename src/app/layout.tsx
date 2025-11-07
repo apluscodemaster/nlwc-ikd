@@ -16,7 +16,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main className="mt-6">{children}</main>
         </div>
 
-        {/* Footer rendered outside the centered container so it spans full viewport width */}
         <Footer />
       </body>
     </html>

@@ -38,92 +38,95 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Column 2: Quick Links */}
-        <div>
-          <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
-          <ul className="space-y-2">
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/about/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> About
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/audio-messages/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Audio Messages
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/house-fellowship/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> House Fellowships
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://nlwc.church/blog/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Blog
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/contact/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Contact
-              </Link>
-            </li>
-          </ul>
-        </div>
+        {/* Columns 2 & 3 wrapper - side-by-side on mobile, span two columns on md+ */}
+        <div className="md:col-span-2 flex flex-col sm:flex-row gap-8">
+          {/* Column 2: Quick Links */}
+          <div className="sm:w-1/2">
+            <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/about/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/audio-messages/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Audio Messages
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/house-fellowship/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> House Fellowships
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://nlwc.church/blog/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/contact/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-        {/* Column 3: Resources */}
-        <div>
-          <h3 className="font-semibold mb-4 text-white">Resources</h3>
-          <ul className="space-y-2">
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/audio-broadcast/"
-                className="flex items-center gap-2 hover:text-[#E2801C] "
-              >
-                <HiChevronRight color={orange} /> Listen live
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/video-broadcast/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Watch live
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Sunday School Manuals
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/category/message-transcripts/"
-                className="flex items-center gap-2 hover:text-[#E2801C]"
-              >
-                <HiChevronRight color={orange} /> Message Transcripts
-              </Link>
-            </li>
-          </ul>
+          {/* Column 3: Resources */}
+          <div className="sm:w-1/2">
+            <h3 className="font-semibold mb-4 text-white">Resources</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/audio-broadcast/"
+                  className="flex items-center gap-2 hover:text-[#E2801C] "
+                >
+                  <HiChevronRight color={orange} /> Listen live
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/video-broadcast/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Watch live
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Sunday School Manuals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://ikorodu.nlwc.church/category/message-transcripts/"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Message Transcripts
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* Column 4: Subscribe & contact */}
