@@ -6,10 +6,10 @@ import { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-const menuItemVariants = {
-  hidden: { opacity: 0, y: -5 },
-  visible: { opacity: 1, y: 0 },
-};
+// const menuItemVariants = {
+//   hidden: { opacity: 0, y: -5 },
+//   visible: { opacity: 1, y: 0 },
+// };
 
 const dropdownVariants = {
   hidden: { opacity: 0, y: 15 },

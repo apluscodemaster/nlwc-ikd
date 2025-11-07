@@ -9,11 +9,12 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 import { HiOutlineMail, HiPhone, HiChevronRight } from "react-icons/hi";
+import Image from "next/image";
 
 export default function Footer() {
   const year = new Date().getFullYear();
   const orange = "#FF7C18";
-  const orangeHover = "#E2801C";
+  //   const orangeHover = "#E2801C";
 
   return (
     <footer className="w-full mt-12 bg-gray-800 text-white">
@@ -22,7 +23,7 @@ export default function Footer() {
         <div>
           <div className="mb-4">
             <Link href="/" className="inline-block">
-              <img
+              <Image
                 src="/logo-200-x-80.png"
                 alt="NLWC logo"
                 width={100}
@@ -133,7 +134,7 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold mb-4 text-white">Get Subscribed</h3>
           <p className="text-sm mb-4 text-white">
-            Don't miss our future updates. Get Subscribed today!
+            Don&apos;t miss our future updates. Get Subscribed today!
           </p>
 
           <div className="flex items-center gap-3 mb-4">
