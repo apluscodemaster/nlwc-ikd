@@ -50,7 +50,10 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-30">
             <div className="flex items-center">
-              <Link href="/" className="inline-block">
+              <Link
+                href="https://ikorodu.nlwc.church/"
+                className="inline-block"
+              >
                 <Image
                   src="/logo-200-x-80.png"
                   alt="logo"
