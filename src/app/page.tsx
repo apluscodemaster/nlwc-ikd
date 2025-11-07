@@ -1,38 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+import useSWR from "swr";
 import type { DateColumns } from "@/lib/sheets";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import TabGallery from "@/components/TabGallery";
 
-export default function Page() {
-  const [dates, setDates] = useState<DateColumns[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const fetcher = async (url: string): Promise<{ dates: DateColumns[] }> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData?.error || "Failed to fetch Google Sheet data");
+  }
+  return res.json();
+};
 
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    fetch("/api/sheet")
-      .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "Failed to fetch sheet");
-        if (mounted) {
-          setDates(json.dates || []);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (mounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+export default function Page() {
+  // ✅ useSWR automatically caches, revalidates, and refreshes in the background
+  const {
+    data,
+    error,
+    isLoading,
+    mutate, // allows manual refresh
+  } = useSWR("/api/sheet", fetcher, {
+    refreshInterval: 60 * 1000, // auto-refresh every 60 seconds
+    revalidateOnFocus: true, // refetch when tab becomes active again
+  });
+
+  const dates = data?.dates || [];
 
   return (
     <div>
@@ -42,16 +38,44 @@ export default function Page() {
         <Hero />
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 justify-center py-12">
-          {loading && (
+          {/* Loading State */}
+          {isLoading && (
             <div className="text-center py-20">Loading gallery...</div>
           )}
-          {error && <div className="text-red-600">Error: {error}</div>}
-          {!loading && !error && dates.length === 0 && (
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-20 text-red-600">
+              Error loading gallery: {error.message}
+              <div className="mt-4">
+                <button
+                  onClick={() => mutate()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && !error && dates.length === 0 && (
             <div className="text-center py-20">No dates/images available.</div>
           )}
 
-          {!loading && !error && dates.length > 0 && (
-            <TabGallery dates={dates} />
+          {/* Gallery */}
+          {!isLoading && !error && dates.length > 0 && (
+            <>
+              <div className="flex justify-end mb-6">
+                <button
+                  onClick={() => mutate()}
+                  className="px-4 py-2 text-black bg-gray-200 rounded-md hover:bg-gray-300 transition text-sm"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
+              <TabGallery dates={dates} />
+            </>
           )}
         </section>
       </main>
