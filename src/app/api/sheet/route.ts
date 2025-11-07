@@ -5,7 +5,7 @@ import {
   groupColumnsToDates,
   RawColumn,
 } from "@/lib/sheets";
-import { toGoogleImageURL } from "@/utils/driveImage";
+import { toGoogleImageURL, cleanImageColumns } from "@/utils/driveImage";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
@@ -75,15 +75,8 @@ export async function GET() {
     // ✅ Step 1: Normalize column data
     const normalized = normalizeColumnsFromSheets(columnsRaw);
 
-    // ✅ Step 2: Transform image URLs to proper Googleusercontent links
-
-    const cleaned: RawColumn[] = normalized.map((col: NormalizedColumn) => {
-      const images = Array.isArray(col.images) ? col.images : [];
-      return {
-        ...col,
-        images: images.map((url) => toGoogleImageURL(url.trim())),
-      };
-    });
+    // ✅ Step 2: Transform all image URLs to proper Googleusercontent links
+    const cleaned: RawColumn[] = cleanImageColumns(normalized);
 
     // ✅ Step 3: Group columns by date (12 per page)
     const grouped = groupColumnsToDates(cleaned, 12);
