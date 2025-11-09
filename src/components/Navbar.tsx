@@ -324,7 +324,7 @@ export default function Navbar() {
                         Message Transcripts
                       </Link>
                       <Link
-                        href="https://ikorodu.nlwc.church/image-gallery/"
+                        href="/"
                         className="block py-2 hover:text-[#FF7C18] transition-colors"
                       >
                         Image Gallery
