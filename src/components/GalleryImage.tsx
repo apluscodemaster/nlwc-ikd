@@ -99,10 +99,10 @@ const GalleryImage: React.FC<Props> = ({
         <div className="pointer-events-auto">
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 bg-white/90 cursor-pointer hover:bg-white px-3 text-black py-1 rounded-md text-sm shadow-sm backdrop-blur-sm transition-all"
+            className="flex items-center gap-2 bg-white/90 cursor-pointer font-thin hover:bg-white px-3 text-black py-1 rounded-md text-sm shadow-sm backdrop-blur-sm transition-all"
           >
             <HiDownload className="text-lg" />
-            {downloading ? "Downloading..." : "Download"}
+            {/* {downloading ? "Downloading..." : "Download"} */}
           </button>
         </div>
       </div>
