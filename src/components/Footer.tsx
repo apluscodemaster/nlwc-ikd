@@ -40,9 +40,9 @@ export default function Footer() {
         </div>
 
         {/* Columns 2 & 3 wrapper - side-by-side on mobile, span two columns on md+ */}
-        <div className="md:col-span-2 flex flex-col sm:flex-row gap-8">
+        <div className="md:col-span-2 flex gap-8">
           {/* Column 2: Quick Links */}
-          <div className="sm:w-1/2">
+          <div className="w-1/2">
             <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
             <ul className="space-y-2">
               <li>
@@ -91,7 +91,7 @@ export default function Footer() {
           </div>
 
           {/* Column 3: Resources */}
-          <div className="sm:w-1/2">
+          <div className="w-1/2">
             <h3 className="font-semibold mb-4 text-white">Resources</h3>
             <ul className="space-y-2">
               <li>
