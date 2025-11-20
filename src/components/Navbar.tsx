@@ -99,13 +99,13 @@ export default function Navbar() {
                     >
                       <Link
                         href="https://ikorodu.nlwc.church/audio-broadcast/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Audio Broadcast
                       </Link>
                       <Link
                         href="https://ikorodu.nlwc.church/video-broadcast/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Video Broadcast
                       </Link>
@@ -141,7 +141,7 @@ export default function Navbar() {
                     >
                       <Link
                         href="https://ikorodu.nlwc.church/audio-messages/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Audio Messages
                       </Link>
@@ -149,31 +149,31 @@ export default function Navbar() {
                         href="https://nlwc.church/blog/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Blog
                       </Link>
                       <Link
                         href="https://ikorodu.nlwc.church/house-fellowship/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         House Fellowship
                       </Link>
                       <Link
                         href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Sunday School Manual
                       </Link>
                       <Link
                         href="https://ikorodu.nlwc.church/category/message-transcripts/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Message Transcripts
                       </Link>
                       <Link
                         href="/"
-                        className="block px-4 py-2 hover:bg-[#FF7C18] hover:text-white transition-colors cursor-pointer"
+                        className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Image Gallery
                       </Link>
