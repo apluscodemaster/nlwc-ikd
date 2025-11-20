@@ -5,6 +5,7 @@ import useSWR from "swr";
 import type { DateColumns } from "@/lib/sheets";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import AutoScrollGallery from "@/components/AutoScrollGallery";
 import TabGallery from "@/components/TabGallery";
 
 const fetcher = async (url: string): Promise<{ dates: DateColumns[] }> => {
@@ -18,14 +19,9 @@ const fetcher = async (url: string): Promise<{ dates: DateColumns[] }> => {
 
 export default function Page() {
   // ✅ useSWR automatically caches, revalidates, and refreshes in the background
-  const {
-    data,
-    error,
-    isLoading,
-    mutate, // allows manual refresh
-  } = useSWR("/api/sheet", fetcher, {
-    refreshInterval: 60 * 1000, // auto-refresh every 60 seconds
-    revalidateOnFocus: true, // refetch when tab becomes active again
+  const { data, error, isLoading, mutate } = useSWR("/api/sheet", fetcher, {
+    refreshInterval: 60 * 1000,
+    revalidateOnFocus: true,
   });
 
   const dates = data?.dates || [];
@@ -36,8 +32,7 @@ export default function Page() {
 
       <main className="pt-20">
         <Hero />
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 justify-center py-12">
+        <section className="max-w-9xl mx-auto px-4 sm:px-6 justify-center py-12">
           {/* Loading State */}
           {isLoading && (
             <div className="text-center py-20">Loading gallery...</div>
@@ -78,6 +73,8 @@ export default function Page() {
             </>
           )}
         </section>
+
+        <AutoScrollGallery />
       </main>
     </div>
   );
