@@ -61,14 +61,14 @@ export default function Page() {
           {/* Gallery */}
           {!isLoading && !error && dates.length > 0 && (
             <>
-              <div className="flex justify-end mb-6">
-                {/* <button
+              {/* <div className="flex justify-end mb-6">
+                <button
                   onClick={() => mutate()}
                   className="px-4 py-2 text-black bg-gray-200 rounded-md hover:bg-gray-300 transition text-sm"
                 >
                   🔄 Refresh
-                </button> */}
-              </div>
+                </button>
+              </div> */}
               <TabGallery dates={dates} />
             </>
           )}
