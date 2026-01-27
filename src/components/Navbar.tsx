@@ -172,7 +172,7 @@ export default function Navbar() {
                         Message Transcripts
                       </Link>
                       <Link
-                        href="/"
+                        href="/gallery"
                         className="block px-4 py-2 hover:text-[#FF7C18] transition-colors cursor-pointer"
                       >
                         Image Gallery

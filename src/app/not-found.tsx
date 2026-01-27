@@ -37,7 +37,7 @@ export default function NotFound() {
             size="lg"
             className="rounded-full px-12 h-14 text-lg font-bold shadow-xl"
           >
-            <Link href="/">Back to Gallery</Link>
+            <Link href="/">Back to Homepage</Link>
           </Button>
         </motion.div>
       </div>
