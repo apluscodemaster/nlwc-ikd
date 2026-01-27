@@ -50,10 +50,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-30">
             <div className="flex items-center">
-              <Link
-                href="https://ikorodu.nlwc.church/"
-                className="inline-block"
-              >
+              <Link href="/" className="inline-block">
                 <Image
                   src="/logo-200-x-80.png"
                   alt="logo"
@@ -66,7 +63,7 @@ export default function Navbar() {
 
             <div className="hidden md:flex items-center space-x-8">
               <Link
-                href="https://ikorodu.nlwc.church/about/"
+                href="/about"
                 className="text-white hover:text-[#FF7C18] transition-colors"
               >
                 About Us
@@ -183,7 +180,7 @@ export default function Navbar() {
               </div>
 
               <Link
-                href="https://ikorodu.nlwc.church/contact/"
+                href="/contact"
                 className="text-white hover:text-[#FF7C18] transition-colors"
               >
                 Contact
@@ -324,7 +321,7 @@ export default function Navbar() {
                         Message Transcripts
                       </Link>
                       <Link
-                        href="/"
+                        href="/gallery"
                         className="block py-2 hover:text-[#FF7C18] transition-colors"
                       >
                         Image Gallery
@@ -334,10 +331,7 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
 
-              <Link
-                href="https://ikorodu.nlwc.church/contact/"
-                className="block py-2"
-              >
+              <Link href="/contact" className="block py-2">
                 Contact
               </Link>
             </div>

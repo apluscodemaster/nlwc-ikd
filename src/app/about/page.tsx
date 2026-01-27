@@ -1,0 +1,30 @@
+"use client";
+
+import React from "react";
+import PageHeader from "@/components/shared/PageHeader";
+import StorySection from "@/components/about/StorySection";
+import LeadershipGrid from "@/components/about/LeadershipGrid";
+import BeliefsAccordion from "@/components/about/BeliefsAccordion";
+import MinistriesGrid from "@/components/about/MinistriesGrid";
+import CTASection from "@/components/landing/CTASection";
+
+export default function AboutPage() {
+  return (
+    <main>
+      <PageHeader
+        title="Our Story & Mission"
+        subtitle="Discover who we are, what we believe, and the heart behind everything we do at The New & Living Way Church."
+      />
+
+      <StorySection />
+
+      <LeadershipGrid />
+
+      <BeliefsAccordion />
+
+      <MinistriesGrid />
+
+      <CTASection />
+    </main>
+  );
+}
