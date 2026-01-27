@@ -2,6 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import Footer from "@/components/Footer";
 import { Jost } from "next/font/google";
+import Providers from "@/components/Providers";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -18,13 +19,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={jost.variable} suppressHydrationWarning={true}>
       <body
-        className="bg-gray-50 text-gray-900 font-sans overflow-x-hidden"
+        className="bg-gray-50 text-gray-900 font-sans overflow-x-hidden min-h-screen flex flex-col"
         suppressHydrationWarning={true}
       >
-        <div className="min-h-screen max-w-6xl mx-auto p-4">
-          <main className="mt-6">{children}</main>
-        </div>
-
+        <Providers>
+          <main className="flex-grow">{children}</main>
+        </Providers>
         <Footer />
       </body>
     </html>

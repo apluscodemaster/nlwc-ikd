@@ -1,29 +1,43 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import React from "react";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { Skeleton } from "@/components/ui/skeleton";
+
+const fetcher = () =>
+  fetch("/api/autoscroll-gallery").then((res) => res.json());
 
 export default function AutoScrollGallery() {
-  const { data, error, isLoading } = useSWR(
-    "/api/autoscroll-gallery",
-    fetcher,
-    {
-      refreshInterval: 1000 * 60 * 5,
-    }
-  );
+  const { data, error, isLoading, isError } = useQuery({
+    queryKey: ["autoscroll-gallery"],
+    queryFn: fetcher,
+    refetchInterval: 1000 * 60 * 5,
+  });
 
-  if (error)
+  if (isError)
     return (
-      <div className="text-center py-10 text-red-600">
+      <div className="text-center py-10 text-destructive font-medium">
         Failed to load gallery
       </div>
     );
+
   if (isLoading)
     return (
-      <div className="text-center py-10">Loading auto-scroll gallery...</div>
+      <div className="w-full py-10 space-y-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <Skeleton className="h-12 w-3/4 mx-auto mb-8" />
+        </div>
+        <div className="flex gap-4 px-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-[350px] w-[250px] rounded-xl flex-shrink-0"
+            />
+          ))}
+        </div>
+      </div>
     );
 
   const images: string[] = data?.images || [];
