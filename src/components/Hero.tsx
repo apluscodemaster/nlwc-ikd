@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Hero() {
   return (
-    <section className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen h-[360px] md:h-[380px]">
+    <section className="relative w-full h-[360px] md:h-[380px]">
       <Image
         src="/gallery-bg.avif"
         alt="hero background"

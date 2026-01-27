@@ -1,9 +1,16 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
-import { HiDownload } from "react-icons/hi";
 import Image from "next/image";
 import { toGoogleImageURL } from "@/utils/driveImage";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, ZoomIn } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   src: string;
@@ -14,10 +21,6 @@ type Props = {
 
 const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 400;
-
-const Shimmer = () => (
-  <div className="w-full h-full animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-md" />
-);
 
 const GalleryImage: React.FC<Props> = ({
   src,
@@ -59,7 +62,8 @@ const GalleryImage: React.FC<Props> = ({
   const displaySrc = isDrive ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
   const downloadSrc = isDrive ? `${baseUrl}=s0` : baseUrl;
 
-  const handleDownload = async () => {
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     setDownloading(true);
     try {
       const a = document.createElement("a");
@@ -70,43 +74,75 @@ const GalleryImage: React.FC<Props> = ({
       document.body.removeChild(a);
     } catch (err) {
       console.error("Download failed", err);
-      alert(
-        "Couldn't download image. Try opening it in a new tab and saving it."
-      );
     } finally {
       setDownloading(false);
     }
   };
 
   return (
-    <figure className="relative group overflow-hidden rounded-md">
-      {!imgDims ? (
-        <Shimmer />
-      ) : (
-        <Image
-          src={displaySrc}
-          alt={alt || "Gallery image"}
-          width={width}
-          height={height}
-          className="w-full block rounded-md shadow-sm object-cover opacity-0 transition-opacity duration-700"
-          style={{ aspectRatio: `${width}/${height}` }}
-          unoptimized
-          onLoadingComplete={(img) => img.classList.remove("opacity-0")}
-        />
-      )}
-      {/* Overlay Button */}
-      <div className="absolute inset-0 flex items-end justify-end p-2 pointer-events-none">
-        <div className="pointer-events-auto">
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 bg-white/90 cursor-pointer font-thin hover:bg-white px-3 text-black py-1 rounded-md text-sm shadow-sm backdrop-blur-sm transition-all"
-          >
-            <HiDownload className="text-lg" />
-            {/* {downloading ? "Downloading..." : "Download"} */}
-          </button>
+    <Dialog>
+      <figure className="relative group overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        {!imgDims ? (
+          <Skeleton
+            className="w-full"
+            style={{
+              aspectRatio:
+                initialWidth && initialHeight
+                  ? `${initialWidth}/${initialHeight}`
+                  : "3/2",
+            }}
+          />
+        ) : (
+          <>
+            <DialogTrigger asChild>
+              <div className="relative cursor-zoom-in">
+                <Image
+                  src={displaySrc}
+                  alt={alt || "Gallery image"}
+                  width={width}
+                  height={height}
+                  className="w-full block object-cover opacity-0 transition-all duration-700 group-hover:scale-105"
+                  style={{ aspectRatio: `${width}/${height}` }}
+                  unoptimized
+                  onLoadingComplete={(img) => img.classList.remove("opacity-0")}
+                />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <ZoomIn className="text-white w-8 h-8 scale-50 group-hover:scale-100 transition-transform duration-300" />
+                </div>
+              </div>
+            </DialogTrigger>
+
+            <div className="absolute bottom-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownload}
+                className="bg-white/90 hover:bg-white text-black font-medium gap-2 h-8 px-3 rounded-lg shadow-lg backdrop-blur-md"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="text-xs">Download</span>
+              </Button>
+            </div>
+          </>
+        )}
+      </figure>
+
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
+        <VisuallyHidden>
+          <DialogTitle>{alt || "Gallery Image Preview"}</DialogTitle>
+        </VisuallyHidden>
+        <div className="relative w-full h-full flex items-center justify-center">
+          <Image
+            src={downloadSrc}
+            alt={alt || "Full resolution gallery image"}
+            width={1920}
+            height={1080}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            unoptimized
+          />
         </div>
-      </div>
-    </figure>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type Props = {
   pageDates: { date: string }[];
@@ -24,52 +25,54 @@ export default function TabPaginator({
   return (
     <div className="w-full">
       {/* Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
           {pageDates.map((d, i) => {
             const globalIdx = globalIndices[i];
             const isSelected = selectedGlobalIndex === globalIdx;
 
             return (
-              <button
+              <Button
                 key={d.date + i}
                 onClick={() => onSelectGlobalIndex(globalIdx)}
-                className={`px-4 sm:px-8 lg:px-15 py-3 sm:py-4 lg:py-5 text-sm sm:text-md font-medium rounded-lg cursor-pointer transition-all duration-200
-                  ${
-                    isSelected
-                      ? "bg-[#FF7C18] hover:bg-[#E2801C] text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:text-white hover:bg-[#E2801C]"
-                  }`}
+                variant={isSelected ? "default" : "secondary"}
+                className={`flex-1 sm:px-6 lg:px-8 py-6 text-sm font-semibold transition-all duration-300
+                  ${isSelected ? "shadow-lg scale-105" : "hover:bg-primary/20 hover:text-primary"}`}
               >
                 {d.date}
-              </button>
+              </Button>
             );
           })}
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
-          <button
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end bg-gray-50/50 p-2 rounded-xl border border-gray-100 shadow-sm">
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => onPageChange(Math.max(0, pageIndex - 1))}
             disabled={pageIndex === 0}
-            className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-gray-300 cursor-pointer rounded-md text-gray-200 hover:bg-[#E2801C] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 w-9 border-gray-200 hover:border-primary/50 hover:bg-primary/5 text-gray-600 transition-colors"
           >
-            ← Prev
-          </button>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-          <span className="text-xs sm:text-sm text-[#FF7C18]">
-            Page <strong>{pageIndex + 1}</strong> / {totalPages}
+          <span className="text-sm font-medium text-primary px-2">
+            <strong>{pageIndex + 1}</strong>{" "}
+            <span className="text-gray-400 mx-1">/</span> {totalPages}
           </span>
 
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() =>
               onPageChange(Math.min(totalPages - 1, pageIndex + 1))
             }
             disabled={pageIndex >= totalPages - 1}
-            className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-gray-300 cursor-pointer rounded-md text-gray-200 hover:bg-[#E2801C] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 w-9 border-gray-200 hover:border-primary/50 hover:bg-primary/5 text-gray-600 transition-colors"
           >
-            Next →
-          </button>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
