@@ -222,10 +222,7 @@ export default function Navbar() {
             className="md:hidden absolute inset-x-0 top-16 bg-white text-gray-900 shadow-lg z-40"
           >
             <div className="px-4 py-4 space-y-2">
-              <Link
-                href="https://ikorodu.nlwc.church/about/"
-                className="block py-2"
-              >
+              <Link href="/about" className="block py-2">
                 About Us
               </Link>
 
