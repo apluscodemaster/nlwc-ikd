@@ -16,8 +16,9 @@ export default function LivePage() {
   return (
     <main>
       <PageHeader
-        title="Live Experience"
-        subtitle="Join our global family in worship and word as we broadcast our services live from Ikorodu, Lagos."
+        title="Video Broadcast"
+        subtitle="Experience the glory in high definition. Watch our live services and special events from anywhere in the world."
+        backgroundImage="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2070&auto=format&fit=crop"
       />
 
       <SectionContainer className="pb-10">
@@ -29,25 +30,29 @@ export default function LivePage() {
           <div className="space-y-8">
             <div className="space-y-4 text-center lg:text-left">
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-                — STAY CONNECTED
+                — VIDEO EXPERIENCE
               </h4>
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
-                Don&apos;t Miss Our <br />
-                <span className="text-primary">Next Encounter</span>
+                Immersive <br />
+                <span className="text-primary">Live Worship</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We stream every Sunday service at 8:00 AM. Set a reminder and
-                join us for a time of transformation.
+                Join our visual broadcast for a multi-camera production that
+                brings the sanctuary environment directly to your home. Best
+                enjoyed on large screens.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <button className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
-                Get Reminded
+                Set Reminder
               </button>
-              <button className="h-14 px-10 rounded-full border border-gray-200 font-bold hover:bg-white transition-all">
-                Download Schedule
-              </button>
+              <Link
+                href="/listen-live"
+                className="inline-flex items-center justify-center h-14 px-10 rounded-full border border-gray-200 font-bold hover:bg-white transition-all"
+              >
+                Switch to Audio
+              </Link>
             </div>
           </div>
 

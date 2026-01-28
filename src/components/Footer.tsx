@@ -36,9 +36,9 @@ export default function Footer() {
         toast.success(data.message);
         setEmail("");
       } else {
-        toast.error(data.error);
+        toast.error(data.error || "Failed to subscribe");
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="https://ikorodu.nlwc.church/house-fellowship/"
+                  href="/fellowship"
                   className="flex items-center gap-2 hover:text-[#E2801C]"
                 >
                   <HiChevronRight color={orange} /> House Fellowships
@@ -134,6 +134,14 @@ export default function Footer() {
           <div className="w-1/2">
             <h3 className="font-semibold mb-4 text-white">Resources</h3>
             <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/listen-live"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Listen live
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/live"
