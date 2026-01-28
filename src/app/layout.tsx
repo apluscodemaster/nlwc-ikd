@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { ReactNode } from "react";
 import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 
@@ -11,8 +12,9 @@ const jost = Jost({
 });
 
 export const metadata = {
-  title: "NLWC IKORODU Church Image Gallery",
-  description: "Dynamic image gallery of joyful moments in church programmes.",
+  title: "The New & Living Way Church | Ikorodu, Lagos",
+  description:
+    "Welcome to The New & Living Way Church, a community of faith, hope, and love in Ikorodu, Lagos. Join us for a life-transforming experience.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -23,7 +25,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         suppressHydrationWarning={true}
       >
         <Providers>
-          <main className="flex-grow">{children}</main>
+          <Navbar />
+          <main className="flex-grow pt-16">{children}</main>
         </Providers>
         <Footer />
       </body>
