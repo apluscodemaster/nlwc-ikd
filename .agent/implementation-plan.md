@@ -25,28 +25,28 @@ Transform the current image gallery application into a comprehensive faith-based
 
 **Tasks**:
 
-- [ ] Create new route structure:
-  - `src/app/page.tsx` → New landing page
-  - `src/app/gallery/page.tsx` → Current gallery (moved from root)
-  - `src/app/about/page.tsx` → About Us page
-  - `src/app/contact/page.tsx` → Contact page
-  - `src/app/media/page.tsx` → Media hub (audio messages, blog links, etc.)
-  - `src/app/live/page.tsx` → Live streaming page
+- [x] Create new route structure:
+  - [x] `src/app/page.tsx` → New landing page
+  - [x] `src/app/gallery/page.tsx` → Current gallery (moved from root)
+  - [x] `src/app/about/page.tsx` → About Us page
+  - [x] `src/app/contact/page.tsx` → Contact page
+  - [x] `src/app/media/page.tsx` → Media hub (audio messages, blog links, etc.)
+  - [x] `src/app/live/page.tsx` → Live streaming page
 
-- [ ] Move existing gallery components:
-  - Copy current `page.tsx` content to `gallery/page.tsx`
-  - Keep `TabGallery`, `AutoScrollGallery`, `MasonryGrid` components as-is
-  - Update any hardcoded routes in components
+- [x] Move existing gallery components:
+  - [x] Copy current `page.tsx` content to `gallery/page.tsx`
+  - [x] Keep `TabGallery`, `AutoScrollGallery`, `MasonryGrid` components as-is
+  - [x] Update any hardcoded routes in components
 
-- [ ] Update Navbar links:
-  - Change "Image Gallery" link to point to `/gallery`
-  - Ensure all navigation items are functional
+- [x] Update Navbar links:
+  - [x] Change "Image Gallery" link to point to `/gallery`
+  - [x] Ensure all navigation items are functional
 
 **Files to Modify**:
 
-- `src/app/page.tsx` (new landing page)
-- `src/app/gallery/page.tsx` (moved gallery)
-- `src/components/Navbar.tsx` (update links)
+- [x] `src/app/page.tsx` (new landing page)
+- [x] `src/app/gallery/page.tsx` (moved gallery)
+- [x] `src/components/Navbar.tsx` (update links)
 
 ---
 
@@ -58,18 +58,18 @@ Transform the current image gallery application into a comprehensive faith-based
 
 **Components to Build**:
 
-- [ ] **Hero Component** (`src/components/landing/Hero.tsx`)
-  - Full-width hero with background image (Unsplash: church/worship)
-  - Church name and tagline overlay
-  - CTA buttons: "Visit Us", "Watch Live", "Our Story"
-  - Subtle parallax scroll effect
+- [x] **Hero Component** (`src/components/landing/Hero.tsx`)
+  - [x] Full-width hero with background image (Unsplash: church/worship)
+  - [x] Church name and tagline overlay
+  - [x] CTA buttons: "Visit Us", "Watch Live", "Our Story"
+  - [x] Subtle parallax scroll effect
 
 **Design Elements**:
 
-- Background: Dark overlay (40% opacity) over worship image
-- Heading: Large, bold text with gradient effect
-- Subheading: Mission statement or tagline
-- Buttons: Primary (orange) and Secondary (outline) variants
+- [x] Background: Dark overlay (40% opacity) over worship image
+- [x] Heading: Large, bold text with gradient effect
+- [x] Subheading: Mission statement or tagline
+- [x] Buttons: Primary (orange) and Secondary (outline) variants
 
 ### 2.2 Welcome Section
 
@@ -77,11 +77,11 @@ Transform the current image gallery application into a comprehensive faith-based
 
 **Components to Build**:
 
-- [ ] **WelcomeSection** (`src/components/landing/WelcomeSection.tsx`)
-  - Grid layout: Image (left) + Text content (right)
-  - Short welcome message from Pastor
-  - "Learn More" link to About page
-  - Shadcn Card component for clean presentation
+- [x] **WelcomeSection** (`src/components/landing/WelcomeSection.tsx`)
+  - [x] Grid layout: Image (left) + Text content (right)
+  - [x] Short welcome message from Pastor
+  - [x] "Learn More" link to About page
+  - [x] Shadcn Card component for clean presentation
 
 ### 2.3 Service Times Section
 
@@ -89,11 +89,11 @@ Transform the current image gallery application into a comprehensive faith-based
 
 **Components to Build**:
 
-- [ ] **ServiceTimes** (`src/components/landing/ServiceTimes.tsx`)
-  - Card-based layout for each service
-  - Icons for service types (Sunday Service, Bible Study, etc.)
-  - Time, day, and location information
-  - Lucide React icons for visual appeal
+- [x] **ServiceTimes** (`src/components/landing/ServiceTimes.tsx`)
+  - [x] Card-based layout for each service
+  - [x] Icons for service types (Sunday Service, Bible Study, etc.)
+  - [x] Time, day, and location information
+  - [x] Lucide React icons for visual appeal
 
 **Data Structure**:
 
@@ -114,11 +114,11 @@ type Service = {
 
 **Components to Build**:
 
-- [ ] **RecentSermons** (`src/components/landing/RecentSermons.tsx`)
-  - Horizontal scrollable cards
-  - Each card: Sermon title, date, speaker, thumbnail
-  - "View All" link to Media page
-  - Skeleton loading states
+- [x] **RecentSermons** (`src/components/landing/RecentSermons.tsx`)
+  - [x] Horizontal scrollable cards
+  - [x] Each card: Sermon title, date, speaker, thumbnail
+  - [x] "View All" link to Media page
+  - [x] Skeleton loading states
 
 ### 2.5 Upcoming Events
 
@@ -126,11 +126,11 @@ type Service = {
 
 **Components to Build**:
 
-- [ ] **UpcomingEvents** (`src/components/landing/UpcomingEvents.tsx`)
-  - Timeline-style layout
-  - Event cards with date badge, title, description
-  - "Register" or "Learn More" CTAs
-  - Empty state when no events
+- [x] **UpcomingEvents** (`src/components/landing/UpcomingEvents.tsx`)
+  - [x] Timeline-style layout
+  - [x] Event cards with date badge, title, description
+  - [x] "Register" or "Learn More" CTAs
+  - [x] Empty state when no events
 
 ### 2.6 Call to Action Section
 
@@ -138,10 +138,10 @@ type Service = {
 
 **Components to Build**:
 
-- [ ] **CTASection** (`src/components/landing/CTASection.tsx`)
-  - Full-width section with gradient background
-  - Multiple CTAs: "Join Us Sunday", "Give Online", "Get Involved"
-  - Shadcn Button components with icons
+- [x] **CTASection** (`src/components/landing/CTASection.tsx`)
+  - [x] Full-width section with gradient background
+  - [x] Multiple CTAs: "Join Us Sunday", "Give Online", "Get Involved"
+  - [x] Shadcn Button components with icons
 
 ### 2.7 Latest Gallery Preview
 
@@ -149,11 +149,11 @@ type Service = {
 
 **Components to Build**:
 
-- [ ] **GalleryPreview** (`src/components/landing/GalleryPreview.tsx`)
-  - Grid of 6-8 recent images from gallery
-  - Hover effects with zoom
-  - "View Full Gallery" button linking to `/gallery`
-  - Reuse existing `GalleryImage` component
+- [x] **GalleryPreview** (`src/components/landing/GalleryPreview.tsx`)
+  - [x] Grid of 6-8 recent images from gallery
+  - [x] Hover effects with zoom
+  - [x] "View Full Gallery" button linking to `/gallery`
+  - [x] Reuse existing `GalleryImage` component
 
 ---
 
@@ -209,7 +209,7 @@ type Service = {
   - [x] Form validation with React Hook Form (implemented custom beautiful form)
   - [x] Shadcn Form components (implemented custom accessible components)
   - [x] Success/error toast notifications (implemented inline status)
-  - [ ] API route: `src/app/api/contact/route.ts`
+  - [x] API route: `src/app/api/contact/route.ts`
 
 - [x] **Contact Information**
   - [x] Church address with embedded Google Map
@@ -324,14 +324,14 @@ type Service = {
   - [x] Consistent section padding and max-width
   - [x] Optional background variants
 
-- [ ] **TestimonialCard** (`src/components/shared/TestimonialCard.tsx`)
-  - For member testimonies (future use)
+- [x] **TestimonialCard** (`src/components/shared/TestimonialCard.tsx`)
+  - [x] For member testimonies (future use)
 
 - [x] **EventCard** (`src/components/shared/EventCard.tsx`)
-  - Reused logic from other cards
+  - [x] Reused logic from other cards
 
 - [x] **SermonCard** (`src/components/shared/SermonCard.tsx`)
-  - Reused `MediaCard.tsx`
+  - [x] Reused `MediaCard.tsx`
 
 ### 7.2 Utility Functions
 
@@ -339,9 +339,9 @@ type Service = {
 
 **Utilities to Create**:
 
-- [ ] `src/lib/unsplash.ts` - Unsplash API integration
+- [x] `src/lib/unsplash.ts` - Unsplash API integration
 - [x] `src/lib/date-utils.ts` - Date formatting helpers
-- [ ] `src/lib/validation.ts` - Form validation schemas (Zod)
+- [x] `src/lib/validation.ts` - Form validation helpers
 
 ---
 
@@ -353,11 +353,12 @@ type Service = {
 
 **Files to Create**:
 
-- [ ] `src/data/services.ts` - Service times data
-- [ ] `src/data/events.ts` - Upcoming events
-- [ ] `src/data/sermons.ts` - Sermon metadata
-- [ ] `src/data/team.ts` - Leadership team info
-- [ ] `src/data/ministries.ts` - Ministry information
+- [x] `src/data/services.ts` - Service times data
+- [x] `src/data/events.ts` - Upcoming events
+- [x] `src/data/sermons.ts` - Sermon metadata
+- [x] `src/data/team.ts` - Leadership team info
+- [x] `src/data/meetings.ts` - Ministry/Meeting information
+- [x] `src/data/resources.ts` - Resource information
 
 ### 8.2 API Routes
 
@@ -365,10 +366,10 @@ type Service = {
 
 **Routes to Create**:
 
-- [ ] `src/app/api/events/route.ts` - Events CRUD
-- [ ] `src/app/api/sermons/route.ts` - Sermons list
-- [ ] `src/app/api/contact/route.ts` - Contact form submission
-- [ ] `src/app/api/newsletter/route.ts` - Newsletter signup
+- [x] `src/app/api/events/route.ts` - Events CRUD
+- [x] `src/app/api/sermons/route.ts` - Sermons list
+- [x] `src/app/api/contact/route.ts` - Contact form submission
+- [x] `src/app/api/newsletter/route.ts` - Newsletter signup
 
 ### 8.3 TanStack Query Hooks
 
@@ -376,9 +377,9 @@ type Service = {
 
 **Hooks to Create**:
 
-- [ ] `src/hooks/useEvents.ts`
-- [ ] `src/hooks/useSermons.ts`
-- [ ] `src/hooks/useGallery.ts` (refactor existing)
+- [x] `src/hooks/useEvents.ts`
+- [x] `src/hooks/useSermons.ts`
+- [x] `src/hooks/useGallery.ts` (refactor existing)
 
 ---
 
@@ -410,10 +411,10 @@ type Service = {
 
 **Component to Create**:
 
-- [ ] `src/components/shared/UnsplashImage.tsx`
-  - Props: category, width, height, alt
-  - Automatic Next.js Image optimization
-  - Fallback placeholder
+- [x] `src/components/shared/UnsplashImage.tsx`
+  - [x] Props: category, width, height, alt
+  - [x] Automatic Next.js Image optimization
+  - [x] Fallback placeholder
 
 ---
 
@@ -426,17 +427,17 @@ type Service = {
 **Run these commands**:
 
 ```bash
-npx shadcn@latest add accordion
-npx shadcn@latest add form
-npx shadcn@latest add input
-npx shadcn@latest add textarea
-npx shadcn@latest add select
-npx shadcn@latest add toast
-npx shadcn@latest add badge
-npx shadcn@latest add avatar
-npx shadcn@latest add separator
-npx shadcn@latest add sheet
-npx shadcn@latest add dropdown-menu
+- [x] accordion
+- [x] form
+- [x] input
+- [x] textarea
+- [x] select
+- [x] sonner (toast)
+- [x] badge
+- [x] avatar
+- [x] separator
+- [x] sheet
+- [x] dropdown-menu
 ```
 
 ---
@@ -475,10 +476,10 @@ npx shadcn@latest add dropdown-menu
 
 **Tasks**:
 
-- [ ] Update `layout.tsx` metadata for each page
-- [ ] Add Open Graph images
-- [ ] Create `robots.txt` and `sitemap.xml`
-- [ ] Implement structured data (JSON-LD) for church info
+- [x] Update `layout.tsx` metadata for each page
+- [x] Add Open Graph images
+- [x] Create `robots.txt` and `sitemap.xml`
+- [x] Implement structured data (JSON-LD) for church info
 
 ### 12.2 Performance Optimization
 

@@ -10,8 +10,40 @@ import {
 } from "react-icons/fa";
 import { HiOutlineMail, HiPhone, HiChevronRight } from "react-icons/hi";
 import Image from "next/image";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message);
+        setEmail("");
+      } else {
+        toast.error(data.error);
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   const year = new Date().getFullYear();
   const orange = "#FF7C18";
   //   const orangeHover = "#E2801C";
@@ -47,7 +79,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="https://ikorodu.nlwc.church/about/"
+                  href="/about"
                   className="flex items-center gap-2 hover:text-[#E2801C]"
                 >
                   <HiChevronRight color={orange} /> About
@@ -55,7 +87,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="https://ikorodu.nlwc.church/audio-messages/"
+                  href="/media"
                   className="flex items-center gap-2 hover:text-[#E2801C]"
                 >
                   <HiChevronRight color={orange} /> Audio Messages
@@ -81,7 +113,15 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="https://ikorodu.nlwc.church/contact/"
+                  href="/gallery"
+                  className="flex items-center gap-2 hover:text-[#E2801C]"
+                >
+                  <HiChevronRight color={orange} /> Gallery
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
                   className="flex items-center gap-2 hover:text-[#E2801C]"
                 >
                   <HiChevronRight color={orange} /> Contact
@@ -96,15 +136,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="https://ikorodu.nlwc.church/audio-broadcast/"
-                  className="flex items-center gap-2 hover:text-[#E2801C] "
-                >
-                  <HiChevronRight color={orange} /> Listen live
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://ikorodu.nlwc.church/video-broadcast/"
+                  href="/live"
                   className="flex items-center gap-2 hover:text-[#E2801C]"
                 >
                   <HiChevronRight color={orange} /> Watch live
@@ -136,6 +168,26 @@ export default function Footer() {
           <p className="text-sm mb-4 text-white">
             Don&apos;t miss our future updates. Get Subscribed today!
           </p>
+
+          <form onSubmit={handleSubscribe} className="space-y-3 mb-6">
+            <div className="relative">
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full h-12 px-4 rounded-full bg-gray-700 border border-gray-600 text-white placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors text-sm"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="absolute right-1 top-1 h-10 px-4 rounded-full bg-primary text-white font-bold text-xs hover:bg-opacity-90 transition-all disabled:opacity-50"
+              >
+                {loading ? "..." : "JOIN"}
+              </button>
+            </div>
+          </form>
 
           <div className="flex items-center gap-3 mb-4">
             <Link
@@ -201,6 +253,7 @@ export default function Footer() {
           <div className="text-sm">&nbsp;</div>
         </div>
       </div>
+      <Toaster position="bottom-right" />
     </footer>
   );
 }
