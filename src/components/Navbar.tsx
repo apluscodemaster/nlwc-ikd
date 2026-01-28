@@ -110,7 +110,7 @@ export default function Navbar() {
             className="relative z-10 transition-transform hover:scale-105 active:scale-95"
           >
             <Image
-              src="/nlwcikd-logo-512x512.png"
+              src="/logo-200-x-80.png"
               alt="NLWC Logo"
               width={100}
               height={40}
