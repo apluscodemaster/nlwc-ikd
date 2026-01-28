@@ -1,7 +1,7 @@
-import { Users, Heart, Baby, Music, BookOpen, Mic2 } from "lucide-react";
+import { Users, UserRound, Baby, Music, HandHeart, Mic2 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
-export type Ministry = {
+export type Meetings = {
   id: string;
   name: string;
   description: string;
@@ -10,28 +10,28 @@ export type Ministry = {
   iconColor: string;
 };
 
-export const ministries: Ministry[] = [
+export const meetings: Meetings[] = [
   {
     id: "1",
-    name: "Men's Ministry",
+    name: "Brothers' Meeting",
     description:
-      "Empowering men to be spiritual leaders in their homes and community.",
+      "Empowering brothers to be spiritual leaders in their homes and community.",
     icon: Users,
     color: "bg-blue-50",
     iconColor: "text-blue-600",
   },
   {
     id: "2",
-    name: "Women's Ministry",
+    name: "Chayah Sisters' Meeting",
     description:
-      "A community for women to grow in faith, wisdom, and fellowship.",
-    icon: Heart,
+      "A community for sisters to grow in faith, wisdom, and fellowship.",
+    icon: UserRound,
     color: "bg-pink-50",
     iconColor: "text-pink-600",
   },
   {
     id: "3",
-    name: "Children's Church",
+    name: "Children's Bootcamp",
     description:
       "Nurturing the next generation in the ways of the Lord through fun and learning.",
     icon: Baby,
@@ -40,7 +40,7 @@ export const ministries: Ministry[] = [
   },
   {
     id: "4",
-    name: "Worship Team",
+    name: "Worship Service",
     description:
       "Leading the congregation into the presence of God through music and praise.",
     icon: Music,
@@ -49,16 +49,16 @@ export const ministries: Ministry[] = [
   },
   {
     id: "5",
-    name: "Bible Study",
+    name: "Prayer Meeting",
     description:
       "Deepening our understanding of scripted through systematic study and discussion.",
-    icon: BookOpen,
+    icon: HandHeart,
     color: "bg-green-50",
     iconColor: "text-green-600",
   },
   {
     id: "6",
-    name: "Media & Tech",
+    name: "Sithrah",
     description:
       "Using technology to spread the gospel through live streams and recordings.",
     icon: Mic2,

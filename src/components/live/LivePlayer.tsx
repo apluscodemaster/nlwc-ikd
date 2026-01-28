@@ -24,8 +24,8 @@ export default function LivePlayer() {
           <iframe
             width="100%"
             height="100%"
-            src="https://www.youtube.com/embed/live_stream?channel=UCFYAn-S8sUcmUzs4EU2Y_iA"
-            title="NLWC Live Stream"
+            src="https://www.youtube.com/embed/live_stream?channel=UCmj7Ugn86LZe2vuOdv4mdSw"
+            title="NLWC Ikorodu Live Stream"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen

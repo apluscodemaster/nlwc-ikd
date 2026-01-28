@@ -60,7 +60,7 @@ export default function WelcomeSection() {
               className="relative h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="https://images.unsplash.com/photo-1511649475106-4ab986b6bc74?q=80&w=1000&auto=format&fit=crop"
+                src="https://picsum.photos/id/129/300/200"
                 alt="Community 2"
                 fill
                 className="object-cover"
@@ -72,7 +72,7 @@ export default function WelcomeSection() {
             className="relative h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="https://images.unsplash.com/photo-1511649475106-4ab986b6bc74?q=80&w=1000&auto=format&fit=crop"
+              src="/pst_laide_olaniyan.avif"
               alt="Church Pastor"
               fill
               className="object-cover"

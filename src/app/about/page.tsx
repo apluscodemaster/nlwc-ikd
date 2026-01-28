@@ -5,7 +5,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import StorySection from "@/components/about/StorySection";
 import LeadershipGrid from "@/components/about/LeadershipGrid";
 import BeliefsAccordion from "@/components/about/BeliefsAccordion";
-import MinistriesGrid from "@/components/about/MinistriesGrid";
+import MeetingsGrid from "@/components/about/MeetingsGrid";
 import CTASection from "@/components/landing/CTASection";
 
 export default function AboutPage() {
@@ -22,7 +22,7 @@ export default function AboutPage() {
 
       <BeliefsAccordion />
 
-      <MinistriesGrid />
+      <MeetingsGrid />
 
       <CTASection />
     </main>
