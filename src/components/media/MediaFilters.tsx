@@ -44,7 +44,7 @@ export default function MediaFilters({
         </div>
 
         {/* Search */}
-        <div className="relative group min-w-[300px]">
+        <div className="relative group w-full md:w-80">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <input
             type="text"

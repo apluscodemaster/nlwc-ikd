@@ -29,7 +29,7 @@ export default function MeetingsGrid() {
         <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
           — OUR MEETINGS
         </h4>
-        <h2 className="text-4xl md:text-5xl font-bold">
+        <h2 className="text-3xl md:text-5xl font-bold">
           Something for <span className="text-primary">Everyone</span>
         </h2>
         <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -50,7 +50,7 @@ export default function MeetingsGrid() {
             key={meeting.id}
             variants={cardVariants}
             whileHover={{ y: -10 }}
-            className="group bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 transition-all duration-300"
+            className="group bg-white/5 border border-white/10 p-6 sm:p-10 rounded-3xl hover:bg-white/10 transition-all duration-300"
           >
             <div
               className={`w-16 h-16 ${meeting.color} rounded-2xl flex items-center justify-center mb-8 transform group-hover:rotate-6 transition-transform`}

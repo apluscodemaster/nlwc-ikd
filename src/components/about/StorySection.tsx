@@ -30,8 +30,9 @@ export default function StorySection() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — OUR STORY
             </h4>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
-              Founded on <span className="text-primary">Faith</span>, <br />
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+              Founded on <span className="text-primary">Faith</span>,{" "}
+              <br className="hidden sm:block" />
               Built on <span className="text-primary">Love</span>
             </h2>
           </div>
@@ -51,7 +52,7 @@ export default function StorySection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 pt-8 border-t border-gray-100">
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-foreground">Our Mission</h3>
               <p className="text-muted-foreground">

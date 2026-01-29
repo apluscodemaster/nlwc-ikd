@@ -8,6 +8,7 @@ import MediaCard from "@/components/media/MediaCard";
 import ResourceList from "@/components/media/ResourceList";
 import { recentSermons } from "@/data/sermons";
 import { AnimatePresence, motion } from "framer-motion";
+import NextImage from "next/image";
 
 export default function MediaPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -86,7 +87,7 @@ export default function MediaPage() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — LATEST ARTICLES
               </h4>
-              <h2 className="text-4xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
                 Read Inspiring{" "}
                 <span className="text-primary">Blog Stories</span>
               </h2>
@@ -107,11 +108,14 @@ export default function MediaPage() {
           </div>
 
           <div className="relative h-[400px] rounded-3xl overflow-hidden shadow-2xl">
-            <img
-              src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1000&auto=format&fit=crop"
-              alt="Blog Section"
-              className="w-full h-full object-cover"
-            />
+            <div className="relative h-full w-full">
+              <NextImage
+                src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1000&auto=format&fit=crop"
+                alt="Blog Section"
+                fill
+                className="object-cover"
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-8 left-8 text-white">
               <span className="text-primary font-bold uppercase tracking-widest text-xs mb-2 block">

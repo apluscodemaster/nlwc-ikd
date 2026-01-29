@@ -54,7 +54,7 @@ export default function GalleryPreview() {
   const previewImages = allImages.slice(0, 8);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 sm:py-32 overflow-hidden">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">
       <motion.div
         initial="hidden"
         whileInView="visible"
@@ -66,7 +66,7 @@ export default function GalleryPreview() {
           <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
             — OUR GALLERY
           </h4>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
             Joyful <span className="text-primary">Moments</span>
           </h2>
           <p className="text-lg text-muted-foreground">
@@ -99,7 +99,7 @@ export default function GalleryPreview() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
           variants={containerVariants}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
         >
           {previewImages.map((src, i) => (
             <motion.div

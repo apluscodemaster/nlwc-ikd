@@ -46,7 +46,7 @@ const blobVariants: Variants = {
 
 export default function CTASection() {
   return (
-    <section className="bg-primary py-24 sm:py-32 relative overflow-hidden">
+    <section className="bg-primary py-12 sm:py-32 relative overflow-hidden">
       {/* Background patterns with animation */}
       <motion.div
         variants={blobVariants}
@@ -67,8 +67,8 @@ export default function CTASection() {
           viewport={{ once: true, margin: "-50px" }}
           variants={headingVariants}
         >
-          <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
-            Ready to Take the <br />{" "}
+          <h2 className="text-3xl md:text-6xl font-bold mb-8 leading-tight">
+            Ready to Take the <br className="hidden sm:block" />{" "}
             <span className="text-black/30">Next Step</span>?
           </h2>
           <p className="text-xl md:text-2xl mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed">

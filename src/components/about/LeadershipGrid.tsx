@@ -35,7 +35,7 @@ export default function LeadershipGrid() {
         <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
           — OUR LEADERSHIP
         </h4>
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+        <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
           Meet Our <span className="text-primary">Pastors</span>
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

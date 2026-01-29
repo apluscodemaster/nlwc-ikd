@@ -33,7 +33,7 @@ export default function RecentSermons() {
   const { data: sermons, isLoading, isError } = useSermons();
 
   return (
-    <section className="bg-white py-24 sm:py-32 overflow-hidden">
+    <section className="bg-white py-12 sm:py-32 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial="hidden"
@@ -46,7 +46,7 @@ export default function RecentSermons() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — RECENT MESSAGES
             </h4>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground">
               Spiritual <span className="text-primary">Nourishment</span>
             </h2>
             <p className="text-lg text-muted-foreground">

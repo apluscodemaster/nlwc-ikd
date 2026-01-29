@@ -22,7 +22,7 @@ export default function FellowshipPage() {
           <h4 className="text-primary font-bold uppercase tracking-widest text-sm mb-4">
             — FIND A CENTER
           </h4>
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
             Fellowship Centers <span className="text-primary">Near You</span>
           </h2>
           <p className="text-lg text-muted-foreground">
@@ -120,7 +120,7 @@ export default function FellowshipPage() {
       {/* Join Section */}
       <SectionContainer className="bg-gray-50">
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-4xl font-bold text-gray-900">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Couldn&apos;t find a center nearby?
           </h2>
           <p className="text-xl text-muted-foreground">
