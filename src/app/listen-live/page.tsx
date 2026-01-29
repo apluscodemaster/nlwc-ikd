@@ -9,7 +9,6 @@ import { recentSermons } from "@/data/sermons";
 import MediaCard from "@/components/media/MediaCard";
 import { ArrowRight, Headset, Calendar, Share2 } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 export default function ListenLivePage() {
   const archives = recentSermons.filter((s) => s.type === "audio").slice(0, 3);
@@ -33,7 +32,7 @@ export default function ListenLivePage() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — AUDIO EXPERIENCE
               </h4>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
                 Listen Anywhere, <br />
                 <span className="text-primary">Anytime</span>
               </h2>
@@ -85,7 +84,7 @@ export default function ListenLivePage() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform rotate-3 scale-105" />
-            <div className="relative bg-white p-12 rounded-[40px] shadow-xl border border-gray-100">
+            <div className="relative bg-white p-6 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-gray-900">
                   Next Service In:
@@ -103,7 +102,7 @@ export default function ListenLivePage() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — RECENT AUDIO
             </h4>
-            <h2 className="text-4xl font-bold text-gray-900">Audio Archives</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Audio Archives</h2>
           </div>
           <Link
             href="/media?type=audio"

@@ -27,7 +27,7 @@ const headingVariants: Variants = {
 
 export default function ServiceTimes() {
   return (
-    <section className="bg-gray-50 py-24 sm:py-32 overflow-hidden">
+    <section className="bg-gray-50 py-12 sm:py-32 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial="hidden"
@@ -39,7 +39,7 @@ export default function ServiceTimes() {
           <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
             — JOIN US THIS WEEK
           </h4>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
             Weekly <span className="text-primary">Experience</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -60,7 +60,7 @@ export default function ServiceTimes() {
               key={service.id}
               variants={cardVariants}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="bg-white rounded-3xl p-10 shadow-sm hover:shadow-2xl transition-shadow duration-300 group border border-transparent hover:border-primary/10"
+              className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm hover:shadow-2xl transition-shadow duration-300 group border border-transparent hover:border-primary/10"
             >
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 5 }}

@@ -72,7 +72,7 @@ export default function Footer() {
         </div>
 
         {/* Columns 2 & 3 wrapper - side-by-side on mobile, span two columns on md+ */}
-        <div className="md:col-span-2 flex gap-8">
+        <div className="md:col-span-2 flex gap-4 sm:gap-8">
           {/* Column 2: Quick Links */}
           <div className="w-1/2">
             <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
@@ -185,7 +185,7 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 px-4 rounded-full bg-gray-700 border border-gray-600 text-white placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors text-sm"
+                className="w-full h-12 pl-4 pr-16 rounded-full bg-gray-700 border border-gray-600 text-white placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors text-xs sm:text-sm"
               />
               <button
                 type="submit"
@@ -256,7 +256,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center text-sm text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-center text-center sm:text-left text-sm text-white gap-2">
           <div>Copyright {year} NLWC IKORODU. All right Reserved.</div>
           <div className="text-sm">&nbsp;</div>
         </div>

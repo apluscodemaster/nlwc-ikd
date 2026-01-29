@@ -32,7 +32,7 @@ export default function LivePage() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — VIDEO EXPERIENCE
               </h4>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
                 Immersive <br />
                 <span className="text-primary">Live Worship</span>
               </h2>
@@ -58,7 +58,7 @@ export default function LivePage() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform -rotate-3 scale-105" />
-            <div className="relative bg-white p-12 rounded-[40px] shadow-xl border border-gray-100">
+            <div className="relative bg-white p-6 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
               <ServiceCountdown />
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function LivePage() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — RECENT BROADCASTS
             </h4>
-            <h2 className="text-4xl font-bold text-gray-900">
+            <h2 className="text-3xl font-bold text-gray-900">
               Experience Archives
             </h2>
           </div>

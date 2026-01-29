@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ContactForm() {
@@ -46,7 +46,7 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
+    <div className="bg-white p-6 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
       <div className="mb-8 font-bold">
         <h3 className="text-2xl text-gray-900">Send us a message</h3>
         <p className="text-muted-foreground font-medium mt-2">

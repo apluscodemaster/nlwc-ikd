@@ -28,14 +28,14 @@ export default function ContactPage() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — CONTACT US
               </h4>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
                 Let&apos;s Start a <br />
                 <span className="text-primary">Conversation</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Whether you have a specific question about our ministries, a
-                prayer request, or just want to say hello, we value every
-                connection.
+                Whether you have a specific question about our meetings, a
+                strong desire to abound in the knowledge of God, or just want to
+                say hello, we value every connection.
               </p>
             </div>
 
@@ -61,7 +61,7 @@ export default function ContactPage() {
           <h4 className="text-primary font-bold uppercase tracking-widest text-sm mb-4">
             — VISIT US
           </h4>
-          <h2 className="text-4xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-gray-900">
             Find Your Way Home
           </h2>
         </div>

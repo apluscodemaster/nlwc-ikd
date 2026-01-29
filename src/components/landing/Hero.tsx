@@ -34,7 +34,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+          className="text-4xl md:text-7xl font-bold mb-6 leading-tight"
         >
           Welcome to{" "}
           <span className="text-primary">The New & Living Way Church</span>

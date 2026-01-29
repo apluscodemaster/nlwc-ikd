@@ -46,7 +46,7 @@ const blobVariants: Variants = {
 
 export default function UpcomingEvents() {
   return (
-    <section className="bg-gray-900 py-24 sm:py-32 relative overflow-hidden">
+    <section className="bg-gray-900 py-12 sm:py-32 relative overflow-hidden">
       {/* Decorative blobs with animation */}
       <motion.div
         variants={blobVariants}
@@ -71,7 +71,7 @@ export default function UpcomingEvents() {
           <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
             — DON&apos;T MISS OUT
           </h4>
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-3xl md:text-5xl font-bold text-white">
             Upcoming <span className="text-primary">Events</span>
           </h2>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
@@ -96,7 +96,7 @@ export default function UpcomingEvents() {
                 borderColor: "rgba(255, 124, 24, 0.5)",
                 transition: { duration: 0.3 },
               }}
-              className="group bg-white/5 border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors duration-300"
+              className="group bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 hover:bg-white/10 transition-colors duration-300"
             >
               <div className="flex justify-between items-start mb-6">
                 <motion.div
@@ -137,7 +137,7 @@ export default function UpcomingEvents() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full rounded-xl border-white/20 text-white hover:bg-white hover:text-black"
+                className="w-full rounded-xl border-white/20 text-black hover:bg-white hover:text-black"
               >
                 <Link href="/contact">Register Now</Link>
               </Button>

@@ -33,7 +33,7 @@ const imageVariants: Variants = {
 
 export default function WelcomeSection() {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 sm:py-32 overflow-hidden">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         {/* Image Grid */}
         <motion.div
@@ -41,12 +41,12 @@ export default function WelcomeSection() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={containerVariants}
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
         >
-          <div className="space-y-4 pt-12">
+          <div className="space-y-4 pt-0 sm:pt-12">
             <motion.div
               variants={imageVariants}
-              className="relative h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
+              className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
             >
               <Image
                 src="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop"
@@ -57,7 +57,7 @@ export default function WelcomeSection() {
             </motion.div>
             <motion.div
               variants={imageVariants}
-              className="relative h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
+              className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
                 src="https://picsum.photos/id/129/300/200"
@@ -69,7 +69,7 @@ export default function WelcomeSection() {
           </div>
           <motion.div
             variants={imageVariants}
-            className="relative h-[550px] rounded-3xl overflow-hidden shadow-2xl"
+            className="relative h-[350px] sm:h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
               src="/pst_laide_olaniyan.avif"
@@ -99,8 +99,8 @@ export default function WelcomeSection() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — WHO WE ARE
             </h4>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
-              A Place Encountering <br />{" "}
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+              A Place Encountering <br className="hidden sm:block" />{" "}
               <span className="text-primary">God&apos;s Love</span>
             </h2>
           </motion.div>
@@ -135,20 +135,20 @@ export default function WelcomeSection() {
             className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-100"
           >
             <div>
-              <p className="text-3xl font-bold text-primary">20+</p>
-              <p className="text-sm text-muted-foreground font-medium uppercase">
+              <p className="text-2xl font-bold text-primary">20+</p>
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
                 Years Active
               </p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-primary">10+</p>
-              <p className="text-sm text-muted-foreground font-medium uppercase">
+              <p className="text-2xl font-bold text-primary">10+</p>
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
                 Ministries
               </p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-primary">500+</p>
-              <p className="text-sm text-muted-foreground font-medium uppercase">
+              <p className="text-2xl font-bold text-primary">500+</p>
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
                 Members
               </p>
             </div>

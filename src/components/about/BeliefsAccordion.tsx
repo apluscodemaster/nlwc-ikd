@@ -49,7 +49,7 @@ export default function BeliefsAccordion() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — OUR DOCTRINE
             </h4>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
               What We <span className="text-primary">Believe</span>
             </h2>
           </div>
