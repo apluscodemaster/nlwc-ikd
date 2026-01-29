@@ -26,17 +26,17 @@ export default function ListenLivePage() {
       </SectionContainer>
 
       <SectionContainer className="bg-gray-50 overflow-hidden">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div className="space-y-8">
             <div className="space-y-4 text-center lg:text-left">
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — AUDIO EXPERIENCE
               </h4>
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
-                Listen Anywhere, <br />
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
+                Listen Anywhere, <br className="hidden sm:block" />
                 <span className="text-primary">Anytime</span>
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
                 Can&apos;t watch the video? Our audio stream is optimized for
                 all mobile devices and low-bandwidth environments, ensuring you
                 never miss a moment of the service.
@@ -68,9 +68,9 @@ export default function ListenLivePage() {
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="flex gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm"
+                  className="flex gap-4 p-5 rounded-3xl bg-white border border-gray-100 shadow-sm"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     {item.icon}
                   </div>
                   <div>
@@ -84,7 +84,7 @@ export default function ListenLivePage() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform rotate-3 scale-105" />
-            <div className="relative bg-white p-6 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
+            <div className="relative bg-white p-8 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-gray-900">
                   Next Service In:

@@ -26,17 +26,17 @@ export default function LivePage() {
       </SectionContainer>
 
       <SectionContainer className="bg-gray-50 overflow-hidden">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div className="space-y-8">
             <div className="space-y-4 text-center lg:text-left">
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — VIDEO EXPERIENCE
               </h4>
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
-                Immersive <br />
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
+                Immersive <br className="hidden sm:block" />
                 <span className="text-primary">Live Worship</span>
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
                 Join our visual broadcast for a multi-camera production that
                 brings the sanctuary environment directly to your home. Best
                 enjoyed on large screens.
@@ -44,12 +44,12 @@ export default function LivePage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+              <button className="h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm sm:text-base">
                 Set Reminder
               </button>
               <Link
                 href="/listen-live"
-                className="inline-flex items-center justify-center h-14 px-10 rounded-full border border-gray-200 font-bold hover:bg-white transition-all"
+                className="inline-flex items-center justify-center h-12 sm:h-14 px-8 sm:px-10 rounded-full border border-gray-200 font-bold hover:bg-white transition-all text-sm sm:text-base"
               >
                 Switch to Audio
               </Link>
@@ -58,7 +58,7 @@ export default function LivePage() {
 
           <div className="relative">
             <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform -rotate-3 scale-105" />
-            <div className="relative bg-white p-6 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
+            <div className="relative bg-white p-8 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
               <ServiceCountdown />
             </div>
           </div>

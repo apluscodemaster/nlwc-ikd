@@ -42,11 +42,11 @@ export default function ServiceCountdown() {
   }, []);
 
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center p-4 min-w-[80px] bg-white rounded-2xl shadow-sm border border-gray-100">
-      <span className="text-3xl font-black text-primary">
+    <div className="flex flex-col items-center p-3 sm:p-4 min-w-[65px] sm:min-w-[80px] bg-white rounded-2xl shadow-sm border border-gray-100">
+      <span className="text-2xl sm:text-3xl font-black text-primary">
         {value.toString().padStart(2, "0")}
       </span>
-      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
+      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
         {label}
       </span>
     </div>
@@ -58,7 +58,7 @@ export default function ServiceCountdown() {
         <Clock className="w-4 h-4 animate-pulse" />
         Next Live Service Ends In
       </div>
-      <div className="flex gap-4">
+      <div className="flex gap-2 sm:gap-4">
         <TimeUnit value={timeLeft.days} label="Days" />
         <TimeUnit value={timeLeft.hours} label="Hours" />
         <TimeUnit value={timeLeft.minutes} label="Mins" />
