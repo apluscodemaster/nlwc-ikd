@@ -3,7 +3,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DateColumns } from "@/lib/sheets";
-import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import AutoScrollGallery from "@/components/AutoScrollGallery";
 import TabGallery from "@/components/TabGallery";

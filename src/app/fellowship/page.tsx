@@ -5,10 +5,31 @@ import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import { fellowshipCenters } from "@/data/centers";
 import { motion } from "framer-motion";
-import { MapPin, User, Phone, Clock, Home } from "lucide-react";
+import {
+  MapPin,
+  User,
+  Phone,
+  Clock,
+  Home,
+  ExternalLink,
+  FileText,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function FellowshipPage() {
+  const handleGetDirections = (address: string, lat: number, lng: number) => {
+    // Try Google Maps with coordinates for accuracy
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${encodeURIComponent(address)}`;
+    window.open(mapsUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCall = (phone: string) => {
+    // Format phone number for tel: link
+    const cleanPhone = phone.replace(/\s+/g, "");
+    window.location.href = `tel:${cleanPhone}`;
+  };
+
   return (
     <main>
       <PageHeader
@@ -97,16 +118,29 @@ export default function FellowshipPage() {
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                             Contact
                           </p>
-                          <p className="text-gray-700 font-medium">
+                          <button
+                            onClick={() => handleCall(center.contact)}
+                            className="text-primary font-medium hover:underline"
+                          >
                             {center.contact}
-                          </p>
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="pt-4">
-                    <button className="w-full h-12 rounded-xl bg-gray-50 text-gray-900 font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm">
+                    <button
+                      onClick={() =>
+                        handleGetDirections(
+                          center.address,
+                          center.location.lat,
+                          center.location.lng,
+                        )
+                      }
+                      className="w-full h-12 rounded-xl bg-gray-50 text-gray-900 font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
                       Get Directions
                     </button>
                   </div>
@@ -128,12 +162,21 @@ export default function FellowshipPage() {
             join a new one, please let us know.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+            <Link
+              href="/contact"
+              className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2"
+            >
               Contact Coordinator
-            </button>
-            <button className="h-14 px-10 rounded-full border border-gray-200 bg-white font-bold hover:bg-primary/5 transition-all">
+            </Link>
+            <a
+              href="https://nlwc.church/fellowship-guidelines"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-14 px-10 rounded-full border border-gray-200 bg-white font-bold hover:bg-primary/5 transition-all flex items-center gap-2"
+            >
+              <FileText className="w-5 h-5" />
               Center Guidelines
-            </button>
+            </a>
           </div>
         </div>
       </SectionContainer>

@@ -14,6 +14,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
+// Social media links - update these with actual URLs
+const SOCIAL_LINKS = {
+  youtube: "https://www.youtube.com/@NLWCIkorodu",
+  facebook: "https://www.facebook.com/nlwcikorodu",
+  instagram: "https://www.instagram.com/nlwcikorodu",
+  twitter: "https://twitter.com/nlwcikorodu",
+  whatsapp: "https://wa.me/2347035760085",
+};
+
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,13 +55,12 @@ export default function Footer() {
   };
   const year = new Date().getFullYear();
   const orange = "#FF7C18";
-  //   const orangeHover = "#E2801C";
 
   return (
     <footer className="w-full mt-12 bg-gray-800 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {/* Column 1 */}
-        <div>
+        <div className="sm:col-span-2 lg:col-span-1">
           <div className="mb-4">
             <Link href="/" className="inline-block">
               <Image
@@ -63,7 +71,7 @@ export default function Footer() {
               />
             </Link>
           </div>
-          <p className="text-sm text-white">
+          <p className="text-sm text-gray-300 leading-relaxed">
             The New and Living Way Church (NLWC) is an amiable community of
             believers who are focused on inheriting the promise of Eternal Life
             in its fullness. Day after day we are learning to walk by the Spirit
@@ -71,109 +79,122 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Columns 2 & 3 wrapper - side-by-side on mobile, span two columns on md+ */}
-        <div className="md:col-span-2 flex gap-4 sm:gap-8">
-          {/* Column 2: Quick Links */}
-          <div className="w-1/2">
-            <h3 className="font-semibold mb-4 text-white">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/about"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/media"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Audio Messages
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/fellowship"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> House Fellowships
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://nlwc.church/blog/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/gallery"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Gallery
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 2: Quick Links */}
+        <div>
+          <h3 className="font-semibold mb-4 text-white text-lg">Quick Links</h3>
+          <ul className="space-y-3">
+            <li>
+              <Link
+                href="/about"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                About
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/media"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Audio Messages
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/fellowship"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                House Fellowships
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="https://nlwc.church/blog/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Blog
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/gallery"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Gallery
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/contact"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Contact
+              </Link>
+            </li>
+          </ul>
+        </div>
 
-          {/* Column 3: Resources */}
-          <div className="w-1/2">
-            <h3 className="font-semibold mb-4 text-white">Resources</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/listen-live"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Listen live
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/live"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Watch live
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Sunday School Manuals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://ikorodu.nlwc.church/category/message-transcripts/"
-                  className="flex items-center gap-2 hover:text-[#E2801C]"
-                >
-                  <HiChevronRight color={orange} /> Message Transcripts
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 3: Resources */}
+        <div>
+          <h3 className="font-semibold mb-4 text-white text-lg">Resources</h3>
+          <ul className="space-y-3">
+            <li>
+              <Link
+                href="/listen-live"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Listen live
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/live"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Watch live
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Sunday School Manuals
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="https://ikorodu.nlwc.church/category/message-transcripts/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
+              >
+                <HiChevronRight color={orange} />
+                Message Transcripts
+              </Link>
+            </li>
+          </ul>
         </div>
 
         {/* Column 4: Subscribe & contact */}
         <div>
-          <h3 className="font-semibold mb-4 text-white">Get Subscribed</h3>
-          <p className="text-sm mb-4 text-white">
+          <h3 className="font-semibold mb-4 text-white text-lg">
+            Get Subscribed
+          </h3>
+          <p className="text-sm mb-4 text-gray-300">
             Don&apos;t miss our future updates. Get Subscribed today!
           </p>
 
@@ -185,7 +206,7 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 pl-4 pr-16 rounded-full bg-gray-700 border border-gray-600 text-white placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors text-xs sm:text-sm"
+                className="w-full h-12 pl-4 pr-16 rounded-full bg-gray-700 border border-gray-600 text-white placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors text-sm"
               />
               <button
                 type="submit"
@@ -197,68 +218,94 @@ export default function Footer() {
             </div>
           </form>
 
-          <div className="flex items-center gap-3 mb-4">
-            <Link
-              href="#"
-              className="text-[18px] p-2 rounded-full"
-              style={{ color: orange }}
+          <div className="flex items-center gap-2 mb-6">
+            <a
+              href={SOCIAL_LINKS.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+              aria-label="YouTube"
             >
-              <FaYoutube />
-            </Link>
-            <Link
-              href="#"
-              className="text-[18px] p-2 rounded-full"
-              style={{ color: orange }}
+              <FaYoutube size={18} />
+            </a>
+            <a
+              href={SOCIAL_LINKS.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+              aria-label="Facebook"
             >
-              <FaFacebookF />
-            </Link>
-            <Link
-              href="#"
-              className="text-[18px] p-2 rounded-full"
-              style={{ color: orange }}
+              <FaFacebookF size={16} />
+            </a>
+            <a
+              href={SOCIAL_LINKS.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+              aria-label="Instagram"
             >
-              <FaInstagram />
-            </Link>
-            <Link
-              href="#"
-              className="text-[18px] p-2 rounded-full"
-              style={{ color: orange }}
+              <FaInstagram size={18} />
+            </a>
+            <a
+              href={SOCIAL_LINKS.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+              aria-label="Twitter"
             >
-              <FaTwitter />
-            </Link>
-            <Link
-              href="#"
-              className="text-[18px] p-2 rounded-full"
-              style={{ color: orange }}
+              <FaTwitter size={16} />
+            </a>
+            <a
+              href={SOCIAL_LINKS.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+              aria-label="WhatsApp"
             >
-              <FaWhatsapp />
-            </Link>
+              <FaWhatsapp size={18} />
+            </a>
           </div>
 
-          <ul className="space-y-2 text-sm text-white">
+          <ul className="space-y-3 text-sm text-gray-300">
             <li className="flex items-center gap-2">
-              <HiOutlineMail color={orange} />
-              <Link
+              <HiOutlineMail color={orange} size={18} />
+              <a
                 href="mailto:ikoroduchurchadmin@nlwc.church"
-                className="hover:text-[#E2801C]"
+                className="hover:text-primary transition-colors"
               >
                 ikoroduchurchadmin@nlwc.church
-              </Link>
+              </a>
             </li>
             <li className="flex items-center gap-2">
-              <HiPhone color={orange} />
-              <Link href="tel:+2347035760085" className="hover:text-[#E2801C]">
+              <HiPhone color={orange} size={18} />
+              <a
+                href="tel:+2347035760085"
+                className="hover:text-primary transition-colors"
+              >
                 +234 703 576 0085
-              </Link>
+              </a>
             </li>
           </ul>
         </div>
       </div>
 
-      <div className="border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-center text-center sm:text-left text-sm text-white gap-2">
-          <div>Copyright {year} NLWC IKORODU. All right Reserved.</div>
-          <div className="text-sm">&nbsp;</div>
+      <div className="border-t border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between text-center sm:text-left text-sm text-gray-400 gap-4">
+          <div>© {year} NLWC IKORODU. All rights Reserved.</div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/about"
+              className="hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/contact"
+              className="hover:text-primary transition-colors"
+            >
+              Terms of Use
+            </Link>
+          </div>
         </div>
       </div>
       <Toaster position="bottom-right" />

@@ -25,8 +25,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         suppressHydrationWarning={true}
       >
         <Providers>
+          {/* Skip to Content Link - Accessibility */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold focus:shadow-lg"
+          >
+            Skip to main content
+          </a>
           <Navbar />
-          <main className="flex-grow pt-16">{children}</main>
+          <main id="main-content" className="flex-grow pt-16">
+            {children}
+          </main>
         </Providers>
         <Footer />
       </body>

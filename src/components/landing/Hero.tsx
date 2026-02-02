@@ -3,11 +3,18 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
 export default function Hero() {
+  const scrollToContent = () => {
+    window.scrollTo({
+      top: window.innerHeight - 100,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section className="relative w-full h-[600px] md:h-[800px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -75,6 +82,27 @@ export default function Hero() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1 }}
+        onClick={scrollToContent}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors cursor-pointer group"
+        aria-label="Scroll to content"
+      >
+        <span className="text-xs font-bold uppercase tracking-widest">
+          Explore
+        </span>
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center group-hover:border-white/60 transition-colors"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </motion.div>
+      </motion.button>
     </section>
   );
 }
