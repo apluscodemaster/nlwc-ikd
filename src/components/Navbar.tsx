@@ -126,7 +126,7 @@ export default function Navbar() {
             className="relative z-10 transition-transform hover:scale-105 active:scale-95"
           >
             <Image
-              src="/logo-200-x-80.png"
+              src="/logo-512x512-transparent.png"
               alt="NLWC Logo"
               width={110}
               height={44}
@@ -275,7 +275,7 @@ export default function Navbar() {
                     <div className="flex items-center justify-between">
                       <SheetTitle>
                         <Image
-                          src="/logo-200-x-80.png"
+                          src="/logo-512x512-transparent.png"
                           alt="NLWC Logo"
                           width={100}
                           height={40}
