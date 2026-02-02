@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 export default function AudioLivePlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
-  const [isLive, setIsLive] = useState(true); // Simulation
 
   return (
     <div className="relative w-full max-w-4xl mx-auto">

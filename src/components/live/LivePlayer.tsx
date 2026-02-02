@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Radio, Users, Share2, Info } from "lucide-react";
+import { Radio, Users, Share2, Info, Send } from "lucide-react";
 
 export default function LivePlayer() {
   return (
@@ -106,6 +106,3 @@ export default function LivePlayer() {
     </div>
   );
 }
-
-// Add missing import to the top
-import { Send } from "lucide-react";
