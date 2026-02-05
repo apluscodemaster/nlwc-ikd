@@ -1,0 +1,193 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  BookMarked,
+} from "lucide-react";
+import { useManuals } from "@/hooks/useWordPress";
+import ManualCard from "./ManualCard";
+
+interface ManualsListProps {
+  initialPage?: number;
+  perPage?: number;
+}
+
+export default function ManualsList({
+  initialPage = 1,
+  perPage = 9,
+}: ManualsListProps) {
+  const [page, setPage] = useState(initialPage);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data, isLoading, isError, error } = useManuals(
+    page,
+    perPage,
+    debouncedSearch || undefined,
+  );
+
+  const manuals = data?.data || [];
+  const pagination = data?.pagination;
+
+  return (
+    <div className="space-y-8">
+      {/* Search Bar */}
+      <div className="relative max-w-xl mx-auto px-2">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search manuals..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full h-14 pl-14 pr-4 rounded-2xl border border-gray-200 bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-gray-900 shadow-sm placeholder:text-muted-foreground"
+        />
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mb-4" />
+          <p className="text-muted-foreground font-medium text-lg">
+            Loading manuals...
+          </p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {isError && (
+        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <BookMarked className="w-10 h-10 text-red-500" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            Failed to load manuals
+          </h3>
+          <p className="text-muted-foreground max-w-xs">
+            {error instanceof Error ? error.message : "Please try again later."}
+          </p>
+        </div>
+      )}
+
+      {/* Manuals Grid */}
+      {!isLoading && !isError && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${page}-${debouncedSearch}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+          >
+            {manuals.map((manual) => (
+              <ManualCard key={manual.id} manual={manual} />
+            ))}
+
+            {manuals.length === 0 && (
+              <div className="col-span-full py-20 text-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookMarked className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  No manuals found
+                </h3>
+                <p className="text-muted-foreground">
+                  {debouncedSearch
+                    ? `No results for "${debouncedSearch}"`
+                    : "Check back later for new content."}
+                </p>
+                {debouncedSearch && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="mt-6 px-6 py-2 rounded-full bg-amber-500/10 text-amber-600 font-bold hover:bg-amber-500/20 transition-colors"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-12">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-amber-500 hover:text-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from(
+                { length: Math.min(5, pagination.totalPages) },
+                (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      className={`w-12 h-12 rounded-xl font-bold transition-all shadow-sm ${
+                        page === pageNum
+                          ? "bg-amber-500 text-white scale-110 shadow-lg shadow-amber-500/20"
+                          : "bg-white border border-gray-200 text-gray-600 hover:border-amber-500 hover:text-amber-500"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                },
+              )}
+            </div>
+
+            <button
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
+              disabled={page === pagination.totalPages}
+              className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-amber-500 hover:text-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              aria-label="Next Page"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Total Count */}
+      {pagination && (
+        <p className="text-center text-sm text-muted-foreground">
+          Showing {manuals.length} of {pagination.total} manuals
+        </p>
+      )}
+    </div>
+  );
+}
