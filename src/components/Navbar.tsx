@@ -75,12 +75,12 @@ const NAVIGATION_DATA: NavItem[] = [
       },
       {
         label: "Sunday School Manual",
-        href: "https://ikorodu.nlwc.church/category/sunday-school-manual/",
+        href: "/manuals",
         isExternal: true,
       },
       {
         label: "Message Transcripts",
-        href: "https://ikorodu.nlwc.church/category/message-transcripts/",
+        href: "/transcripts",
         isExternal: true,
       },
       { label: "Image Gallery", href: "/gallery" },
