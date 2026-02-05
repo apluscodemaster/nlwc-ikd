@@ -18,7 +18,7 @@ export async function GET() {
   if (!SHEET_ID) {
     return NextResponse.json(
       { error: "Missing GOOGLE_SHEETS_ID" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -28,14 +28,14 @@ export async function GET() {
   if (!GOOGLE_CLIENT_EMAIL) {
     return NextResponse.json(
       { error: "Missing GOOGLE_CLIENT_EMAIL" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
   if (!GOOGLE_PRIVATE_KEY_RAW) {
     return NextResponse.json(
       { error: "Missing GOOGLE_PRIVATE_KEY" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -68,14 +68,14 @@ export async function GET() {
 
     // ✅ Step 1: Normalize column data
     const normalized = normalizeColumnsFromSheets(
-      columnsRaw
+      columnsRaw,
     ) as NormalizedColumn[];
 
     // ✅ Step 2: Transform all image URLs to proper Googleusercontent links
     const cleaned = cleanImageColumns(normalized);
 
-    // ✅ Step 3: Group columns by date (12 per page)
-    const grouped = groupColumnsToDates(cleaned, 12);
+    // ✅ Step 3: Group columns by date (no limit)
+    const grouped = groupColumnsToDates(cleaned);
 
     // ✅ Step 4: Return JSON response
     return NextResponse.json({ dates: grouped });
@@ -85,12 +85,12 @@ export async function GET() {
       err instanceof Error
         ? err.message
         : typeof err === "string"
-        ? err
-        : JSON.stringify(err);
+          ? err
+          : JSON.stringify(err);
 
     return NextResponse.json(
       { error: "Sheets API error", details: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

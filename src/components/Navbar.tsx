@@ -258,7 +258,7 @@ export default function Navbar() {
                       "p-2.5 rounded-xl transition-all active:scale-90",
                       isScrolled
                         ? "bg-primary/10 text-primary"
-                        : "bg-white/10 text-white",
+                        : "bg-black/5 text-black",
                     )}
                   >
                     <Menu className="w-6 h-6" />
