@@ -40,10 +40,10 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
     >
       <Link
         href={`/transcripts/${transcript.slug}`}
-        className="block bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300"
+        className="block w-full overflow-hidden bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300"
       >
         {/* Header */}
-        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div
             className={`${style.bg} ${style.text} px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2`}
           >
@@ -58,7 +58,7 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
 
         {/* Title */}
         <h3
-          className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mb-2"
+          className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mb-2 wrap-break-word"
           dangerouslySetInnerHTML={{ __html: transcript.title }}
         />
 
@@ -71,7 +71,7 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
         )}
 
         {/* Excerpt */}
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4 wrap-break-word">
           {transcript.excerpt || "Read the full transcript of this message..."}
         </p>
 

@@ -65,10 +65,10 @@ export default function MediaCard({ media }: MediaCardProps) {
             </button>
           )}
         </div>
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1 wrap-break-word">
           {media.title}
         </h3>
-        <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+        <p className="text-xs sm:text-sm text-muted-foreground font-medium wrap-break-word">
           {media.speaker}
         </p>
       </div>

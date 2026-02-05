@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   Search,
   Loader2,
@@ -85,13 +85,7 @@ export default function TranscriptsList({
       {/* Transcripts Grid */}
       {!isLoading && !isError && (
         <AnimatePresence mode="wait">
-          <motion.div
-            key={`${page}-${debouncedSearch}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {transcripts.map((transcript) => (
               <TranscriptCard key={transcript.id} transcript={transcript} />
             ))}
@@ -119,26 +113,26 @@ export default function TranscriptsList({
                 )}
               </div>
             )}
-          </motion.div>
+          </div>
         </AnimatePresence>
       )}
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-12">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center justify-center gap-6 pt-12">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               aria-label="Previous Page"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {Array.from(
-                { length: Math.min(5, pagination.totalPages) },
+                { length: Math.min(pagination.totalPages, 5) },
                 (_, i) => {
                   let pageNum;
                   if (pagination.totalPages <= 5) {
@@ -155,9 +149,9 @@ export default function TranscriptsList({
                     <button
                       key={pageNum}
                       onClick={() => setPage(pageNum)}
-                      className={`w-12 h-12 rounded-xl font-bold transition-all shadow-sm ${
+                      className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl font-bold transition-all shadow-sm text-sm sm:text-base ${
                         page === pageNum
-                          ? "bg-primary text-white scale-110 shadow-lg shadow-primary/20"
+                          ? "bg-primary text-white scale-105 sm:scale-110 shadow-lg shadow-primary/20"
                           : "bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
                       }`}
                     >
@@ -173,10 +167,10 @@ export default function TranscriptsList({
                 setPage((p) => Math.min(pagination.totalPages, p + 1))
               }
               disabled={page === pagination.totalPages}
-              className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white border border-gray-200 text-gray-700 shadow-sm hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               aria-label="Next Page"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>

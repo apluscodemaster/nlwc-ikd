@@ -23,7 +23,7 @@ export default function ManualCard({ manual }: ManualCardProps) {
     >
       <Link
         href={`/manuals/${manual.slug}`}
-        className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-amber-500/20 transition-all duration-300"
+        className="block w-full overflow-hidden bg-white rounded-2xl border border-gray-100 hover:shadow-xl hover:border-amber-500/20 transition-all duration-300"
       >
         {/* Thumbnail or Placeholder */}
         {manual.thumbnail ? (
@@ -44,7 +44,7 @@ export default function ManualCard({ manual }: ManualCardProps) {
 
         <div className="p-5 sm:p-6">
           {/* Header */}
-          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="bg-amber-500/10 text-amber-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <FileText className="w-3.5 h-3.5" />
               Sunday School
@@ -57,12 +57,12 @@ export default function ManualCard({ manual }: ManualCardProps) {
 
           {/* Title */}
           <h3
-            className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2 mb-3 leading-tight"
+            className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2 mb-3 leading-tight wrap-break-word"
             dangerouslySetInnerHTML={{ __html: manual.title }}
           />
 
           {/* Excerpt */}
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4">
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 wrap-break-word">
             {manual.excerpt ||
               "Access the Sunday School manual for this lesson..."}
           </p>
