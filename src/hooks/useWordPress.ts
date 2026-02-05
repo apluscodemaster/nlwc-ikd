@@ -167,3 +167,62 @@ export function useManual(slug: string, enabled = true) {
     staleTime: 10 * 60 * 1000,
   });
 }
+
+// =============================================================================
+// SERMONS TYPES & HOOKS
+// =============================================================================
+
+export interface Sermon {
+  id: number;
+  title: string;
+  speaker: string;
+  date: string;
+  slug: string;
+  excerpt: string;
+  thumbnail: string;
+  type: string;
+  link: string;
+}
+
+interface SermonsResponse {
+  sermons: Sermon[];
+  pagination: {
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+async function fetchSermons(
+  page = 1,
+  perPage = 9,
+  search?: string,
+): Promise<SermonsResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    perPage: perPage.toString(),
+  });
+  if (search) params.append("search", search);
+
+  const response = await fetch(`/api/sermons?${params.toString()}`);
+  if (!response.ok) throw new Error("Failed to fetch sermons");
+  return response.json();
+}
+
+/**
+ * Hook to fetch paginated sermons
+ */
+export function useSermons(
+  page = 1,
+  perPage = 9,
+  search?: string,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ["sermons", page, perPage, search],
+    queryFn: () => fetchSermons(page, perPage, search),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
