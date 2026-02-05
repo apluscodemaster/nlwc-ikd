@@ -15,7 +15,7 @@ export type DateColumns = {
 const HEADER_RE = /^(\d{4}-\d{2}-\d{2})\s*-\s*(Portrait|Landscape)$/i;
 
 export function parseHeader(
-  header: string
+  header: string,
 ): { date: string; orientation: Orientation } | null {
   const m = header?.trim().match(HEADER_RE);
   if (!m) return null;
@@ -30,7 +30,7 @@ export function parseHeader(
  * into RawColumn objects.
  */
 export function normalizeColumnsFromSheets(
-  columns: (string | undefined)[][]
+  columns: (string | undefined)[][],
 ): RawColumn[] {
   // API returns array of columns, each column is array of strings, first item is header
   return (columns || []).map((col) => ({
@@ -47,7 +47,7 @@ export function normalizeColumnsFromSheets(
  */
 export function groupColumnsToDates(
   cols: RawColumn[],
-  maxPerDate = 12
+  maxPerDate = Infinity,
 ): DateColumns[] {
   const byDate = new Map<string, Partial<DateColumns>>();
 
@@ -65,16 +65,16 @@ export function groupColumnsToDates(
   // sort dates chronologically ascending, then we can show latest (end) by default
   Array.from(byDate.values())
     .sort((a: Partial<DateColumns>, b: Partial<DateColumns>) =>
-      a.date! > b.date! ? 1 : -1
+      a.date! > b.date! ? 1 : -1,
     )
     .forEach((item) => {
       const portraitImages = item.portrait?.values ?? [];
       const landscapeImages = item.landscape?.values ?? [];
       // combine: example strategy — preserve portrait first then landscape, but keep ordering
-      const combined = [...portraitImages, ...landscapeImages].slice(
-        0,
-        maxPerDate
-      );
+      // Combine all images (no limit unless explicitly set)
+      const allImages = [...portraitImages, ...landscapeImages];
+      const combined =
+        maxPerDate === Infinity ? allImages : allImages.slice(0, maxPerDate);
       dates.push({
         date: item.date as string,
         portrait: item.portrait,

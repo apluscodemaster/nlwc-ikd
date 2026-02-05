@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -36,6 +36,19 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileLiveOpen, setMobileLiveOpen] = useState(false);
   const [mobileMediaOpen, setMobileMediaOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -45,10 +58,14 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30 bg-black/30 backdrop-blur-sm">
+    <header
+      className={`fixed inset-x-0 top-0 z-30 transition-all duration-300 ${
+        isScrolled ? "bg-black/80 backdrop-blur-md shadow-lg" : "bg-transparent"
+      }`}
+    >
       <nav>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-30">
+          <div className="flex items-center justify-between h-20">
             <div className="flex items-center">
               <Link
                 href="https://ikorodu.nlwc.church/"
