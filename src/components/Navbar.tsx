@@ -115,7 +115,7 @@ export default function Navbar() {
         "fixed inset-x-0 top-0 z-50 transition-all duration-500",
         isScrolled
           ? "bg-white/80 backdrop-blur-xl shadow-lg shadow-black/5 py-3 border-b border-primary/10"
-          : "bg-black/20 backdrop-blur-md py-6",
+          : "bg-white/70 backdrop-blur-md py-3",
       )}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -130,10 +130,7 @@ export default function Navbar() {
               alt="NLWC Logo"
               width={110}
               height={44}
-              className={cn(
-                "h-auto w-auto transition-all duration-500",
-                isScrolled ? "brightness-100" : "brightness-0 invert",
-              )}
+              className="h-auto w-auto transition-all duration-500 brightness-100"
               priority
             />
           </Link>
@@ -158,7 +155,7 @@ export default function Navbar() {
                           : "text-gray-600 hover:text-primary"
                         : pathname === item.href
                           ? "text-primary"
-                          : "text-white hover:text-white/80",
+                          : "text-black hover:text-black/80",
                     )}
                   >
                     {item.label}
@@ -184,8 +181,8 @@ export default function Navbar() {
                             ? "text-primary bg-primary/5"
                             : "text-gray-600 hover:text-primary"
                           : activeDropdown === item.label
-                            ? "text-white bg-white/10"
-                            : "text-white hover:text-white/80",
+                            ? "text-primary bg-primary/5"
+                            : "text-black hover:text-primary",
                       )}
                     >
                       {item.label}
