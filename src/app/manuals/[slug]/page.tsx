@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getManualBySlug, getSundaySchoolManuals } from "@/lib/wordpress";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ShareButton from "@/components/shared/ShareButton";
+import TranscriptContent from "@/components/shared/TranscriptContent";
 import { Calendar, ArrowLeft, BookMarked } from "lucide-react";
 import Link from "next/link";
 
@@ -92,17 +93,7 @@ export default async function ManualPage({ params }: Props) {
       {/* Content */}
       <SectionContainer className="py-8 sm:py-12">
         <article className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-8 md:p-12 overflow-hidden">
-          <div
-            className="prose prose-sm sm:prose-base md:prose-lg prose-gray max-w-none
-              prose-headings:font-bold prose-headings:text-gray-900
-              prose-p:text-gray-700 prose-p:leading-relaxed
-              prose-strong:text-gray-900
-              prose-a:text-amber-600 prose-a:no-underline hover:prose-a:underline
-              prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-              prose-li:text-gray-700
-              wrap-break-word whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: manual.content }}
-          />
+          <TranscriptContent content={manual.content} accentColor="amber" />
         </article>
       </SectionContainer>
 
