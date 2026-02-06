@@ -439,7 +439,7 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     formattedDate: formatDate(post.date),
     slug: post.slug,
     link: post.link,
-    thumbnail: getFeaturedImage(post),
+    thumbnail: getFeaturedImage(post) || "/open_bible.jpg",
   };
 }
 
