@@ -201,7 +201,7 @@ async function fetchSermons(
 ): Promise<SermonsResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
-    perPage: perPage.toString(),
+    per_page: perPage.toString(),
   });
   if (search) params.append("search", search);
 

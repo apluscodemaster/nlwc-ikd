@@ -46,7 +46,6 @@ export default async function ManualPage({ params }: Props) {
   if (!manual) {
     notFound();
   }
-
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}

@@ -11,16 +11,24 @@ import {
 } from "lucide-react";
 import { useSermons, type Sermon } from "@/hooks/useWordPress";
 import Link from "next/link";
-import { useDebounce } from "@/hooks/useDebounce";
 
 interface SermonsListProps {
   perPage?: number;
 }
 
 export default function SermonsList({ perPage = 9 }: SermonsListProps) {
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const debouncedSearch = useDebounce(search, 300);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data, isLoading, isError, error } = useSermons(
     page,
@@ -30,11 +38,6 @@ export default function SermonsList({ perPage = 9 }: SermonsListProps) {
 
   const sermons = data?.sermons || [];
   const pagination = data?.pagination;
-
-  // Reset page when search changes
-  React.useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
 
   return (
     <div className="space-y-8">

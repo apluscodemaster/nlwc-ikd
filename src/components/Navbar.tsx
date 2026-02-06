@@ -61,6 +61,10 @@ const NAVIGATION_DATA: NavItem[] = [
     label: "Media Resources",
     children: [
       {
+        label: "Sermons",
+        href: "/sermons",
+      },
+      {
         label: "Audio Messages",
         href: "/media?type=audio",
       },
@@ -76,12 +80,10 @@ const NAVIGATION_DATA: NavItem[] = [
       {
         label: "Sunday School Manual",
         href: "/manuals",
-        isExternal: true,
       },
       {
         label: "Message Transcripts",
         href: "/transcripts",
-        isExternal: true,
       },
       { label: "Image Gallery", href: "/gallery" },
     ],

@@ -236,6 +236,103 @@ export async function fetchWPCategories(): Promise<WPCategory[]> {
   return response.json();
 }
 
+// WordPress Custom Post Type endpoints
+export const WP_CUSTOM_POST_TYPES = {
+  MESSAGE_TRANSCRIPTS: "message-transcripts",
+  SUNDAY_SCHOOL_MANUAL: "sunday-school-manual",
+} as const;
+
+interface FetchCustomPostTypeOptions {
+  perPage?: number;
+  page?: number;
+  search?: string;
+  orderBy?: "date" | "title" | "id" | "modified";
+  order?: "asc" | "desc";
+  embed?: boolean;
+}
+
+/**
+ * Fetch from a custom post type endpoint
+ */
+export async function fetchCustomPostType(
+  postType: string,
+  options: FetchCustomPostTypeOptions = {},
+): Promise<{ posts: WPPost[]; totalPages: number; total: number }> {
+  const {
+    perPage = 10,
+    page = 1,
+    search,
+    orderBy = "date",
+    order = "desc",
+    embed = true,
+  } = options;
+
+  const params = new URLSearchParams({
+    per_page: perPage.toString(),
+    page: page.toString(),
+    orderby: orderBy,
+    order,
+  });
+
+  if (search) {
+    params.append("search", search);
+  }
+
+  if (embed) {
+    params.append("_embed", "true");
+  }
+
+  const response = await fetch(
+    `${WP_API_BASE}/${postType}?${params.toString()}`,
+    {
+      next: {
+        revalidate: 300,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${postType}: ${response.statusText}`);
+  }
+
+  const posts: WPPost[] = await response.json();
+  const totalPages = parseInt(response.headers.get("X-WP-TotalPages") || "1");
+  const total = parseInt(response.headers.get("X-WP-Total") || "0");
+
+  return { posts, totalPages, total };
+}
+
+/**
+ * Fetch a single item from a custom post type by slug
+ */
+export async function fetchCustomPostTypeBySlug(
+  postType: string,
+  slug: string,
+  embed = true,
+): Promise<WPPost | null> {
+  const params = new URLSearchParams({ slug });
+  if (embed) {
+    params.append("_embed", "true");
+  }
+
+  const response = await fetch(
+    `${WP_API_BASE}/${postType}?${params.toString()}`,
+    {
+      next: {
+        revalidate: 300,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error(`Failed to fetch ${postType}: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data[0] || null;
+}
+
 // =============================================================================
 // DATA TRANSFORMERS
 // =============================================================================
@@ -246,7 +343,7 @@ export async function fetchWPCategories(): Promise<WPCategory[]> {
 function extractSpeaker(content: string): string | undefined {
   // Try to find patterns like "Minister: Pastor Name" or "Speaker: Name"
   const patterns = [
-    /Minister:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
+    /Minister\(?s?\)?:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
     /Speaker:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
     /Pastor\s+([A-Z][a-z]+\s*[A-Z]?[a-z]*)/,
   ];
@@ -443,6 +540,83 @@ export async function getManualBySlug(
   slug: string,
 ): Promise<SundaySchoolManual | null> {
   const post = await fetchWPPost(slug);
+  if (!post) return null;
+  return transformToManual(post);
+}
+
+// =============================================================================
+// CUSTOM POST TYPE API FUNCTIONS (SERMONS/MESSAGE TRANSCRIPTS)
+// =============================================================================
+
+/**
+ * Get Message Transcripts from custom post type endpoint
+ * This fetches from the dedicated message-transcripts CPT
+ */
+export async function getMessageTranscripts(
+  options: { page?: number; perPage?: number; search?: string } = {},
+) {
+  const { posts, totalPages, total } = await fetchCustomPostType(
+    WP_CUSTOM_POST_TYPES.MESSAGE_TRANSCRIPTS,
+    {
+      page: options.page || 1,
+      perPage: options.perPage || 10,
+      search: options.search,
+    },
+  );
+
+  return {
+    transcripts: posts.map(transformToTranscript),
+    totalPages,
+    total,
+  };
+}
+
+/**
+ * Get a single message transcript by slug from custom post type
+ */
+export async function getMessageTranscriptBySlug(
+  slug: string,
+): Promise<TranscriptPost | null> {
+  const post = await fetchCustomPostTypeBySlug(
+    WP_CUSTOM_POST_TYPES.MESSAGE_TRANSCRIPTS,
+    slug,
+  );
+  if (!post) return null;
+  return transformToTranscript(post);
+}
+
+/**
+ * Get Sunday School Manuals from custom post type endpoint
+ */
+export async function getSundaySchoolManualsFromCPT(
+  options: { page?: number; perPage?: number; search?: string } = {},
+) {
+  const { posts, totalPages, total } = await fetchCustomPostType(
+    WP_CUSTOM_POST_TYPES.SUNDAY_SCHOOL_MANUAL,
+    {
+      page: options.page || 1,
+      perPage: options.perPage || 10,
+      search: options.search,
+    },
+  );
+
+  return {
+    manuals: posts.map(transformToManual),
+    totalPages,
+    total,
+  };
+}
+
+/**
+ * Get a single Sunday School manual by slug from custom post type
+ */
+export async function getManualBySlugFromCPT(
+  slug: string,
+): Promise<SundaySchoolManual | null> {
+  const post = await fetchCustomPostTypeBySlug(
+    WP_CUSTOM_POST_TYPES.SUNDAY_SCHOOL_MANUAL,
+    slug,
+  );
   if (!post) return null;
   return transformToManual(post);
 }

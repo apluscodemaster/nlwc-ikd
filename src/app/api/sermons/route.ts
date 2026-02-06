@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSundayMessageTranscripts } from "@/lib/wordpress";
+import { getMessageTranscripts } from "@/lib/wordpress";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get("page") || "1");
-  const perPage = parseInt(searchParams.get("perPage") || "9");
+  const perPage = parseInt(searchParams.get("per_page") || "9");
   const search = searchParams.get("search") || undefined;
 
   try {
-    const data = await getSundayMessageTranscripts({
+    const data = await getMessageTranscripts({
       page,
       perPage,
       search,
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
       slug: transcript.slug,
       excerpt: transcript.excerpt,
       thumbnail: transcript.thumbnail || "/default-sermon.webp",
-      type: transcript.type, // sunday-message or sunday-school
-      link: `/transcripts/${transcript.slug}`,
+      type: transcript.type,
+      link: `/sermons/${transcript.slug}`,
     }));
 
     return NextResponse.json({
