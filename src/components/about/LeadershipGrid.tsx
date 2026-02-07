@@ -77,31 +77,33 @@ export default function LeadershipGrid() {
                 </div>
               </motion.div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-              <DialogHeader>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+              <DialogHeader className="p-6 pb-2 border-b border-gray-50">
                 <DialogTitle className="text-2xl font-bold">
                   About {member.name}
                 </DialogTitle>
               </DialogHeader>
-              <div className="grid md:grid-cols-2 gap-8 mt-4">
-                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900">
-                      {member.name}
-                    </h4>
-                    <p className="text-primary font-medium">{member.role}</p>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {member.bio}
-                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        {member.name}
+                      </h4>
+                      <p className="text-primary font-medium">{member.role}</p>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {member.bio}
+                    </p>
+                  </div>
                 </div>
               </div>
             </DialogContent>
