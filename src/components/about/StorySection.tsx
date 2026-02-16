@@ -104,7 +104,8 @@ export default function StorySection() {
                   <ul className="list-disc list-inside space-y-1 ml-2">
                     <li>
                       <strong>Mission</strong> – Taking the word of
-                      righteousness to believers through outreaches.
+                      righteousness to believers in the body of Christ through
+                      outreaches.
                     </li>
                     <li>
                       <strong>Evangelism & Crusades</strong> – Reaching the lost

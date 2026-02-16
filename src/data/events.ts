@@ -10,7 +10,7 @@ export type ChurchEvent = {
 export const upcomingEvents: ChurchEvent[] = [
   {
     id: 1,
-    title: "Youth Impact Convention 2026",
+    title: "Singlz Summit",
     date: "Feb 15 - 18",
     time: "4:00 PM Daily",
     location: "Main Sanctuary",
@@ -18,7 +18,7 @@ export const upcomingEvents: ChurchEvent[] = [
   },
   {
     id: 2,
-    title: "Night of Divine Encounters",
+    title: "Worship Service",
     date: "Feb 27",
     time: "10:00 PM",
     location: "Church Premises",

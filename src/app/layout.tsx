@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Script from "next/script";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import ScrollToTop from "@/components/ScrollToTop";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main id="main-content" className="flex-grow pt-16">
             {children}
           </main>
+          <ScrollToTop />
         </Providers>
         <Footer />
       </body>
