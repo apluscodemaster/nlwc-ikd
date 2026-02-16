@@ -14,6 +14,7 @@ import {
   Instagram,
   Phone,
   Mail,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -343,10 +344,29 @@ export default function Navbar() {
                       ))}
                     </Accordion>
 
-                    <div className="mt-8 space-y-6">
+                    <div className="mt-8 space-y-4">
                       <div className="p-6 rounded-[32px] bg-primary/5 border border-primary/10 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                           <Heart className="w-12 h-12 text-primary fill-primary" />
+                        </div>
+                        <h4 className="font-bold text-gray-900 mb-2">
+                          Support Our Mission
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-4 font-medium">
+                          Honour the Lord with your substance and firstfruits.
+                        </p>
+                        <Link
+                          href="/give"
+                          onClick={() => setMobileOpen(false)}
+                          className="inline-flex items-center h-12 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
+                        >
+                          Give Now
+                        </Link>
+                      </div>
+
+                      <div className="p-6 rounded-[32px] bg-gray-50 border border-gray-100 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                          <MapPin className="w-12 h-12 text-gray-400" />
                         </div>
                         <h4 className="font-bold text-gray-900 mb-2">
                           Visit Us This Sunday
@@ -357,18 +377,18 @@ export default function Navbar() {
                         <Link
                           href="/contact"
                           onClick={() => setMobileOpen(false)}
-                          className="inline-flex items-center h-12 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95"
+                          className="inline-flex items-center h-12 px-6 rounded-full bg-black text-white font-bold text-sm shadow-lg shadow-black/20 hover:shadow-black/30 transition-all active:scale-95"
                         >
                           Get Directions
                         </Link>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-4 mt-8">
                         <a
                           href="tel:+2347035760085"
-                          className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                          className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
-                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+                          <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
                             <Phone className="w-5 h-5" />
                           </div>
                           <span className="text-sm font-bold text-gray-900">
@@ -377,9 +397,9 @@ export default function Navbar() {
                         </a>
                         <a
                           href="mailto:ikoroduchurchadmin@nlwc.church"
-                          className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                          className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
-                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+                          <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
                             <Mail className="w-5 h-5" />
                           </div>
                           <span className="text-sm font-bold text-gray-900">

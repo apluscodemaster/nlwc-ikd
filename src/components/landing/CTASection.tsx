@@ -109,11 +109,11 @@ export default function CTASection() {
               className="w-full h-20 rounded-2xl bg-white text-primary hover:bg-gray-100 shadow-xl group"
             >
               <Link
-                href="/live"
+                href="/give"
                 className="flex flex-col items-center justify-center gap-1"
               >
                 <Heart className="w-6 h-6 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-lg font-bold">Watch Live</span>
+                <span className="text-lg font-bold">Give Online</span>
               </Link>
             </Button>
           </motion.div>
