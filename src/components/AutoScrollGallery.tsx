@@ -45,7 +45,7 @@ export default function AutoScrollGallery() {
   return (
     <section className="relative w-full overflow-hidden bg-gray-100 py-10">
       <h2 className="text-black text-5xl text-center my-4 font-bold ">
-        Pastor Laide Olaniyan @40 - April 2025
+        Season Of The Spirit (SOTS&apos;26) Moments
       </h2>
       {/* Top Row (scrolls left) */}
       <div className="flex gap-4 animate-scroll-left">
