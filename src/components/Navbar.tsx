@@ -44,30 +44,30 @@ interface NavItem {
 }
 
 const NAVIGATION_DATA: NavItem[] = [
-  { label: "About Us", href: "/about" },
+  { label: "About Us", href: "https://ikorodu.nlwc.church/about/" },
   {
     label: "Live Streaming",
     children: [
       {
         label: "Audio Broadcast",
-        href: "/listen-live",
+        href: "https://ikorodu.nlwc.church/audio-broadcast/",
       },
       {
         label: "Video Broadcast",
-        href: "/live",
+        href: "https://ikorodu.nlwc.church/video-broadcast/",
       },
     ],
   },
   {
     label: "Media Resources",
     children: [
-      {
-        label: "Sermons",
-        href: "/sermons",
-      },
+      // {
+      //   label: "Sermons",
+      //   href: "/sermons",
+      // },
       {
         label: "Audio Messages",
-        href: "/media?type=audio",
+        href: "https://ikorodu.nlwc.church/audio-messages/",
       },
       {
         label: "Blog",
@@ -76,20 +76,20 @@ const NAVIGATION_DATA: NavItem[] = [
       },
       {
         label: "House Fellowship",
-        href: "/fellowship",
+        href: "https://ikorodu.nlwc.church/house-fellowship/",
       },
       {
         label: "Sunday School Manual",
-        href: "/manuals",
+        href: "https://ikorodu.nlwc.church/category/sunday-school-manual/",
       },
       {
         label: "Message Transcripts",
-        href: "/transcripts",
+        href: "https://ikorodu.nlwc.church/category/sunday-message-transcripts/",
       },
       { label: "Image Gallery", href: "/gallery" },
     ],
   },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact", href: "https://ikorodu.nlwc.church/contact/" },
 ];
 
 const SOCIAL_LINKS = [
