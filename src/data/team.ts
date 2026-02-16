@@ -11,7 +11,7 @@ export const team: TeamMember[] = [
     id: "1",
     name: "Pastor Emeka Egwuchukwu",
     role: "Senior Pastor",
-    image: "/pst_emeka_egwuchukwu.avif",
+    image: "/pst_emeka_egwuchukwu.jpg",
     bio: "Pastor Emeka Egwuchukwu is the visionary leader of The New & Living Way Church. With over 20 years of ministry experience, he is passionate about teaching the Word of God and helping people live purposeful lives.",
   },
   {
