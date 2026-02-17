@@ -62,13 +62,17 @@ const NAVIGATION_DATA: NavItem[] = [
     label: "Media Resources",
     children: [
       {
-        label: "Sermons",
+        label: "Audio Messages",
         href: "/sermons",
       },
       {
-        label: "Audio Messages",
-        href: "/media?type=audio",
+        label: "Video Messages",
+        href: "/video-messages",
       },
+      // {
+      //   label: "Audio Messages",
+      //   href: "/media?type=audio",
+      // },
       {
         label: "Blog",
         href: "https://nlwc.church/blog/",
