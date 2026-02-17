@@ -84,6 +84,10 @@ class NLWC_Sermons_API {
                     'default'           => 0,
                     'sanitize_callback' => 'absint',
                 ),
+                'year' => array(
+                    'default'           => 0,
+                    'sanitize_callback' => 'absint',
+                ),
                 'order' => array(
                     'default'           => 'DESC',
                     'sanitize_callback' => 'sanitize_text_field',
@@ -139,6 +143,7 @@ class NLWC_Sermons_API {
         $series_id  = $request->get_param('series_id');
         $speaker_id = $request->get_param('speaker_id');
         $topic_id   = $request->get_param('topic_id');
+        $year       = $request->get_param('year');
         $order      = strtoupper($request->get_param('order')) === 'ASC' ? 'ASC' : 'DESC';
         $offset     = ($page - 1) * $per_page;
 
@@ -171,6 +176,12 @@ class NLWC_Sermons_API {
         if ($topic_id > 0) {
             $joins[]  = "INNER JOIN {$t['topic_matches']} AS mtm ON m.message_id = mtm.message_id AND mtm.topic_id = %d";
             $values[] = $topic_id;
+        }
+
+        // Filter by year
+        if ($year > 0) {
+            $where[]  = "YEAR(m.date) = %d";
+            $values[] = $year;
         }
 
         $join_sql  = implode(' ', $joins);
@@ -232,6 +243,7 @@ class NLWC_Sermons_API {
             return array(
                 'id'              => (int) $row['message_id'],
                 'title'           => $row['title'],
+                'slug'            => sanitize_title($row['title']),
                 'speaker'         => $row['speaker'],
                 'date'            => $row['date'],
                 'description'     => $row['description'],
@@ -325,6 +337,7 @@ class NLWC_Sermons_API {
         $response = new WP_REST_Response(array(
             'id'              => (int) $row['message_id'],
             'title'           => $row['title'],
+            'slug'            => sanitize_title($row['title']),
             'speaker'         => $row['speaker'],
             'date'            => $row['date'],
             'description'     => $row['description'],

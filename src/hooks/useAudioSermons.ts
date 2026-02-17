@@ -19,6 +19,7 @@ interface UseAudioSermonsOptions {
   seriesId?: number;
   speakerId?: number;
   topicId?: number;
+  year?: number;
   order?: "ASC" | "DESC";
 }
 
@@ -41,6 +42,7 @@ export function useAudioSermons(
     seriesId,
     speakerId,
     topicId,
+    year,
     order = "DESC",
   } = options;
 
@@ -67,6 +69,7 @@ export function useAudioSermons(
         if (seriesId) params.set("series_id", seriesId.toString());
         if (speakerId) params.set("speaker_id", speakerId.toString());
         if (topicId) params.set("topic_id", topicId.toString());
+        if (year) params.set("year", year.toString());
 
         const response = await fetch(`/api/audio-sermons?${params}`);
 
