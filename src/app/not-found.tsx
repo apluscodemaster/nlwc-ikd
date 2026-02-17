@@ -75,9 +75,9 @@ export default function NotFound() {
             Oops! This path doesn&apos;t exist.
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto">
-            It seems you&apos;ve wandered into a quiet corner of the church
-            gallery. The page you&apos;re looking for might have moved or is
-            still being prepared.
+            It seems you&apos;ve wandered into a quiet corner of the church. The
+            page you&apos;re looking for might have moved or is still being
+            prepared.
           </p>
         </motion.div>
 
