@@ -25,6 +25,8 @@ export interface AudioSermon {
   downloadUrl?: string;
   thumbnailUrl?: string;
   series?: string;
+  seriesId?: number;
+  duration?: string;
 }
 
 export interface AudioSermonsResponse {
@@ -35,6 +37,36 @@ export interface AudioSermonsResponse {
     totalPages: number;
     total: number;
   };
+}
+
+export interface SeriesItem {
+  id: number;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  messageCount: number;
+}
+
+export interface SpeakerItem {
+  id: number;
+  name: string;
+  messageCount: number;
+}
+
+export interface TopicItem {
+  id: number;
+  name: string;
+  messageCount: number;
+}
+
+export interface AudioSermonsFilters {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  seriesId?: number;
+  speakerId?: number;
+  topicId?: number;
+  order?: "ASC" | "DESC";
 }
 
 // =============================================================================
@@ -59,14 +91,19 @@ function getFetchOptions(): RequestInit {
  * Returns null if the endpoint is not available (404).
  */
 async function fetchFromWpApi(
-  page: number,
-  perPage: number,
+  filters: AudioSermonsFilters,
 ): Promise<AudioSermonsResponse | null> {
   try {
     const params = new URLSearchParams({
-      page: page.toString(),
-      per_page: perPage.toString(),
+      page: (filters.page || 1).toString(),
+      per_page: (filters.perPage || 12).toString(),
     });
+    if (filters.search) params.set("search", filters.search);
+    if (filters.seriesId) params.set("series_id", filters.seriesId.toString());
+    if (filters.speakerId)
+      params.set("speaker_id", filters.speakerId.toString());
+    if (filters.topicId) params.set("topic_id", filters.topicId.toString());
+    if (filters.order) params.set("order", filters.order);
 
     const response = await fetch(
       `${WP_API_URL}/sermons?${params}`,
@@ -74,7 +111,6 @@ async function fetchFromWpApi(
     );
 
     if (response.status === 404) {
-      // Endpoint not deployed yet — fall back to scraping
       return null;
     }
 
@@ -84,7 +120,6 @@ async function fetchFromWpApi(
 
     const result = await response.json();
 
-    // Map the WP API response to our AudioSermon interface
     const sermons: AudioSermon[] = (result.data || []).map(
       (item: Record<string, unknown>) => ({
         id: item.id,
@@ -95,6 +130,8 @@ async function fetchFromWpApi(
         downloadUrl: (item.audioUrl as string) || undefined,
         thumbnailUrl: (item.thumbnail as string) || undefined,
         series: (item.seriesTitle as string) || undefined,
+        seriesId: item.seriesId as number,
+        duration: (item.duration as string) || undefined,
       }),
     );
 
@@ -345,22 +382,18 @@ function formatDate(dateStr: string): string {
 }
 
 /**
- * Fetch audio sermons listing (paginated)
+ * Fetch audio sermons listing (paginated + filtered)
  * Automatically uses WP REST API if available, falls back to scraping.
  */
-export async function getAudioSermons({
-  page = 1,
-  perPage = 10,
-}: {
-  page?: number;
-  perPage?: number;
-}): Promise<AudioSermonsResponse> {
+export async function getAudioSermons(
+  filters: AudioSermonsFilters = {},
+): Promise<AudioSermonsResponse> {
   // Try WP REST API first
-  const apiResult = await fetchFromWpApi(page, perPage);
+  const apiResult = await fetchFromWpApi(filters);
   if (apiResult) return apiResult;
 
-  // Fall back to scraping
-  return fetchFromScraping(page, perPage);
+  // Fall back to scraping (no filter support)
+  return fetchFromScraping(filters.page || 1, filters.perPage || 12);
 }
 
 /**
@@ -376,4 +409,73 @@ export async function getAudioSermonDetail(
 
   // Fall back to scraping
   return fetchDetailFromScraping(messageId);
+}
+
+// =============================================================================
+// FILTER OPTIONS (Series, Speakers, Topics)
+// =============================================================================
+
+/**
+ * Fetch all series/categories for the filter dropdown
+ */
+export async function getSeriesList(): Promise<SeriesItem[]> {
+  try {
+    const response = await fetch(
+      `${WP_API_URL}/sermons/series`,
+      getFetchOptions(),
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data || []).map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      title: item.title as string,
+      description: item.description as string,
+      thumbnail: item.thumbnail as string,
+      messageCount: item.messageCount as number,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch all speakers for the filter dropdown
+ */
+export async function getSpeakersList(): Promise<SpeakerItem[]> {
+  try {
+    const response = await fetch(
+      `${WP_API_URL}/sermons/speakers`,
+      getFetchOptions(),
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data || []).map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      name: item.name as string,
+      messageCount: item.messageCount as number,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch all topics for the filter dropdown
+ */
+export async function getTopicsList(): Promise<TopicItem[]> {
+  try {
+    const response = await fetch(
+      `${WP_API_URL}/sermons/topics`,
+      getFetchOptions(),
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data || []).map((item: Record<string, unknown>) => ({
+      id: item.id as number,
+      name: item.name as string,
+      messageCount: item.messageCount as number,
+    }));
+  } catch {
+    return [];
+  }
 }
