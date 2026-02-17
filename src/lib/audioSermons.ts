@@ -19,6 +19,7 @@ const AUDIO_MESSAGES_URL = `${BASE_URL}/audio-messages/`;
 export interface AudioSermon {
   id: number;
   title: string;
+  slug?: string;
   speaker: string;
   date: string;
   listenUrl: string;
@@ -66,6 +67,7 @@ export interface AudioSermonsFilters {
   seriesId?: number;
   speakerId?: number;
   topicId?: number;
+  year?: number;
   order?: "ASC" | "DESC";
 }
 
@@ -103,6 +105,7 @@ async function fetchFromWpApi(
     if (filters.speakerId)
       params.set("speaker_id", filters.speakerId.toString());
     if (filters.topicId) params.set("topic_id", filters.topicId.toString());
+    if (filters.year) params.set("year", filters.year.toString());
     if (filters.order) params.set("order", filters.order);
 
     const response = await fetch(

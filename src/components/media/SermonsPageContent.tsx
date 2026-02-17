@@ -163,6 +163,7 @@ export default function SermonsPageContent() {
   const [selectedSeries, setSelectedSeries] = useState<number | undefined>();
   const [selectedSpeaker, setSelectedSpeaker] = useState<number | undefined>();
   const [selectedTopic, setSelectedTopic] = useState<number | undefined>();
+  const [selectedYear, setSelectedYear] = useState<number | undefined>();
   const [sortOrder, setSortOrder] = useState<"DESC" | "ASC">("DESC");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
@@ -260,6 +261,7 @@ export default function SermonsPageContent() {
     seriesId: selectedSeries,
     speakerId: selectedSpeaker,
     topicId: selectedTopic,
+    year: selectedYear,
     order: sortOrder,
   });
 
@@ -278,7 +280,7 @@ export default function SermonsPageContent() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [selectedSeries, selectedSpeaker, selectedTopic, sortOrder]);
+  }, [selectedSeries, selectedSpeaker, selectedTopic, selectedYear, sortOrder]);
 
   // Active filter count
   const activeFilterCount = [
@@ -294,9 +296,16 @@ export default function SermonsPageContent() {
     setSelectedSeries(undefined);
     setSelectedSpeaker(undefined);
     setSelectedTopic(undefined);
+    setSelectedYear(undefined);
     setSortOrder("DESC");
     setPage(1);
   };
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(
+    { length: currentYear - 2007 },
+    (_, i) => currentYear - i,
+  );
 
   // ==========================================================================
   // Audio player controls
@@ -670,6 +679,22 @@ export default function SermonsPageContent() {
                   id="filter-topic"
                 />
 
+                {/* Year Filter */}
+                <FilterDropdown
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="Year"
+                  value={selectedYear}
+                  options={years.map((y) => ({
+                    value: y,
+                    label: y.toString(),
+                    count: 0, // We don't have counts for years easily available
+                  }))}
+                  onChange={(v) => setSelectedYear(v || undefined)}
+                  isLoading={filtersLoading}
+                  id="filter-year"
+                  hideCount
+                />
+
                 {/* Clear Filters */}
                 {activeFilterCount > 0 && (
                   <div className="sm:col-span-3 flex justify-end">
@@ -716,6 +741,12 @@ export default function SermonsPageContent() {
                   topics.find((t) => t.id === selectedTopic)?.name || "Topic"
                 }
                 onRemove={() => setSelectedTopic(undefined)}
+              />
+            )}
+            {selectedYear && (
+              <FilterTag
+                label={selectedYear.toString()}
+                onRemove={() => setSelectedYear(undefined)}
               />
             )}
           </div>
@@ -1021,6 +1052,7 @@ function FilterDropdown({
   onChange: (value: number | undefined) => void;
   isLoading: boolean;
   id: string;
+  hideCount?: boolean;
 }) {
   return (
     <div className="relative">
@@ -1039,7 +1071,7 @@ function FilterDropdown({
         <option value="">All {label}s</option>
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
-            {opt.label} ({opt.count})
+            {opt.label} {!hideCount && opt.count > 0 ? `(${opt.count})` : ""}
           </option>
         ))}
       </select>
@@ -1240,7 +1272,7 @@ function SermonCard({
 
           {/* Transcript Link — navigates to /sermons/[slug] */}
           <Link
-            href={`/sermons/${slugify(sermon.title)}`}
+            href={`/sermons/${sermon.slug || slugify(sermon.title)}`}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-gray-500 hover:text-primary hover:bg-primary/5 transition-all"
             title="Read Transcript"
             id={`transcript-sermon-${sermon.id}`}
