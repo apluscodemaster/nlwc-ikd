@@ -28,9 +28,129 @@ import {
   Tag,
   SortAsc,
   SortDesc,
+  RotateCcw,
+  FastForward,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import type { AudioSermon } from "@/lib/audioSermons";
+
+// =============================================================================
+// Playback Progress Persistence (localStorage)
+// =============================================================================
+
+interface SavedProgress {
+  sermonId: number;
+  currentTime: number;
+  duration: number;
+  title: string;
+  timestamp: number; // Date.now() when saved
+}
+
+const PROGRESS_KEY_PREFIX = "nlwc-sermon-progress-";
+const PROGRESS_INDEX_KEY = "nlwc-sermon-progress-index";
+const PROGRESS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const PROGRESS_MIN_SECONDS = 15; // Don't save if less than 15s played
+const PROGRESS_NEAR_END_SECONDS = 30; // Consider finished if within 30s of end
+
+function saveProgress(sermon: AudioSermon, time: number, dur: number) {
+  if (typeof window === "undefined") return;
+  // Don't save if barely started or near the end
+  if (time < PROGRESS_MIN_SECONDS) return;
+  if (dur > 0 && dur - time < PROGRESS_NEAR_END_SECONDS) {
+    clearProgress(sermon.id);
+    return;
+  }
+
+  const data: SavedProgress = {
+    sermonId: sermon.id,
+    currentTime: time,
+    duration: dur,
+    title: sermon.title,
+    timestamp: Date.now(),
+  };
+
+  try {
+    localStorage.setItem(
+      `${PROGRESS_KEY_PREFIX}${sermon.id}`,
+      JSON.stringify(data),
+    );
+    // Also maintain an index of saved IDs for cleanup
+    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
+    const index: number[] = indexStr ? JSON.parse(indexStr) : [];
+    if (!index.includes(sermon.id)) {
+      index.push(sermon.id);
+      localStorage.setItem(PROGRESS_INDEX_KEY, JSON.stringify(index));
+    }
+  } catch {
+    // Storage full or not available — silently ignore
+  }
+}
+
+function getProgress(sermonId: number): SavedProgress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const str = localStorage.getItem(`${PROGRESS_KEY_PREFIX}${sermonId}`);
+    if (!str) return null;
+    const data: SavedProgress = JSON.parse(str);
+    // Check age
+    if (Date.now() - data.timestamp > PROGRESS_MAX_AGE_MS) {
+      clearProgress(sermonId);
+      return null;
+    }
+    // Don't offer resume for very short progress
+    if (data.currentTime < PROGRESS_MIN_SECONDS) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function clearProgress(sermonId: number) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(`${PROGRESS_KEY_PREFIX}${sermonId}`);
+    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
+    if (indexStr) {
+      const index: number[] = JSON.parse(indexStr);
+      const newIndex = index.filter((id) => id !== sermonId);
+      localStorage.setItem(PROGRESS_INDEX_KEY, JSON.stringify(newIndex));
+    }
+  } catch {
+    // Silently ignore
+  }
+}
+
+function cleanupOldProgress() {
+  if (typeof window === "undefined") return;
+  try {
+    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
+    if (!indexStr) return;
+    const index: number[] = JSON.parse(indexStr);
+    for (const id of index) {
+      const str = localStorage.getItem(`${PROGRESS_KEY_PREFIX}${id}`);
+      if (str) {
+        const data: SavedProgress = JSON.parse(str);
+        if (Date.now() - data.timestamp > PROGRESS_MAX_AGE_MS) {
+          clearProgress(id);
+        }
+      } else {
+        clearProgress(id);
+      }
+    }
+  } catch {
+    // Silently ignore
+  }
+}
+
+function formatProgressTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 // =============================================================================
 // Main Component
@@ -55,6 +175,66 @@ export default function SermonsPageContent() {
   const [duration, setDuration] = useState(0);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Resume playback state
+  const [resumePrompt, setResumePrompt] = useState<{
+    sermon: AudioSermon;
+    savedProgress: SavedProgress;
+  } | null>(null);
+  const progressSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  // Cleanup old progress on mount
+  useEffect(() => {
+    cleanupOldProgress();
+  }, []);
+
+  // Save progress periodically while playing
+  useEffect(() => {
+    if (isPlaying && activeSermon) {
+      // Save every 5 seconds
+      progressSaveIntervalRef.current = setInterval(() => {
+        if (audioRef.current && activeSermon) {
+          saveProgress(
+            activeSermon,
+            audioRef.current.currentTime,
+            audioRef.current.duration || 0,
+          );
+        }
+      }, 5000);
+    } else {
+      if (progressSaveIntervalRef.current) {
+        clearInterval(progressSaveIntervalRef.current);
+        progressSaveIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (progressSaveIntervalRef.current) {
+        clearInterval(progressSaveIntervalRef.current);
+      }
+    };
+  }, [isPlaying, activeSermon]);
+
+  // Save progress on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (
+        audioRef.current &&
+        activeSermon &&
+        audioRef.current.currentTime > 0
+      ) {
+        saveProgress(
+          activeSermon,
+          audioRef.current.currentTime,
+          audioRef.current.duration || 0,
+        );
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [activeSermon]);
 
   // Debounce search
   useEffect(() => {
@@ -121,25 +301,19 @@ export default function SermonsPageContent() {
   // ==========================================================================
   // Audio player controls
   // ==========================================================================
-  const handlePlay = useCallback(
-    async (sermon: AudioSermon) => {
-      setIsLoadingDetail(true);
-      let sermonToPlay = sermon;
-      if (!sermon.downloadUrl) {
-        const detail = await fetchSermonDetail(sermon.id);
-        if (detail && detail.downloadUrl) {
-          sermonToPlay = detail;
-        }
-      }
-      setActiveSermon(sermonToPlay);
-      setIsLoadingDetail(false);
-      if (sermonToPlay.downloadUrl && audioRef.current) {
-        audioRef.current.src = sermonToPlay.downloadUrl;
+
+  // Starts playback from a specific time (0 = start, or resumed position)
+  const startPlayback = useCallback(
+    (sermon: AudioSermon, startTime: number = 0) => {
+      setActiveSermon(sermon);
+      if (sermon.downloadUrl && audioRef.current) {
+        audioRef.current.src = sermon.downloadUrl;
+        audioRef.current.currentTime = startTime;
         audioRef.current.play();
         setIsPlaying(true);
       }
     },
-    [fetchSermonDetail],
+    [],
   );
 
   const togglePlay = useCallback(() => {
@@ -151,6 +325,59 @@ export default function SermonsPageContent() {
     }
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
+
+  const handlePlay = useCallback(
+    async (sermon: AudioSermon) => {
+      // If same sermon is already active, just toggle play/pause
+      if (activeSermon?.id === sermon.id && audioRef.current?.src) {
+        if (isPlaying) {
+          audioRef.current.pause();
+        } else {
+          audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+        return;
+      }
+
+      setIsLoadingDetail(true);
+      let sermonToPlay = sermon;
+      if (!sermon.downloadUrl) {
+        const detail = await fetchSermonDetail(sermon.id);
+        if (detail && detail.downloadUrl) {
+          sermonToPlay = detail;
+        }
+      }
+      setIsLoadingDetail(false);
+
+      // Check for saved progress
+      const saved = getProgress(sermonToPlay.id);
+      if (saved && saved.currentTime >= PROGRESS_MIN_SECONDS) {
+        // Show resume prompt
+        setResumePrompt({ sermon: sermonToPlay, savedProgress: saved });
+      } else {
+        // No saved progress — start from beginning
+        startPlayback(sermonToPlay, 0);
+      }
+    },
+    [fetchSermonDetail, activeSermon, isPlaying, startPlayback],
+  );
+
+  const handleResume = useCallback(() => {
+    if (!resumePrompt) return;
+    startPlayback(resumePrompt.sermon, resumePrompt.savedProgress.currentTime);
+    setResumePrompt(null);
+  }, [resumePrompt, startPlayback]);
+
+  const handleStartOver = useCallback(() => {
+    if (!resumePrompt) return;
+    clearProgress(resumePrompt.sermon.id);
+    startPlayback(resumePrompt.sermon, 0);
+    setResumePrompt(null);
+  }, [resumePrompt, startPlayback]);
+
+  const handleDismissResume = useCallback(() => {
+    setResumePrompt(null);
+  }, []);
 
   const toggleMute = useCallback(() => {
     if (!audioRef.current) return;
@@ -187,6 +414,14 @@ export default function SermonsPageContent() {
   };
 
   const closePlayer = useCallback(() => {
+    // Save progress before closing
+    if (audioRef.current && activeSermon && audioRef.current.currentTime > 0) {
+      saveProgress(
+        activeSermon,
+        audioRef.current.currentTime,
+        audioRef.current.duration || 0,
+      );
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
@@ -195,7 +430,15 @@ export default function SermonsPageContent() {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-  }, []);
+  }, [activeSermon]);
+
+  // Handle sermon finished — clear saved progress
+  const handleAudioEnded = useCallback(() => {
+    setIsPlaying(false);
+    if (activeSermon) {
+      clearProgress(activeSermon.id);
+    }
+  }, [activeSermon]);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -204,9 +447,116 @@ export default function SermonsPageContent() {
         ref={audioRef}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleAudioEnded}
+        onPause={() => {
+          // Save progress when paused
+          if (audioRef.current && activeSermon) {
+            saveProgress(
+              activeSermon,
+              audioRef.current.currentTime,
+              audioRef.current.duration || 0,
+            );
+          }
+        }}
         preload="none"
       />
+
+      {/* ===== RESUME PLAYBACK PROMPT ===== */}
+      <AnimatePresence>
+        {resumePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={handleDismissResume}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 400 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="relative bg-linear-to-r from-primary to-amber-500 p-6 text-white">
+                <button
+                  onClick={handleDismissResume}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <Headphones className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-white/80 text-xs font-medium uppercase tracking-wider">
+                      Resume Listening
+                    </p>
+                    <h3 className="font-bold text-sm sm:text-base leading-snug line-clamp-2">
+                      {resumePrompt.sermon.title}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Progress Indicator */}
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-white/70 mb-1.5">
+                    <span>
+                      Listened:{" "}
+                      {formatProgressTime(
+                        resumePrompt.savedProgress.currentTime,
+                      )}
+                    </span>
+                    {resumePrompt.savedProgress.duration > 0 && (
+                      <span>
+                        Total:{" "}
+                        {formatProgressTime(
+                          resumePrompt.savedProgress.duration,
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: `${resumePrompt.savedProgress.duration > 0 ? (resumePrompt.savedProgress.currentTime / resumePrompt.savedProgress.duration) * 100 : 0}%`,
+                      }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full bg-white rounded-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="p-5 space-y-3">
+                <button
+                  onClick={handleResume}
+                  className="w-full flex items-center justify-center gap-3 h-14 rounded-2xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+                  id="resume-playback"
+                >
+                  <FastForward className="w-5 h-5" />
+                  Continue from{" "}
+                  {formatProgressTime(resumePrompt.savedProgress.currentTime)}
+                </button>
+                <button
+                  onClick={handleStartOver}
+                  className="w-full flex items-center justify-center gap-3 h-14 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition-all active:scale-[0.98]"
+                  id="start-over"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  Start Over
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ===== SEARCH & FILTERS BAR ===== */}
       <div className="space-y-4">
