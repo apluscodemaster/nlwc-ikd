@@ -172,14 +172,31 @@ export async function fetchWPPosts(
     params.append("_embed", "true");
   }
 
-  const response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, {
-    next: {
-      revalidate: 300, // Revalidate every 5 minutes
-    },
-  });
+  let response: Response | null = null;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      // Exponential backoff: 1s, 3s
+      await new Promise((r) => setTimeout(r, attempt * 2000));
+    }
+
+    response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, {
+      next: {
+        revalidate: 300,
+      },
+    });
+
+    if (response.ok) break;
+    if (response.status === 429) {
+      lastError = new Error(`Rate limited (attempt ${attempt + 1})`);
+      continue;
+    }
     throw new Error(`Failed to fetch posts: ${response.statusText}`);
+  }
+
+  if (!response || !response.ok) {
+    throw lastError || new Error("Failed to fetch posts after retries");
   }
 
   const posts: WPPost[] = await response.json();
@@ -204,15 +221,31 @@ export async function fetchWPPost(
   const params = embed ? "?_embed=true" : "";
   const url = isId ? `${endpoint}${params}` : `${endpoint}&_embed=true`;
 
-  const response = await fetch(url, {
-    next: {
-      revalidate: 300,
-    },
-  });
+  let response: Response | null = null;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, attempt * 2000));
+    }
+
+    response = await fetch(url, {
+      next: {
+        revalidate: 300,
+      },
+    });
+
+    if (response.ok) break;
     if (response.status === 404) return null;
+    if (response.status === 429) {
+      lastError = new Error(`Rate limited (attempt ${attempt + 1})`);
+      continue;
+    }
     throw new Error(`Failed to fetch post: ${response.statusText}`);
+  }
+
+  if (!response || !response.ok) {
+    throw lastError || new Error("Failed to fetch post after retries");
   }
 
   const data = await response.json();
