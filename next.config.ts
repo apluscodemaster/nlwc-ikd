@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "img.youtube.com",
+      },
+      {
+        protocol: "https",
         hostname: "nlwc-ikorodu.s3.us-east-2.amazonaws.com",
       },
     ],
