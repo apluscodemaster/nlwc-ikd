@@ -150,7 +150,7 @@ export default function AudioSermonsList({
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-linear-to-tr from-purple-500 to-indigo-600 flex items-center justify-center animate-pulse">
               <Headphones className="w-8 h-8 text-white" />
             </div>
             <Loader2 className="w-6 h-6 text-indigo-400 animate-spin absolute -bottom-1 -right-1" />
@@ -251,7 +251,7 @@ export default function AudioSermonsList({
                       onClick={() => setPage(pageNum)}
                       className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl font-bold transition-all shadow-sm text-sm sm:text-base ${
                         page === pageNum
-                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white scale-105 sm:scale-110 shadow-lg shadow-indigo-500/20"
+                          ? "bg-linear-to-r from-purple-600 to-indigo-600 text-white scale-105 sm:scale-110 shadow-lg shadow-indigo-500/20"
                           : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-600"
                       }`}
                     >
@@ -290,7 +290,7 @@ export default function AudioSermonsList({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 backdrop-blur-xl border-t border-white/10 shadow-2xl"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 backdrop-blur-xl border-t border-white/10 shadow-2xl"
           >
             {/* Progress Bar */}
             <div
@@ -298,7 +298,7 @@ export default function AudioSermonsList({
               onClick={handleProgressClick}
             >
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-100 relative"
+                className="h-full bg-linear-to-r from-purple-500 to-indigo-500 transition-all duration-100 relative"
                 style={{
                   width: `${duration ? (currentTime / duration) * 100 : 0}%`,
                 }}
@@ -337,7 +337,7 @@ export default function AudioSermonsList({
 
                   <button
                     onClick={togglePlay}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white hover:scale-105 transition-transform shadow-lg shadow-indigo-500/30"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white hover:scale-105 transition-transform shadow-lg shadow-indigo-500/30"
                     aria-label={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
@@ -428,13 +428,13 @@ function AudioSermonCard({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
         isActive
-          ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 shadow-lg shadow-indigo-100"
+          ? "bg-linear-to-r from-indigo-50 to-purple-50 border-indigo-200 shadow-lg shadow-indigo-100"
           : "bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md"
       }`}
     >
       {/* Active Indicator */}
       {isActive && (
-        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-indigo-600 rounded-l-2xl" />
+        <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-purple-500 to-indigo-600 rounded-l-2xl" />
       )}
 
       <div className="flex items-center gap-3 sm:gap-5 p-4 sm:p-5">
@@ -442,10 +442,10 @@ function AudioSermonCard({
         <button
           onClick={isPlaying ? onPause : onPlay}
           disabled={isLoadingDetail}
-          className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-all duration-300 ${
+          className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-all duration-300 ${
             isActive
-              ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-300"
-              : "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-500 group-hover:from-purple-100 group-hover:to-indigo-100 group-hover:text-indigo-600"
+              ? "bg-linear-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-300"
+              : "bg-linear-to-r from-gray-100 to-gray-50 text-gray-500 group-hover:from-purple-100 group-hover:to-indigo-100 group-hover:text-indigo-600"
           }`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -510,7 +510,7 @@ function AudioSermonCard({
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-1 bg-gradient-to-t from-purple-500 to-indigo-500 rounded-full"
+                className="w-1 bg-linear-to-t from-purple-500 to-indigo-500 rounded-full"
                 animate={{
                   height: ["40%", "100%", "60%", "80%", "40%"],
                 }}
