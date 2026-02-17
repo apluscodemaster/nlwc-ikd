@@ -6,7 +6,7 @@ import SermonsPageContent from "@/components/media/SermonsPageContent";
 export const metadata: Metadata = {
   title: "Sermons & Audio Messages | NLWC Ikorodu",
   description:
-    "Listen to powerful audio sermons and messages from New and Living Way Church, Ikorodu. Search by speaker, category, or topic.",
+    "Listen to life-changing messages from New and Living Way Church, Ikorodu.",
 };
 
 export default function SermonsPage() {
@@ -14,7 +14,7 @@ export default function SermonsPage() {
     <main>
       <PageHeader
         title="Audio Messages"
-        subtitle="Listen to powerful sermons and teachings. Search by speaker, category, or topic to find the message you need."
+        subtitle="Listen to a life-changing teachings. Search by speaker, category, or topic to find the message you need."
       />
 
       <SectionContainer>
