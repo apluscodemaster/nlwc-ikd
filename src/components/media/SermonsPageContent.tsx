@@ -287,6 +287,7 @@ export default function SermonsPageContent() {
     selectedSeries,
     selectedSpeaker,
     selectedTopic,
+    selectedYear,
   ].filter(Boolean).length;
 
   // Clear filters
@@ -1044,6 +1045,7 @@ function FilterDropdown({
   onChange,
   isLoading,
   id,
+  hideCount,
 }: {
   icon: React.ReactNode;
   label: string;
