@@ -396,7 +396,7 @@ function LiveChat() {
                     {formatChatTime(msg.timestamp)}
                   </span>
                 </div>
-                <p className="text-gray-700 break-words">{msg.message}</p>
+                <p className="text-gray-700 wrap-break-word">{msg.message}</p>
               </div>
             </motion.div>
           ))

@@ -25,8 +25,8 @@ export default function Hero() {
         className="absolute inset-0"
       >
         <Image
-          src="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073&auto=format&fit=crop"
-          alt="Church Worship"
+          src="https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=2071&auto=format&fit=crop"
+          alt="Church Worship Sanctuary"
           fill
           className="object-cover"
           priority
