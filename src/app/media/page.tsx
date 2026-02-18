@@ -31,6 +31,7 @@ export default function MediaPage() {
       <PageHeader
         title="Media Resources"
         subtitle="Grow in your faith with our collection of sermon videos, audio messages, and spiritual study resources."
+        backgroundImage="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=2070&auto=format&fit=crop"
       />
 
       <SectionContainer>
@@ -116,7 +117,7 @@ export default function MediaPage() {
                 className="object-cover"
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-8 left-8 text-white">
               <span className="text-primary font-bold uppercase tracking-widest text-xs mb-2 block">
                 Featured Post
