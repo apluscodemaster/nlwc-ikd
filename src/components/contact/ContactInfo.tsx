@@ -50,8 +50,8 @@ const socials = [
 
 export default function ContactInfo() {
   return (
-    <div className="space-y-12">
-      <div className="grid sm:grid-cols-2 gap-8">
+    <div className="space-y-8 md:space-y-12">
+      <div className="grid sm:grid-cols-2 gap-4 md:gap-8">
         {contactDetails.map((item, index) => (
           <motion.div
             key={index}
@@ -59,17 +59,19 @@ export default function ContactInfo() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.1 }}
-            className="flex gap-4 p-6 rounded-3xl bg-gray-50 border border-gray-100"
+            className="flex gap-3 md:gap-4 p-4 md:p-6 rounded-3xl bg-gray-50 border border-gray-100"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <item.icon className="w-6 h-6 text-primary" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+              <item.icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-bold text-gray-900 mb-1">
                 {item.title}
               </h3>
-              <p className="text-primary font-semibold mb-1">{item.content}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-primary font-semibold mb-1 text-sm md:text-base wrap-break-word">
+                {item.content}
+              </p>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 {item.description}
               </p>
             </div>
@@ -77,23 +79,25 @@ export default function ContactInfo() {
         ))}
       </div>
 
-      <div className="p-8 rounded-3xl bg-primary text-white">
-        <h3 className="text-2xl font-bold mb-4">Connect on Social Media</h3>
-        <p className="text-white/80 mb-8 max-w-md">
+      <div className="p-6 md:p-8 rounded-3xl bg-primary text-white">
+        <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">
+          Connect on Social Media
+        </h3>
+        <p className="text-sm md:text-base text-white/80 mb-6 md:mb-8 max-w-md">
           Follow us for daily inspirations, live updates, and community news
           across all our social platforms.
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3 md:gap-4">
           {socials.map((social, index) => (
             <motion.a
               key={index}
               href={social.href}
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
               aria-label={social.label}
             >
-              <social.icon className="w-6 h-6" />
+              <social.icon className="w-5 h-5 md:w-6 md:h-6" />
             </motion.a>
           ))}
         </div>
