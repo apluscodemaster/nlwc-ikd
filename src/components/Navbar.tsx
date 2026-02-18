@@ -86,7 +86,7 @@ const NAVIGATION_DATA: NavItem[] = [
         label: "Message Transcripts",
         href: "https://ikorodu.nlwc.church/category/sunday-message-transcripts/",
       },
-      { label: "Image Gallery", href: "/gallery" },
+      { label: "Image Gallery", href: "/" },
     ],
   },
   { label: "Contact", href: "https://ikorodu.nlwc.church/contact/" },
@@ -125,7 +125,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
-            href="/"
+            href="https://ikorodu.nlwc.church/"
             className="relative z-10 transition-transform hover:scale-105 active:scale-95"
           >
             <Image
