@@ -77,7 +77,7 @@ export default function LivePlayer() {
   ];
 
   return (
-    <div className="grid lg:grid-cols-3 gap-8">
+    <div className="grid lg:grid-cols-3 gap-8 lg:items-start">
       {/* Video Container */}
       <div className="lg:col-span-2 space-y-6">
         <motion.div
@@ -168,8 +168,13 @@ export default function LivePlayer() {
         </div>
       </div>
 
-      {/* Chat / Sidebar */}
-      <LiveChat />
+      {/* Chat / Sidebar — wrapped in a relative container so the chat
+         can be absolutely positioned and never push the grid row taller */}
+      <div className="relative h-[600px] lg:h-auto lg:self-stretch">
+        <div className="lg:absolute lg:inset-0">
+          <LiveChat />
+        </div>
+      </div>
     </div>
   );
 }
@@ -313,7 +318,7 @@ function LiveChat() {
   };
 
   return (
-    <div className="flex flex-col h-[600px] lg:h-auto bg-gray-50 rounded-3xl border border-gray-100 overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-50 rounded-3xl border border-gray-100 overflow-hidden">
       {/* Header */}
       <div className="p-5 border-b border-gray-200 bg-white flex items-center justify-between">
         <div className="flex items-center gap-3">
