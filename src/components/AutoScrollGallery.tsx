@@ -43,36 +43,52 @@ export default function AutoScrollGallery() {
   const images: string[] = data?.images || [];
 
   return (
-    <section className="relative w-full overflow-hidden bg-gray-100 py-10">
-      <h3 className="text-black text-5xl text-center my-4 font-bold ">
-        Season of The Spirit (SOTS&quot;26) Moments
+    <section className="relative w-full overflow-hidden bg-gray-50/50 py-16">
+      <h3 className="text-black text-3xl md:text-5xl text-center mb-12 font-bold px-4 max-w-4xl mx-auto leading-tight">
+        Relive the <span className="text-primary">Beautiful Moments</span> From
+        Season of The Spirit (SOTS&apos;26)
       </h3>
-      {/* Top Row (scrolls left) */}
-      <div className="flex gap-4 animate-scroll-left">
-        {[...images, ...images].map((url, i) => (
-          <Image
-            key={`top-${i}`}
-            src={url}
-            alt={`Gallery image ${i}`}
-            width={300}
-            height={300}
-            className="object-cover rounded-lg shadow-md h-[350px] w-[250px] transition-transform duration-500"
-          />
-        ))}
-      </div>
 
-      {/* Bottom Row (scrolls right) */}
-      <div className="flex gap-4 animate-scroll-right mt-6">
-        {[...images, ...images].map((url, i) => (
-          <Image
-            key={`bottom-${i}`}
-            src={url}
-            alt={`Gallery image ${i}`}
-            width={300}
-            height={350}
-            className="object-cover rounded-lg shadow-md h-[350px] w-[250px] transition-transform duration-500"
-          />
-        ))}
+      <div className="relative group">
+        {/* Gradient Masks for Premium Fade Effect */}
+        <div className="absolute inset-y-0 left-0 w-20 md:w-40 bg-gradient-to-r from-gray-50/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-20 md:w-40 bg-gradient-to-l from-gray-50/80 to-transparent z-10 pointer-events-none" />
+
+        {/* Top Row (scrolls left) */}
+        <div className="flex gap-4 animate-scroll-left group-hover:[animation-play-state:paused]">
+          {[...images, ...images].map((url, i) => (
+            <div
+              key={`top-${i}`}
+              className="relative h-[280px] w-[200px] md:h-[350px] md:w-[250px] flex-shrink-0 overflow-hidden rounded-2xl shadow-sm transition-all duration-500 hover:shadow-xl hover:scale-105"
+            >
+              <Image
+                src={url}
+                alt={`Gallery image ${i}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 200px, 250px"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom Row (scrolls right) */}
+        <div className="flex gap-4 animate-scroll-right mt-6 group-hover:[animation-play-state:paused]">
+          {[...images, ...images].map((url, i) => (
+            <div
+              key={`bottom-${i}`}
+              className="relative h-[280px] w-[200px] md:h-[350px] md:w-[250px] flex-shrink-0 overflow-hidden rounded-2xl shadow-sm transition-all duration-500 hover:shadow-xl hover:scale-105"
+            >
+              <Image
+                src={url}
+                alt={`Gallery image ${i}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 200px, 250px"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
