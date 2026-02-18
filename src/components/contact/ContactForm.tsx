@@ -46,18 +46,21 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="bg-white p-6 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
-      <div className="mb-8 font-bold">
-        <h3 className="text-2xl text-gray-900">Send us a message</h3>
-        <p className="text-muted-foreground font-medium mt-2">
+    <div className="bg-white p-5 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
+      <div className="mb-6 md:mb-8 font-bold">
+        <h3 className="text-xl md:text-2xl text-gray-900">Send us a message</h3>
+        <p className="text-muted-foreground font-medium mt-2 text-sm md:text-base">
           Required fields are marked *
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-bold text-gray-700">
+            <label
+              htmlFor="name"
+              className="text-xs md:text-sm font-bold text-gray-700"
+            >
               Full Name *
             </label>
             <input
@@ -65,11 +68,14 @@ export default function ContactForm() {
               type="text"
               id="name"
               placeholder="John Doe"
-              className="w-full h-14 px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium"
+              className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm md:text-base"
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-bold text-gray-700">
+            <label
+              htmlFor="email"
+              className="text-xs md:text-sm font-bold text-gray-700"
+            >
               Email Address *
             </label>
             <input
@@ -77,19 +83,22 @@ export default function ContactForm() {
               type="email"
               id="email"
               placeholder="john@example.com"
-              className="w-full h-14 px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium"
+              className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm md:text-base"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="subject" className="text-sm font-bold text-gray-700">
+          <label
+            htmlFor="subject"
+            className="text-xs md:text-sm font-bold text-gray-700"
+          >
             Subject *
           </label>
           <select
             required
             id="subject"
-            className="w-full h-14 px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white"
+            className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white text-sm md:text-base"
           >
             <option value="">Select a subject</option>
             <option value="general">General Inquiry</option>
@@ -101,7 +110,10 @@ export default function ContactForm() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="message" className="text-sm font-bold text-gray-700">
+          <label
+            htmlFor="message"
+            className="text-xs md:text-sm font-bold text-gray-700"
+          >
             Message *
           </label>
           <textarea
@@ -109,7 +121,7 @@ export default function ContactForm() {
             id="message"
             rows={5}
             placeholder="How can we help you today?"
-            className="w-full p-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium resize-none"
+            className="w-full p-4 md:p-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium resize-none text-sm md:text-base"
           ></textarea>
         </div>
 
@@ -117,7 +129,7 @@ export default function ContactForm() {
           type="submit"
           size="lg"
           disabled={status === "loading"}
-          className="w-full h-16 rounded-full text-lg font-bold shadow-lg shadow-primary/20"
+          className="w-full h-14 md:h-16 rounded-full text-base md:text-lg font-bold shadow-lg shadow-primary/20"
         >
           {status === "loading" ? (
             <span className="flex items-center gap-2">
