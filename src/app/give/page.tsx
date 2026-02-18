@@ -101,13 +101,13 @@ function BankCard({
           )}
         />
 
-        <CardHeader className="p-6 sm:p-8 pb-4">
+        <CardHeader className="p-5 sm:p-6 pb-2">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2">
+            <div className="space-y-0.5">
+              <CardTitle className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
                 {option.title}
               </CardTitle>
-              <CardDescription className="text-base font-medium text-gray-500">
+              <CardDescription className="text-sm font-medium text-gray-500">
                 {option.description}
               </CardDescription>
             </div>
@@ -128,9 +128,9 @@ function BankCard({
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 sm:p-8 pt-0 space-y-6">
+        <CardContent className="p-5 sm:p-6 pt-0 space-y-4">
           {/* Main Info Block */}
-          <div className="bg-gray-50/50 rounded-[24px] border border-gray-100/50 p-6 space-y-6">
+          <div className="bg-gray-50/50 rounded-[24px] border border-gray-100/50 p-5 space-y-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 shrink-0">
                 <Image
@@ -155,9 +155,9 @@ function BankCard({
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block px-1">
                 Account Number
               </span>
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-                <div className="flex-1 px-5 h-14 bg-white rounded-2xl border-2 border-gray-100 flex items-center justify-between group-hover:border-primary/20 transition-all">
-                  <span className="text-2xl sm:text-3xl font-black tracking-[0.1em] text-gray-900 tabular-nums">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch">
+                <div className="flex-1 px-4 h-12 bg-white rounded-xl border-2 border-gray-100 flex items-center justify-between group-hover:border-primary/20 transition-all">
+                  <span className="text-xl sm:text-2xl font-black tracking-[0.1em] text-gray-900 tabular-nums">
                     {option.accountNumber}
                   </span>
                 </div>
@@ -166,7 +166,7 @@ function BankCard({
                     copyToClipboard(option.accountNumber, option.id)
                   }
                   className={cn(
-                    "h-14 px-8 rounded-2xl font-black shadow-lg transition-all active:scale-95 shrink-0",
+                    "h-12 px-6 rounded-xl font-black shadow-lg transition-all active:scale-95 shrink-0",
                     isCopied
                       ? "bg-green-500 hover:bg-green-600 shadow-green-200"
                       : "bg-primary hover:bg-primary/90 shadow-primary/20",
@@ -197,13 +197,13 @@ function BankCard({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 bg-white/50 p-4 rounded-xl border border-gray-100">
-              <User className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 bg-white/50 p-3 rounded-xl border border-gray-100">
+              <User className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-0.5">
                   Account Name
                 </span>
-                <span className="text-base font-bold text-gray-800 leading-tight">
+                <span className="text-sm font-bold text-gray-800 leading-tight">
                   {option.accountName}
                 </span>
               </div>
@@ -239,7 +239,7 @@ export default function GivePage() {
   };
 
   return (
-    <div className="min-h-screen relative bg-linear-to-b from-gray-50 to-white pt-24 pb-20 overflow-hidden">
+    <div className="min-h-screen relative bg-linear-to-b from-gray-50 to-white pt-20 pb-16">
       {/* Dynamic Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30 overflow-hidden">
         <motion.div
@@ -260,15 +260,15 @@ export default function GivePage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto mb-16 sm:mb-24"
+          className="max-w-4xl mx-auto mb-12 sm:mb-16"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-xl shadow-black/5 border border-gray-100 text-primary mb-8">
-            <Heart className="w-4 h-4 fill-primary" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <Heart className="w-3.5 h-3.5 fill-primary" />
+            <span className="text-[9px] font-black uppercase tracking-[0.2em]">
               Giving & Stewardship
             </span>
           </div>
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black mb-8 tracking-tighter leading-none text-gray-900">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black mb-6 tracking-tighter leading-none text-gray-900">
             Honour God with <br />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-amber-500">
               Your Giving
@@ -276,10 +276,10 @@ export default function GivePage() {
           </h1>
           <div className="relative group inline-block">
             <div className="absolute -inset-4 bg-linear-to-r from-primary/10 to-transparent blur-2xl rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity" />
-            <p className="relative text-xl sm:text-2xl md:text-3xl text-gray-500 font-medium leading-relaxed italic max-w-3xl mx-auto px-4">
+            <p className="relative text-lg sm:text-xl md:text-2xl text-gray-500 font-medium leading-relaxed italic max-w-2xl mx-auto px-4">
               &quot;Honour the Lord with thy substance, and with the firstfruits
               of all thine increase...&quot;
-              <span className="block mt-6 font-black text-gray-900 tracking-[0.3em] uppercase text-sm">
+              <span className="block mt-4 font-black text-gray-900 tracking-[0.3em] uppercase text-xs">
                 — Proverbs 3:9-10
               </span>
             </p>
@@ -287,11 +287,11 @@ export default function GivePage() {
         </motion.div>
 
         {/* Layout Grid */}
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start max-w-6xl mx-auto text-left">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start max-w-6xl mx-auto text-left">
           {/* Main Giving Cards */}
-          <div className="space-y-8">
-            <h2 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-4">
-              <span className="w-10 h-10 rounded-2xl bg-gray-900 text-white flex items-center justify-center text-lg">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-gray-900 text-white flex items-center justify-center text-sm">
                 01
               </span>
               Local Transfers
@@ -307,10 +307,10 @@ export default function GivePage() {
           </div>
 
           {/* Context & Support Side */}
-          <div className="space-y-10 lg:sticky lg:top-32">
+          <div className="space-y-8 lg:sticky lg:top-32">
             <div>
-              <h2 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-4">
-                <span className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center text-lg">
+              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center text-sm">
                   02
                 </span>
                 The Impact
@@ -338,14 +338,16 @@ export default function GivePage() {
                     initial={{ opacity: 0, x: 20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.1 }}
-                    className="flex gap-5 p-6 rounded-[24px] bg-white border border-gray-100 shadow-sm transition-all hover:shadow-md"
+                    className="flex gap-4 p-5 rounded-[24px] bg-white border border-gray-100 shadow-sm transition-all hover:shadow-md"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <item.icon className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <item.icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black mb-1">{item.title}</h3>
-                      <p className="text-gray-500 font-medium leading-relaxed">
+                      <h3 className="text-lg font-black mb-0.5">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 font-medium leading-relaxed">
                         {item.desc}
                       </p>
                     </div>
@@ -355,37 +357,37 @@ export default function GivePage() {
             </div>
 
             {/* Help Card */}
-            <Card className="border-none bg-gray-900 text-white p-8 sm:p-10 rounded-[40px] relative overflow-hidden group shadow-2xl">
+            <Card className="border-none bg-gray-900 text-white p-6 sm:p-8 rounded-[32px] relative overflow-hidden group shadow-2xl">
               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl transition-transform group-hover:scale-150" />
-              <div className="relative z-10 space-y-8">
+              <div className="relative z-10 space-y-6">
                 <div>
-                  <h3 className="text-3xl font-black mb-3">Questions?</h3>
-                  <p className="text-gray-400 font-medium leading-relaxed">
+                  <h3 className="text-2xl font-black mb-2">Questions?</h3>
+                  <p className="text-sm text-gray-400 font-medium leading-relaxed">
                     Need help or have questions about how these funds are
                     allocated? Our administration team is available to assist
                     you.
                   </p>
                 </div>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <Button
                     asChild
-                    className="h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-sm px-8"
+                    className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-black text-xs px-6"
                   >
                     <a
                       href="mailto:ikoroduchurchadmin@nlwc.church"
                       className="flex items-center gap-3"
                     >
-                      <ExternalLink className="w-5 h-5" /> CONTACT ADMIN
+                      <ExternalLink className="w-4 h-4" /> CONTACT ADMIN
                     </a>
                   </Button>
                   <Button
                     variant="ghost"
                     asChild
-                    className="h-14 rounded-2xl text-white hover:bg-white/10 font-bold transition-all px-8 justify-start"
+                    className="h-12 rounded-xl text-white hover:bg-white/10 font-bold transition-all px-6 justify-start text-xs"
                   >
                     <a href="/contact" className="flex items-center gap-2">
                       EXPLORE CONTACT OPTIONS{" "}
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4" />
                     </a>
                   </Button>
                 </div>
@@ -404,13 +406,13 @@ export default function GivePage() {
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="mt-24 pt-20 border-t border-gray-100"
+          className="mt-16 pt-12 border-t border-gray-100"
         >
-          <p className="text-2xl sm:text-3xl text-gray-500 font-medium italic max-w-2xl mx-auto leading-relaxed mb-6">
+          <p className="text-xl sm:text-2xl text-gray-500 font-medium italic max-w-2xl mx-auto leading-relaxed mb-4">
             &quot;Every man according as he purposeth in his heart... for God
             loveth a cheerful giver.&quot;
           </p>
-          <span className="font-black text-gray-900 tracking-[0.4em] uppercase text-xs">
+          <span className="font-black text-gray-900 tracking-[0.4em] uppercase text-[10px]">
             — 2 Corinthians 9:7
           </span>
         </motion.div>
