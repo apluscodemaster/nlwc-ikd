@@ -15,6 +15,7 @@ export default function VideoMessagesPage() {
       <PageHeader
         title="Video Messages"
         subtitle="Watch and be inspired by our latest video teachings. Access our library of spiritual nourishment from anywhere in the world."
+        backgroundImage="https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop"
       />
 
       <SectionContainer className="py-12 sm:py-20">

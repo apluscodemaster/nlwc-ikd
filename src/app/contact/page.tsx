@@ -14,6 +14,7 @@ export default function ContactPage() {
       <PageHeader
         title="Get in Touch"
         subtitle="We're here to listen, pray for you, and welcome you into our community. Reach out to us anytime."
+        backgroundImage="https://images.unsplash.com/photo-1529070538774-1571d6de0845?q=80&w=2070&auto=format&fit=crop"
       />
 
       <SectionContainer>

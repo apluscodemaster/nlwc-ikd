@@ -15,6 +15,7 @@ export default function TranscriptsPage() {
       <PageHeader
         title="Message Transcripts"
         subtitle="Read the full written transcripts of our Sunday messages. Study the Word at your own pace."
+        backgroundImage="https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=2070&auto=format&fit=crop"
       />
 
       <SectionContainer>
