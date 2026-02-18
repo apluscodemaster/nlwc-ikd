@@ -50,7 +50,7 @@ export default function PageHeader({
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <section className="relative h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden">
+    <section className="relative h-[320px] md:h-[500px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <motion.div
         initial={{ scale: 1.1 }}
@@ -69,27 +69,27 @@ export default function PageHeader({
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 text-center text-white px-4 mt-20">
+      <div className="relative z-10 text-center text-white px-4 mt-12 md:mt-20">
         {/* Breadcrumbs */}
         {showBreadcrumbs && breadcrumbs.length > 0 && (
           <motion.nav
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex items-center justify-center gap-2 mb-6 text-sm"
+            className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 mb-4 md:mb-6 text-[10px] xs:text-xs md:text-sm"
             aria-label="Breadcrumb"
           >
             <Link
               href="/"
               className="flex items-center gap-1 text-white/70 hover:text-white transition-colors"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-3 h-3 md:w-4 md:h-4" />
               <span>Home</span>
             </Link>
 
             {breadcrumbs.map((crumb) => (
               <React.Fragment key={crumb.href}>
-                <ChevronRight className="w-4 h-4 text-white/40" />
+                <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-white/40" />
                 {crumb.isLast ? (
                   <span className="text-primary font-semibold">
                     {crumb.name}
@@ -111,7 +111,7 @@ export default function PageHeader({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-4xl md:text-6xl font-bold mb-4"
+          className="text-3xl md:text-6xl font-bold mb-4"
         >
           {title}
         </motion.h1>
@@ -120,7 +120,7 @@ export default function PageHeader({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto"
+            className="text-base md:text-xl text-gray-200 max-w-2xl mx-auto px-2"
           >
             {subtitle}
           </motion.p>
