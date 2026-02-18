@@ -44,9 +44,9 @@ export default function AutoScrollGallery() {
 
   return (
     <section className="relative w-full overflow-hidden bg-gray-100 py-10">
-      <h2 className="text-black text-5xl text-center my-4 font-bold ">
-        Pastor Laide Olaniyan @40 - April 2025
-      </h2>
+      <h3 className="text-black text-5xl text-center my-4 font-bold ">
+        Season of The Spirit (SOTS&quot;26) Moments
+      </h3>
       {/* Top Row (scrolls left) */}
       <div className="flex gap-4 animate-scroll-left">
         {[...images, ...images].map((url, i) => (
@@ -54,7 +54,7 @@ export default function AutoScrollGallery() {
             key={`top-${i}`}
             src={url}
             alt={`Gallery image ${i}`}
-            width={250}
+            width={300}
             height={300}
             className="object-cover rounded-lg shadow-md h-[350px] w-[250px] transition-transform duration-500"
           />
@@ -68,7 +68,7 @@ export default function AutoScrollGallery() {
             key={`bottom-${i}`}
             src={url}
             alt={`Gallery image ${i}`}
-            width={250}
+            width={300}
             height={350}
             className="object-cover rounded-lg shadow-md h-[350px] w-[250px] transition-transform duration-500"
           />
