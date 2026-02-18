@@ -41,7 +41,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-7xl font-bold mb-6 leading-tight"
+          className="text-3xl xs:text-4xl md:text-7xl font-bold mb-4 md:mb-6 leading-tight"
         >
           Welcome to{" "}
           <span className="text-primary">The New & Living Way Church</span>
@@ -51,7 +51,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-xl md:text-2xl mb-10 text-gray-200 max-w-3xl mx-auto"
+          className="text-lg md:text-2xl mb-8 md:mb-10 text-gray-200 max-w-3xl mx-auto px-4"
         >
           A community of faith, hope, and love in Ikorodu. Join us as we grow
           together in Christ.
@@ -61,22 +61,23 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          className="flex flex-row gap-3 md:gap-4 justify-center items-center px-2"
         >
           <Button
             asChild
             size="lg"
-            className="text-lg px-10 h-14 rounded-full shadow-2xl hover:scale-105 transition-transform"
+            className="text-sm md:text-lg px-4 xs:px-6 md:px-10 h-12 md:h-14 rounded-full shadow-2xl hover:scale-105 transition-transform shrink-0"
           >
             <Link href="/about">
-              Our Story <ArrowRight className="ml-2 w-5 h-5" />
+              Our Story{" "}
+              <ArrowRight className="ml-1 md:ml-2 w-4 h-4 md:w-5 md:h-5" />
             </Link>
           </Button>
           <Button
             asChild
             variant="secondary"
             size="lg"
-            className="text-lg px-10 h-14 rounded-full shadow-2xl bg-white/10 border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black transition-all"
+            className="text-sm md:text-lg px-4 xs:px-6 md:px-10 h-12 md:h-14 rounded-full shadow-2xl bg-white/10 border-white/20 text-white backdrop-blur-md hover:bg-white hover:text-black transition-all shrink-0"
           >
             <Link href="/live">Watch Live</Link>
           </Button>
