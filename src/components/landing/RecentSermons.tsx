@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +69,7 @@ export default function RecentSermons() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -137,6 +138,21 @@ export default function RecentSermons() {
       ),
     );
   }, []);
+
+  // Playback speed
+  const SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
+  const cycleSpeed = useCallback(() => {
+    setPlaybackRate((prev) => {
+      const idx = SPEED_OPTIONS.indexOf(prev);
+      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -431,6 +447,16 @@ export default function RecentSermons() {
                     ) : (
                       <Volume2 className="w-4 h-4" />
                     )}
+                  </button>
+
+                  {/* Speed Control */}
+                  <button
+                    onClick={cycleSpeed}
+                    className="hidden sm:flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary text-xs font-bold transition-all min-w-[44px]"
+                    aria-label={`Playback speed ${playbackRate}x`}
+                    title="Change playback speed"
+                  >
+                    {playbackRate}x
                   </button>
 
                   {/* Close */}
