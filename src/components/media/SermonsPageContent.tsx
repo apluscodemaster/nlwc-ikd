@@ -174,6 +174,7 @@ export default function SermonsPageContent() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -416,6 +417,21 @@ export default function SermonsPageContent() {
     },
     [duration],
   );
+
+  // Playback speed
+  const SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
+  const cycleSpeed = useCallback(() => {
+    setPlaybackRate((prev) => {
+      const idx = SPEED_OPTIONS.indexOf(prev);
+      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -997,6 +1013,16 @@ export default function SermonsPageContent() {
                     ) : (
                       <Volume2 className="w-5 h-5" />
                     )}
+                  </button>
+
+                  {/* Speed Control */}
+                  <button
+                    onClick={cycleSpeed}
+                    className="hidden sm:flex items-center justify-center px-2.5 py-1 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-xs font-bold transition-all min-w-[44px]"
+                    aria-label={`Playback speed ${playbackRate}x`}
+                    title="Change playback speed"
+                  >
+                    {playbackRate}x
                   </button>
 
                   {activeSermon.downloadUrl && (
