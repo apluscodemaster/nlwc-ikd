@@ -154,6 +154,18 @@ export default function RecentSermons() {
     }
   }, [playbackRate]);
 
+  useEffect(() => {
+    const isPlayerVisible = Boolean(activeSermon);
+    if (isPlayerVisible) {
+      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
+    } else {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    }
+    return () => {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    };
+  }, [activeSermon]);
+
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!audioRef.current || !duration) return;
@@ -452,7 +464,7 @@ export default function RecentSermons() {
                   {/* Speed Control */}
                   <button
                     onClick={cycleSpeed}
-                    className="hidden sm:flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary text-xs font-bold transition-all min-w-[44px]"
+                    className="flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary text-xs font-bold transition-all min-w-[44px]"
                     aria-label={`Playback speed ${playbackRate}x`}
                     title="Change playback speed"
                   >
