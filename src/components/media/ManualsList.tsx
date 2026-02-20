@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Search,
   Loader2,
@@ -21,18 +22,66 @@ export default function ManualsList({
   initialPage = 1,
   perPage = 9,
 }: ManualsListProps) {
-  const [page, setPage] = useState(initialPage);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const urlPage = searchParams.get("page");
+  const parsedPage = urlPage ? parseInt(urlPage, 10) : initialPage;
+  const initialSearch = searchParams.get("q") || "";
+
+  const [page, setPage] = useState(
+    !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : initialPage,
+  );
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
 
   // Debounce search input
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1); // Reset to first page on new search
+      if (!isFirstRender.current) {
+        setPage(1); // Reset to first page on new search
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Sync to URL
+  useEffect(() => {
+    if (isFirstRender.current) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (page > 1) {
+      params.set("page", page.toString());
+    } else {
+      params.delete("page");
+    }
+
+    if (debouncedSearch) {
+      params.set("q", debouncedSearch);
+    } else {
+      params.delete("q");
+    }
+
+    const currentUrlPage = searchParams.get("page") || "";
+    const currentUrlQ = searchParams.get("q") || "";
+    const newUrlPage = params.get("page") || "";
+    const newUrlQ = params.get("q") || "";
+
+    if (currentUrlPage !== newUrlPage || currentUrlQ !== newUrlQ) {
+      const query = params.toString();
+      router.push(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    }
+  }, [page, debouncedSearch, pathname, router, searchParams]);
 
   const { data, isLoading, isError, error } = useManuals(
     page,
