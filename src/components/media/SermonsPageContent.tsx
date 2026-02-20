@@ -433,6 +433,18 @@ export default function SermonsPageContent() {
     }
   }, [playbackRate]);
 
+  useEffect(() => {
+    const isPlayerVisible = Boolean(activeSermon && activeSermon.downloadUrl);
+    if (isPlayerVisible) {
+      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
+    } else {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    }
+    return () => {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    };
+  }, [activeSermon]);
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -1018,7 +1030,7 @@ export default function SermonsPageContent() {
                   {/* Speed Control */}
                   <button
                     onClick={cycleSpeed}
-                    className="hidden sm:flex items-center justify-center px-2.5 py-1 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-xs font-bold transition-all min-w-[44px]"
+                    className="flex items-center justify-center px-2.5 py-1 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-xs font-bold transition-all min-w-[44px]"
                     aria-label={`Playback speed ${playbackRate}x`}
                     title="Change playback speed"
                   >
