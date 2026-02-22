@@ -157,7 +157,7 @@ function BankCard({
               </span>
               <div className="flex flex-col sm:flex-row gap-2 items-stretch">
                 <div className="flex-1 px-4 h-12 bg-white rounded-xl border-2 border-gray-100 flex items-center justify-between group-hover:border-primary/20 transition-all">
-                  <span className="text-xl sm:text-2xl font-black tracking-[0.1em] text-gray-900 tabular-nums">
+                  <span className="text-xl sm:text-2xl font-black tracking-widest text-gray-900 tabular-nums">
                     {option.accountNumber}
                   </span>
                 </div>
@@ -260,7 +260,7 @@ export default function GivePage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto mb-12 sm:mb-16"
+          className="max-w-4xl mx-auto mb-8 sm:mb-16"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-xl shadow-black/5 border border-gray-100 text-primary mb-8">
             <Heart className="w-3.5 h-3.5 fill-primary" />

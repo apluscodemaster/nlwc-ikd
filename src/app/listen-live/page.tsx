@@ -203,6 +203,18 @@ export default function ListenLivePage() {
               </p>
             </div>
 
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <button className="h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm sm:text-base">
+                Set Reminder
+              </button>
+              <Link
+                href="/live#live-player"
+                className="inline-flex items-center justify-center h-12 sm:h-14 px-8 sm:px-10 rounded-full border border-gray-200 font-bold hover:bg-white transition-all text-sm sm:text-base"
+              >
+                Switch to Video
+              </Link>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 {

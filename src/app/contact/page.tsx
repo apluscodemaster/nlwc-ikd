@@ -29,7 +29,7 @@ export default function ContactPage() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-xs md:text-sm">
                 — CONTACT US
               </h4>
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-2xl xs:text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
                 Let&apos;s Start a <br />
                 <span className="text-primary">Conversation</span>
               </h2>
