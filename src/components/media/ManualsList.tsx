@@ -136,7 +136,11 @@ export default function ManualsList({
         <AnimatePresence mode="wait">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {manuals.map((manual) => (
-              <ManualCard key={manual.id} manual={manual} />
+              <ManualCard
+                key={manual.id}
+                manual={manual}
+                searchQuery={debouncedSearch}
+              />
             ))}
 
             {manuals.length === 0 && (

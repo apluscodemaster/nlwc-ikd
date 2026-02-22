@@ -136,7 +136,11 @@ export default function TranscriptsList({
         <AnimatePresence mode="wait">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {transcripts.map((transcript) => (
-              <TranscriptCard key={transcript.id} transcript={transcript} />
+              <TranscriptCard
+                key={transcript.id}
+                transcript={transcript}
+                searchQuery={debouncedSearch}
+              />
             ))}
 
             {transcripts.length === 0 && (

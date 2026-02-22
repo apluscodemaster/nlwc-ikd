@@ -7,11 +7,13 @@ import {
 import SectionContainer from "@/components/shared/SectionContainer";
 import ShareButton from "@/components/shared/ShareButton";
 import TranscriptContent from "@/components/shared/TranscriptContent";
+import SearchHighlightBanner from "@/components/shared/SearchHighlightBanner";
 import { Calendar, User, ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -43,15 +45,27 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function TranscriptPage({ params }: Props) {
+export default async function TranscriptPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const transcript = await getTranscriptBySlug(slug);
+  const searchQuery =
+    typeof resolvedSearchParams?.q === "string" ? resolvedSearchParams.q : "";
 
   if (!transcript) {
     notFound();
   }
   return (
     <main className="min-h-screen bg-gray-50">
+      {/* Search Highlight Banner */}
+      {searchQuery && (
+        <SearchHighlightBanner
+          query={searchQuery}
+          backHref="/transcripts"
+          backLabel="transcripts"
+        />
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
         <SectionContainer className="py-8 md:py-12">
@@ -110,7 +124,10 @@ export default async function TranscriptPage({ params }: Props) {
       {/* Content */}
       <SectionContainer className="py-8 sm:py-12">
         <article className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-8 md:p-12 overflow-hidden">
-          <TranscriptContent content={transcript.content} />
+          <TranscriptContent
+            content={transcript.content}
+            searchQuery={searchQuery}
+          />
         </article>
       </SectionContainer>
 
