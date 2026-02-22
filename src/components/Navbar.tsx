@@ -278,13 +278,15 @@ export default function Navbar() {
                   <SheetHeader className="p-6 border-b border-gray-100">
                     <div className="flex items-center justify-between">
                       <SheetTitle>
-                        <Image
-                          src="/logo-512x512-transparent.png"
-                          alt="NLWC Logo"
-                          width={100}
-                          height={40}
-                          className="h-auto w-auto"
-                        />
+                        <Link href="/">
+                          <Image
+                            src="/logo-512x512-transparent.png"
+                            alt="NLWC Logo"
+                            width={100}
+                            height={40}
+                            className="h-auto w-auto"
+                          />
+                        </Link>
                       </SheetTitle>
                     </div>
                   </SheetHeader>
