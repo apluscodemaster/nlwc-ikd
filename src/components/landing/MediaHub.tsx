@@ -313,7 +313,7 @@ export default function MediaHub() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3 py-2.5 sm:px-5 sm:py-3 cursor-pointer rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                     isActive
                       ? "bg-white text-primary shadow-md"
                       : "text-gray-500 hover:text-gray-800 hover:bg-white/50"
