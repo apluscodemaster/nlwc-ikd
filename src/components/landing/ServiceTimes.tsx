@@ -28,7 +28,7 @@ const headingVariants: Variants = {
 export default function ServiceTimes() {
   return (
     <section className="bg-gray-50 py-12 sm:py-32 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-none mx-auto px-4 sm:px-10 lg:px-16 xl:px-20">
         <motion.div
           initial="hidden"
           whileInView="visible"

@@ -1246,7 +1246,7 @@ export default function SermonsPageContent() {
 
               <button
                 onClick={togglePlay}
-                className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-amber-500 flex items-center justify-center text-white shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
+                className="w-16 h-16 rounded-full bg-linear-to-r from-primary to-amber-500 flex items-center justify-center text-white shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? (
