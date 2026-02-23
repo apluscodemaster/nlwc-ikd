@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +38,55 @@ import {
   FastForward,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
+import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
+
+// Transcript slug lookup
+interface TranscriptStub {
+  slug: string;
+  title: string;
+}
+
+async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
+  try {
+    const res = await fetch("/api/transcripts?per_page=100");
+    if (!res.ok) return [];
+    const json = await res.json();
+    const transcripts = json.data || json.transcripts || [];
+    return transcripts.map((t: { slug: string; title: string }) => ({
+      slug: t.slug,
+      title: t.title,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findTranscriptSlug(
+  sermonTitle: string,
+  transcripts: TranscriptStub[],
+): string | null {
+  const normalizedSermon = normalizeTitle(sermonTitle);
+  for (const t of transcripts) {
+    const normalizedTranscript = normalizeTitle(t.title);
+    if (
+      normalizedSermon === normalizedTranscript ||
+      normalizedSermon.includes(normalizedTranscript) ||
+      normalizedTranscript.includes(normalizedSermon)
+    ) {
+      return t.slug;
+    }
+  }
+  return null;
+}
 
 // =============================================================================
 // Playback Progress Persistence (localStorage)
@@ -272,6 +326,13 @@ export default function SermonsPageContent() {
     topics,
     isLoading: filtersLoading,
   } = useFilterOptions();
+
+  // Fetch transcript slugs for matching
+  const { data: transcriptSlugs = [] } = useQuery({
+    queryKey: ["transcript-slugs"],
+    queryFn: fetchTranscriptSlugs,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   // Page changes
   useEffect(() => {
@@ -856,6 +917,7 @@ export default function SermonsPageContent() {
                     }
                     onPlay={() => handlePlay(sermon)}
                     onPause={togglePlay}
+                    transcriptSlugs={transcriptSlugs}
                   />
                 ))}
               </div>
@@ -1152,6 +1214,7 @@ function SermonCard({
   isLoadingDetail,
   onPlay,
   onPause,
+  transcriptSlugs,
 }: {
   sermon: AudioSermon;
   index: number;
@@ -1160,7 +1223,15 @@ function SermonCard({
   isLoadingDetail: boolean;
   onPlay: () => void;
   onPause: () => void;
+  transcriptSlugs: TranscriptStub[];
 }) {
+  const matchedSlug = useMemo(
+    () => findTranscriptSlug(sermon.title, transcriptSlugs),
+    [sermon.title, transcriptSlugs],
+  );
+  const transcriptHref = matchedSlug
+    ? `/transcripts/${matchedSlug}`
+    : "/transcripts";
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -1310,15 +1381,17 @@ function SermonCard({
             )}
           </button>
 
-          {/* Transcript Link — navigates to /sermons/[slug] */}
+          {/* Transcript Link — links to matched transcript or /transcripts */}
           <Link
-            href={`/sermons/${sermon.slug || slugify(sermon.title)}`}
+            href={transcriptHref}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-gray-500 hover:text-primary hover:bg-primary/5 transition-all"
-            title="Read Transcript"
+            title={matchedSlug ? "Read Transcript" : "View All Transcripts"}
             id={`transcript-sermon-${sermon.id}`}
           >
             <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">Transcript</span>
+            <span className="hidden sm:inline">
+              {matchedSlug ? "Transcript" : "Transcripts"}
+            </span>
           </Link>
 
           {/* Download */}
