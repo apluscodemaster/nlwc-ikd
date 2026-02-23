@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import {
   Calendar,
   MapPin,
@@ -11,7 +11,7 @@ import {
 import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getUpcomingEvents, generateICS } from "@/data/events";
+import { getUpcomingEvents, generateGoogleCalendarUrl } from "@/data/events";
 import type { ChurchEvent } from "@/data/events";
 
 const containerVariants: Variants = {
@@ -110,26 +110,7 @@ function EventCard({ event }: { event: ChurchEvent }) {
   const daysUntil = getDaysUntil(event.date);
   const isToday = daysUntil === 0;
   const isTomorrow = daysUntil === 1;
-
-  const handleAddToCalendar = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const icsContent = generateICS(event);
-      const blob = new Blob([icsContent], {
-        type: "text/calendar;charset=utf-8",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${event.id}.ics`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    },
-    [event],
-  );
+  const googleCalUrl = generateGoogleCalendarUrl(event);
 
   return (
     <motion.div
@@ -206,14 +187,16 @@ function EventCard({ event }: { event: ChurchEvent }) {
         <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
           {event.recurrence}
         </span>
-        <button
-          onClick={handleAddToCalendar}
+        <a
+          href={googleCalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-primary/30 text-white/70 hover:text-white text-xs font-semibold transition-all active:scale-95"
-          title="Add to your calendar"
+          title="Add to Google Calendar"
         >
           <CalendarPlus className="w-3.5 h-3.5" />
           Remind Me
-        </button>
+        </a>
       </div>
     </motion.div>
   );

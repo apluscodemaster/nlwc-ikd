@@ -72,7 +72,7 @@ export function getUpcomingEvents(): ChurchEvent[] {
   });
 
   // --- 2. Prayer Meeting (Wednesday) ---
-  const nextWednesday = getNextWeekday(3, 6, 0);
+  const nextWednesday = getNextWeekday(3, 18, 0);
   events.push({
     id: "prayer-meeting",
     title: "Prayer Meeting",
@@ -209,41 +209,28 @@ export function getUpcomingEvents(): ChurchEvent[] {
 }
 
 /**
- * Generate an .ics calendar string for a single event.
+ * Generate a Google Calendar URL to create an event directly in the user's calendar.
  */
-export function generateICS(event: ChurchEvent): string {
+export function generateGoogleCalendarUrl(event: ChurchEvent): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
 
-  const formatICSDate = (d: Date): string => {
+  const formatGCalDate = (d: Date): string => {
     return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
   };
 
-  const start = formatICSDate(event.date);
+  const start = formatGCalDate(event.date);
   const endDate = new Date(event.date);
   endDate.setHours(endDate.getHours() + 2); // Default 2hr duration
-  const end = formatICSDate(endDate);
+  const end = formatGCalDate(endDate);
 
-  const uid = `${event.id}-${start}@nlwc-ikorodu`;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: event.title,
+    dates: `${start}/${end}`,
+    details: `${event.description}\n\n${event.recurrence}\n\nNLWC Ikorodu`,
+    location: event.location,
+    trp: "false",
+  });
 
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//NLWC Ikorodu//Service Reminder//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${uid}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:${event.title}`,
-    `DESCRIPTION:${event.description}`,
-    `LOCATION:${event.location}`,
-    "BEGIN:VALARM",
-    "TRIGGER:-PT30M",
-    "ACTION:DISPLAY",
-    `DESCRIPTION:${event.title} starts in 30 minutes`,
-    "END:VALARM",
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

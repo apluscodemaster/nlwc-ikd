@@ -19,6 +19,19 @@ export default function ScriptureContent({
   content,
   className = "",
 }: ScriptureContentProps) {
+  // Clean up excessive whitespace, empty paragraphs, and special chars from WP content
+  const cleanedContent = content
+    // Remove excessive &nbsp; sequences (more than 2 in a row)
+    .replace(/(&nbsp;\s*){3,}/gi, "&nbsp;&nbsp;")
+    // Remove empty paragraphs with only whitespace/nbsp
+    .replace(/<p[^>]*>\s*(&nbsp;\s*)*\s*<\/p>/gi, "")
+    // Collapse multiple <br> tags into at most 2
+    .replace(/(<br\s*\/?\s*>\s*){3,}/gi, "<br /><br />")
+    // Remove \u00a0 (non-breaking spaces) when they appear in sequences
+    .replace(/(\u00a0\s*){3,}/g, " ")
+    // Remove double+ blank lines in pre-formatted text
+    .replace(/\n{3,}/g, "\n\n");
+
   return (
     <div
       data-scripture-content="true"
@@ -29,8 +42,12 @@ export default function ScriptureContent({
         prose-a:text-primary prose-a:no-underline hover:prose-a:underline
         prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
         prose-li:text-gray-700
-        wrap-break-word whitespace-pre-wrap ${className}`}
-      dangerouslySetInnerHTML={{ __html: content }}
+        wrap-break-word
+        [&_p:empty]:hidden [&_p:empty+br]:hidden
+        [&_p]:mb-4 [&_p]:mt-0
+        [&_br+br+br]:hidden
+        ${className}`}
+      dangerouslySetInnerHTML={{ __html: cleanedContent }}
     />
   );
 }

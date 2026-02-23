@@ -29,7 +29,7 @@ export const services: Service[] = [
     id: 2,
     name: "Prayer Meeting",
     day: "Wednesdays",
-    time: "6:00 AM",
+    time: "6:00 PM",
     location: "Church Auditorium",
     description:
       "Standing together in faith and interceding for our community.",
