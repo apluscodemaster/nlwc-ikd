@@ -133,7 +133,7 @@ export default function StorySection() {
             className="relative h-[350px] sm:h-[600px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop"
+              src="/about-img.jpg"
               alt="Church Community"
               fill
               className="object-cover"

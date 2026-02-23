@@ -49,7 +49,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
             >
               <Image
-                src="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop"
+                src="/community.webp"
                 alt="Community 1"
                 fill
                 className="object-cover"
@@ -60,7 +60,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="https://picsum.photos/id/129/300/200"
+                src="/community2.webp"
                 alt="Community 2"
                 fill
                 className="object-cover"
@@ -72,7 +72,7 @@ export default function WelcomeSection() {
             className="relative h-[350px] sm:h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="/pst_laide_olaniyan.avif"
+              src="/community3.avif"
               alt="Church Pastor"
               fill
               className="object-cover"
