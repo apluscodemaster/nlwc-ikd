@@ -20,12 +20,15 @@ import {
   Volume2,
   VolumeX,
   Loader2,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
+import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
@@ -49,6 +52,7 @@ export default function ListenLivePage() {
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [showMobilePlayer, setShowMobilePlayer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlay = useCallback(
@@ -447,15 +451,19 @@ export default function ListenLivePage() {
                   )}
                 </div>
 
-                {/* Song Info */}
-                <div className="min-w-0 flex-1">
+                {/* Song Info — clickable on mobile */}
+                <button
+                  className="min-w-0 flex-1 text-left sm:pointer-events-none cursor-pointer sm:cursor-default"
+                  onClick={() => setShowMobilePlayer(true)}
+                  aria-label="Open full player"
+                >
                   <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate">
                     {activeSermon.title}
                   </h4>
                   <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {activeSermon.speaker}
                   </p>
-                </div>
+                </button>
 
                 {/* Time Display */}
                 <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground font-mono shrink-0">
@@ -529,6 +537,30 @@ export default function ListenLivePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ===== FULL-SCREEN MOBILE PLAYER ===== */}
+      {activeSermon && (
+        <MobileFullPlayer
+          show={showMobilePlayer}
+          onClose={() => setShowMobilePlayer(false)}
+          onClosePlayer={closePlayer}
+          title={activeSermon.title}
+          speaker={activeSermon.speaker}
+          series={activeSermon.series}
+          thumbnailUrl={activeSermon.thumbnailUrl}
+          downloadUrl={activeSermon.downloadUrl}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          playbackRate={playbackRate}
+          isMuted={isMuted}
+          onTogglePlay={togglePlay}
+          onSeek={seek}
+          onToggleMute={toggleMute}
+          onCycleSpeed={cycleSpeed}
+          onProgressClick={handleProgressClick}
+        />
+      )}
     </main>
   );
 }

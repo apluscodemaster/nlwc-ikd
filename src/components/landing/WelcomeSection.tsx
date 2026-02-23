@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Radio } from "lucide-react";
 import Image from "next/image";
 import { motion, Variants } from "framer-motion";
+import { getUpcomingEvents } from "@/data/events";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -19,7 +20,11 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
 };
 
 const imageVariants: Variants = {
@@ -31,7 +36,29 @@ const imageVariants: Variants = {
   },
 };
 
+function useCountdown(targetDate: Date) {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const diff = Math.max(0, targetDate.getTime() - now.getTime());
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return { days, hours, minutes, seconds, isLive: diff === 0 };
+}
+
 export default function WelcomeSection() {
+  const nextEvent = useMemo(() => getUpcomingEvents()[0], []);
+  const { days, hours, minutes, seconds, isLive } = useCountdown(
+    nextEvent?.date ?? new Date(),
+  );
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -130,29 +157,67 @@ export default function WelcomeSection() {
             </Button>
           </motion.div>
 
-          <motion.div
-            variants={itemVariants}
-            className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-100"
-          >
-            <div>
-              <p className="text-2xl font-bold text-primary">20+</p>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
-                Years Active
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">10+</p>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
-                Ministries
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">500+</p>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium uppercase">
-                Members
-              </p>
-            </div>
-          </motion.div>
+          {/* Next Service Countdown */}
+          {nextEvent && (
+            <motion.div
+              variants={itemVariants}
+              className="pt-8 border-t border-gray-100"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
+                    {isLive ? "🔴 Happening Now" : "Next Up"}
+                  </p>
+                  <p className="text-sm sm:text-base font-bold text-gray-900">
+                    {nextEvent.icon} {nextEvent.title}
+                  </p>
+                </div>
+
+                {!isLive ? (
+                  <div className="flex items-center gap-2">
+                    {[
+                      { value: days, label: "D" },
+                      { value: hours, label: "H" },
+                      { value: minutes, label: "M" },
+                      { value: seconds, label: "S" },
+                    ].map((unit) => (
+                      <div
+                        key={unit.label}
+                        className="flex flex-col items-center justify-center w-12 h-14 sm:w-14 sm:h-16 rounded-xl bg-gray-900 text-white"
+                      >
+                        <span className="text-lg sm:text-xl font-bold leading-none tabular-nums">
+                          {unit.value.toString().padStart(2, "0")}
+                        </span>
+                        <span className="text-[9px] font-bold text-white/50 uppercase mt-0.5">
+                          {unit.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                    </span>
+                    <span className="text-sm font-bold text-red-600">LIVE</span>
+                  </div>
+                )}
+
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full px-5 h-10 border-primary/30 text-primary hover:bg-primary hover:text-white font-bold transition-all"
+                >
+                  <Link href="/listen-live" className="flex items-center gap-2">
+                    <Radio className="w-4 h-4" />
+                    Join Live
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </section>
