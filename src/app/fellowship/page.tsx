@@ -103,25 +103,25 @@ export default function FellowshipPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <a
+                  <div className="flex flex-row gap-2 pt-4">
+                    <Link
                       href={center.mapLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 h-12 rounded-xl bg-gray-50 text-gray-900 font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-xl bg-gray-50 text-gray-900 text-xs sm:text-sm font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm flex items-center justify-center gap-1.5 px-2"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                       Get Directions
-                    </a>
-                    <a
+                    </Link>
+                    <Link
                       href={center.whatsappLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 h-12 rounded-xl bg-green-50 text-green-700 font-bold hover:bg-green-600 hover:text-white transition-all border border-green-100 shadow-sm flex items-center justify-center gap-2"
+                      className="flex-1 h-12 rounded-xl bg-green-50 text-green-700 text-xs sm:text-sm font-bold hover:bg-green-600 hover:text-white transition-all border border-green-100 shadow-sm flex items-center justify-center gap-1.5 px-2"
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      Connect on WhatsApp
-                    </a>
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Contact Coordinator
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -137,17 +137,17 @@ export default function FellowshipPage() {
             Couldn&apos;t find a center nearby?
           </h2>
           <p className="text-xl text-muted-foreground">
-            We are constantly expanding. If you&apos;d like to host a center or
-            join a new one, please let us know.
+            We are constantly expanding. If you&apos;d like to join a new one,
+            please let us know.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/contact"
+              href="https://wa.me/2348029513199"
               className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2"
             >
-              Contact Coordinator
+              Contact General Coordinator
             </Link>
-            <a
+            {/* <a
               href="https://nlwc.church/fellowship-guidelines"
               target="_blank"
               rel="noopener noreferrer"
@@ -155,7 +155,7 @@ export default function FellowshipPage() {
             >
               <FileText className="w-5 h-5" />
               Center Guidelines
-            </a>
+            </a> */}
           </div>
         </div>
       </SectionContainer>
