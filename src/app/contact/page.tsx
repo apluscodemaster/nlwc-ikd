@@ -4,7 +4,7 @@ import React from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ContactForm from "@/components/contact/ContactForm";
-import ContactInfo from "@/components/contact/ContactInfo";
+import ContactInfo, { SocialConnect } from "@/components/contact/ContactInfo";
 import MapEmbed from "@/components/contact/MapEmbed";
 import { motion } from "framer-motion";
 
@@ -17,15 +17,15 @@ export default function ContactPage() {
         backgroundImage="/contact-hero.jpg"
       />
 
-      <SectionContainer>
-        <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-start">
+      <SectionContainer containerClassName="max-w-screen-2xl">
+        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 md:gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <div className="space-y-4 mb-8 md:mb-12">
+            <div className="space-y-4 mb-8 md:mb-10">
               <h4 className="text-primary font-bold uppercase tracking-widest text-xs md:text-sm">
                 — CONTACT US
               </h4>
@@ -33,7 +33,7 @@ export default function ContactPage() {
                 Let&apos;s Start a <br />
                 <span className="text-primary">Conversation</span>
               </h2>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
                 Whether you have a specific question about our meetings, a
                 strong desire to abound in the knowledge of God, or just want to
                 say hello, we value every connection.
@@ -48,25 +48,37 @@ export default function ContactPage() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
+            className="h-full"
           >
             <ContactForm />
           </motion.div>
         </div>
       </SectionContainer>
 
+      <SectionContainer containerClassName="max-w-screen-2xl" className="pt-0">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <SocialConnect />
+        </motion.div>
+      </SectionContainer>
+
       <SectionContainer
-        className="bg-gray-50"
+        className="bg-gray-50 border-t border-gray-100"
         containerClassName="max-w-none px-0 sm:px-0"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-8 md:mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h4 className="text-primary font-bold uppercase tracking-widest text-xs md:text-sm mb-4">
             — VISIT US
           </h4>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 md:mb-12">
             Find Your Way Home
           </h2>
         </div>
-        <div className="h-[350px] md:h-[500px] w-full mt-8">
+        <div className="h-[400px] md:h-[600px] w-full">
           <MapEmbed />
         </div>
       </SectionContainer>

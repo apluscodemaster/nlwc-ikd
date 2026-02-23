@@ -262,13 +262,14 @@ export default function GivePage() {
           transition={{ duration: 0.8 }}
           className="max-w-4xl mx-auto mb-8 sm:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-xl shadow-black/5 border border-gray-100 text-primary mb-8">
+          {/* <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-xl shadow-black/5 border border-gray-100 text-primary mb-8"> */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
             <Heart className="w-3.5 h-3.5 fill-primary" />
             <span className="text-[9px] font-black uppercase tracking-[0.2em]">
-              Giving & Stewardship
+              Support Our Mission
             </span>
           </div>
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black mb-6 tracking-tighter leading-none text-gray-900">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 tracking-tighter leading-none text-gray-900">
             Honour God with <br />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-amber-500">
               Your Giving
@@ -276,10 +277,12 @@ export default function GivePage() {
           </h1>
           <div className="relative group inline-block">
             <div className="absolute -inset-4 bg-linear-to-r from-primary/10 to-transparent blur-2xl rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity" />
-            <p className="relative text-lg sm:text-xl md:text-2xl text-gray-500 font-medium leading-relaxed italic max-w-2xl mx-auto px-4">
+            {/* <p className="relative text-lg sm:text-xl md:text-2xl text-gray-500 font-medium leading-relaxed italic max-w-2xl mx-auto px-4"> */}
+            <p className="relative text-lg md:text-xl text-muted-foreground leading-relaxed italic max-w-2xl mx-auto px-4">
               &quot;Honour the Lord with thy substance, and with the firstfruits
               of all thine increase...&quot;
-              <span className="block mt-4 font-black text-gray-900 tracking-[0.3em] uppercase text-xs">
+              {/* <span className="block mt-4 font-black text-gray-900 tracking-[0.3em] uppercase text-xs"> */}
+              <span className="block mt-2 font-bold text-foreground">
                 — Proverbs 3:9-10
               </span>
             </p>
@@ -320,7 +323,7 @@ export default function GivePage() {
                   {
                     icon: Zap,
                     title: "Eternal Impact",
-                    desc: "Fuels global ministry efforts to reach every soul.",
+                    desc: "Fuels ministry efforts to reach every soul thereby achieving the vision.",
                   },
                   {
                     icon: ShieldCheck,
@@ -357,46 +360,45 @@ export default function GivePage() {
             </div>
 
             {/* Help Card */}
-            <Card className="border-none bg-gray-900 text-white p-6 sm:p-8 rounded-[32px] relative overflow-hidden group shadow-2xl">
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl transition-transform group-hover:scale-150" />
-              <div className="relative z-10 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-black mb-2">Questions?</h3>
-                  <p className="text-sm text-gray-400 font-medium leading-relaxed">
-                    Need help or have questions about how these funds are
-                    allocated? Our administration team is available to assist
-                    you.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3">
+            <Card className="border-none bg-black text-white p-8 rounded-[32px] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                <Heart className="w-24 h-24 rotate-12" />
+              </div>
+              <div className="relative z-10">
+                <h3 className="text-2xl font-black mb-4">Have Questions?</h3>
+                <p className="text-gray-400 mb-8 leading-relaxed">
+                  If you need assistance with your donation or have questions
+                  about how funds are used, please reach out to our
+                  administration.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     asChild
-                    className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-black text-xs px-6"
+                    variant="outline"
+                    className="rounded-full border-white/20 hover:bg-white/10 text-black hover:text-white h-12 px-6"
                   >
-                    <a
-                      href="mailto:ikoroduchurchadmin@nlwc.church"
-                      className="flex items-center gap-3"
-                    >
-                      <ExternalLink className="w-4 h-4" /> CONTACT ADMIN
+                    <a href="mailto:ikoroduchurchadmin@nlwc.church">
+                      Contact Admin
                     </a>
                   </Button>
                   <Button
                     variant="ghost"
+                    className="rounded-full text-white hover:bg-white/5 h-12 px-6 group"
                     asChild
-                    className="h-12 rounded-xl text-white hover:bg-white/10 font-bold transition-all px-6 justify-start text-xs"
                   >
                     <a href="/contact" className="flex items-center gap-2">
-                      EXPLORE CONTACT OPTIONS{" "}
-                      <ChevronRight className="w-4 h-4" />
+                      Visit Contact Page
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </a>
                   </Button>
                 </div>
               </div>
             </Card>
 
-            <div className="text-center p-6 border-2 border-dashed border-gray-100 rounded-[32px]">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                Secure & Confidential Stewardship
+            <div className="p-6 rounded-2xl border border-dashed border-muted-foreground/30 flex items-center justify-center text-center">
+              <p className="text-sm text-muted-foreground">
+                All donations are securely processed and used directly for
+                ministry operations.
               </p>
             </div>
           </div>
@@ -406,15 +408,20 @@ export default function GivePage() {
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="mt-16 pt-12 border-t border-gray-100"
+          transition={{ duration: 1 }}
+          className="mt-20 pt-20 border-t border-gray-100 text-center"
         >
-          <p className="text-xl sm:text-2xl text-gray-500 font-medium italic max-w-2xl mx-auto leading-relaxed mb-4">
-            &quot;Every man according as he purposeth in his heart... for God
-            loveth a cheerful giver.&quot;
+          <div className="flex justify-center gap-4 mb-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-primary" />
+            ))}
+          </div>
+          <p className="text-muted-foreground max-w-2xl mx-auto italic">
+            &quot;Every man according as he purposeth in his heart, so let him
+            give; not grudgingly, or of necessity: for God loveth a cheerful
+            giver.&quot;
           </p>
-          <span className="font-black text-gray-900 tracking-[0.4em] uppercase text-[10px]">
-            — 2 Corinthians 9:7
-          </span>
+          <p className="font-bold mt-2">— 2 Corinthians 9:7</p>
         </motion.div>
       </div>
     </div>
