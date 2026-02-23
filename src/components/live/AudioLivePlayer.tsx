@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const WAYSTREAM_EMBED_URL =
+  process.env.NEXT_PUBLIC_WAYSTREAM_EMBED_URL ||
   "https://app.waystream.io/embed/nlwcikorodu?orientation=portrait";
 
 export default function AudioLivePlayer() {
