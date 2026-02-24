@@ -67,7 +67,7 @@ export default function ContactForm() {
               required
               type="text"
               id="name"
-              placeholder="John Doe"
+              placeholder="John Abiodun"
               className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm md:text-base"
             />
           </div>
@@ -100,11 +100,13 @@ export default function ContactForm() {
             id="subject"
             className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white text-sm md:text-base"
           >
-            <option value="">Select a subject</option>
+            <option value="" selected disabled>
+              Select a subject
+            </option>
             <option value="general">General Inquiry</option>
             <option value="prayer">Prayer Request</option>
             <option value="testimony">Testimony</option>
-            <option value="ministry">Join a Ministry</option>
+            <option value="ministry">Join a House Fellowship</option>
             <option value="counseling">Counseling</option>
           </select>
         </div>

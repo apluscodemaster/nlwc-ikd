@@ -6,12 +6,37 @@ import { FileText, Calendar, ChevronRight, BookMarked } from "lucide-react";
 import type { SundaySchoolManual } from "@/lib/wordpress";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  highlightSearchInHtml,
+  highlightSearchInText,
+} from "@/utils/highlightSearch";
 
 interface ManualCardProps {
   manual: SundaySchoolManual;
+  searchQuery?: string;
 }
 
-export default function ManualCard({ manual }: ManualCardProps) {
+export default function ManualCard({
+  manual,
+  searchQuery = "",
+}: ManualCardProps) {
+  // Highlight title if there's a search query
+  const highlightedTitle = searchQuery
+    ? highlightSearchInHtml(manual.title, searchQuery)
+    : manual.title;
+
+  // Highlight excerpt if there's a search query
+  const excerptText =
+    manual.excerpt || "Access the Sunday School manual for this lesson...";
+  const highlightedExcerpt = searchQuery
+    ? highlightSearchInText(excerptText, searchQuery)
+    : null;
+
+  // Pass search query to detail page via URL param
+  const detailHref = searchQuery
+    ? `/manuals/${manual.slug}?q=${encodeURIComponent(searchQuery)}`
+    : `/manuals/${manual.slug}`;
+
   return (
     <motion.div
       layout
@@ -22,22 +47,22 @@ export default function ManualCard({ manual }: ManualCardProps) {
       className="group"
     >
       <Link
-        href={`/manuals/${manual.slug}`}
+        href={detailHref}
         className="block w-full overflow-hidden bg-white rounded-2xl border border-gray-100 hover:shadow-xl hover:border-amber-500/20 transition-all duration-300"
       >
         {/* Thumbnail or Placeholder */}
         {manual.thumbnail ? (
-          <div className="relative aspect-[16/9] overflow-hidden">
+          <div className="relative aspect-video overflow-hidden">
             <Image
               src={manual.thumbnail}
               alt={manual.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
           </div>
         ) : (
-          <div className="relative aspect-[16/9] bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
+          <div className="relative aspect-video bg-linear-to-br from-amber-50 to-amber-100 flex items-center justify-center">
             <BookMarked className="w-16 h-16 text-amber-300" />
           </div>
         )}
@@ -58,14 +83,20 @@ export default function ManualCard({ manual }: ManualCardProps) {
           {/* Title */}
           <h3
             className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2 mb-3 leading-tight wrap-break-word"
-            dangerouslySetInnerHTML={{ __html: manual.title }}
+            dangerouslySetInnerHTML={{ __html: highlightedTitle }}
           />
 
           {/* Excerpt */}
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 wrap-break-word">
-            {manual.excerpt ||
-              "Access the Sunday School manual for this lesson..."}
-          </p>
+          {highlightedExcerpt ? (
+            <p
+              className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 wrap-break-word"
+              dangerouslySetInnerHTML={{ __html: highlightedExcerpt }}
+            />
+          ) : (
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-4 wrap-break-word">
+              {excerptText}
+            </p>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-end pt-4 border-t border-gray-100">

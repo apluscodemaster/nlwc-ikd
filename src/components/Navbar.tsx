@@ -125,7 +125,7 @@ export default function Navbar() {
           : "bg-white/70 backdrop-blur-md py-3",
       )}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
@@ -278,13 +278,15 @@ export default function Navbar() {
                   <SheetHeader className="p-6 border-b border-gray-100">
                     <div className="flex items-center justify-between">
                       <SheetTitle>
-                        <Image
-                          src="/logo-512x512-transparent.png"
-                          alt="NLWC Logo"
-                          width={100}
-                          height={40}
-                          className="h-auto w-auto"
-                        />
+                        <Link href="/">
+                          <Image
+                            src="/logo-512x512-transparent.png"
+                            alt="NLWC Logo"
+                            width={100}
+                            height={40}
+                            className="h-auto w-auto"
+                          />
+                        </Link>
                       </SheetTitle>
                     </div>
                   </SheetHeader>

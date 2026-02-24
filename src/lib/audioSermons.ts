@@ -12,7 +12,8 @@
  * Audio files are hosted on AWS S3 (nlwc-ikorodu.s3.us-east-2.amazonaws.com).
  */
 
-const BASE_URL = "https://ikorodu.nlwc.church";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
 const WP_API_URL = `${BASE_URL}/wp-json/nlwc/v1`;
 const AUDIO_MESSAGES_URL = `${BASE_URL}/audio-messages/`;
 

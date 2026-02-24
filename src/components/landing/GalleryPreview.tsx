@@ -67,7 +67,7 @@ export default function GalleryPreview() {
             — OUR GALLERY
           </h4>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-            Joyful <span className="text-primary">Moments</span>
+            Our Worship <span className="text-primary">Experience</span>
           </h2>
           <p className="text-lg text-muted-foreground">
             Relive the beautiful memories from our services, special programs,

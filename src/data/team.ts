@@ -24,14 +24,14 @@ export const team: TeamMember[] = [
   {
     id: "3",
     name: "Pastor Laide Olaniyan",
-    role: "Co-Pastor",
+    role: "Resident Pastor",
     image: "/pst_laide_olaniyan.avif",
     bio: "Pastor Laide Olaniyan is a seasoned pastor with a proven track record of leading and inspiring his congregation. With a deep love for the Word of God, he has dedicated his life to serving the Lord and helping others find spiritual fulfillment.",
   },
   {
     id: "4",
     name: "Pastor (Mrs.) Rose Olaniyan",
-    role: "Co-Pastor",
+    role: "Resident Pastor",
     image: "/pst_rose_olaniyan.webp",
     bio: "Pastor (Mrs.) Rose Olaniyan is a dedicated pastor who has a heart for teaching and inspiring her congregation. With a passion for the Word of God, she leads the worship team and helps others find spiritual growth and transformation.",
   },

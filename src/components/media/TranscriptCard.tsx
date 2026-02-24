@@ -5,12 +5,20 @@ import { motion } from "framer-motion";
 import { BookOpen, Calendar, User, ChevronRight } from "lucide-react";
 import type { TranscriptPost } from "@/lib/wordpress";
 import Link from "next/link";
+import {
+  highlightSearchInHtml,
+  highlightSearchInText,
+} from "@/utils/highlightSearch";
 
 interface TranscriptCardProps {
   transcript: TranscriptPost;
+  searchQuery?: string;
 }
 
-export default function TranscriptCard({ transcript }: TranscriptCardProps) {
+export default function TranscriptCard({
+  transcript,
+  searchQuery = "",
+}: TranscriptCardProps) {
   const typeStyles = {
     "sunday-message": {
       bg: "bg-primary/10",
@@ -29,6 +37,29 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
   const style = typeStyles[transcript.type];
   const TypeIcon = style.icon;
 
+  // Highlight title if there's a search query
+  const highlightedTitle = searchQuery
+    ? highlightSearchInHtml(transcript.title, searchQuery)
+    : transcript.title;
+
+  // Highlight excerpt if there's a search query
+  const excerptText =
+    transcript.excerpt || "Read the full transcript of this message...";
+  const highlightedExcerpt = searchQuery
+    ? highlightSearchInText(excerptText, searchQuery)
+    : null;
+
+  // Highlight speaker if there's a search query
+  const highlightedSpeaker =
+    searchQuery && transcript.speaker
+      ? highlightSearchInText(transcript.speaker, searchQuery)
+      : null;
+
+  // Pass search query to detail page via URL param
+  const detailHref = searchQuery
+    ? `/transcripts/${transcript.slug}?q=${encodeURIComponent(searchQuery)}`
+    : `/transcripts/${transcript.slug}`;
+
   return (
     <motion.div
       layout
@@ -39,7 +70,7 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
       className="group"
     >
       <Link
-        href={`/transcripts/${transcript.slug}`}
+        href={detailHref}
         className="block w-full overflow-hidden bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300"
       >
         {/* Header */}
@@ -59,21 +90,35 @@ export default function TranscriptCard({ transcript }: TranscriptCardProps) {
         {/* Title */}
         <h3
           className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mb-2 wrap-break-word"
-          dangerouslySetInnerHTML={{ __html: transcript.title }}
+          dangerouslySetInnerHTML={{ __html: highlightedTitle }}
         />
 
         {/* Speaker */}
         {transcript.speaker && (
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
             <User className="w-4 h-4" />
-            <span className="truncate">{transcript.speaker}</span>
+            {highlightedSpeaker ? (
+              <span
+                className="truncate"
+                dangerouslySetInnerHTML={{ __html: highlightedSpeaker }}
+              />
+            ) : (
+              <span className="truncate">{transcript.speaker}</span>
+            )}
           </div>
         )}
 
         {/* Excerpt */}
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4 wrap-break-word">
-          {transcript.excerpt || "Read the full transcript of this message..."}
-        </p>
+        {highlightedExcerpt ? (
+          <p
+            className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4 wrap-break-word"
+            dangerouslySetInnerHTML={{ __html: highlightedExcerpt }}
+          />
+        ) : (
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4 wrap-break-word">
+            {excerptText}
+          </p>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100 gap-2">

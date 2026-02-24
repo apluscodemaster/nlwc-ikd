@@ -28,7 +28,7 @@ const headingVariants: Variants = {
 export default function ServiceTimes() {
   return (
     <section className="bg-gray-50 py-12 sm:py-32 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-none mx-auto px-4 sm:px-10 lg:px-16 xl:px-20">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -53,7 +53,7 @@ export default function ServiceTimes() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
           variants={containerVariants}
-          className="grid md:grid-cols-3 gap-8"
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {services.map((service) => (
             <motion.div
