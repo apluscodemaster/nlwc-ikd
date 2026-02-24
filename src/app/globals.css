@@ -195,3 +195,32 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Search highlight styles */
+mark.search-highlight {
+  background-color: #fef08a; /* yellow-200 */
+  color: inherit;
+  padding: 1px 2px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background-color 0.3s ease;
+}
+
+mark.search-highlight-active {
+  background-color: #fbbf24; /* amber-400 */
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+  animation: highlight-pulse 0.6s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+  }
+}

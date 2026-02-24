@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import LivePlayer from "@/components/live/LivePlayer";
@@ -40,6 +40,11 @@ export default function LivePage() {
 
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
 
+  // Scroll to top on mount to ensure user sees the video section
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const recentVideos = videos.slice(0, 3);
 
   return (
@@ -50,7 +55,7 @@ export default function LivePage() {
         backgroundImage="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2070&auto=format&fit=crop"
       />
 
-      <SectionContainer className="pb-10">
+      <SectionContainer id="live-player" className="pb-10">
         <LivePlayer />
       </SectionContainer>
 
@@ -199,7 +204,7 @@ export default function LivePage() {
       {/* ===== VIDEO PLAYER MODAL ===== */}
       <AnimatePresence>
         {selectedVideo && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-6 lg:p-8">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-0 sm:p-6 lg:p-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

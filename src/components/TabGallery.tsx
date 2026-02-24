@@ -22,10 +22,10 @@ function formatDisplayDate(dateString: string) {
     day % 10 === 1 && day !== 11
       ? "st"
       : day % 10 === 2 && day !== 12
-      ? "nd"
-      : day % 10 === 3 && day !== 13
-      ? "rd"
-      : "th";
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+          ? "rd"
+          : "th";
 
   return `${dayName}, ${day}${suffix} ${month}. ${year}`;
 }
@@ -71,18 +71,20 @@ export default function TabGallery({ dates }: Props) {
   };
 
   return (
-    <div>
-      <TabPaginator
-        pageDates={pageDates}
-        pageIndex={pageIndex}
-        totalPages={totalPages}
-        onPageChange={setPageIndex}
-        globalIndices={globalIndicesForPage()}
-        selectedGlobalIndex={selectedDateIdx}
-        onSelectGlobalIndex={selectDateByGlobalIndex}
-      />
+    <div className="relative">
+      <div className="sticky top-[72px] sm:top-[80px] z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 py-4 transition-all duration-300">
+        <TabPaginator
+          pageDates={pageDates}
+          pageIndex={pageIndex}
+          totalPages={totalPages}
+          onPageChange={setPageIndex}
+          globalIndices={globalIndicesForPage()}
+          selectedGlobalIndex={selectedDateIdx}
+          onSelectGlobalIndex={selectDateByGlobalIndex}
+        />
+      </div>
 
-      <div className="mt-6">
+      <div>
         {selectedDateIdx !== null ? (
           <div>
             <div className="mb-4 text-sm text-white-600">

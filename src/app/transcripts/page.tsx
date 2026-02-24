@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import TranscriptsList from "@/components/media/TranscriptsList";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Message Transcripts | NLWC Ikorodu",
@@ -19,7 +21,18 @@ export default function TranscriptsPage() {
       />
 
       <SectionContainer>
-        <TranscriptsList perPage={9} />
+        <Suspense
+          fallback={
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground font-medium text-lg">
+                Loading transcripts...
+              </p>
+            </div>
+          }
+        >
+          <TranscriptsList perPage={9} />
+        </Suspense>
       </SectionContainer>
     </main>
   );

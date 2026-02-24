@@ -1,4 +1,4 @@
-import { Calendar, Users, LucideIcon, Book } from "lucide-react";
+import { Calendar, Users, LucideIcon, Book, Flame } from "lucide-react";
 
 export type Service = {
   id: number;
@@ -16,7 +16,7 @@ export const services: Service[] = [
   {
     id: 1,
     name: "Sunday Service",
-    day: "Sunday",
+    day: "Sundays",
     time: "8:00 AM",
     location: "Church Auditorium",
     description:
@@ -27,18 +27,6 @@ export const services: Service[] = [
   },
   {
     id: 2,
-    name: "Bible Study",
-    day: "Fridays",
-    time: "6:00 PM",
-    location: "Church Auditorium",
-    description:
-      "Deep dive into God's word and grow in your understanding of faith.",
-    icon: Book,
-    color: "bg-blue-50",
-    iconColor: "text-blue-600",
-  },
-  {
-    id: 3,
     name: "Prayer Meeting",
     day: "Wednesdays",
     time: "6:00 PM",
@@ -46,7 +34,31 @@ export const services: Service[] = [
     description:
       "Standing together in faith and interceding for our community.",
     icon: Users,
+    color: "bg-blue-50",
+    iconColor: "text-blue-600",
+  },
+  {
+    id: 3,
+    name: "Bible Study",
+    day: "Fridays",
+    time: "6:00 PM",
+    location: "Church Auditorium",
+    description:
+      "Deep dive into God's word and grow in your understanding of faith.",
+    icon: Book,
     color: "bg-green-50",
     iconColor: "text-green-600",
+  },
+  {
+    id: 4,
+    name: "Sithrah",
+    day: "2nd Saturday Monthly",
+    time: "12:00 Noon",
+    location: "Church Auditorium",
+    description:
+      "A special monthly time of prayer and spiritual refreshing before the Lord.",
+    icon: Flame,
+    color: "bg-purple-50",
+    iconColor: "text-purple-600",
   },
 ];

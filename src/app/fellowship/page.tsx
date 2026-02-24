@@ -7,29 +7,17 @@ import { fellowshipCenters } from "@/data/centers";
 import { motion } from "framer-motion";
 import {
   MapPin,
-  User,
-  Phone,
-  Clock,
+  MessageCircle,
   Home,
   ExternalLink,
   FileText,
+  User,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function FellowshipPage() {
-  const handleGetDirections = (address: string, lat: number, lng: number) => {
-    // Try Google Maps with coordinates for accuracy
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${encodeURIComponent(address)}`;
-    window.open(mapsUrl, "_blank", "noopener,noreferrer");
-  };
-
-  const handleCall = (phone: string) => {
-    // Format phone number for tel: link
-    const cleanPhone = phone.replace(/\s+/g, "");
-    window.location.href = `tel:${cleanPhone}`;
-  };
-
   return (
     <main>
       <PageHeader
@@ -92,10 +80,10 @@ export default function FellowshipPage() {
                         <User className="w-5 h-5 text-primary mt-1 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            Leader
+                            Coordinator
                           </p>
                           <p className="text-gray-700 font-medium">
-                            {center.leader}
+                            {center.coordinator}
                           </p>
                         </div>
                       </div>
@@ -112,37 +100,28 @@ export default function FellowshipPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <Phone className="w-5 h-5 text-primary mt-1 shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            Contact
-                          </p>
-                          <button
-                            onClick={() => handleCall(center.contact)}
-                            className="text-primary font-medium hover:underline"
-                          >
-                            {center.contact}
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-4">
-                    <button
-                      onClick={() =>
-                        handleGetDirections(
-                          center.address,
-                          center.location.lat,
-                          center.location.lng,
-                        )
-                      }
-                      className="w-full h-12 rounded-xl bg-gray-50 text-gray-900 font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm flex items-center justify-center gap-2"
+                  <div className="flex flex-row gap-2 pt-4">
+                    <Link
+                      href={center.mapLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-12 rounded-xl bg-gray-50 text-gray-900 text-xs sm:text-sm font-bold hover:bg-primary hover:text-white transition-all border border-gray-100 shadow-sm flex items-center justify-center gap-1.5 px-2"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                       Get Directions
-                    </button>
+                    </Link>
+                    <Link
+                      href={center.whatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-12 rounded-xl bg-green-50 text-green-700 text-xs sm:text-sm font-bold hover:bg-green-600 hover:text-white transition-all border border-green-100 shadow-sm flex items-center justify-center gap-1.5 px-2"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Contact Coordinator
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -158,17 +137,17 @@ export default function FellowshipPage() {
             Couldn&apos;t find a center nearby?
           </h2>
           <p className="text-xl text-muted-foreground">
-            We are constantly expanding. If you&apos;d like to host a center or
-            join a new one, please let us know.
+            We are constantly expanding. If you&apos;d like to join a new one,
+            please let us know.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/contact"
+              href="https://wa.me/2348029513199"
               className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2"
             >
-              Contact Coordinator
+              Contact General Coordinator
             </Link>
-            <a
+            {/* <a
               href="https://nlwc.church/fellowship-guidelines"
               target="_blank"
               rel="noopener noreferrer"
@@ -176,7 +155,7 @@ export default function FellowshipPage() {
             >
               <FileText className="w-5 h-5" />
               Center Guidelines
-            </a>
+            </a> */}
           </div>
         </div>
       </SectionContainer>

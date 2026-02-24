@@ -4,7 +4,7 @@ import React from "react";
 import Hero from "@/components/landing/Hero";
 import WelcomeSection from "@/components/landing/WelcomeSection";
 import ServiceTimes from "@/components/landing/ServiceTimes";
-import RecentSermons from "@/components/landing/RecentSermons";
+import MediaHub from "@/components/landing/MediaHub";
 import UpcomingEvents from "@/components/landing/UpcomingEvents";
 import GalleryPreview from "@/components/landing/GalleryPreview";
 import CTASection from "@/components/landing/CTASection";
@@ -22,8 +22,8 @@ export default function HomePage() {
         {/* Service Times */}
         <ServiceTimes />
 
-        {/* Recent Sermons */}
-        <RecentSermons />
+        {/* Media Hub (Audio, Video, Transcripts, Manuals) */}
+        <MediaHub />
 
         {/* Upcoming Events */}
         <UpcomingEvents />

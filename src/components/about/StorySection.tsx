@@ -64,7 +64,7 @@ export default function StorySection() {
               <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
                 — WHO WE ARE
               </h4>
-              <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+              <h2 className="text-2xl xs:text-3xl md:text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
                 A New Testament <span className="text-primary">Church</span>,{" "}
                 <br className="hidden sm:block" />
                 Built on <span className="text-primary">Truth</span>
@@ -130,10 +130,10 @@ export default function StorySection() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={imageVariants}
-            className="relative h-[600px] rounded-3xl overflow-hidden shadow-2xl"
+            className="relative h-[350px] sm:h-[600px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop"
+              src="/about-img.jpg"
               alt="Church Community"
               fill
               className="object-cover"

@@ -113,14 +113,14 @@ export default async function SermonPage({ params }: Props) {
             <ArrowLeft className="w-4 h-4" />
             All Sermons
           </Link>
-          <a
+          {/* <a
             href={sermon.link}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
           >
             View on Website
-          </a>
+          </a> */}
         </div>
       </SectionContainer>
     </main>
