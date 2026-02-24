@@ -4,11 +4,13 @@ import { getManualBySlug, getSundaySchoolManuals } from "@/lib/wordpress";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ShareButton from "@/components/shared/ShareButton";
 import TranscriptContent from "@/components/shared/TranscriptContent";
+import SearchHighlightBanner from "@/components/shared/SearchHighlightBanner";
 import { Calendar, ArrowLeft, BookMarked } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -40,15 +42,27 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function ManualPage({ params }: Props) {
+export default async function ManualPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const manual = await getManualBySlug(slug);
+  const searchQuery =
+    typeof resolvedSearchParams?.q === "string" ? resolvedSearchParams.q : "";
 
   if (!manual) {
     notFound();
   }
   return (
     <main className="min-h-screen bg-gray-50">
+      {/* Search Highlight Banner */}
+      {searchQuery && (
+        <SearchHighlightBanner
+          query={searchQuery}
+          backHref="/manuals"
+          backLabel="manuals"
+        />
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
         <SectionContainer className="py-8 md:py-12">
@@ -93,7 +107,11 @@ export default async function ManualPage({ params }: Props) {
       {/* Content */}
       <SectionContainer className="py-8 sm:py-12">
         <article className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-8 md:p-12 overflow-hidden">
-          <TranscriptContent content={manual.content} accentColor="amber" />
+          <TranscriptContent
+            content={manual.content}
+            accentColor="amber"
+            searchQuery={searchQuery}
+          />
         </article>
       </SectionContainer>
 
@@ -107,14 +125,14 @@ export default async function ManualPage({ params }: Props) {
             <ArrowLeft className="w-4 h-4" />
             All Manuals
           </Link>
-          <a
+          {/* <a
             href={manual.link}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/20 hover:scale-105 transition-all active:scale-95"
           >
             View on Website
-          </a>
+          </a> */}
         </div>
       </SectionContainer>
     </main>

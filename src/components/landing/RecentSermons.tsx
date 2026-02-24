@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +14,15 @@ import {
   Volume2,
   VolumeX,
   Loader2,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
+import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -69,7 +72,9 @@ export default function RecentSermons() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [showMobilePlayer, setShowMobilePlayer] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlay = useCallback(
@@ -137,6 +142,33 @@ export default function RecentSermons() {
       ),
     );
   }, []);
+
+  // Playback speed
+  const SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
+  const cycleSpeed = useCallback(() => {
+    setPlaybackRate((prev) => {
+      const idx = SPEED_OPTIONS.indexOf(prev);
+      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
+
+  useEffect(() => {
+    const isPlayerVisible = Boolean(activeSermon);
+    if (isPlayerVisible) {
+      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
+    } else {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    }
+    return () => {
+      document.documentElement.style.removeProperty("--scroll-bottom");
+    };
+  }, [activeSermon]);
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -368,15 +400,19 @@ export default function RecentSermons() {
                   )}
                 </div>
 
-                {/* Song Info */}
-                <div className="min-w-0 flex-1">
+                {/* Song Info — clickable on mobile */}
+                <button
+                  className="min-w-0 flex-1 text-left sm:pointer-events-none cursor-pointer sm:cursor-default"
+                  onClick={() => setShowMobilePlayer(true)}
+                  aria-label="Open full player"
+                >
                   <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate">
                     {activeSermon.title}
                   </h4>
                   <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {activeSermon.speaker}
                   </p>
-                </div>
+                </button>
 
                 {/* Time Display (hidden on very small screens) */}
                 <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground font-mono shrink-0">
@@ -433,6 +469,16 @@ export default function RecentSermons() {
                     )}
                   </button>
 
+                  {/* Speed Control */}
+                  <button
+                    onClick={cycleSpeed}
+                    className="flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary text-xs font-bold transition-all min-w-[44px]"
+                    aria-label={`Playback speed ${playbackRate}x`}
+                    title="Change playback speed"
+                  >
+                    {playbackRate}x
+                  </button>
+
                   {/* Close */}
                   <button
                     onClick={closePlayer}
@@ -447,6 +493,30 @@ export default function RecentSermons() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ===== FULL-SCREEN MOBILE PLAYER ===== */}
+      {activeSermon && (
+        <MobileFullPlayer
+          show={showMobilePlayer}
+          onClose={() => setShowMobilePlayer(false)}
+          onClosePlayer={closePlayer}
+          title={activeSermon.title}
+          speaker={activeSermon.speaker}
+          series={activeSermon.series}
+          thumbnailUrl={activeSermon.thumbnailUrl}
+          downloadUrl={activeSermon.downloadUrl}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          playbackRate={playbackRate}
+          isMuted={isMuted}
+          onTogglePlay={togglePlay}
+          onSeek={seek}
+          onToggleMute={toggleMute}
+          onCycleSpeed={cycleSpeed}
+          onProgressClick={handleProgressClick}
+        />
+      )}
     </section>
   );
 }

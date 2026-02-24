@@ -8,6 +8,11 @@ const TELEGRAM_URL = "https://bit.ly/nlwcikorodu_audio";
 const PAGE_URL = "https://nlwc-ikd-gallery.vercel.app/live";
 const PAGE_TITLE = "NLWC Ikorodu — Live Video Broadcast";
 
+// Fallback embed URL from env if API fails
+const FALLBACK_EMBED_URL = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
+  ? `https://www.youtube.com/embed/live_stream?channel=${process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID}`
+  : "";
+
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -34,7 +39,26 @@ function XTwitterIcon({ className }: { className?: string }) {
 
 export default function LivePlayer() {
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [streamEmbedUrl, setStreamEmbedUrl] = useState(FALLBACK_EMBED_URL);
   const shareRef = useRef<HTMLDivElement>(null);
+
+  // Fetch the live stream URL from Google Sheets
+  useEffect(() => {
+    async function fetchStreamUrl() {
+      try {
+        const res = await fetch("/api/video-stream");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.embedUrl) {
+            setStreamEmbedUrl(data.embedUrl);
+          }
+        }
+      } catch {
+        // Silently fall back to env var
+      }
+    }
+    fetchStreamUrl();
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -95,7 +119,7 @@ export default function LivePlayer() {
           <iframe
             width="100%"
             height="100%"
-            src="https://www.youtube.com/embed/live_stream?channel=UCmj7Ugn86LZe2vuOdv4mdSw"
+            src={streamEmbedUrl}
             title="NLWC Ikorodu Live Stream"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

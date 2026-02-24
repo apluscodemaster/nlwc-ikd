@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "/api/",
     },
-    sitemap: "https://ikorodu.nlwc.church/sitemap.xml",
+    sitemap: `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church"}/sitemap.xml`,
   };
 }

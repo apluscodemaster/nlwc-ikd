@@ -25,7 +25,7 @@ export default function Hero() {
         className="absolute inset-0"
       >
         <Image
-          src="https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=2071&auto=format&fit=crop"
+          src="/video-hero-bg.avif"
           alt="Church Worship Sanctuary"
           fill
           className="object-cover"

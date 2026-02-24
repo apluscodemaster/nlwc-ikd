@@ -43,3 +43,6 @@ next-env.d.ts
 #API
 /src/app/api/sheet/.env.local
 /src/app/api/sheet/.env.development
+
+# WordPress mu-plugins (server-side, contains DB schema details)
+/wordpress/mu-plugins/
