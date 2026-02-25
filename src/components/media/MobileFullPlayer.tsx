@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import {
   Play,
@@ -66,6 +66,19 @@ export default function MobileFullPlayer({
   onCycleSpeed,
   onProgressClick,
 }: MobileFullPlayerProps) {
+  // Prevent background scroll when player is shown
+  useEffect(() => {
+    if (show) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+
+      return () => {
+        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
+      };
+    }
+  }, [show]);
+
   return (
     <AnimatePresence>
       {show && (
