@@ -104,25 +104,38 @@ export async function getAdjacentDevotionals(scheduledDate: Timestamp) {
 export async function getPublishedDevotionals(
   pageSize: number = 12,
   lastDoc?: DocumentSnapshot,
+  filter?: { month: number; year: number }, // month is 0-11
 ) {
-  let q = query(
+  let baseQuery = query(
     collection(db, COLLECTION),
     where("scheduledDate", "<=", Timestamp.now()),
     orderBy("scheduledDate", "desc"),
-    limit(pageSize),
   );
 
-  if (lastDoc) {
-    q = query(
+  if (filter) {
+    const startDate = new Date(filter.year, filter.month, 1);
+    const endDate = new Date(filter.year, filter.month + 1, 1);
+    const startTs = Timestamp.fromDate(startDate);
+    const endTs = Timestamp.fromDate(endDate);
+
+    baseQuery = query(
       collection(db, COLLECTION),
+      where("scheduledDate", ">=", startTs),
+      where("scheduledDate", "<", endTs),
+      // We still need this to ensure they are published,
+      // though month filter usually implies past dates
       where("scheduledDate", "<=", Timestamp.now()),
       orderBy("scheduledDate", "desc"),
-      startAfter(lastDoc),
-      limit(pageSize),
     );
   }
 
-  const snap = await getDocs(q);
+  let finalQuery = query(baseQuery, limit(pageSize));
+
+  if (lastDoc) {
+    finalQuery = query(baseQuery, startAfter(lastDoc), limit(pageSize));
+  }
+
+  const snap = await getDocs(finalQuery);
   const devotionals = snap.docs.map(
     (d) => ({ id: d.id, ...d.data() }) as Devotional,
   );

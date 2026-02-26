@@ -15,6 +15,21 @@ import { DocumentSnapshot } from "firebase/firestore";
 
 const PAGE_SIZE = 12;
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export default function DevotionalArchiveGrid() {
   const [devotionals, setDevotionals] = useState<Devotional[]>([]);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
@@ -22,15 +37,26 @@ export default function DevotionalArchiveGrid() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchPage = useCallback(async (cursor?: DocumentSnapshot) => {
-    const result = await getPublishedDevotionals(
-      PAGE_SIZE,
-      cursor || undefined,
-    );
-    return result;
-  }, []);
+  // Filter state
+  const [month, setMonth] = useState<number | "all">("all");
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+
+  const fetchPage = useCallback(
+    async (cursor?: DocumentSnapshot) => {
+      const filter =
+        month === "all" ? undefined : { month: month as number, year };
+      const result = await getPublishedDevotionals(
+        PAGE_SIZE,
+        cursor || undefined,
+        filter,
+      );
+      return result;
+    },
+    [month, year],
+  );
 
   useEffect(() => {
+    setLoading(true);
     fetchPage().then((result) => {
       setDevotionals(result.devotionals);
       setLastDoc(result.lastVisible);
@@ -49,96 +75,149 @@ export default function DevotionalArchiveGrid() {
     setLoadingMore(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-        <p className="text-muted-foreground font-medium text-lg">
-          Loading devotionals...
-        </p>
-      </div>
-    );
-  }
-
-  if (devotionals.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">
-          <FileText className="w-10 h-10 text-primary/40" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
-          No Devotionals Yet
-        </h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          Check back soon for daily devotional materials to enrich your
-          spiritual walk.
-        </p>
-      </div>
-    );
-  }
+  const yearsList = [2024, 2025, 2026]; // Adjust as church grows
 
   return (
     <div>
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {devotionals.map((devotional, index) => (
-          <motion.div
-            key={devotional.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.05 }}
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+            Filter By:
+          </label>
+          <select
+            value={month}
+            onChange={(e) =>
+              setMonth(
+                e.target.value === "all" ? "all" : parseInt(e.target.value),
+              )
+            }
+            className="h-11 px-4 rounded-2xl border border-gray-100 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
           >
-            <Link
-              href={`/devotionals/${devotional.id}`}
-              className="group block h-full rounded-3xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all overflow-hidden"
-            >
-              {/* Top gradient accent */}
-              <div className="h-1 w-full bg-linear-to-r from-primary/60 via-amber-400/60 to-primary/60 group-hover:from-primary group-hover:via-amber-400 group-hover:to-primary transition-all" />
+            <option value="all">All Months</option>
+            {MONTHS.map((m, i) => (
+              <option key={m} value={i}>
+                {m}
+              </option>
+            ))}
+          </select>
 
-              <div className="p-6">
-                {/* Icon */}
-                <div className="w-12 h-12 rounded-2xl bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
+          <select
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value))}
+            className="h-11 px-4 rounded-2xl border border-gray-100 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+          >
+            {yearsList.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                {/* Title */}
-                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                  {devotional.title}
-                </h3>
-
-                {/* Date */}
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  {devotional.scheduledDate
-                    .toDate()
-                    .toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                </p>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+        {month !== "all" && (
+          <button
+            onClick={() => setMonth("all")}
+            className="text-xs font-bold text-primary hover:underline"
+          >
+            Clear Filter
+          </button>
+        )}
       </div>
 
-      {/* Load More */}
-      {hasMore && (
-        <div className="flex justify-center mt-12">
-          <button
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-all disabled:opacity-60"
-          >
-            {loadingMore ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-            {loadingMore ? "Loading..." : "Load More"}
-          </button>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+          <p className="text-muted-foreground font-medium text-lg">
+            Loading devotionals...
+          </p>
         </div>
+      ) : devotionals.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">
+            <FileText className="w-10 h-10 text-primary/40" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            No Devotionals Found
+          </h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            {month === "all"
+              ? "Check back soon for daily devotional materials."
+              : `We couldn't find any devotionals for ${MONTHS[month as number]} ${year}. Try a different month.`}
+          </p>
+          {month !== "all" && (
+            <button
+              onClick={() => setMonth("all")}
+              className="mt-6 h-10 px-6 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-all"
+            >
+              Show All Devotionals
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {devotionals.map((devotional, index) => (
+              <motion.div
+                key={devotional.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+              >
+                <Link
+                  href={`/devotionals/${devotional.id}`}
+                  className="group block h-full rounded-3xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all overflow-hidden"
+                >
+                  {/* Top gradient accent */}
+                  <div className="h-1 w-full bg-linear-to-r from-primary/60 via-amber-400/60 to-primary/60 group-hover:from-primary group-hover:via-amber-400 group-hover:to-primary transition-all" />
+
+                  <div className="p-6">
+                    {/* Icon */}
+                    <div className="w-12 h-12 rounded-2xl bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+                      <BookOpen className="w-6 h-6 text-primary" />
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                      {devotional.title}
+                    </h3>
+
+                    {/* Date */}
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      {devotional.scheduledDate
+                        .toDate()
+                        .toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="flex justify-center mt-12">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-all disabled:opacity-60"
+              >
+                {loadingMore ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+                {loadingMore ? "Loading..." : "Load More"}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
