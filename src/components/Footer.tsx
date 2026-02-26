@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { usePathname } from "next/navigation";
 
 // Social media links - update these with actual URLs
 const SOCIAL_LINKS = {
@@ -24,8 +25,12 @@ const SOCIAL_LINKS = {
 };
 
 export default function Footer() {
+  const pathname = usePathname();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Hide Footer on admin routes
+  if (pathname?.startsWith("/admin")) return null;
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
