@@ -168,16 +168,21 @@ export async function createDevotional(
   const { url, publicId } = await response.json();
   onProgress?.(80);
 
-  const docRef = await addDoc(collection(db, COLLECTION), {
-    title: input.title,
-    scheduledDate: Timestamp.fromDate(input.scheduledDate),
-    pdfUrl: url,
-    storagePath: publicId,
-    createdAt: Timestamp.now(),
-  });
+  try {
+    const docRef = await addDoc(collection(db, COLLECTION), {
+      title: input.title,
+      scheduledDate: Timestamp.fromDate(input.scheduledDate),
+      pdfUrl: url,
+      storagePath: publicId,
+      createdAt: Timestamp.now(),
+    });
 
-  onProgress?.(100);
-  return docRef.id;
+    onProgress?.(100);
+    return docRef.id;
+  } catch (dbError) {
+    console.error("Firestore addDoc failed:", dbError);
+    throw dbError;
+  }
 }
 
 /** Update title and/or scheduled date */
