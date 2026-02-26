@@ -112,9 +112,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  // Hide Navbar on admin routes
-  if (pathname?.startsWith("/admin")) return null;
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -122,6 +119,9 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Hide Navbar on admin routes
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <header
