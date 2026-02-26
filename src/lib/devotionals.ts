@@ -14,14 +14,7 @@ import {
   Timestamp,
   DocumentSnapshot,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytesResumable,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
-import { db, storage } from "./firebase";
+import { db } from "./firebase";
 
 // ──────────────────────────────────────────────
 // Types
@@ -157,50 +150,33 @@ export async function createDevotional(
   input: DevotionalInput,
   onProgress?: (progress: number) => void,
 ): Promise<string> {
-  // Sanitise filename: keep it deterministic for easy replacement later
-  const safeName = input.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storagePath = `devotionals/${safeName}`;
-  const storageRef = ref(storage, storagePath);
+  const formData = new FormData();
+  formData.append("file", input.file);
 
-  const metadata = { contentType: "application/pdf" };
+  onProgress?.(20);
 
-  // Try resumable upload first (supports progress), fall back to simple upload
-  try {
-    const uploadTask = uploadBytesResumable(storageRef, input.file, metadata);
+  const response = await fetch("/api/devotionals/upload", {
+    method: "POST",
+    body: formData,
+  });
 
-    await new Promise<void>((resolve, reject) => {
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          onProgress?.(progress);
-        },
-        (error) => reject(error),
-        () => resolve(),
-      );
-    });
-  } catch (resumableError) {
-    console.warn(
-      "Resumable upload failed, falling back to simple upload:",
-      resumableError,
-    );
-    // Fallback: simple single-request upload (no progress tracking but avoids CORS issues)
-    onProgress?.(10);
-    await uploadBytes(storageRef, input.file, metadata);
-    onProgress?.(100);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Upload failed");
   }
 
-  const pdfUrl = await getDownloadURL(storageRef);
+  const { url, publicId } = await response.json();
+  onProgress?.(80);
 
   const docRef = await addDoc(collection(db, COLLECTION), {
     title: input.title,
     scheduledDate: Timestamp.fromDate(input.scheduledDate),
-    pdfUrl,
-    storagePath,
+    pdfUrl: url,
+    storagePath: publicId,
     createdAt: Timestamp.now(),
   });
 
+  onProgress?.(100);
   return docRef.id;
 }
 
@@ -226,51 +202,51 @@ export async function replaceDevotionalPdf(
   const devotional = await getDevotionalById(id);
   if (!devotional) throw new Error("Devotional not found");
 
-  // Upload to the SAME path so Firebase overwrites the old version
-  const storageRef = ref(storage, devotional.storagePath);
-  const metadata = { contentType: "application/pdf" };
+  const formData = new FormData();
+  formData.append("file", newFile);
+  formData.append("publicId", devotional.storagePath); // Use same public ID to overwrite
 
-  try {
-    const uploadTask = uploadBytesResumable(storageRef, newFile, metadata);
+  onProgress?.(20);
 
-    await new Promise<void>((resolve, reject) => {
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          onProgress?.(progress);
-        },
-        (error) => reject(error),
-        () => resolve(),
-      );
-    });
-  } catch (resumableError) {
-    console.warn(
-      "Resumable upload failed, falling back to simple upload:",
-      resumableError,
-    );
-    onProgress?.(10);
-    await uploadBytes(storageRef, newFile, metadata);
-    onProgress?.(100);
+  const response = await fetch("/api/devotionals/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Replacement failed");
   }
 
-  const pdfUrl = await getDownloadURL(storageRef);
-  await updateDoc(doc(db, COLLECTION, id), { pdfUrl });
+  const { url } = await response.json();
+  onProgress?.(80);
+
+  await updateDoc(doc(db, COLLECTION, id), { pdfUrl: url });
+  onProgress?.(100);
 }
 
-/** Delete both the Firestore document and the Storage file */
+/** Delete both the Firestore document and the Cloudinary file */
 export async function deleteDevotional(id: string) {
   const devotional = await getDevotionalById(id);
   if (!devotional) throw new Error("Devotional not found");
 
-  // Delete from Storage
+  // Delete from Cloudinary
   try {
-    const storageRef = ref(storage, devotional.storagePath);
-    await deleteObject(storageRef);
+    const response = await fetch("/api/devotionals/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ publicId: devotional.storagePath }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.warn(
+        "Cloudinary deletion failed, but continuing with Firestore:",
+        error,
+      );
+    }
   } catch (err) {
-    // If file doesn't exist any more, continue deleting doc
-    console.warn("Storage file may already be deleted:", err);
+    console.warn("Error calling Cloudinary delete API:", err);
   }
 
   // Delete Firestore document
