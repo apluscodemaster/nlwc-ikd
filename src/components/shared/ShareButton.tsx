@@ -1,6 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ShareButtonProps {
   title: string;
@@ -22,7 +23,7 @@ export default function ShareButton({ title, url }: ShareButtonProps) {
     } else {
       // Fallback: Copy to clipboard
       navigator.clipboard.writeText(url).then(() => {
-        alert("Link copied to clipboard!");
+        toast.success("Link copied to clipboard!");
       });
     }
   };
