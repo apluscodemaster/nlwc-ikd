@@ -18,6 +18,7 @@ interface PageHeaderProps {
 const PATH_NAMES: Record<string, string> = {
   about: "About Us",
   contact: "Contact",
+  devotionals: "Daily Devotionals",
   fellowship: "House Fellowship",
   gallery: "Image Gallery",
   live: "Video Broadcast",
