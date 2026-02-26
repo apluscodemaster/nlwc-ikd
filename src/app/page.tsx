@@ -8,6 +8,7 @@ import MediaHub from "@/components/landing/MediaHub";
 import UpcomingEvents from "@/components/landing/UpcomingEvents";
 import GalleryPreview from "@/components/landing/GalleryPreview";
 import CTASection from "@/components/landing/CTASection";
+import DevotionalPrompt from "@/components/devotionals/DevotionalPrompt";
 
 export default function HomePage() {
   return (
@@ -34,6 +35,9 @@ export default function HomePage() {
         {/* Call to Action */}
         <CTASection />
       </main>
+
+      {/* Daily Devotional Invitation */}
+      <DevotionalPrompt />
     </div>
   );
 }

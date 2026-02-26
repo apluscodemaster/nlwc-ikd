@@ -90,6 +90,10 @@ const NAVIGATION_DATA: NavItem[] = [
         label: "Message Transcripts",
         href: "/transcripts",
       },
+      {
+        label: "Daily Devotionals",
+        href: "/devotionals",
+      },
       { label: "Image Gallery", href: "/gallery" },
     ],
   },
