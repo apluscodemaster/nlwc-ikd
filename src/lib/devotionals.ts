@@ -17,6 +17,7 @@ import {
 import {
   ref,
   uploadBytesResumable,
+  uploadBytes,
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
@@ -161,23 +162,34 @@ export async function createDevotional(
   const storagePath = `devotionals/${safeName}`;
   const storageRef = ref(storage, storagePath);
 
-  // Upload with progress tracking
-  const uploadTask = uploadBytesResumable(storageRef, input.file, {
-    contentType: "application/pdf",
-  });
+  const metadata = { contentType: "application/pdf" };
 
-  await new Promise<void>((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress?.(progress);
-      },
-      reject,
-      resolve,
+  // Try resumable upload first (supports progress), fall back to simple upload
+  try {
+    const uploadTask = uploadBytesResumable(storageRef, input.file, metadata);
+
+    await new Promise<void>((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress?.(progress);
+        },
+        (error) => reject(error),
+        () => resolve(),
+      );
+    });
+  } catch (resumableError) {
+    console.warn(
+      "Resumable upload failed, falling back to simple upload:",
+      resumableError,
     );
-  });
+    // Fallback: simple single-request upload (no progress tracking but avoids CORS issues)
+    onProgress?.(10);
+    await uploadBytes(storageRef, input.file, metadata);
+    onProgress?.(100);
+  }
 
   const pdfUrl = await getDownloadURL(storageRef);
 
@@ -216,22 +228,32 @@ export async function replaceDevotionalPdf(
 
   // Upload to the SAME path so Firebase overwrites the old version
   const storageRef = ref(storage, devotional.storagePath);
-  const uploadTask = uploadBytesResumable(storageRef, newFile, {
-    contentType: "application/pdf",
-  });
+  const metadata = { contentType: "application/pdf" };
 
-  await new Promise<void>((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress?.(progress);
-      },
-      reject,
-      resolve,
+  try {
+    const uploadTask = uploadBytesResumable(storageRef, newFile, metadata);
+
+    await new Promise<void>((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress?.(progress);
+        },
+        (error) => reject(error),
+        () => resolve(),
+      );
+    });
+  } catch (resumableError) {
+    console.warn(
+      "Resumable upload failed, falling back to simple upload:",
+      resumableError,
     );
-  });
+    onProgress?.(10);
+    await uploadBytes(storageRef, newFile, metadata);
+    onProgress?.(100);
+  }
 
   const pdfUrl = await getDownloadURL(storageRef);
   await updateDoc(doc(db, COLLECTION, id), { pdfUrl });
