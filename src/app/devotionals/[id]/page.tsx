@@ -6,13 +6,13 @@ import { motion } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
   BookOpen,
   Calendar,
   Loader2,
   AlertCircle,
   Download,
   Library,
+  ExternalLink,
 } from "lucide-react";
 import {
   getDevotionalById,
@@ -107,7 +107,7 @@ export default function DevotionalViewPage({
 
       <section className="py-10 sm:py-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          {/* Top bar */}
+          {/* Breadcrumbs & Date */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,83 +117,75 @@ export default function DevotionalViewPage({
             <div className="flex items-center gap-3 flex-wrap">
               <Link
                 href="/devotionals"
-                className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
                 Archive
               </Link>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                {formattedDate}
-              </div>
+              <span className="text-gray-300">/</span>
+              <span className="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-none">
+                {devotional.title}
+              </span>
             </div>
 
-            <a
-              href={devotional.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-bold transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </a>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4" />
+              {formattedDate}
+            </div>
           </motion.div>
 
-          {/* PDF Embed */}
+          {/* Reading Interface */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="relative rounded-3xl overflow-hidden border border-gray-200/60 shadow-xl bg-white"
+            className="flex flex-col gap-6"
           >
-            {/* Decorative top stripe */}
-            <div className="h-1.5 w-full bg-linear-to-r from-primary via-amber-400 to-primary" />
-
-            <div className="p-2 sm:p-4">
-              <div
-                className="relative w-full rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"
-                style={{ height: "80vh", minHeight: "600px" }}
-              >
-                {/* PDF Object (Native Preview) */}
-                <object
-                  data={devotional.pdfUrl}
-                  type="application/pdf"
-                  className="w-full h-full"
+            {/* Action Bar */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 text-sm font-semibold text-gray-600">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Reading Mode
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={devotional.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 h-10 px-6 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <iframe
-                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
-                    title={devotional.title}
-                    className="w-full h-full border-none"
-                  >
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-4">
-                        <BookOpen className="w-8 h-8 text-primary" />
-                      </div>
-                      <p className="text-gray-600 font-medium mb-4">
-                        Unable to preview the PDF directly in this browser.
-                      </p>
-                      <a
-                        href={devotional.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
-                      >
-                        Open Full Devotional
-                      </a>
-                    </div>
-                  </iframe>
-                </object>
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </a>
+              </div>
+            </div>
 
-                {/* Floating "View Fullscreen" Hint for better UX */}
-                <div className="absolute bottom-6 right-6 pointer-events-none sm:pointer-events-auto">
-                  <a
-                    href={devotional.pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-gray-200 shadow-lg text-xs font-bold text-gray-700 hover:bg-white hover:scale-105 transition-all"
-                  >
-                    Full Screen View
-                  </a>
+            {/* Viewer */}
+            <div className="relative rounded-3xl overflow-hidden border border-gray-200/60 shadow-2xl bg-white group">
+              <div className="h-1.5 w-full bg-linear-to-r from-primary via-amber-400 to-primary" />
+
+              <div className="p-1 sm:p-2 bg-gray-50">
+                <div
+                  className="relative w-full rounded-2xl overflow-hidden bg-white"
+                  style={{ height: "85vh", minHeight: "700px" }}
+                >
+                  <embed
+                    src={`${devotional.pdfUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+                    type="application/pdf"
+                    className="w-full h-full"
+                  />
+
+                  {/* Overlay for readers with float tools */}
+                  <div className="absolute top-4 right-4 flex items-center gap-3">
+                    <a
+                      href={devotional.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-gray-200 shadow-2xl text-sm font-bold text-primary hover:bg-primary hover:text-white hover:scale-105 transition-all"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View Full Screen
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

@@ -23,13 +23,28 @@ export async function POST(request: Request) {
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000).toString();
+    const title = formData.get("title") as string | undefined;
+
+    // Create a sanitized filename from title if no publicId is provided
+    let finalPublicId = publicId;
+    if (!finalPublicId && title) {
+      finalPublicId = title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "") // Remove non-alphanumeric except spaces/hyphens
+        .replace(/[\s_-]+/g, "-") // Replace spaces/underscores with hyphens
+        .trim();
+
+      // Add a small random suffix to prevent exact duplicate collisions if titles are generic
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      finalPublicId = `${finalPublicId}-${randomSuffix}`;
+    }
 
     // Cloudinary signature params (alphabetical order)
     let paramsToSign = "";
-    if (publicId) {
-      paramsToSign = `folder=devotionals&overwrite=true&public_id=${publicId}&timestamp=${timestamp}${API_SECRET}`;
+    if (finalPublicId) {
+      paramsToSign = `access_mode=public&folder=devotionals&overwrite=true&public_id=${finalPublicId}&timestamp=${timestamp}${API_SECRET}`;
     } else {
-      paramsToSign = `folder=devotionals&timestamp=${timestamp}${API_SECRET}`;
+      paramsToSign = `access_mode=public&folder=devotionals&timestamp=${timestamp}${API_SECRET}`;
     }
 
     const signature = crypto
@@ -43,9 +58,10 @@ export async function POST(request: Request) {
     cloudinaryFormData.append("timestamp", timestamp);
     cloudinaryFormData.append("signature", signature);
     cloudinaryFormData.append("folder", "devotionals");
+    cloudinaryFormData.append("access_mode", "public");
 
-    if (publicId) {
-      cloudinaryFormData.append("public_id", publicId);
+    if (finalPublicId) {
+      cloudinaryFormData.append("public_id", finalPublicId);
       cloudinaryFormData.append("overwrite", "true");
     }
 
