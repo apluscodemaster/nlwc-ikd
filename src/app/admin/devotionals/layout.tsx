@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   signOut,
   User,
+  getAdditionalUserInfo,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,7 +23,6 @@ import {
   EyeOff,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 // ──────────────────────────────────────────────
 // Auth Context
@@ -115,7 +115,16 @@ export default function AdminLayout({
     setGoogleLoggingIn(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const additionalInfo = getAdditionalUserInfo(result);
+
+      if (additionalInfo?.isNewUser) {
+        // Sign out immediately if the user was just created (not pre-existing)
+        await signOut(auth);
+        setLoginError(
+          "Access Denied: This account is not registered as an administrator. Please contact the system owner.",
+        );
+      }
     } catch (err: unknown) {
       setLoginError(getFriendlyErrorMessage(err as FirebaseAuthError));
     } finally {

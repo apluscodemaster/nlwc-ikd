@@ -16,7 +16,18 @@ import {
   AlertCircle,
   GripVertical,
   BookOpen,
+  Search,
+  Filter,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   getAllDevotionals,
   createDevotional,
@@ -55,6 +66,10 @@ export default function AdminDevotionalsPage() {
   const [replaceProgress, setReplaceProgress] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -216,10 +231,11 @@ export default function AdminDevotionalsPage() {
 
   // ── Delete handler ──
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure? This will delete the PDF and all metadata."))
-      return;
+  const handleDelete = async () => {
+    if (!confirmDeleteId) return;
 
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     setDeletingId(id);
     try {
       await deleteDevotional(id);
@@ -242,31 +258,114 @@ export default function AdminDevotionalsPage() {
 
   const isScheduledFuture = (t: Timestamp) => t.toDate() > new Date();
 
+  const filteredDevotionals = devotionals.filter((d) => {
+    const matchesTitle = d.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const date = d.scheduledDate.toDate();
+
+    const start = filterStartDate
+      ? new Date(filterStartDate + "T00:00:00")
+      : null;
+    const end = filterEndDate ? new Date(filterEndDate + "T23:59:59") : null;
+
+    const matchesStart = !start || date >= start;
+    const matchesEnd = !end || date <= end;
+
+    return matchesTitle && matchesStart && matchesEnd;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+  };
+
+  const isFiltered = searchTerm || filterStartDate || filterEndDate;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
+      {/* Header & Filter */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div className="flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Manage Devotionals
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 mb-6">
             Upload, edit, and manage daily devotional PDFs
           </p>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-11 pl-11 pr-4 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+              />
+            </div>
+
+            {/* Date Range Inputs */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="h-11 px-4 rounded-2xl border border-gray-200 bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+                  placeholder="Start Date"
+                />
+                {!filterStartDate && (
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs hidden sm:block">
+                    From
+                  </span>
+                )}
+              </div>
+              <span className="text-gray-400 text-xs">to</span>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="h-11 px-4 rounded-2xl border border-gray-200 bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+                  placeholder="End Date"
+                />
+                {!filterEndDate && (
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs hidden sm:block">
+                    To
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Clear Button */}
+            {isFiltered && (
+              <button
+                onClick={clearFilters}
+                className="h-11 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-500 transition-all flex items-center gap-2"
+              >
+                <X className="w-3.5 h-3.5" />
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={refresh}
             disabled={loading}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-11 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={() => setShowUploadPanel(true)}
-            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="inline-flex items-center gap-2 h-11 px-6 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <Plus className="w-4 h-4" />
             Upload
@@ -459,28 +558,43 @@ export default function AdminDevotionalsPage() {
           <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
           <p className="text-muted-foreground font-medium">Loading...</p>
         </div>
-      ) : devotionals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
+      ) : filteredDevotionals.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
           <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">
             <BookOpen className="w-10 h-10 text-primary/40" />
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            No devotionals yet
+            No devotionals found
           </h3>
           <p className="text-muted-foreground text-center max-w-md mb-6">
-            Upload your first devotional PDF to get started.
+            {isFiltered
+              ? `No results match your current filters. Try adjusting your search or date range.`
+              : "Upload your first devotional PDF to get started."}
           </p>
-          <button
-            onClick={() => setShowUploadPanel(true)}
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Upload Devotional
-          </button>
+          {!isFiltered && (
+            <button
+              onClick={() => setShowUploadPanel(true)}
+              className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Upload Devotional
+            </button>
+          )}
         </div>
       ) : (
         <div className="rounded-3xl border border-gray-100 bg-white shadow-lg overflow-hidden">
           <div className="h-1 bg-linear-to-r from-primary via-amber-400 to-primary" />
+
+          <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+            <span className="text-sm font-bold text-gray-700">
+              {filteredDevotionals.length} Devotional(s)
+              {isFiltered && (
+                <span className="text-muted-foreground font-normal ml-2">
+                  (Filters active)
+                </span>
+              )}
+            </span>
+          </div>
 
           {/* Table header */}
           <div className="hidden sm:grid grid-cols-[1fr_140px_100px_180px] gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -492,7 +606,7 @@ export default function AdminDevotionalsPage() {
 
           {/* Table rows */}
           <div className="divide-y divide-gray-50">
-            {devotionals.map((d) => {
+            {filteredDevotionals.map((d) => {
               const isFuture = isScheduledFuture(d.scheduledDate);
 
               return (
@@ -595,7 +709,7 @@ export default function AdminDevotionalsPage() {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(d.id)}
+                          onClick={() => setConfirmDeleteId(d.id)}
                           disabled={deletingId === d.id}
                           className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors disabled:opacity-50"
                           title="Delete"
@@ -624,6 +738,45 @@ export default function AdminDevotionalsPage() {
         onChange={handleReplace}
         className="hidden"
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+      >
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground py-2">
+              Are you sure you want to delete{" "}
+              <span className="font-bold text-gray-900">
+                &quot;{devotionals.find((d) => d.id === confirmDeleteId)?.title}
+                &quot;
+              </span>
+              ? This action will permanently remove the PDF file and all
+              associated metadata. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex sm:justify-end gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDeleteId(null)}
+              className="rounded-xl px-6 h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="rounded-xl px-6 h-11 bg-red-600 hover:bg-red-700"
+            >
+              Delete Permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
