@@ -165,6 +165,7 @@ export async function createDevotional(
 ): Promise<string> {
   const formData = new FormData();
   formData.append("file", input.file);
+  formData.append("title", input.title); // Send title for better filename control
 
   onProgress?.(20);
 
