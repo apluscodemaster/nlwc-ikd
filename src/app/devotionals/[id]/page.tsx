@@ -150,12 +150,52 @@ export default function DevotionalViewPage({
             <div className="h-1.5 w-full bg-linear-to-r from-primary via-amber-400 to-primary" />
 
             <div className="p-2 sm:p-4">
-              <iframe
-                src={`${devotional.pdfUrl}#toolbar=1&navpanes=0`}
-                title={devotional.title}
-                className="w-full rounded-2xl border border-gray-100"
+              <div
+                className="relative w-full rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden"
                 style={{ height: "80vh", minHeight: "600px" }}
-              />
+              >
+                {/* PDF Object (Native Preview) */}
+                <object
+                  data={devotional.pdfUrl}
+                  type="application/pdf"
+                  className="w-full h-full"
+                >
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
+                    title={devotional.title}
+                    className="w-full h-full border-none"
+                  >
+                    <div className="flex flex-col items-center justify-center p-8 text-center">
+                      <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-4">
+                        <BookOpen className="w-8 h-8 text-primary" />
+                      </div>
+                      <p className="text-gray-600 font-medium mb-4">
+                        Unable to preview the PDF directly in this browser.
+                      </p>
+                      <a
+                        href={devotional.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                      >
+                        Open Full Devotional
+                      </a>
+                    </div>
+                  </iframe>
+                </object>
+
+                {/* Floating "View Fullscreen" Hint for better UX */}
+                <div className="absolute bottom-6 right-6 pointer-events-none sm:pointer-events-auto">
+                  <a
+                    href={devotional.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-gray-200 shadow-lg text-xs font-bold text-gray-700 hover:bg-white hover:scale-105 transition-all"
+                  >
+                    Full Screen View
+                  </a>
+                </div>
+              </div>
             </div>
           </motion.div>
 
