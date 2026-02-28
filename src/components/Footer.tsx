@@ -63,7 +63,7 @@ export default function Footer() {
 
   return (
     <footer className="w-full mt-12 bg-gray-800 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
         {/* Column 1 */}
         <div className="sm:col-span-2 lg:col-span-1">
           <div className="mb-4">
@@ -84,114 +84,124 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Column 2: Quick Links */}
-        <div>
-          <h3 className="font-semibold mb-4 text-white text-lg">Quick Links</h3>
-          <ul className="space-y-3">
-            <li>
-              <Link
-                href="/about"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                About
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/media"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Audio Messages
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/fellowship"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                House Fellowships
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://nlwc.church/blog/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Blog
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/gallery"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Gallery
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/contact"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Contact
-              </Link>
-            </li>
-          </ul>
-        </div>
+        {/* Middle Columns: Quick Links & Resources - Side by side on mobile */}
+        <div className="grid grid-cols-2 gap-8 sm:col-span-2 lg:col-span-2">
+          {/* Column 2: Quick Links */}
+          <div>
+            <h3 className="font-semibold mb-4 text-white text-lg">
+              Quick Links
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  href="/about"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/sermons"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Audio Messages
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/fellowship"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  House Fellowships
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://nlwc.church/blog/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/gallery"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Gallery
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-        {/* Column 3: Resources */}
-        <div>
-          <h3 className="font-semibold mb-4 text-white text-lg">Resources</h3>
-          <ul className="space-y-3">
-            <li>
-              <Link
-                href="/listen-live"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Listen live
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/live"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Watch live
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/category/sunday-school-manual/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Sunday School Manuals
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="https://ikorodu.nlwc.church/category/message-transcripts/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors"
-              >
-                <HiChevronRight color={orange} />
-                Message Transcripts
-              </Link>
-            </li>
-          </ul>
+          {/* Column 3: Resources */}
+          <div>
+            <h3 className="font-semibold mb-4 text-white text-lg">Resources</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  href="/devotionals"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Daily Devotionals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/listen-live"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Listen live
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/live"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Watch live
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/manuals"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Sunday School Manuals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/transcripts"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Message Transcripts
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* Column 4: Subscribe & contact */}

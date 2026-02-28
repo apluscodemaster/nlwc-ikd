@@ -18,8 +18,13 @@ import { AnimatePresence, motion } from "framer-motion";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
+  const totalSeconds = Math.floor(time);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}hr ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
@@ -87,7 +92,7 @@ export default function MobileFullPlayer({
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-60 bg-linear-to-b from-gray-900 via-gray-800 to-black flex flex-col sm:hidden"
+          className="fixed inset-0 z-60 bg-linear-to-b from-gray-900 via-gray-800 to-black flex flex-col"
         >
           {/* Top Bar */}
           <div className="flex items-center justify-between px-5 pt-4 pb-2">
