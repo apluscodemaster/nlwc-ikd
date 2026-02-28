@@ -147,6 +147,15 @@ export default function DevotionalViewPage({
                 Reading Mode
               </div>
               <div className="flex items-center gap-2">
+                {/* <a
+                  href={devotional.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex sm:hidden items-center gap-2 h-10 px-4 rounded-xl bg-white border border-gray-200 text-primary text-sm font-bold hover:bg-primary hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Full Screen
+                </a> */}
                 <a
                   href={devotional.pdfUrl}
                   target="_blank"
@@ -174,8 +183,8 @@ export default function DevotionalViewPage({
                     title={devotional.title}
                   />
 
-                  {/* Overlay for readers with float tools */}
-                  <div className="absolute top-4 right-4 flex items-center gap-3">
+                  {/* Overlay for readers with float tools — hidden on mobile to avoid blocking PDF */}
+                  <div className="absolute top-4 right-4 hidden sm:flex items-center gap-3">
                     <a
                       href={devotional.pdfUrl}
                       target="_blank"
