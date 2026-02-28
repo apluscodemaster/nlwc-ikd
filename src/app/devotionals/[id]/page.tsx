@@ -168,10 +168,10 @@ export default function DevotionalViewPage({
                   className="relative w-full rounded-2xl overflow-hidden bg-white"
                   style={{ height: "85vh", minHeight: "700px" }}
                 >
-                  <embed
-                    src={`${devotional.pdfUrl}#toolbar=1&navpanes=0&scrollbar=1`}
-                    type="application/pdf"
-                    className="w-full h-full"
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
+                    className="w-full h-full border-none"
+                    title={devotional.title}
                   />
 
                   {/* Overlay for readers with float tools */}
