@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Radio, Activity, Maximize2, Minimize2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { isCurrentlyLive } from "@/lib/liveSchedule";
 
 const WAYSTREAM_EMBED_URL =
   process.env.NEXT_PUBLIC_WAYSTREAM_EMBED_URL ||
@@ -11,6 +12,15 @@ const WAYSTREAM_EMBED_URL =
 
 export default function AudioLivePlayer() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isLive, setIsLive] = useState(false);
+
+  // Check live status every 30 seconds
+  useEffect(() => {
+    const check = () => setIsLive(isCurrentlyLive());
+    check();
+    const interval = setInterval(check, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
@@ -33,12 +43,14 @@ export default function AudioLivePlayer() {
               <div className="absolute inset-0 rounded-[32px] border-2 border-white/30 animate-ping opacity-20" />
               <div className="absolute inset-0 rounded-[32px] border-2 border-white/20 animate-ping opacity-10 [animation-delay:0.5s]" />
 
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-widest">
-                  Live Now
-                </span>
-              </div>
+              {isLive && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">
+                    Live Now
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Clock, Radio } from "lucide-react";
+import { Clock, Radio, Calendar } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import {
+  isCurrentlyLive,
+  getNextService,
+  type NextServiceInfo,
+} from "@/lib/liveSchedule";
 
 interface TimeLeftState {
   days: number;
@@ -20,44 +25,27 @@ export default function ServiceCountdown() {
     seconds: 0,
   });
   const [isLive, setIsLive] = useState(false);
+  const [nextService, setNextService] = useState<NextServiceInfo | null>(null);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const dayOfWeek = now.getDay();
-      const currentHour = now.getHours();
 
-      // Check if we're currently live (Sunday between 8:00 AM and 12:00 PM)
-      if (dayOfWeek === 0 && currentHour >= 8 && currentHour < 12) {
+      // Check if currently in a live service window
+      if (isCurrentlyLive(now)) {
         setIsLive(true);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setNextService(null);
         return;
       }
 
       setIsLive(false);
 
-      // Calculate next Sunday at 8:00 AM
-      const nextSunday = new Date();
-      const daysUntilSunday = (7 - dayOfWeek) % 7;
+      // Calculate countdown to the next service
+      const next = getNextService(now);
+      setNextService(next);
 
-      // If it's Sunday but after 12 PM, go to next Sunday
-      if (dayOfWeek === 0 && currentHour >= 12) {
-        nextSunday.setDate(now.getDate() + 7);
-      } else if (daysUntilSunday === 0 && currentHour >= 8) {
-        // It's Sunday but service not started yet handled above
-        nextSunday.setDate(now.getDate() + 7);
-      } else {
-        nextSunday.setDate(now.getDate() + daysUntilSunday);
-      }
-
-      nextSunday.setHours(8, 0, 0, 0);
-
-      // If Sunday 8am has passed today, move to next Sunday
-      if (now > nextSunday) {
-        nextSunday.setDate(nextSunday.getDate() + 7);
-      }
-
-      const difference = nextSunday.getTime() - now.getTime();
+      const difference = next.date.getTime() - now.getTime();
 
       if (difference > 0) {
         setTimeLeft({
@@ -127,10 +115,25 @@ export default function ServiceCountdown() {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-sm mb-6">
+      <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-sm mb-4">
         <Clock className="w-4 h-4 animate-pulse" />
         Next Service Starts In
       </div>
+
+      {/* Service name + date badge */}
+      {nextService && (
+        <div className="flex items-center gap-2 mb-6 px-5 py-2.5 rounded-full bg-primary/5 border border-primary/10">
+          <Calendar className="w-4 h-4 text-primary/70" />
+          <span className="text-sm font-bold text-gray-800">
+            {nextService.label}
+          </span>
+          <span className="text-sm text-gray-400">—</span>
+          <span className="text-sm font-semibold text-primary">
+            {nextService.formattedDate}
+          </span>
+        </div>
+      )}
+
       <div className="flex gap-2 sm:gap-4">
         <TimeUnit value={timeLeft.days} label="Days" />
         <TimeUnit value={timeLeft.hours} label="Hours" />
