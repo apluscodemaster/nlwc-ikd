@@ -40,9 +40,17 @@ export default function LivePage() {
 
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
 
-  // Scroll to top on mount to ensure user sees the video section
+  // Scroll to top on mount — delayed so it runs after Next.js scroll restoration.
+  // Skip when a #hash is present (e.g. /live#live-player from the listen-live page).
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (window.location.hash) return;
+    // Use a small timeout + rAF to run after Next.js scroll restoration
+    const timeout = setTimeout(() => {
+      requestAnimationFrame(() =>
+        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }),
+      );
+    }, 50);
+    return () => clearTimeout(timeout);
   }, []);
 
   const recentVideos = videos.slice(0, 3);
