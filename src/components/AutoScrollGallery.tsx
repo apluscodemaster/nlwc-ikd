@@ -55,7 +55,7 @@ export default function AutoScrollGallery() {
         </h3>
         <p className="text-gray-500 max-w-2xl mx-auto text-base md:text-lg font-medium">
           A continuous flow of memories captured during the Season of The Spirit
-          &apos;26. The legacy of worship continues.
+          &apos;26.
         </p>
       </div>
 
