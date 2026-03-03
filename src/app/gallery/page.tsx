@@ -2,14 +2,15 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import type { DateColumns } from "@/lib/sheets";
-import Hero from "@/components/Hero";
-import AutoScrollGallery from "@/components/AutoScrollGallery";
+import PageHeader from "@/components/shared/PageHeader";
 import TabGallery from "@/components/TabGallery";
+import AutoScrollGallery from "@/components/AutoScrollGallery";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Camera } from "lucide-react";
 
 const fetcher = async (): Promise<{ dates: DateColumns[] }> => {
   const res = await fetch("/api/sheet");
@@ -30,27 +31,45 @@ export default function GalleryPage() {
   const dates = data?.dates || [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <main className="pt-0">
-        <Hero />
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+        <PageHeader
+          title="Our Worship Experience"
+          subtitle="Relive the moments of worship, fellowship, and growth."
+          backgroundImage="/gallery-bg.avif"
+        />
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
+          <div className="flex flex-col items-center text-center mb-16 space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2">
+              <Camera className="w-8 h-8" />
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
+              Captured <span className="text-primary text-italic">Moments</span>
+            </h2>
+            <p className="text-gray-500 max-w-2xl text-lg font-medium leading-relaxed">
+              Every image tells a story of God&apos;s faithfulness and our
+              collective journey in the Faith.
+            </p>
+          </div>
+
           {/* Loading State */}
           {isLoading && (
-            <div className="space-y-8">
-              <div className="flex gap-4 overflow-hidden border-b pb-4">
+            <div className="space-y-12">
+              <div className="flex gap-4 overflow-hidden border-b border-gray-100 pb-6">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton
                     key={i}
-                    className="h-12 w-40 rounded-lg flex-shrink-0"
+                    className="h-12 w-48 rounded-2xl flex-shrink-0"
                   />
                 ))}
               </div>
-              <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <Skeleton
                     key={i}
-                    className="w-full mb-4 rounded-xl"
-                    style={{ height: `${200 + (i % 3) * 100}px` }}
+                    className="w-full mb-6 rounded-[32px]"
+                    style={{ height: `${250 + (i % 3) * 120}px` }}
                   />
                 ))}
               </div>
@@ -59,37 +78,52 @@ export default function GalleryPage() {
 
           {/* Error State */}
           {isError && (
-            <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-destructive/5 rounded-3xl border border-destructive/10">
-              <AlertCircle className="w-12 h-12 text-destructive" />
+            <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 bg-red-50/50 rounded-[48px] border border-red-100 shadow-sm px-6">
+              <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <AlertCircle className="w-10 h-10" />
+              </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-foreground">
-                  Something went wrong
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Oops! Something went wrong
                 </h3>
-                <p className="text-muted-foreground max-w-sm">
-                  {(error as Error).message}
+                <p className="text-gray-500 max-w-sm mx-auto">
+                  {(error as Error).message ||
+                    "We couldn't load the gallery at this moment. Please try again soon."}
                 </p>
               </div>
-              <Button onClick={() => refetch()} className="gap-2 shadow-lg">
-                <RefreshCw className="w-4 h-4" />
-                Try Again
+              <Button
+                onClick={() => refetch()}
+                className="gap-2 h-14 px-8 rounded-full bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all"
+              >
+                <RefreshCw className="w-5 h-5" />
+                Retry Loading Gallery
               </Button>
             </div>
           )}
 
           {/* Empty State */}
           {!isLoading && !error && dates.length === 0 && (
-            <div className="text-center py-24 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+            <div className="text-center py-32 bg-gray-50/50 rounded-[48px] border border-dashed border-gray-200 px-6">
+              <Camera className="w-16 h-16 text-gray-300 mx-auto mb-6" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                No Memories Found
+              </h3>
               <p className="text-gray-500 font-medium">
-                No joyful moments found yet. Check back soon!
+                Our photographers are hard at work! Check back soon for new
+                joyful moments.
               </p>
             </div>
           )}
 
-          {/* Gallery */}
+          {/* Gallery Content */}
           {!isLoading && !error && dates.length > 0 && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
               <TabGallery dates={dates} />
-            </>
+            </motion.div>
           )}
         </section>
 
