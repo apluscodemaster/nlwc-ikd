@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
+import { isCurrentlyLive } from "@/lib/liveSchedule";
 
 const TELEGRAM_URL = "https://bit.ly/nlwcikorodu_audio";
 const PAGE_URL = "https://nlwc-ikd-gallery.vercel.app/live";
@@ -40,7 +41,16 @@ function XTwitterIcon({ className }: { className?: string }) {
 export default function LivePlayer() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [streamEmbedUrl, setStreamEmbedUrl] = useState(FALLBACK_EMBED_URL);
+  const [isLive, setIsLive] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+
+  // Check live status every 30 seconds
+  useEffect(() => {
+    const check = () => setIsLive(isCurrentlyLive());
+    check();
+    const interval = setInterval(check, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch the live stream URL from Google Sheets
   useEffect(() => {
@@ -109,11 +119,13 @@ export default function LivePlayer() {
           animate={{ opacity: 1, scale: 1 }}
           className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl bg-black border border-white/5"
         >
-          {/* Pulsing Live indicator */}
-          <div className="absolute top-6 left-6 z-10 flex items-center gap-3 px-4 py-2 bg-red-600 rounded-full text-white text-xs font-black uppercase tracking-widest shadow-xl animate-pulse">
-            <Radio className="w-4 h-4" />
-            Live Now
-          </div>
+          {/* Pulsing Live indicator — only visible during service */}
+          {isLive && (
+            <div className="absolute top-6 left-6 z-10 flex items-center gap-3 px-4 py-2 bg-red-600 rounded-full text-white text-xs font-black uppercase tracking-widest shadow-xl animate-pulse">
+              <Radio className="w-4 h-4" />
+              Live Now
+            </div>
+          )}
 
           {/* YouTube Embed */}
           <iframe

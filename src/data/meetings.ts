@@ -15,7 +15,7 @@ export const meetings: Meetings[] = [
     id: "1",
     name: "Brothers' Meeting",
     description:
-      "Empowering brothers to be spiritual leaders in their homes and community.",
+      "Raising brothers to be sound in living the life of God at home and the community.",
     icon: Users,
     color: "bg-blue-50",
     iconColor: "text-blue-600",
@@ -51,7 +51,7 @@ export const meetings: Meetings[] = [
     id: "5",
     name: "Prayer Meeting",
     description:
-      "Deepening our understanding of scripted through systematic study and discussion.",
+      "Praying through God's Word together, seeking guidance and transformation.",
     icon: HandHeart,
     color: "bg-green-50",
     iconColor: "text-green-600",
@@ -59,8 +59,7 @@ export const meetings: Meetings[] = [
   {
     id: "6",
     name: "Sithrah",
-    description:
-      "Using technology to spread the gospel through live streams and recordings.",
+    description: "An outreach to integrate the doctrine into our daily living.",
     icon: Mic2,
     color: "bg-purple-50",
     iconColor: "text-purple-600",
