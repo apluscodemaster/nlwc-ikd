@@ -61,8 +61,8 @@ export default function AutoScrollGallery() {
 
       <div className="relative group">
         {/* Superior Gradient Masks for Perfectly Seamless Fade */}
-        <div className="absolute inset-y-0 left-0 w-32 md:w-64 bg-linear-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-32 md:w-64 bg-linear-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 left-0 w-12 sm:w-32 md:w-64 bg-linear-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-12 sm:w-32 md:w-64 bg-linear-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
 
         <div className="space-y-6 md:space-y-8">
           {/* Top Row (scrolls left) */}
