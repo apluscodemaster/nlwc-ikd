@@ -49,25 +49,57 @@ interface TranscriptStub {
 
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
   try {
-    const res = await fetch("/api/transcripts?per_page=100");
-    if (!res.ok) return [];
-    const json = await res.json();
-    const transcripts = json.data || json.transcripts || [];
-    return transcripts.map((t: { slug: string; title: string }) => ({
-      slug: t.slug,
-      title: t.title,
-    }));
+    const allTranscripts: TranscriptStub[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    // Paginate through all transcript pages to get complete list
+    while (page <= totalPages) {
+      const res = await fetch(`/api/transcripts?per_page=100&page=${page}`);
+      if (!res.ok) break;
+      const json = await res.json();
+      const transcripts = json.data || json.transcripts || [];
+      allTranscripts.push(
+        ...transcripts.map((t: { slug: string; title: string }) => ({
+          slug: t.slug,
+          title: t.title,
+        })),
+      );
+      totalPages = json.pagination?.totalPages || 1;
+      page++;
+    }
+
+    return allTranscripts;
   } catch {
     return [];
   }
 }
 
 function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    title
+      .toLowerCase()
+      // Decode common HTML entities
+      .replace(/&amp;/g, "&")
+      .replace(/&#8217;/g, "'")
+      .replace(/&#8216;/g, "'")
+      .replace(/&#8220;/g, '"')
+      .replace(/&#8221;/g, '"')
+      .replace(/&rsquo;/g, "'")
+      .replace(/&lsquo;/g, "'")
+      .replace(/&rdquo;/g, '"')
+      .replace(/&ldquo;/g, '"')
+      .replace(/&ndash;/g, "-")
+      .replace(/&mdash;/g, "-")
+      // Normalize unicode quotes/dashes
+      .replace(/[\u2018\u2019\u0027]/g, "'")
+      .replace(/[\u201C\u201D\u0022]/g, '"')
+      .replace(/[\u2013\u2014]/g, "-")
+      // Remove all non-alphanumeric chars except spaces
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 function findTranscriptSlug(
@@ -75,16 +107,52 @@ function findTranscriptSlug(
   transcripts: TranscriptStub[],
 ): string | null {
   const normalizedSermon = normalizeTitle(sermonTitle);
+  if (!normalizedSermon) return null;
+
+  // 1. Exact match first
   for (const t of transcripts) {
-    const normalizedTranscript = normalizeTitle(t.title);
-    if (
-      normalizedSermon === normalizedTranscript ||
-      normalizedSermon.includes(normalizedTranscript) ||
-      normalizedTranscript.includes(normalizedSermon)
-    ) {
+    if (normalizeTitle(t.title) === normalizedSermon) {
       return t.slug;
     }
   }
+
+  // 2. Substring match — only if the sermon title is long enough to avoid false positives
+  if (normalizedSermon.length >= 10) {
+    for (const t of transcripts) {
+      const normalizedTranscript = normalizeTitle(t.title);
+      if (
+        normalizedSermon.includes(normalizedTranscript) ||
+        normalizedTranscript.includes(normalizedSermon)
+      ) {
+        return t.slug;
+      }
+    }
+  }
+
+  // 3. Word-overlap scoring for fuzzy matching
+  const sermonWords = normalizedSermon.split(" ").filter((w) => w.length > 2);
+  if (sermonWords.length >= 2) {
+    let bestMatch: { slug: string; score: number } | null = null;
+    for (const t of transcripts) {
+      const transcriptWords = normalizeTitle(t.title)
+        .split(" ")
+        .filter((w) => w.length > 2);
+      if (transcriptWords.length === 0) continue;
+
+      const matchingWords = sermonWords.filter((w) =>
+        transcriptWords.includes(w),
+      );
+      const score =
+        matchingWords.length /
+        Math.max(sermonWords.length, transcriptWords.length);
+      // Require at least 60% word overlap
+      if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { slug: t.slug, score };
+      }
+    }
+    if (bestMatch) return bestMatch.slug;
+  }
+
   return null;
 }
 
