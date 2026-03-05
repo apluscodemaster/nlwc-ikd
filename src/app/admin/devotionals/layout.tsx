@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAdminAuth } from "@/app/admin/layout";
-import { BookOpen, LogOut } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 /**
  * Devotionals sub-layout.
@@ -16,7 +15,8 @@ export default function DevotionalsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, logout } = useAdminAuth();
+  // Authentication is handled by parent /admin/layout.tsx
+  // No need for local logout/user here anymore.
 
   return (
     <div className="flex flex-col min-h-full">
@@ -31,16 +31,9 @@ export default function DevotionalsLayout({
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-xs text-muted-foreground hidden sm:block">
-              {user?.email}
+            <span className="text-xs text-muted-foreground">
+              Administrator Access
             </span>
-            <button
-              onClick={logout}
-              className="inline-flex items-center gap-2 h-8 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-600 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign Out
-            </button>
           </div>
         </div>
       </div>
