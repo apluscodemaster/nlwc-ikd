@@ -137,6 +137,9 @@ interface FetchPostsOptions {
   orderBy?: "date" | "title" | "id" | "modified";
   order?: "asc" | "desc";
   embed?: boolean;
+  before?: string; // ISO date string — posts published before this date
+  after?: string; // ISO date string — posts published after this date
+  exclude?: number[]; // Post IDs to exclude
 }
 
 /**
@@ -168,6 +171,18 @@ export async function fetchWPPosts(
 
   if (search) {
     params.append("search", search);
+  }
+
+  if (options.before) {
+    params.append("before", options.before);
+  }
+
+  if (options.after) {
+    params.append("after", options.after);
+  }
+
+  if (options.exclude && options.exclude.length > 0) {
+    params.append("exclude", options.exclude.join(","));
   }
 
   if (embed) {
@@ -470,7 +485,7 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     formattedDate: formatDate(post.date),
     slug: post.slug,
     link: post.link,
-    thumbnail: getFeaturedImage(post) || "/open_bible.jpg",
+    thumbnail: getFeaturedImage(post) || undefined,
   };
 }
 
@@ -516,6 +531,63 @@ export async function getSundaySchoolManuals(
     totalPages,
     total,
   };
+}
+
+/**
+ * Get adjacent manuals (previous and next) by date
+ */
+export async function getAdjacentManuals(
+  currentDate: string,
+  currentSlug: string,
+): Promise<{
+  previous: { title: string; slug: string } | null;
+  next: { title: string; slug: string } | null;
+}> {
+  try {
+    // Fetch 1 manual published BEFORE the current date (newer → older = desc)
+    const { posts: olderPosts } = await fetchWPPosts({
+      categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
+      perPage: 2,
+      page: 1,
+      orderBy: "date",
+      order: "desc",
+      before: currentDate,
+      embed: false,
+    });
+
+    // Fetch 1 manual published AFTER the current date (older → newer = asc)
+    const { posts: newerPosts } = await fetchWPPosts({
+      categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
+      perPage: 2,
+      page: 1,
+      orderBy: "date",
+      order: "asc",
+      after: currentDate,
+      embed: false,
+    });
+
+    // Filter out the current post by slug
+    const prevPost = olderPosts.find((p) => p.slug !== currentSlug) || null;
+    const nextPost = newerPosts.find((p) => p.slug !== currentSlug) || null;
+
+    return {
+      previous: prevPost
+        ? {
+            title: sanitizeWPText(prevPost.title.rendered),
+            slug: prevPost.slug,
+          }
+        : null,
+      next: nextPost
+        ? {
+            title: sanitizeWPText(nextPost.title.rendered),
+            slug: nextPost.slug,
+          }
+        : null,
+    };
+  } catch (error) {
+    console.error("Failed to fetch adjacent manuals:", error);
+    return { previous: null, next: null };
+  }
 }
 
 /**

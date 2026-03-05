@@ -2,10 +2,11 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { FileText, Calendar, ChevronRight, BookMarked } from "lucide-react";
+import { FileText, Calendar, ChevronRight } from "lucide-react";
 import type { SundaySchoolManual } from "@/lib/wordpress";
 import Link from "next/link";
 import Image from "next/image";
+import ManualThumbnail from "./ManualThumbnail";
 import {
   highlightSearchInHtml,
   highlightSearchInText,
@@ -62,9 +63,7 @@ export default function ManualCard({
             <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
           </div>
         ) : (
-          <div className="relative aspect-video bg-linear-to-br from-amber-50 to-amber-100 flex items-center justify-center">
-            <BookMarked className="w-16 h-16 text-amber-300" />
-          </div>
+          <ManualThumbnail title={manual.title} />
         )}
 
         <div className="p-5 sm:p-6">

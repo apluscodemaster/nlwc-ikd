@@ -6,9 +6,14 @@ import { toast } from "sonner";
 interface ShareButtonProps {
   title: string;
   url: string;
+  variant?: "default" | "light";
 }
 
-export default function ShareButton({ title, url }: ShareButtonProps) {
+export default function ShareButton({
+  title,
+  url,
+  variant = "default",
+}: ShareButtonProps) {
   const handleShare = () => {
     if (typeof window !== "undefined" && navigator.share) {
       navigator
@@ -28,10 +33,15 @@ export default function ShareButton({ title, url }: ShareButtonProps) {
     }
   };
 
+  const colorClass =
+    variant === "light"
+      ? "text-white/80 hover:text-white"
+      : "hover:text-primary";
+
   return (
     <button
       onClick={handleShare}
-      className="flex items-center gap-2 hover:text-primary transition-colors ml-auto"
+      className={`flex items-center gap-2 transition-colors ml-auto ${colorClass}`}
       aria-label="Share this transcript"
     >
       <Share2 className="w-4 h-4" />
