@@ -23,6 +23,8 @@ import {
   Plus,
   FileAudio,
   ImagePlus,
+  Pencil,
+  Save,
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -66,6 +68,7 @@ interface ContentItem {
   speaker?: string;
   type: string;
   excerpt?: string;
+  content?: string;
   audioUrl?: string;
   thumbnail?: string;
   series?: string;
@@ -231,9 +234,11 @@ function RichTextEditor({
 function ContentListItem({
   item,
   type,
+  onEdit,
 }: {
   item: ContentItem;
   type: ContentType;
+  onEdit?: (item: ContentItem) => void;
 }) {
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all group">
@@ -299,16 +304,27 @@ function ContentListItem({
         )}
       </div>
 
-      {/* Status badge */}
-      <span
-        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex-shrink-0 ${
-          item.status === "publish"
-            ? "bg-emerald-50 text-emerald-600"
-            : "bg-amber-50 text-amber-600"
-        }`}
-      >
-        {item.status === "publish" ? "Live" : "Draft"}
-      </span>
+      {/* Actions */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {onEdit && (
+          <button
+            onClick={() => onEdit(item)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10 text-gray-400 hover:text-primary transition-all cursor-pointer"
+            title="Edit"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <span
+          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+            item.status === "publish"
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-amber-50 text-amber-600"
+          }`}
+        >
+          {item.status === "publish" ? "Live" : "Draft"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -339,6 +355,13 @@ export default function AdminChurchContentPage() {
   // Series state
   const [seriesList, setSeriesList] = useState<SeriesItem[]>([]);
   const [loadingSeries, setLoadingSeries] = useState(false);
+
+  // Edit state
+  const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editStatus, setEditStatus] = useState<"draft" | "publish">("draft");
+  const [saving, setSaving] = useState(false);
 
   const sermonForm = useForm<SermonFormData>({
     defaultValues: {
@@ -446,6 +469,50 @@ export default function AdminChurchContentPage() {
     if (file) {
       setAudioFileName(file.name);
       sermonForm.setValue("audioFile", e.target.files);
+    }
+  };
+
+  // ── Handle Edit Click ──
+  const handleEditItem = (item: ContentItem) => {
+    setEditingItem(item);
+    setEditTitle(item.title);
+    setEditContent(item.content || item.excerpt || "");
+    setEditStatus(item.status as "draft" | "publish");
+  };
+
+  // ── Save Edit ──
+  const handleSaveEdit = async () => {
+    if (!editingItem) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/wp/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingItem.id,
+          title: editTitle,
+          content: editContent,
+          status: editStatus,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Post updated successfully!", {
+          description: `Post #${data.postId} saved.`,
+        });
+        setEditingItem(null);
+        fetchContent(activeTab, contentPage);
+      } else {
+        toast.error("Failed to update", {
+          description: data.error || "Unknown error",
+        });
+      }
+    } catch {
+      toast.error("Save failed", {
+        description: "Could not reach the server.",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -720,6 +787,7 @@ export default function AdminChurchContentPage() {
                         key={item.id}
                         item={item}
                         type={activeTab}
+                        onEdit={handleEditItem}
                       />
                     ))}
                   </div>
@@ -1317,6 +1385,141 @@ export default function AdminChurchContentPage() {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══════════════ EDIT MODAL ══════════════ */}
+      <AnimatePresence>
+        {editingItem && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-50"
+              onClick={() => setEditingItem(null)}
+            />
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:max-h-[85vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Pencil className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">
+                      Edit{" "}
+                      {activeTab === "sermon"
+                        ? "Sermon"
+                        : activeTab === "transcript"
+                          ? "Transcript"
+                          : "Manual"}
+                    </h3>
+                    <p className="text-[11px] text-gray-400">
+                      Post #{editingItem.id}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Title
+                  </label>
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Content
+                  </label>
+                  {activeTab === "sermon" ? (
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      rows={5}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-y"
+                      placeholder="Description / notes…"
+                    />
+                  ) : (
+                    <RichTextEditor
+                      value={editContent}
+                      onChange={setEditContent}
+                      placeholder="Edit content…"
+                    />
+                  )}
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <div className="relative w-48">
+                    <select
+                      value={editStatus}
+                      onChange={(e) =>
+                        setEditStatus(e.target.value as "draft" | "publish")
+                      }
+                      className="w-full h-10 px-3 pr-8 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer appearance-none"
+                    >
+                      <option value="draft">📝 Draft</option>
+                      <option value="publish">🚀 Publish</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="px-5 h-10 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                  className="px-6 h-10 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
