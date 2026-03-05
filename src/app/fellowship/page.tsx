@@ -36,8 +36,8 @@ export default function FellowshipPage() {
           </h2>
           <p className="text-lg text-muted-foreground">
             Our centers are spread across Ikorodu to ensure that every member of
-            the congregation has a close-knit community where they can learn and
-            pray together.
+            the congregation has a close-knit community where they can
+            fellowship and grow spiritually together
           </p>
         </div>
 
@@ -137,8 +137,9 @@ export default function FellowshipPage() {
             Couldn&apos;t find a center nearby?
           </h2>
           <p className="text-xl text-muted-foreground">
-            We are constantly expanding. If you&apos;d like to join a new one,
-            please let us know.
+            We are continually exploring new locations for our House Fellowship
+            centers. If you cannot find one close to you, please contact us and
+            share your location so we can consider starting one in your area.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link

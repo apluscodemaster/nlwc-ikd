@@ -20,7 +20,7 @@ const PATH_NAMES: Record<string, string> = {
   contact: "Contact",
   devotionals: "Daily Devotionals",
   fellowship: "House Fellowship",
-  gallery: "Image Gallery",
+  gallery: "Church Gallery",
   live: "Video Broadcast",
   "listen-live": "Audio Broadcast",
   media: "Media Resources",

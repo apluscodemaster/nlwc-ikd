@@ -35,24 +35,11 @@ export default function GalleryPage() {
       <main className="pt-0">
         <PageHeader
           title="Our Worship Experience"
-          subtitle="Relive the moments of worship, fellowship, and growth."
+          subtitle="Relive moments from our Church Services and Special Gatherings."
           backgroundImage="/gallery-bg.avif"
         />
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
-          <div className="flex flex-col items-center text-center mb-16 space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2">
-              <Camera className="w-8 h-8" />
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
-              Captured <span className="text-primary text-italic">Moments</span>
-            </h2>
-            <p className="text-gray-500 max-w-2xl text-lg font-medium leading-relaxed">
-              Every image tells a story of God&apos;s faithfulness and our
-              collective journey in the Faith.
-            </p>
-          </div>
-
           {/* Loading State */}
           {isLoading && (
             <div className="space-y-12">

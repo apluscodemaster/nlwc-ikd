@@ -14,7 +14,7 @@ export default function SermonsPage() {
     <main>
       <PageHeader
         title="Audio Messages"
-        subtitle="Listen to a life-changing teachings. Search by speaker, category, or topic to find the message you need."
+        subtitle="Listen and Listen Again! Play and download spiritually edifying messages. Search by speaker, category, or topic to find the message you need."
         backgroundImage="https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=2070&auto=format&fit=crop"
       />
 

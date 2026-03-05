@@ -14,7 +14,7 @@ export default function VideoMessagesPage() {
     <main>
       <PageHeader
         title="Video Messages"
-        subtitle="Watch and be inspired by our latest video teachings. Access our library of spiritual nourishment from anywhere in the world."
+        subtitle="Watch the Video Format of all our teachings. Search by speaker, category, or topic to find the message you need."
         backgroundImage="/video-hero-bg.avif"
       />
 
