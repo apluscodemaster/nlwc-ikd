@@ -284,7 +284,7 @@ export default function AdminDevotionalsPage() {
   const isFiltered = searchTerm || filterStartDate || filterEndDate;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-8 sm:py-12">
       {/* Header & Filter */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div className="flex-1">
@@ -309,35 +309,33 @@ export default function AdminDevotionalsPage() {
             </div>
 
             {/* Date Range Inputs */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center h-11 px-4 rounded-2xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
+                  From
+                </span>
                 <input
                   type="date"
                   value={filterStartDate}
                   onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="h-11 px-4 rounded-2xl border border-gray-200 bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                  placeholder="Start Date"
+                  className="bg-transparent text-xs sm:text-sm focus:outline-none min-w-[120px]"
                 />
-                {!filterStartDate && (
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs hidden sm:block">
-                    From
-                  </span>
-                )}
               </div>
-              <span className="text-gray-400 text-xs">to</span>
-              <div className="relative">
+
+              <span className="text-gray-400 text-xs font-bold uppercase tracking-widest px-1">
+                to
+              </span>
+
+              <div className="flex items-center h-11 px-4 rounded-2xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
+                  To
+                </span>
                 <input
                   type="date"
                   value={filterEndDate}
                   onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="h-11 px-4 rounded-2xl border border-gray-200 bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                  placeholder="End Date"
+                  className="bg-transparent text-xs sm:text-sm focus:outline-none min-w-[120px]"
                 />
-                {!filterEndDate && (
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs hidden sm:block">
-                    To
-                  </span>
-                )}
               </div>
             </div>
 
@@ -476,17 +474,22 @@ export default function AdminDevotionalsPage() {
                           />
 
                           {/* Date input */}
-                          <input
-                            type="date"
-                            value={item.scheduledDate}
-                            onChange={(e) =>
-                              updateQueueItem(index, {
-                                scheduledDate: e.target.value,
-                              })
-                            }
-                            disabled={item.status !== "pending"}
-                            className="h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
-                          />
+                          <div className="flex items-center h-10 px-3 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-primary/30 disabled:opacity-60">
+                            <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase hidden lg:block shrink-0">
+                              Date:
+                            </span>
+                            <input
+                              type="date"
+                              value={item.scheduledDate}
+                              onChange={(e) =>
+                                updateQueueItem(index, {
+                                  scheduledDate: e.target.value,
+                                })
+                              }
+                              disabled={item.status !== "pending"}
+                              className="bg-transparent text-sm focus:outline-none w-full"
+                            />
+                          </div>
 
                           {/* Status */}
                           <div className="flex items-center gap-2">
@@ -597,11 +600,11 @@ export default function AdminDevotionalsPage() {
           </div>
 
           {/* Table header */}
-          <div className="hidden sm:grid grid-cols-[1fr_140px_100px_180px] gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="hidden sm:grid grid-cols-[1fr_180px_120px_200px] gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-xs font-bold text-muted-foreground uppercase tracking-wider">
             <span>Title</span>
-            <span>Scheduled</span>
+            <span>Scheduled Date</span>
             <span>Status</span>
-            <span className="text-right">Actions</span>
+            <span className="text-right">Manage Actions</span>
           </div>
 
           {/* Table rows */}
@@ -613,7 +616,7 @@ export default function AdminDevotionalsPage() {
                 <motion.div
                   key={d.id}
                   layout
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_140px_100px_180px] gap-3 sm:gap-4 px-6 py-4 items-center hover:bg-gray-50/50 transition-colors"
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_180px_120px_200px] gap-3 sm:gap-4 px-6 py-4 items-center hover:bg-gray-50/50 transition-colors"
                 >
                   {/* Title */}
                   <div className="flex items-center gap-3 min-w-0">
