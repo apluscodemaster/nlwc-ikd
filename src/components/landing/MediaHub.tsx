@@ -736,7 +736,7 @@ export default function MediaHub() {
               </motion.div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-4">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-2.5 pb-2 sm:pt-3 sm:pb-2.5">
               <div className="flex items-center gap-2.5 sm:gap-5">
                 {/* Thumbnail */}
                 <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden shrink-0 shadow-md">
