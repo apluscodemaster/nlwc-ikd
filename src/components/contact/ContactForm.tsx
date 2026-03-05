@@ -32,7 +32,7 @@ export default function ContactForm() {
         </div>
         <h3 className="text-3xl font-bold text-gray-900 mb-4">Message Sent!</h3>
         <p className="text-lg text-muted-foreground mb-8 max-w-sm">
-          Thank you for reaching out. A member of our team will get back to you
+          Thank you for reaching out. The church Admin will get back to you
           shortly.
         </p>
         <Button
