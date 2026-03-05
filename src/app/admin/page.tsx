@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Plus,
   FileAudio,
+  ImagePlus,
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -44,7 +45,9 @@ interface SermonFormData {
   speaker: string;
   seriesId: string;
   description: string;
+  sermonDate: string;
   audioFile: FileList | null;
+  thumbnailFile: FileList | null;
 }
 
 interface TextFormData {
@@ -316,6 +319,12 @@ export default function AdminChurchContentPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [publishing, setPublishing] = useState(false);
   const [audioFileName, setAudioFileName] = useState<string | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(
+    null,
+  );
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
 
   // Existing content state
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
@@ -338,7 +347,9 @@ export default function AdminChurchContentPage() {
       speaker: "",
       seriesId: "",
       description: "",
+      sermonDate: new Date().toISOString().split("T")[0],
       audioFile: null,
+      thumbnailFile: null,
     },
   });
 
@@ -353,6 +364,7 @@ export default function AdminChurchContentPage() {
   });
 
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const currentTab = TABS.find((t) => t.id === activeTab)!;
 
   // ── Fetch existing content ──
@@ -423,6 +435,9 @@ export default function AdminChurchContentPage() {
     sermonForm.reset();
     textForm.reset();
     setAudioFileName(null);
+    setThumbnailPreview(null);
+    setThumbnailFileName(null);
+    setUploadedMediaId(null);
   };
 
   // ── Handle Audio file selection ──
@@ -431,6 +446,48 @@ export default function AdminChurchContentPage() {
     if (file) {
       setAudioFileName(file.name);
       sermonForm.setValue("audioFile", e.target.files);
+    }
+  };
+
+  // ── Handle Thumbnail image selection & upload ──
+  const handleThumbnailSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show local preview
+    setThumbnailFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setThumbnailPreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    // Upload to WordPress Media Library
+    setUploadingThumbnail(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/wp/upload-media", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.id) {
+        setUploadedMediaId(data.id);
+        toast.success("Thumbnail uploaded", {
+          description: "Image saved to WordPress media library.",
+        });
+      } else {
+        toast.error("Thumbnail upload failed", {
+          description: data.error || "Unknown error",
+        });
+      }
+    } catch {
+      toast.error("Upload error", {
+        description: "Could not upload thumbnail to WordPress.",
+      });
+    } finally {
+      setUploadingThumbnail(false);
     }
   };
 
@@ -455,6 +512,7 @@ export default function AdminChurchContentPage() {
           content: contentParts.join("\n"),
           status: data.status,
           speaker: data.speaker,
+          featuredMediaId: uploadedMediaId || undefined,
         }),
       });
 
@@ -471,6 +529,9 @@ export default function AdminChurchContentPage() {
         });
         sermonForm.reset();
         setAudioFileName(null);
+        setThumbnailPreview(null);
+        setThumbnailFileName(null);
+        setUploadedMediaId(null);
         setViewMode("list");
         fetchContent(activeTab, 1);
       } else {
@@ -816,6 +877,109 @@ export default function AdminChurchContentPage() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-y"
                       placeholder="Brief description of the sermon (optional)…"
                     />
+                  </div>
+
+                  {/* Sermon Date */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Sermon Date
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        {...sermonForm.register("sermonDate")}
+                        className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Image Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Message Thumbnail
+                    </label>
+                    <input
+                      ref={thumbnailInputRef}
+                      type="file"
+                      accept="image/*,.jpg,.jpeg,.png,.webp,.avif"
+                      onChange={handleThumbnailSelect}
+                      className="hidden"
+                    />
+
+                    {thumbnailPreview ? (
+                      <div className="relative rounded-xl border-2 border-primary/20 bg-primary/5 overflow-hidden">
+                        {/* Preview image */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={thumbnailPreview}
+                          alt="Thumbnail preview"
+                          className="w-full h-48 object-cover"
+                        />
+                        {/* Upload status overlay */}
+                        <div className="absolute inset-0 flex items-end">
+                          <div className="w-full bg-gradient-to-t from-black/70 to-transparent p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {uploadingThumbnail ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                    <span className="text-xs text-white font-medium">
+                                      Uploading…
+                                    </span>
+                                  </>
+                                ) : uploadedMediaId ? (
+                                  <>
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                    <span className="text-xs text-white font-medium">
+                                      {thumbnailFileName}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="w-4 h-4 text-amber-400" />
+                                    <span className="text-xs text-white font-medium">
+                                      Upload failed
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setThumbnailPreview(null);
+                                  setThumbnailFileName(null);
+                                  setUploadedMediaId(null);
+                                  if (thumbnailInputRef.current)
+                                    thumbnailInputRef.current.value = "";
+                                }}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-black/40 hover:bg-red-500/80 text-white transition-colors cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => thumbnailInputRef.current?.click()}
+                        className="w-full flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 bg-gray-50/50 hover:bg-primary/5 transition-all cursor-pointer group"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/20 transition-all">
+                          <ImagePlus className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-gray-600 group-hover:text-primary transition-colors">
+                            Click to upload thumbnail image
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            JPG, PNG, WEBP, or AVIF
+                          </p>
+                        </div>
+                      </button>
+                    )}
                   </div>
 
                   {/* Audio File Upload */}

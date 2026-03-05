@@ -68,6 +68,7 @@ export interface WPPublishResult {
  */
 export async function publishToWordPress(
   payload: WPPublishPayload,
+  options?: { featuredMediaId?: number },
 ): Promise<WPPublishResult> {
   if (!WP_APP_PASSWORD) {
     return {
@@ -76,12 +77,18 @@ export async function publishToWordPress(
     };
   }
 
-  const body = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body: Record<string, any> = {
     title: payload.title,
     content: buildContent(payload),
     status: payload.status,
     categories: getCategoryIds(payload),
   };
+
+  // Attach featured image (thumbnail) if provided
+  if (options?.featuredMediaId) {
+    body.featured_media = options.featuredMediaId;
+  }
 
   try {
     const response = await fetch(`${WP_URL}/wp-json/wp/v2/posts`, {

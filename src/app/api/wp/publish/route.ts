@@ -12,6 +12,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Extract featured media ID before validation (not part of schema)
+    const featuredMediaId = body.featuredMediaId
+      ? Number(body.featuredMediaId)
+      : undefined;
+
     // Validate with Zod
     const parsed = wpPublishSchema.safeParse(body);
     if (!parsed.success) {
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     // Publish to WordPress
-    const result = await publishToWordPress(parsed.data);
+    const result = await publishToWordPress(parsed.data, { featuredMediaId });
 
     if (!result.success) {
       return NextResponse.json(result, { status: 500 });
