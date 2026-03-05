@@ -142,7 +142,7 @@ export default function FellowshipPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="https://wa.me/2348029513199"
+              href="https://wa.me/2347066644051"
               className="h-14 px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2"
             >
               Contact General Coordinator

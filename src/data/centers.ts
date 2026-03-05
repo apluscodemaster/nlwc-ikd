@@ -23,7 +23,7 @@ export const fellowshipCenters: FellowshipCenter[] = [
     id: "2",
     name: "Irawo Center",
     address: "2, Ihedimbu Street, Off Alafia Street, Irawo Ikorodu Road.",
-    coordinator: "Bro. Shile Shodipo",
+    coordinator: "Pst. Shile Shodipo",
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/pAXQP5UmAvxfLzNP8",
     whatsappLink: "https://wa.me/2347066644051",
