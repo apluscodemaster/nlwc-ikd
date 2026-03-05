@@ -54,7 +54,7 @@ const NAV_ITEMS = [
     label: "Devotionals",
     href: "/admin/devotionals",
     icon: BookOpen,
-    description: "Firebase-powered daily devotionals",
+    description: "Daily Devotionals Management",
   },
 ];
 

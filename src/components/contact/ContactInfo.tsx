@@ -36,16 +36,24 @@ const contactDetails = [
   {
     icon: Clock,
     title: "Office Hours",
-    content: "Tuesday - Friday",
+    content: "Monday - Friday",
     description: "9:00 AM - 5:00 PM",
   },
 ];
 
 const socials = [
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Youtube, href: "#", label: "Youtube" },
+  { icon: Facebook, href: "https://facebook.com/nlwclife", label: "Facebook" },
+  { icon: Twitter, href: "https://x.com/nlwclife", label: "X (Twitter)" },
+  {
+    icon: Instagram,
+    href: "https://www.instagram.com/nlwclife/",
+    label: "Instagram",
+  },
+  {
+    icon: Youtube,
+    href: "https://www.youtube.com/@nlwclife",
+    label: "Youtube",
+  },
 ];
 
 export function SocialConnect() {
