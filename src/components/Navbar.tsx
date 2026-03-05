@@ -101,9 +101,17 @@ const NAVIGATION_DATA: NavItem[] = [
 ];
 
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-  { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
+  { icon: Facebook, href: "https://facebook.com/nlwclife", label: "Facebook" },
+  {
+    icon: Instagram,
+    href: "https://www.instagram.com/nlwclife/",
+    label: "Instagram",
+  },
+  {
+    icon: Youtube,
+    href: "https://www.youtube.com/@nlwclife",
+    label: "YouTube",
+  },
 ];
 
 export default function Navbar() {
