@@ -235,18 +235,18 @@ export default function AdminLayout({
   }
 
   // ── Authenticated Layout ──
+  // Outer chrome (sidebar, top bar) is handled by the parent /admin layout.
+  // This layout only provides the Firebase AuthContext and a small header.
   return (
     <AuthContext.Provider value={{ user, logout }}>
-      <div className="-mt-16 min-h-screen bg-gray-50 flex flex-col">
-        {/* Admin Top Bar */}
-        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-primary" />
-              </div>
+      <div className="flex flex-col min-h-full">
+        {/* Devotional sub-header */}
+        <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-12">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" />
               <span className="text-sm font-bold text-gray-900">
-                Devotional Admin
+                Devotional Manager
               </span>
             </div>
 
@@ -256,7 +256,7 @@ export default function AdminLayout({
               </span>
               <button
                 onClick={logout}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-600 transition-colors"
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-600 transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Sign Out
