@@ -5,6 +5,8 @@
 
 const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church"}/wp-json/wp/v2`;
 
+import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
+
 // WordPress Category IDs
 export const WP_CATEGORIES = {
   SUNDAY_MESSAGE_TRANSCRIPTS: 20,
@@ -441,11 +443,9 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
 
   return {
     id: post.id,
-    title: post.title.rendered
-      .replace(/&#8211;/g, "–")
-      .replace(/&#8217;/g, "'"),
-    content: post.content.rendered,
-    excerpt: post.excerpt.rendered.replace(/<[^>]*>/g, "").trim(),
+    title: sanitizeWPText(post.title.rendered),
+    content: sanitizeWPHtml(post.content.rendered),
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(/<[^>]*>/g, "")),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
@@ -463,11 +463,9 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
 export function transformToManual(post: WPPost): SundaySchoolManual {
   return {
     id: post.id,
-    title: post.title.rendered
-      .replace(/&#8211;/g, "–")
-      .replace(/&#8217;/g, "'"),
-    content: post.content.rendered,
-    excerpt: post.excerpt.rendered.replace(/<[^>]*>/g, "").trim(),
+    title: sanitizeWPText(post.title.rendered),
+    content: sanitizeWPHtml(post.content.rendered),
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(/<[^>]*>/g, "")),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
