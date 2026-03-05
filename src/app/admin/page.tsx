@@ -361,6 +361,17 @@ export default function AdminChurchContentPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editStatus, setEditStatus] = useState<"draft" | "publish">("draft");
+  const [editDate, setEditDate] = useState("");
+  const [editSpeaker, setEditSpeaker] = useState("");
+  const [editSeriesId, setEditSeriesId] = useState("");
+  const [editThumbnailPreview, setEditThumbnailPreview] = useState<
+    string | null
+  >(null);
+  const [editUploadedMediaId, setEditUploadedMediaId] = useState<number | null>(
+    null,
+  );
+  const [editUploadingThumbnail, setEditUploadingThumbnail] = useState(false);
+  const editThumbnailInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
 
   const sermonForm = useForm<SermonFormData>({
@@ -478,6 +489,50 @@ export default function AdminChurchContentPage() {
     setEditTitle(item.title);
     setEditContent(item.content || item.excerpt || "");
     setEditStatus(item.status as "draft" | "publish");
+    // Pre-populate sermon-specific fields
+    setEditDate(
+      item.date ? new Date(item.date).toISOString().split("T")[0] : "",
+    );
+    setEditSpeaker(item.speaker || "");
+    // Try to find matching series ID from the series list
+    const matchedSeries = seriesList.find((s) => s.title === item.series);
+    setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
+    setEditThumbnailPreview(item.thumbnail || null);
+    setEditUploadedMediaId(null); // Will be set if user uploads a new one
+    setEditUploadingThumbnail(false);
+  };
+
+  // ── Handle Edit Thumbnail Upload ──
+  const handleEditThumbnailSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Preview
+    const reader = new FileReader();
+    reader.onload = () => setEditThumbnailPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    // Upload
+    setEditUploadingThumbnail(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/wp/upload-media", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.mediaId) {
+        setEditUploadedMediaId(data.mediaId);
+        toast.success("Thumbnail uploaded!");
+      } else {
+        toast.error("Thumbnail upload failed");
+      }
+    } catch {
+      toast.error("Thumbnail upload failed");
+    } finally {
+      setEditUploadingThumbnail(false);
+    }
   };
 
   // ── Save Edit ──
@@ -485,15 +540,30 @@ export default function AdminChurchContentPage() {
     if (!editingItem) return;
     setSaving(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload: Record<string, any> = {
+        id: editingItem.id,
+        title: editTitle,
+        content: editContent,
+        status: editStatus,
+      };
+      // Include date if changed (for sermons)
+      if (editDate) {
+        payload.date = new Date(editDate).toISOString();
+      }
+      // Include featured media if a new thumbnail was uploaded
+      if (editUploadedMediaId) {
+        payload.featuredMediaId = editUploadedMediaId;
+      }
+      // Include categories if series was selected (for sermons)
+      if (editSeriesId) {
+        payload.categories = [Number(editSeriesId)];
+      }
+
       const res = await fetch("/api/wp/update", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingItem.id,
-          title: editTitle,
-          content: editContent,
-          status: editStatus,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -1449,10 +1519,66 @@ export default function AdminChurchContentPage() {
                   />
                 </div>
 
-                {/* Content */}
+                {/* Speaker Dropdown - Sermon only */}
+                {activeTab === "sermon" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Speaker / Minister
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editSpeaker}
+                        onChange={(e) => setEditSpeaker(e.target.value)}
+                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="">Select a minister…</option>
+                        {loadingSpeakers ? (
+                          <option disabled>Loading ministers…</option>
+                        ) : (
+                          speakers.map((s) => (
+                            <option key={s.id} value={s.name}>
+                              {s.name} ({s.messageCount} messages)
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Series Dropdown - Sermon only */}
+                {activeTab === "sermon" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Series / Category
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editSeriesId}
+                        onChange={(e) => setEditSeriesId(e.target.value)}
+                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="">Select a series…</option>
+                        {loadingSeries ? (
+                          <option disabled>Loading series…</option>
+                        ) : (
+                          seriesList.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.title} ({s.messageCount} messages)
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Content / Description */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Content
+                    {activeTab === "sermon" ? "Description" : "Content"}
                   </label>
                   {activeTab === "sermon" ? (
                     <textarea
@@ -1470,6 +1596,118 @@ export default function AdminChurchContentPage() {
                     />
                   )}
                 </div>
+
+                {/* Sermon Date - Sermon only */}
+                {activeTab === "sermon" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Sermon Date
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Thumbnail - Sermon only */}
+                {activeTab === "sermon" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Message Thumbnail
+                    </label>
+                    <input
+                      ref={editThumbnailInputRef}
+                      type="file"
+                      accept="image/*,.jpg,.jpeg,.png,.webp,.avif"
+                      onChange={handleEditThumbnailSelect}
+                      className="hidden"
+                    />
+
+                    {editThumbnailPreview ? (
+                      <div className="relative rounded-xl border-2 border-primary/20 bg-primary/5 overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={editThumbnailPreview}
+                          alt="Thumbnail preview"
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-end">
+                          <div className="w-full bg-gradient-to-t from-black/70 to-transparent p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {editUploadingThumbnail ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                    <span className="text-xs text-white font-medium">
+                                      Uploading…
+                                    </span>
+                                  </>
+                                ) : editUploadedMediaId ? (
+                                  <>
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                    <span className="text-xs text-white font-medium">
+                                      New thumbnail uploaded
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye className="w-4 h-4 text-white/70" />
+                                    <span className="text-xs text-white font-medium">
+                                      Current thumbnail
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    editThumbnailInputRef.current?.click()
+                                  }
+                                  className="px-2.5 h-7 flex items-center gap-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[11px] font-medium transition-colors cursor-pointer"
+                                >
+                                  <ImagePlus className="w-3 h-3" />
+                                  Change
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditThumbnailPreview(null);
+                                    setEditUploadedMediaId(null);
+                                    if (editThumbnailInputRef.current)
+                                      editThumbnailInputRef.current.value = "";
+                                  }}
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-black/40 hover:bg-red-500/80 text-white transition-colors cursor-pointer"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => editThumbnailInputRef.current?.click()}
+                        className="w-full flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 bg-gray-50/50 hover:bg-primary/5 transition-all cursor-pointer group"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/20 transition-all">
+                          <ImagePlus className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
+                        </div>
+                        <p className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">
+                          Upload new thumbnail
+                        </p>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Status */}
                 <div>

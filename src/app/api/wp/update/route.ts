@@ -21,7 +21,8 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, title, content, status, featuredMediaId } = body;
+    const { id, title, content, status, featuredMediaId, date, categories } =
+      body;
 
     if (!id) {
       return NextResponse.json(
@@ -42,6 +43,8 @@ export async function PUT(request: NextRequest) {
     if (status !== undefined) updateBody.status = status;
     if (featuredMediaId !== undefined)
       updateBody.featured_media = Number(featuredMediaId);
+    if (date !== undefined) updateBody.date = date;
+    if (categories !== undefined) updateBody.categories = categories;
 
     const response = await fetch(`${WP_URL}/wp-json/wp/v2/posts/${id}`, {
       method: "PUT",
