@@ -5,8 +5,9 @@ import PageHeader from "@/components/shared/PageHeader";
 import StorySection from "@/components/about/StorySection";
 import LeadershipGrid from "@/components/about/LeadershipGrid";
 import BeliefsAccordion from "@/components/about/BeliefsAccordion";
-import MeetingsGrid from "@/components/about/MeetingsGrid";
+// import MeetingsGrid from "@/components/about/MeetingsGrid";
 import CTASection from "@/components/landing/CTASection";
+import UpcomingEvents from "@/components/landing/UpcomingEvents";
 
 export default function AboutPage() {
   return (
@@ -23,7 +24,9 @@ export default function AboutPage() {
 
       <BeliefsAccordion />
 
-      <MeetingsGrid />
+      {/* <MeetingsGrid /> */}
+
+      <UpcomingEvents />
 
       <CTASection />
     </main>

@@ -24,6 +24,7 @@ const PATH_NAMES: Record<string, string> = {
   live: "Video Broadcast",
   "listen-live": "Audio Broadcast",
   media: "Media Resources",
+  salvation: "Prayer of Salvation",
 };
 
 export default function PageHeader({

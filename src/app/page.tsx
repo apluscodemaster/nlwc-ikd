@@ -2,38 +2,41 @@
 
 import React from "react";
 import Hero from "@/components/landing/Hero";
-import WelcomeSection from "@/components/landing/WelcomeSection";
+import GodWantsYou from "@/components/landing/GodWantsYou";
+import OurJourney from "@/components/landing/OurJourney";
+import LeadershipGrid from "@/components/about/LeadershipGrid";
 import ServiceTimes from "@/components/landing/ServiceTimes";
 import MediaHub from "@/components/landing/MediaHub";
-import UpcomingEvents from "@/components/landing/UpcomingEvents";
 import GalleryPreview from "@/components/landing/GalleryPreview";
-import CTASection from "@/components/landing/CTASection";
 import DevotionalPrompt from "@/components/devotionals/DevotionalPrompt";
+import WelcomeSection from "@/components/landing/WelcomeSection";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main>
-        {/* Hero Section */}
+        {/* 1. Hero Section */}
         <Hero />
 
-        {/* Welcome Section */}
         <WelcomeSection />
 
-        {/* Service Times */}
+        {/* 2. God Wants You — Headline + CTA */}
+        <GodWantsYou />
+
+        {/* 3. Our Journey — Faith, Hope, Charity */}
+        <OurJourney />
+
+        {/* 4. Meet Our Pastors */}
+        <LeadershipGrid />
+
+        {/* 5. Weekly Meetings */}
         <ServiceTimes />
 
-        {/* Media Hub (Audio, Video, Transcripts, Manuals) */}
+        {/* 6. Spiritual Nourishment (Audio, Video, Transcripts, Manuals) */}
         <MediaHub />
 
-        {/* Upcoming Events */}
-        <UpcomingEvents />
-
-        {/* Gallery Preview */}
+        {/* 7. Gallery Preview */}
         <GalleryPreview />
-
-        {/* Call to Action */}
-        <CTASection />
       </main>
 
       {/* Daily Devotional Invitation */}
