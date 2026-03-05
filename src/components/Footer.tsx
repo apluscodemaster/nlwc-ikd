@@ -17,10 +17,10 @@ import { usePathname } from "next/navigation";
 
 // Social media links - update these with actual URLs
 const SOCIAL_LINKS = {
-  youtube: "https://www.youtube.com/@NLWCIkorodu",
-  facebook: "https://www.facebook.com/nlwcikorodu",
-  instagram: "https://www.instagram.com/nlwcikorodu",
-  twitter: "https://twitter.com/nlwcikorodu",
+  youtube: "https://www.youtube.com/@nlwclife",
+  facebook: "https://facebook.com/nlwclife",
+  instagram: "https://www.instagram.com/nlwclife/",
+  twitter: "https://x.com/nlwclife",
   whatsapp: "https://wa.me/2347035760085",
 };
 

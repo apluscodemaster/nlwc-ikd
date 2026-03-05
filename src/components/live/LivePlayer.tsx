@@ -94,7 +94,7 @@ export default function LivePlayer() {
       label: "X (Twitter)",
       icon: <XTwitterIcon className="w-4 h-4" />,
       color: "text-gray-900 bg-gray-50 hover:bg-gray-100",
-      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(PAGE_TITLE)}&url=${encodeURIComponent(PAGE_URL)}`,
+      href: `https://x.com/intent/tweet?text=${encodeURIComponent(PAGE_TITLE)}&url=${encodeURIComponent(PAGE_URL)}`,
     },
     {
       label: "Facebook",
