@@ -69,7 +69,7 @@ export default function Hero() {
             className="text-sm md:text-lg px-4 xs:px-6 md:px-10 h-12 md:h-14 rounded-full shadow-2xl hover:scale-105 transition-transform shrink-0"
           >
             <Link href="/about">
-              Our Story{" "}
+              About Us
               <ArrowRight className="ml-1 md:ml-2 w-4 h-4 md:w-5 md:h-5" />
             </Link>
           </Button>

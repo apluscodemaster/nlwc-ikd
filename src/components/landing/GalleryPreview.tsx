@@ -70,8 +70,7 @@ export default function GalleryPreview() {
             Our Worship <span className="text-primary">Experience</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Relive the beautiful memories from our services, special programs,
-            and community events.
+            Relive moments from our Church Services and Special Gatherings.
           </p>
         </div>
 

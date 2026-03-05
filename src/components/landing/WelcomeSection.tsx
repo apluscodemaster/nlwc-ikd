@@ -126,26 +126,31 @@ export default function WelcomeSection() {
             <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
               — WHO WE ARE
             </h4>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+            {/* <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
               A Place Encountering <br className="hidden sm:block" />{" "}
               <span className="text-primary">God&apos;s Love</span>
-            </h2>
+            </h2> */}
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6">
             <p className="text-lg text-muted-foreground leading-relaxed">
-              At The New & Living Way Church, we believe in creating a space
-              where everyone can encounter God&apos;s love, grow in faith, and
-              serve others with purpose.
+              We are The New and Living Way Church!
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Whether you&apos;re exploring faith for the first time or have
-              been walking with Christ for years, you&apos;ll find a welcoming
-              community here. We are more than just a church; we are a family.
+              The right place for you to grow in faith, experience God&apos;s
+              love, and walk closer with Him.
+            </p>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              We believe the Lord has amazing plans for you, and we are excited
+              to be part of your journey. You are loved, valued, and celebrated.
+              Welcome to the family! With an unquenchable love,
+            </p>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Pst. Emeka & Pst. Lilian Egwuchukwu <br /> Senior Pastors, NLWC
             </p>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="pt-4">
+          {/* <motion.div variants={itemVariants} className="pt-4">
             <Button
               asChild
               size="lg"
@@ -155,7 +160,7 @@ export default function WelcomeSection() {
                 Explore Our Story <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
-          </motion.div>
+          </motion.div> */}
 
           {/* Next Service Countdown */}
           {nextEvent && (
