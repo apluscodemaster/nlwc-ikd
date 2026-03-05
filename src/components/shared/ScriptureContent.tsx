@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { sanitizeWPHtml } from "@/utils/sanitizeWP";
 
 interface ScriptureContentProps {
   content: string;
@@ -19,18 +20,8 @@ export default function ScriptureContent({
   content,
   className = "",
 }: ScriptureContentProps) {
-  // Clean up excessive whitespace, empty paragraphs, and special chars from WP content
-  const cleanedContent = content
-    // Remove excessive &nbsp; sequences (more than 2 in a row)
-    .replace(/(&nbsp;\s*){3,}/gi, "&nbsp;&nbsp;")
-    // Remove empty paragraphs with only whitespace/nbsp
-    .replace(/<p[^>]*>\s*(&nbsp;\s*)*\s*<\/p>/gi, "")
-    // Collapse multiple <br> tags into at most 2
-    .replace(/(<br\s*\/?\s*>\s*){3,}/gi, "<br /><br />")
-    // Remove \u00a0 (non-breaking spaces) when they appear in sequences
-    .replace(/(\u00a0\s*){3,}/g, " ")
-    // Remove double+ blank lines in pre-formatted text
-    .replace(/\n{3,}/g, "\n\n");
+  // Clean up WordPress content artifacts (entities, empty paragraphs, excess whitespace)
+  const cleanedContent = sanitizeWPHtml(content);
 
   return (
     <div
