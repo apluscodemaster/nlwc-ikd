@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${manual.title} | Sunday School | NLWC Ikorodu`,
+    title: `${manual.title} | Sunday School Manuals | NLWC Ikorodu`,
     description:
       manual.excerpt || `Read the Sunday School manual: ${manual.title}`,
   };

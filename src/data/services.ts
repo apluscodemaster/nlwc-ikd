@@ -1,4 +1,11 @@
-import { Calendar, Users, LucideIcon, Book, Flame } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  LucideIcon,
+  Book,
+  Flame,
+  Sparkles,
+} from "lucide-react";
 
 export type Service = {
   id: number;
@@ -52,13 +59,25 @@ export const services: Service[] = [
   {
     id: 4,
     name: "Sithrah",
-    day: "2nd Saturday Monthly",
-    time: "12:00 Noon",
+    day: "2nd Sat Monthly",
+    time: "12:00 PM",
     location: "Church Auditorium",
     description:
       "A special monthly time of prayer and spiritual refreshing before the Lord.",
     icon: Flame,
     color: "bg-purple-50",
     iconColor: "text-purple-600",
+  },
+  {
+    id: 5,
+    name: "Season of the Spirit",
+    day: "Feb - March",
+    time: "8:00 AM",
+    location: "Church Auditorium",
+    description:
+      "A special season of spiritual refreshing and prophetic advancement.",
+    icon: Sparkles,
+    color: "bg-amber-50",
+    iconColor: "text-amber-600",
   },
 ];
