@@ -44,13 +44,19 @@ function useCountdown(targetDate: Date) {
     return () => clearInterval(timer);
   }, []);
 
-  const diff = Math.max(0, targetDate.getTime() - now.getTime());
+  // Service is "live" from its start time until midnight the same day
+  const midnight = new Date(targetDate);
+  midnight.setHours(23, 59, 59, 999);
+
+  const isLive = now >= targetDate && now <= midnight;
+
+  const diff = isLive ? 0 : Math.max(0, targetDate.getTime() - now.getTime());
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((diff / (1000 * 60)) % 60);
   const seconds = Math.floor((diff / 1000) % 60);
 
-  return { days, hours, minutes, seconds, isLive: diff === 0 };
+  return { days, hours, minutes, seconds, isLive };
 }
 
 export default function WelcomeSection() {
@@ -104,7 +110,7 @@ export default function WelcomeSection() {
               fill
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-6 left-6 text-white">
               <p className="text-sm font-medium uppercase tracking-widest text-primary mb-1">
                 Our Leadership
@@ -171,7 +177,7 @@ export default function WelcomeSection() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 justify-between">
                 <div className="space-y-1">
                   <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
-                    {isLive ? "🔴 Happening Now" : "Next Up"}
+                    {isLive ? "🔴 Now Live" : "Next Up"}
                   </p>
                   <p className="text-sm sm:text-base font-bold text-gray-900">
                     {nextEvent.icon} {nextEvent.title}
