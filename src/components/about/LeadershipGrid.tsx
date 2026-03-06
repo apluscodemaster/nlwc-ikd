@@ -58,16 +58,14 @@ export default function LeadershipGrid() {
                 variants={itemVariants}
                 className="group cursor-pointer space-y-4"
               >
-                <div className="relative aspect-[3/4] rounded-3xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                <div className="relative aspect-3/4 rounded-3xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500">
                   <Image
                     src={member.image}
                     alt={member.name}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                    <span className="text-white font-semibold">Read Bio</span>
-                  </div>
+                  <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
                 <div className="text-center">
                   <h3 className="text-xl font-bold text-gray-900">
@@ -85,7 +83,7 @@ export default function LeadershipGrid() {
               </DialogHeader>
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
+                  <div className="relative aspect-3/4 rounded-2xl overflow-hidden">
                     <Image
                       src={member.image}
                       alt={member.name}

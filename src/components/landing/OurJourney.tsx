@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Cross, Heart, Sparkles } from "lucide-react";
+import { Cross, Heart, Anchor } from "lucide-react";
 
 const pillars = [
   {
@@ -17,7 +17,7 @@ const pillars = [
   },
   {
     title: "Hope",
-    icon: Sparkles,
+    icon: Anchor,
     verse:
       "We seek the hope of Eternal life, which God, that cannot lie, promised before the world began.",
     reference: "Titus 1:2",
