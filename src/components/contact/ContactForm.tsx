@@ -25,13 +25,15 @@ export default function ContactForm() {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="h-full flex flex-col items-center justify-center text-center p-8 bg-primary/5 rounded-3xl border border-primary/10"
+        className="h-full flex flex-col items-center justify-center text-center p-6 xs:p-8 bg-primary/5 rounded-3xl border border-primary/10"
       >
-        <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-10 h-10 text-primary" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/20 rounded-full flex items-center justify-center mb-6">
+          <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
         </div>
-        <h3 className="text-3xl font-bold text-gray-900 mb-4">Message Sent!</h3>
-        <p className="text-lg text-muted-foreground mb-8 max-w-sm">
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+          Message Sent!
+        </h3>
+        <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-sm">
           Thank you for reaching out. The church Admin will get back to you
           shortly.
         </p>
@@ -46,7 +48,7 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="bg-white p-5 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
+    <div className="bg-white p-5 xs:p-8 md:p-12 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100">
       <div className="mb-6 md:mb-8 font-bold">
         <h3 className="text-xl md:text-2xl text-gray-900">Send us a message</h3>
         <p className="text-muted-foreground font-medium mt-2 text-sm md:text-base">
@@ -95,20 +97,37 @@ export default function ContactForm() {
           >
             Subject *
           </label>
-          <select
-            required
-            id="subject"
-            className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white text-sm md:text-base"
-          >
-            <option value="" selected disabled>
-              Select a subject
-            </option>
-            <option value="general">General Inquiry</option>
-            <option value="prayer">Prayer Request</option>
-            <option value="testimony">Testimony</option>
-            <option value="ministry">Join a House Fellowship</option>
-            <option value="counseling">Counseling</option>
-          </select>
+          <div className="relative">
+            <select
+              required
+              id="subject"
+              className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white text-sm md:text-base pr-10"
+            >
+              <option value="" selected disabled>
+                Select a subject
+              </option>
+              <option value="general">General Inquiry</option>
+              <option value="prayer">Prayer Request</option>
+              <option value="testimony">Testimony</option>
+              <option value="ministry">Join a House Fellowship</option>
+              <option value="counseling">Counseling</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -131,7 +150,7 @@ export default function ContactForm() {
           type="submit"
           size="lg"
           disabled={status === "loading"}
-          className="w-full h-14 md:h-16 rounded-full text-base md:text-lg font-bold shadow-lg shadow-primary/20"
+          className="w-full h-12 sm:h-14 md:h-16 rounded-full text-sm sm:text-base md:text-lg font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
         >
           {status === "loading" ? (
             <span className="flex items-center gap-2">
@@ -140,7 +159,7 @@ export default function ContactForm() {
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              Send Message <Send className="w-5 h-5" />
+              Send Message <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
           )}
         </Button>
