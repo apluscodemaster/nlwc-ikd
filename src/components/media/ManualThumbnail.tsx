@@ -56,7 +56,7 @@ export default function ManualThumbnail({
 
       {/* "Sunday School" label */}
       <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-[0.15em] text-white/50 bg-white/10 backdrop-blur-sm px-2 py-1 rounded z-10">
-        Sunday School
+        Sunday School Manuals
       </span>
 
       {/* Full title text */}

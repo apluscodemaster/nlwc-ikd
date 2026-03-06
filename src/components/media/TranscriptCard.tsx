@@ -30,7 +30,7 @@ export default function TranscriptCard({
       bg: "bg-amber-500/10",
       text: "text-amber-600",
       icon: BookOpen,
-      label: "Sunday School",
+      label: "Sunday School Manuals",
     },
   };
 

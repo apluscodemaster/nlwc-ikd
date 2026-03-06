@@ -2,6 +2,7 @@
 
 import ScriptureContent from "./ScriptureContent";
 import { highlightSearchInHtml } from "@/utils/highlightSearch";
+import { formatMemoryTrack } from "@/utils/formatMemoryTrack";
 
 interface TranscriptContentProps {
   content: string;
@@ -23,15 +24,18 @@ export default function TranscriptContent({
 }: TranscriptContentProps) {
   const colorClasses =
     accentColor === "amber"
-      ? "prose-a:text-amber-600 prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5"
+      ? "prose-a:text-amber-600 prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 text-justify sm:text-left"
       : "";
 
   // Apply search highlighting to the content if a query is provided
-  const highlightedContent = searchQuery
+  let formattedContent = searchQuery
     ? highlightSearchInHtml(content, searchQuery)
     : content;
 
+  // Enhance "Memory Track" sections for an aesthetic UI layout
+  formattedContent = formatMemoryTrack(formattedContent);
+
   return (
-    <ScriptureContent content={highlightedContent} className={colorClasses} />
+    <ScriptureContent content={formattedContent} className={colorClasses} />
   );
 }

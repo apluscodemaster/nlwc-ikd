@@ -65,7 +65,7 @@ export default function MediaFilters({
           Pastor Laide
         </button>
         <button className="px-4 py-2 rounded-full border border-gray-100 hover:border-primary hover:text-primary transition-all">
-          Sunday School
+          Sunday School Manuals
         </button>
         <button className="px-4 py-2 rounded-full border border-gray-100 hover:border-primary hover:text-primary transition-all">
           House Fellowship

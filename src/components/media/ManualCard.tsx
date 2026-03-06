@@ -71,7 +71,7 @@ export default function ManualCard({
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="bg-amber-500/10 text-amber-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <FileText className="w-3.5 h-3.5" />
-              Sunday School
+              Sunday School Manuals
             </div>
             <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
