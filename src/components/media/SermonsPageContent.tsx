@@ -1076,6 +1076,7 @@ export default function SermonsPageContent() {
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 backdrop-blur-xl border-t border-white/10 shadow-2xl"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
             {/* Progress Bar */}
             <div
@@ -1092,7 +1093,7 @@ export default function SermonsPageContent() {
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2.5 pb-2 sm:pt-3 sm:pb-2.5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-2 sm:pt-3 sm:pb-3">
               <div className="flex items-center gap-3 sm:gap-6">
                 {/* Thumbnail */}
                 {activeSermon.thumbnailUrl && (
@@ -1340,7 +1341,7 @@ export default function SermonsPageContent() {
             </div>
 
             {/* Secondary Controls */}
-            <div className="flex items-center justify-center gap-5 pb-10 px-8">
+            <div className="flex items-center justify-center gap-5 pb-[calc(1rem+env(safe-area-inset-bottom))] px-8">
               <button
                 onClick={cycleSpeed}
                 className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all active:scale-95 min-w-[52px]"

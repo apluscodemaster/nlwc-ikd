@@ -422,6 +422,7 @@ export default function ListenLivePage() {
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-[0_-4px_30px_rgba(0,0,0,0.1)]"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
             {/* Progress Bar */}
             <div
@@ -438,7 +439,7 @@ export default function ListenLivePage() {
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-4">
               <div className="flex items-center gap-3 sm:gap-5">
                 {/* Thumbnail */}
                 <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shrink-0 shadow-md">
