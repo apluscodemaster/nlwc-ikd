@@ -23,20 +23,20 @@ export default function AudioLivePlayer() {
   }, []);
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto">
-      {/* Decorative background Elements */}
-      <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl animate-pulse" />
+    <div className="relative w-full max-w-4xl mx-auto overflow-hidden sm:overflow-visible">
+      {/* Decorative background Elements - hidden on tiny screens or clipped */}
+      <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl animate-pulse pointer-events-none" />
 
-      <div className="relative bg-white rounded-[40px] shadow-2xl border border-gray-100 p-6 sm:p-8 md:p-12 overflow-hidden">
+      <div className="relative bg-white rounded-[40px] shadow-2xl border border-gray-100 p-4 sm:p-8 md:p-12 overflow-hidden">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           {/* Audio Visualizer / Status Indicator */}
-          <div className="relative w-full md:w-64 shrink-0">
-            <div className="relative aspect-square max-w-[256px] mx-auto">
+          <div className="relative w-full md:w-64 shrink-0 px-4 sm:px-0">
+            <div className="relative aspect-square max-w-[220px] xs:max-w-[256px] mx-auto">
               <div className="absolute inset-0 rounded-[32px] bg-linear-to-br from-primary to-orange-600 shadow-2xl animate-pulse" />
 
               <div className="absolute inset-0 flex items-center justify-center">
-                <Radio className="w-20 h-20 sm:w-24 sm:h-24 text-white animate-pulse" />
+                <Radio className="w-16 h-16 sm:w-24 sm:h-24 text-white animate-pulse" />
               </div>
 
               {/* Pulsating circles */}
@@ -63,10 +63,10 @@ export default function AudioLivePlayer() {
                   Audio Broadcast
                 </span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
                 NLWC Ikorodu Live Stream
               </h3>
-              <p className="text-gray-500 font-medium">
+              <p className="text-sm sm:text-base text-gray-500 font-medium">
                 Listen to our services live via Waystream
               </p>
             </div>
