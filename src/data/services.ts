@@ -17,6 +17,7 @@ export type Service = {
   icon: LucideIcon;
   color: string;
   iconColor: string;
+  image?: string;
 };
 
 export const services: Service[] = [
@@ -31,6 +32,7 @@ export const services: Service[] = [
     icon: Calendar,
     color: "bg-orange-50",
     iconColor: "text-orange-600",
+    image: "/community.webp",
   },
   {
     id: 2,
@@ -43,6 +45,7 @@ export const services: Service[] = [
     icon: Users,
     color: "bg-blue-50",
     iconColor: "text-blue-600",
+    image: "/prayer-meeting-gen.png",
   },
   {
     id: 3,
@@ -55,6 +58,7 @@ export const services: Service[] = [
     icon: Book,
     color: "bg-green-50",
     iconColor: "text-green-600",
+    image: "/open_bible.jpg",
   },
   {
     id: 4,
@@ -67,6 +71,7 @@ export const services: Service[] = [
     icon: Flame,
     color: "bg-purple-50",
     iconColor: "text-purple-600",
+    image: "/community2.webp",
   },
   {
     id: 5,
@@ -79,5 +84,6 @@ export const services: Service[] = [
     icon: Sparkles,
     color: "bg-amber-50",
     iconColor: "text-amber-600",
+    image: "/community3.avif",
   },
 ];
