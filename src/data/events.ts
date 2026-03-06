@@ -22,10 +22,15 @@ function getNextWeekday(dayOfWeek: number, hour: number, minute: number): Date {
 
   if (daysUntil < 0) daysUntil += 7;
   if (daysUntil === 0) {
-    // If it's today, check if the event time has already passed
+    // Keep today shown until midnight — this allows the "Now Live" window.
+    // Only move to next week if we're past midnight (i.e., the full day has ended).
+    const midnight = new Date(now);
+    midnight.setHours(23, 59, 59, 999);
     const eventTimeToday = new Date(now);
     eventTimeToday.setHours(hour, minute, 0, 0);
-    if (now > eventTimeToday) daysUntil = 7;
+    // If the service time has passed AND we're past midnight, jump to next week.
+    // Otherwise keep daysUntil = 0 so the event remains visible today.
+    if (now > midnight) daysUntil = 7;
   }
 
   result.setDate(result.getDate() + daysUntil);
