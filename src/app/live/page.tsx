@@ -99,8 +99,8 @@ export default function LivePage() {
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform -rotate-3 scale-105" />
-            <div className="relative bg-white p-8 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
+            <div className="absolute inset-0 bg-primary/5 rounded-[40px] transform md:-rotate-3 scale-100 md:scale-105" />
+            <div className="relative bg-white p-5 sm:p-12 rounded-[40px] shadow-xl border border-gray-100">
               <ServiceCountdown />
             </div>
           </div>

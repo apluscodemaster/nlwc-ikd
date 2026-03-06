@@ -140,21 +140,21 @@ export default function LivePlayer() {
           ></iframe>
         </motion.div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-2">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               Sunday Worship Experience
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Join Community → Telegram */}
             <a
               href={TELEGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-12 px-6 rounded-full border border-gray-100 font-bold flex items-center gap-2 hover:bg-gray-50 transition-all"
+              className="h-11 sm:h-12 px-4 sm:px-6 rounded-full border border-gray-100 font-bold flex items-center gap-2 hover:bg-gray-50 transition-all text-xs sm:text-sm shrink-0"
             >
-              <Users className="w-5 h-5 text-primary" />
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               Join Community
             </a>
 
@@ -162,12 +162,12 @@ export default function LivePlayer() {
             <div className="relative" ref={shareRef}>
               <button
                 onClick={() => setShowShareMenu(!showShareMenu)}
-                className="h-12 px-6 rounded-full bg-primary text-white font-bold flex items-center gap-2 hover:scale-105 transition-all"
+                className="h-11 sm:h-12 px-4 sm:px-6 rounded-full bg-primary text-white font-bold flex items-center gap-2 hover:scale-105 transition-all text-xs sm:text-sm"
               >
                 {showShareMenu ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 ) : (
-                  <Share2 className="w-5 h-5" />
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
                 Share
               </button>
