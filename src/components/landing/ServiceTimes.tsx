@@ -105,30 +105,78 @@ export default function ServiceTimes() {
               <motion.div
                 key={service.id}
                 variants={cardVariants}
-                className="min-w-[280px] sm:min-w-[350px] bg-white rounded-3xl p-8 sm:p-10 shadow-sm hover:shadow-2xl transition-all duration-300 group border border-transparent hover:border-primary/5 flex flex-col"
+                className="min-w-[300px] sm:min-w-[380px] bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 group border border-gray-100/50 hover:border-primary/10 flex flex-col h-full"
               >
-                <motion.div
-                  whileHover={{ scale: 1.05, rotate: 2 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  className={`w-16 h-16 ${service.color} rounded-2xl flex items-center justify-center mb-8 shrink-0`}
-                >
-                  <service.icon className={`w-8 h-8 ${service.iconColor}`} />
-                </motion.div>
+                {/* Image Section */}
+                <div className="relative h-64 overflow-hidden">
+                  {service.image ? (
+                    <motion.img
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
+                      src={service.image}
+                      alt={service.name}
+                      className="w-full h-full object-cover transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className={`w-full h-full ${service.color}`} />
+                  )}
 
-                <h3 className="text-2xl font-bold mb-4 text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
-                  {service.name}
-                </h3>
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
 
-                <p className="text-muted-foreground mb-8 leading-relaxed line-clamp-3 h-20">
-                  {service.description}
-                </p>
+                  {/* Icon Overlay */}
+                  <div className="absolute top-6 left-6">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className={`w-12 h-12 ${service.color} rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-md bg-opacity-90`}
+                    >
+                      <service.icon
+                        className={`w-6 h-6 ${service.iconColor}`}
+                      />
+                    </motion.div>
+                  </div>
 
-                <div className="mt-auto pt-6 border-t border-gray-50">
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <Clock className="w-5 h-5 text-primary shrink-0" />
-                    <span className="font-semibold text-sm">
-                      {service.day} | {service.time}
+                  {/* Badge */}
+                  <div className="absolute bottom-6 left-6">
+                    <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold text-gray-900 shadow-sm uppercase tracking-wider">
+                      {service.day}
                     </span>
+                  </div>
+                </div>
+
+                {/* Content Section */}
+                <div className="p-8 sm:p-10 flex flex-col grow bg-white">
+                  <h3 className="text-2xl font-extrabold mb-4 text-gray-900 group-hover:text-primary transition-colors tracking-tight">
+                    {service.name}
+                  </h3>
+
+                  <p className="text-muted-foreground mb-8 leading-relaxed line-clamp-3 text-[0.95rem]">
+                    {service.description}
+                  </p>
+
+                  <div className="mt-auto pt-8 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Clock className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                            Time
+                          </span>
+                          <span className="font-bold text-sm text-gray-900">
+                            {service.time}
+                          </span>
+                        </div>
+                      </div>
+
+                      <motion.div
+                        whileHover={{ x: 5 }}
+                        className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 cursor-pointer"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </motion.div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
