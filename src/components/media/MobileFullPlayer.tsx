@@ -218,7 +218,7 @@ export default function MobileFullPlayer({
           </div>
 
           {/* Secondary Controls */}
-          <div className="flex items-center justify-center gap-5 pb-10 px-8">
+          <div className="flex items-center justify-center gap-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] px-8">
             <button
               onClick={onCycleSpeed}
               className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all active:scale-95 min-w-[52px]"

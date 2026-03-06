@@ -63,11 +63,11 @@ export default function LivePage() {
         backgroundImage="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2070&auto=format&fit=crop"
       />
 
-      <SectionContainer id="live-player" className="pb-10">
+      <SectionContainer id="live-player" className="pb-8 sm:pb-12">
         <LivePlayer />
       </SectionContainer>
 
-      <SectionContainer className="bg-gray-50 overflow-hidden">
+      <SectionContainer className="bg-gray-50 overflow-hidden pt-10 sm:pt-16">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div className="space-y-8">
             <div className="space-y-4 text-center lg:text-left">
