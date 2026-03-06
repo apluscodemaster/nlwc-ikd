@@ -69,7 +69,12 @@ const TABS = [
     icon: FileText,
     href: "/transcripts",
   },
-  { key: "manuals", label: "Sunday School", icon: BookOpen, href: "/manuals" },
+  {
+    key: "manuals",
+    label: "Sunday School Manuals",
+    icon: BookOpen,
+    href: "/manuals",
+  },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 

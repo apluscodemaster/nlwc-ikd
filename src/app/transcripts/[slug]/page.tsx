@@ -90,7 +90,7 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 {transcript.type === "sunday-school"
-                  ? "Sunday School"
+                  ? "Sunday School Manual"
                   : "Sunday Message"}
               </div>
             </div>
