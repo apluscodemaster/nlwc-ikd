@@ -33,6 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
+import ManualThumbnail from "@/components/media/ManualThumbnail";
 
 // =============================================================================
 // Video Messages fetch
@@ -684,25 +685,26 @@ export default function MediaHub() {
                         href={`/manuals/${manual.slug}`}
                         className="group block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500"
                       >
-                        <div className="relative aspect-video overflow-hidden bg-gray-100">
-                          {manual.thumbnail ? (
+                        {manual.thumbnail ? (
+                          <div className="relative aspect-video overflow-hidden bg-gray-100">
                             <Image
                               src={manual.thumbnail}
                               alt={manual.title}
                               fill
                               className="object-cover group-hover:scale-105 transition-transform duration-700"
                             />
-                          ) : (
-                            <div className="w-full h-full bg-linear-to-br from-green-500/10 to-primary/5 flex items-center justify-center">
-                              <BookOpen className="w-12 h-12 text-green-600/30" />
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
+                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black text-green-700 uppercase tracking-widest shadow-lg">
+                              <BookOpen className="w-3 h-3 inline mr-1" />
+                              Manual
                             </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
-                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-black text-green-700 uppercase tracking-widest shadow-lg">
-                            <BookOpen className="w-3 h-3 inline mr-1" />
-                            Manual
                           </div>
-                        </div>
+                        ) : (
+                          <ManualThumbnail
+                            title={manual.title}
+                            className="group-hover:scale-105 transition-transform duration-700"
+                          />
+                        )}
 
                         <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
                           <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
