@@ -24,6 +24,7 @@ import {
   BookOpen,
   Calendar,
   User,
+  Clock,
 } from "lucide-react";
 import Image from "next/image";
 import { AnimatePresence, motion, Variants } from "framer-motion";
@@ -629,9 +630,15 @@ export default function MediaHub() {
                           </div>
 
                           <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
-                            <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
-                              {transcript.formattedDate}
-                            </p>
+                            <div className="flex items-center gap-3">
+                              <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
+                                {transcript.formattedDate}
+                              </p>
+                              <div className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-primary/60 uppercase tracking-widest">
+                                <Clock className="w-3 h-3" />
+                                <span>{transcript.readingTime} min read</span>
+                              </div>
+                            </div>
                             <h3 className="text-sm sm:text-lg font-bold text-gray-900 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                               {transcript.title}
                             </h3>
@@ -707,9 +714,15 @@ export default function MediaHub() {
                         )}
 
                         <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
-                          <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
-                            {manual.formattedDate}
-                          </p>
+                          <div className="flex items-center gap-3">
+                            <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-widest">
+                              {manual.formattedDate}
+                            </p>
+                            <div className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-primary/60 uppercase tracking-widest">
+                              <Clock className="w-3 h-3" />
+                              <span>{manual.readingTime} min read</span>
+                            </div>
+                          </div>
                           <h3 className="text-sm sm:text-lg font-bold text-gray-900 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                             {manual.title}
                           </h3>
