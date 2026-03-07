@@ -6,6 +6,7 @@
 const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church"}/wp-json/wp/v2`;
 
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
+import { calculateReadingTime } from "@/utils/readingTime";
 
 // WordPress Category IDs
 export const WP_CATEGORIES = {
@@ -111,6 +112,7 @@ export interface TranscriptPost {
   thumbnail?: string;
   categories: string[];
   type: "sunday-message" | "sunday-school";
+  readingTime: number;
 }
 
 export interface SundaySchoolManual {
@@ -123,6 +125,7 @@ export interface SundaySchoolManual {
   slug: string;
   link: string;
   thumbnail?: string;
+  readingTime: number;
 }
 
 // =============================================================================
@@ -469,6 +472,7 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
     type: isSundaySchool ? "sunday-school" : "sunday-message",
+    readingTime: calculateReadingTime(post.content.rendered),
   };
 }
 
@@ -486,6 +490,7 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     slug: post.slug,
     link: post.link,
     thumbnail: getFeaturedImage(post) || undefined,
+    readingTime: calculateReadingTime(post.content.rendered),
   };
 }
 

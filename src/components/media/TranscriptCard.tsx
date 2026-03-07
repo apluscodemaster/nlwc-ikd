@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Calendar, User, ChevronRight } from "lucide-react";
+import { BookOpen, Calendar, User, ChevronRight, Clock } from "lucide-react";
 import type { TranscriptPost } from "@/lib/wordpress";
 import Link from "next/link";
 import {
@@ -81,9 +81,15 @@ export default function TranscriptCard({
             <TypeIcon className="w-3.5 h-3.5" />
             {style.label}
           </div>
-          <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {transcript.formattedDate}
+          <div className="flex items-center gap-3">
+            <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
+              <Calendar className="w-3.5 h-3.5 text-primary" />
+              {transcript.formattedDate}
+            </div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              {transcript.readingTime} min read
+            </div>
           </div>
         </div>
 
