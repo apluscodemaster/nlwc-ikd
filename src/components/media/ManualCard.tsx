@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { FileText, Calendar, ChevronRight } from "lucide-react";
+import { FileText, Calendar, ChevronRight, Clock } from "lucide-react";
 import type { SundaySchoolManual } from "@/lib/wordpress";
 import Link from "next/link";
 import Image from "next/image";
@@ -73,9 +73,15 @@ export default function ManualCard({
               <FileText className="w-3.5 h-3.5" />
               Sunday School Manuals
             </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              {manual.formattedDate}
+            <div className="flex items-center gap-3">
+              <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
+                <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                {manual.formattedDate}
+              </div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                {manual.readingTime} min read
+              </div>
             </div>
           </div>
 
