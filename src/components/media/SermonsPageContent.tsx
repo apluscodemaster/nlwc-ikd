@@ -49,32 +49,61 @@ interface TranscriptStub {
 }
 
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
+  const WP_API =
+    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
+  const CATEGORY_ID = 20; // Sunday Message Transcripts
+
   try {
     const allTranscripts: TranscriptStub[] = [];
     let page = 1;
     let totalPages = 1;
+    const maxPages = 10; // Safety cap
 
-    // Paginate through all transcript pages to get complete list
-    while (page <= totalPages) {
-      const res = await fetch(`/api/transcripts?per_page=100&page=${page}`);
-      if (!res.ok) break;
-      const json = await res.json();
-      const transcripts = json.data || json.transcripts || [];
-      allTranscripts.push(
-        ...transcripts.map((t: { slug: string; title: string }) => ({
-          slug: t.slug,
-          title: t.title,
-        })),
-      );
-      totalPages = json.pagination?.totalPages || 1;
+    while (page <= totalPages && page <= maxPages) {
+      try {
+        const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=100&page=${page}&_fields=title,slug&orderby=date&order=desc`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.warn(
+            `[TranscriptMatch] WP API page ${page} failed: ${res.status}`,
+          );
+          break;
+        }
+
+        totalPages = parseInt(
+          res.headers.get("X-WP-TotalPages") || "1",
+          10,
+        );
+
+        const posts: { title: { rendered: string }; slug: string }[] =
+          await res.json();
+        allTranscripts.push(
+          ...posts.map((p) => ({
+            slug: p.slug,
+            title: p.title.rendered,
+          })),
+        );
+      } catch (pageError) {
+        console.warn(
+          `[TranscriptMatch] Error fetching page ${page}:`,
+          pageError,
+        );
+        break;
+      }
       page++;
     }
 
+    console.log(
+      `[TranscriptMatch] Fetched ${allTranscripts.length} transcript slugs across ${page - 1} page(s)`,
+    );
     return allTranscripts;
-  } catch {
+  } catch (err) {
+    console.error("[TranscriptMatch] Failed to fetch transcript slugs:", err);
     return [];
   }
 }
+
+
 
 function normalizeTitle(title: string): string {
   return (
