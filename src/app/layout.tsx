@@ -72,6 +72,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   bibleVersion: "KJV",
                   tooltipStyle: "dark",
                   socialSharing: [],
+                  tagChapters: true,
+                  dropShadow: true,
+                  noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
                   customStyle: {
                     heading: { fontSize: "14px" },
                     body: { fontSize: "13px" }
