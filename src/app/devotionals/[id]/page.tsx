@@ -22,6 +22,7 @@ import {
 } from "@/lib/devotionals";
 import PageHeader from "@/components/shared/PageHeader";
 import DevotionalSidebar from "@/components/devotionals/DevotionalSidebar";
+import { toast } from "sonner";
 
 export default function DevotionalViewPage({
   params,
@@ -117,7 +118,7 @@ export default function DevotionalViewPage({
     } else {
       // Fallback: Copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      toast.success("Link copied to clipboard!");
     }
   };
 

@@ -36,6 +36,7 @@ import {
   Link as LinkIcon,
   Quote,
 } from "lucide-react";
+import { showPrompt } from "@/components/shared/CustomDialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentType = "sermon" | "transcript" | "manual";
@@ -306,9 +307,13 @@ function RichTextEditor({
   };
 
   // Insert a hyperlink
-  const insertLink = () => {
+  const insertLink = async () => {
     const savedRange = saveSelection();
-    const url = prompt("Enter URL:");
+    const url = await showPrompt("Enter the URL for the link:", {
+      title: "Insert Link",
+      placeholder: "https://example.com",
+      confirmLabel: "Insert",
+    });
     if (!url) {
       restoreSelection(savedRange);
       return;
