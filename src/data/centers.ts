@@ -35,7 +35,7 @@ export const fellowshipCenters: FellowshipCenter[] = [
     whatsappLink: "https://wa.me/2347066644051",
     lat: 6.5933,
     lng: 3.4567,
-    areaKeywords: ["irawo", "alafia", "ikorodu road"],
+    areaKeywords: ["irawo", "alafia", "ikorodu road", "ondo"],
   },
   {
     id: "3",
@@ -97,7 +97,7 @@ export const fellowshipCenters: FellowshipCenter[] = [
     whatsappLink: "https://wa.me/2348133725886",
     lat: 6.6583,
     lng: 3.525,
-    areaKeywords: ["owode", "weighbridge", "offa"],
+    areaKeywords: ["owode", "weighbridge", "offa", "bako estate"],
   },
   {
     id: "8",
