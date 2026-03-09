@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
 import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
 import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
+import CustomDialog from "@/components/shared/CustomDialog";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <ScrollToTop />
           <FellowshipPrompt />
           <RefTaggerReloader />
+          <CustomDialog />
         </Providers>
         <Footer />
 
