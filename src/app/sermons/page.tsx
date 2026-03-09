@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Metadata } from "next";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
@@ -19,7 +20,9 @@ export default function SermonsPage() {
       />
 
       <SectionContainer>
-        <SermonsPageContent />
+        <Suspense fallback={null}>
+          <SermonsPageContent />
+        </Suspense>
       </SectionContainer>
     </main>
   );

@@ -97,7 +97,7 @@ const NAVIGATION_DATA: NavItem[] = [
       { label: "Church Gallery", href: "/gallery" },
     ],
   },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const SOCIAL_LINKS = [
