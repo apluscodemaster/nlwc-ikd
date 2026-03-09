@@ -268,7 +268,7 @@ export default function DevotionalViewPage({
               >
                 <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                 <h4 className="text-xl font-bold mb-3 relative z-10">
-                  Help Us Grow
+                  Help A Friend Grow
                 </h4>
                 <p className="text-white/80 text-sm mb-6 relative z-10">
                   If these materials have blessed you, consider sharing with
