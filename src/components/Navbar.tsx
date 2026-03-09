@@ -59,6 +59,23 @@ const NAVIGATION_DATA: NavItem[] = [
     ],
   },
   {
+    label: "Media",
+    children: [
+      {
+        label: "Audio Messages",
+        href: "/sermons",
+      },
+      {
+        label: "Video Messages",
+        href: "/video-messages",
+      },
+      {
+        label: "Church Gallery",
+        href: "/gallery",
+      },
+    ],
+  },
+  {
     label: "Resources",
     children: [
       {
@@ -72,23 +89,6 @@ const NAVIGATION_DATA: NavItem[] = [
       {
         label: "Message Transcripts",
         href: "/transcripts",
-      },
-    ],
-  },
-  {
-    label: "Media",
-    children: [
-      {
-        label: "Video Messages",
-        href: "/video-messages",
-      },
-      {
-        label: "Audio Messages",
-        href: "/sermons",
-      },
-      {
-        label: "Church Gallery",
-        href: "/gallery",
       },
     ],
   },

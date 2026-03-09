@@ -6,6 +6,9 @@ export type FellowshipCenter = {
   meetingTime: string;
   mapLink: string;
   whatsappLink: string;
+  lat: number;
+  lng: number;
+  areaKeywords: string[];
 };
 
 export const fellowshipCenters: FellowshipCenter[] = [
@@ -18,6 +21,9 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/GBUT7TQiCfu65cms5",
     whatsappLink: "https://wa.me/2347088447255",
+    lat: 6.6201,
+    lng: 3.5084,
+    areaKeywords: ["grammar school", "kokoro abu", "ikorodu", "aga", "itamaga"],
   },
   {
     id: "2",
@@ -27,6 +33,9 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/pAXQP5UmAvxfLzNP8",
     whatsappLink: "https://wa.me/2347066644051",
+    lat: 6.5933,
+    lng: 3.4567,
+    areaKeywords: ["irawo", "alafia", "ikorodu road"],
   },
   {
     id: "3",
@@ -37,6 +46,9 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/2xdzvvNBjngTxNNGA",
     whatsappLink: "https://wa.me/2349096705951",
+    lat: 6.5833,
+    lng: 3.5833,
+    areaKeywords: ["ijede", "cele", "all saints", "redemption"],
   },
   {
     id: "4",
@@ -47,15 +59,21 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/k9WeZke5eBActzLcA",
     whatsappLink: "https://wa.me/2348182072185",
+    lat: 6.6167,
+    lng: 3.4833,
+    areaKeywords: ["agric", "ishawo", "round hotel"],
   },
   {
     id: "5",
     name: "Ketu Center I",
     address: "5, Oladele Street, Kosofe, Ketu, Ikorodu Road.",
-    coordinator: "Pst. Segun Adeeko",
+    coordinator: "Bro. Kehinde Adeyemi",
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/rhinY7FwWzq78UQ37",
-    whatsappLink: "https://wa.me/2348029513199",
+    whatsappLink: "https://wa.me/2347039880241",
+    lat: 6.6003,
+    lng: 3.3931,
+    areaKeywords: ["ketu", "kosofe", "mile 12", "alapere"],
   },
   {
     id: "6",
@@ -65,6 +83,9 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/WzFRoGiLSAvS5yET8",
     whatsappLink: "https://wa.me/2348139782910",
+    lat: 6.5983,
+    lng: 3.3883,
+    areaKeywords: ["ketu", "ojota", "ogudu"],
   },
   {
     id: "7",
@@ -74,6 +95,9 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/YHdcntDc39YErnQbA",
     whatsappLink: "https://wa.me/2348133725886",
+    lat: 6.6583,
+    lng: 3.525,
+    areaKeywords: ["owode", "weighbridge", "offa"],
   },
   {
     id: "8",
@@ -84,16 +108,22 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/CGyn7EBaCfc88sRP8",
     whatsappLink: "https://wa.me/2348082315811",
+    lat: 6.6333,
+    lng: 3.4667,
+    areaKeywords: ["sabo", "odoguyan", "jakande", "agbala", "shagamu"],
   },
   {
     id: "9",
     name: "Eruwen Center",
     address:
       "Omooba Street, off Golden Dames Avenue, off Olanrewaju Kazeem Street, Oremeji, Abule Erunwen, Ikorodu.",
-    coordinator: "Bro. Michael Omodojo",
+    coordinator: "Bro. Daniel Abiodun",
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/6DHHPwe96576GxtH7",
-    whatsappLink: "https://wa.me/2347042686436",
+    whatsappLink: "https://wa.me/2348137030513",
+    lat: 6.625,
+    lng: 3.5167,
+    areaKeywords: ["eruwen", "erunwen", "oremeji", "golden dames"],
   },
   {
     id: "10",
@@ -103,5 +133,8 @@ export const fellowshipCenters: FellowshipCenter[] = [
     meetingTime: "Every Sunday, 6:00 PM",
     mapLink: "https://maps.app.goo.gl/eZKxUoueFmcurdmo7",
     whatsappLink: "https://wa.me/2348145334024",
+    lat: 6.6333,
+    lng: 3.5083,
+    areaKeywords: ["oreyo", "agbalumo", "oriyomi"],
   },
 ];
