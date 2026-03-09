@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -279,16 +280,43 @@ function formatProgressTime(seconds: number): string {
 // =============================================================================
 
 export default function SermonsPageContent() {
-  // Filter state
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedSeries, setSelectedSeries] = useState<number | undefined>();
-  const [selectedSpeaker, setSelectedSpeaker] = useState<number | undefined>();
-  const [selectedTopic, setSelectedTopic] = useState<number | undefined>();
-  const [selectedYear, setSelectedYear] = useState<number | undefined>();
-  const [sortOrder, setSortOrder] = useState<"DESC" | "ASC">("DESC");
-  const [page, setPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Initialise filter state from URL query params
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    searchParams.get("q") || "",
+  );
+  const [selectedSeries, setSelectedSeries] = useState<number | undefined>(
+    searchParams.get("series") ? Number(searchParams.get("series")) : undefined,
+  );
+  const [selectedSpeaker, setSelectedSpeaker] = useState<number | undefined>(
+    searchParams.get("speaker")
+      ? Number(searchParams.get("speaker"))
+      : undefined,
+  );
+  const [selectedTopic, setSelectedTopic] = useState<number | undefined>(
+    searchParams.get("topic") ? Number(searchParams.get("topic")) : undefined,
+  );
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(
+    searchParams.get("year") ? Number(searchParams.get("year")) : undefined,
+  );
+  const [sortOrder, setSortOrder] = useState<"DESC" | "ASC">(
+    (searchParams.get("sort") as "DESC" | "ASC") || "DESC",
+  );
+  const [page, setPage] = useState(
+    searchParams.get("page") ? Number(searchParams.get("page")) : 1,
+  );
+  const [showFilters, setShowFilters] = useState(() => {
+    // Auto-open filters panel if any filter is active from the URL
+    return !!(
+      searchParams.get("speaker") ||
+      searchParams.get("series") ||
+      searchParams.get("topic") ||
+      searchParams.get("year")
+    );
+  });
 
   // Audio player state
   const [activeSermon, setActiveSermon] = useState<AudioSermon | null>(null);
@@ -412,6 +440,38 @@ export default function SermonsPageContent() {
   useEffect(() => {
     setPage(1);
   }, [selectedSeries, selectedSpeaker, selectedTopic, selectedYear, sortOrder]);
+
+  // ========================================================================
+  // Sync filter state → URL query params (shareable links)
+  // ========================================================================
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    if (selectedSpeaker) params.set("speaker", String(selectedSpeaker));
+    if (selectedSeries) params.set("series", String(selectedSeries));
+    if (selectedTopic) params.set("topic", String(selectedTopic));
+    if (selectedYear) params.set("year", String(selectedYear));
+    if (sortOrder !== "DESC") params.set("sort", sortOrder);
+    if (page > 1) params.set("page", String(page));
+
+    const qs = params.toString();
+    const newUrl = qs ? `/sermons?${qs}` : "/sermons";
+
+    // Only update if the URL actually changed
+    const currentQs = window.location.search.replace(/^\?/, "");
+    if (qs !== currentQs) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [
+    debouncedSearch,
+    selectedSpeaker,
+    selectedSeries,
+    selectedTopic,
+    selectedYear,
+    sortOrder,
+    page,
+    router,
+  ]);
 
   // Active filter count
   const activeFilterCount = [
