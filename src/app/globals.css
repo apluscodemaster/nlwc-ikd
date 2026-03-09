@@ -224,3 +224,22 @@ mark.search-highlight-active {
     box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
   }
 }
+
+/* ─── RefTagger Tooltip Overrides ──────────────────────────────────────────── */
+/* Show full verse text without truncation, scrollable for very long passages */
+.rtTooltip {
+  max-width: 380px !important;
+}
+
+.rtTooltip .rtTooltipBody {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+/* Make the "Read more" link less prominent since full text is visible */
+.rtTooltip .rtTooltipFooter a {
+  font-size: 11px !important;
+}
+
