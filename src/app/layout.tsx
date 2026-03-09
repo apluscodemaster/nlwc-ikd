@@ -4,6 +4,7 @@ import Script from "next/script";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
           <ScrollToTop />
+          <FellowshipPrompt />
         </Providers>
         <Footer />
       </body>
