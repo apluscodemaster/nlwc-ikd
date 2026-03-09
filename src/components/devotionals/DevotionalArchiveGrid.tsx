@@ -40,10 +40,11 @@ export default function DevotionalArchiveGrid() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Search & Filter state
+  // Search, Filter & Layout state
   const [searchQuery, setSearchQuery] = useState("");
   const [month, setMonth] = useState<number | "all">("all");
   const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
 
   const fetchPage = useCallback(
     async (cursor?: DocumentSnapshot) => {
@@ -112,6 +113,55 @@ export default function DevotionalArchiveGrid() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
+            {/* Layout Toggle */}
+            <div className="flex items-center p-1 bg-gray-100 rounded-xl mr-2">
+              <button
+                onClick={() => setViewLayout("grid")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewLayout === "grid"
+                    ? "bg-white text-primary shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                title="Grid View"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewLayout("list")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewLayout === "list"
+                    ? "bg-white text-primary shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                title="List View"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Month
@@ -210,63 +260,118 @@ export default function DevotionalArchiveGrid() {
         </div>
       ) : (
         <>
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Main Content Area: Grid or List */}
+          <div
+            className={
+              viewLayout === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                : "flex flex-col gap-4"
+            }
+          >
             {filteredDevotionals
               .slice(!isFiltering ? 1 : 0) // Skip the first one if it's shown as featured
               .map((devotional, index) => (
                 <motion.div
                   key={devotional.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
                 >
                   <Link
                     href={`/devotionals/${devotional.id}`}
-                    className="group block h-full rounded-[32px] border border-gray-100 bg-white p-8 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all scroll-mt-24"
+                    className={`group block overflow-hidden border border-gray-100 transition-all ${
+                      viewLayout === "grid"
+                        ? "h-full rounded-[32px] bg-white p-8 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5"
+                        : "rounded-2xl bg-white p-4 sm:p-6 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+                    }`}
                   >
-                    <div className="flex flex-col h-full">
-                      {/* Icon & Date */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="w-14 h-14 rounded-2xl bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                          <BookOpen className="w-7 h-7 text-primary" />
+                    <div
+                      className={
+                        viewLayout === "grid"
+                          ? "flex flex-col h-full"
+                          : "flex items-center gap-4 sm:gap-8"
+                      }
+                    >
+                      {/* Icon */}
+                      <div
+                        className={`flex items-center justify-center rounded-2xl bg-primary/5 group-hover:bg-primary/10 transition-colors shrink-0 ${
+                          viewLayout === "grid"
+                            ? "w-14 h-14 mb-6"
+                            : "w-12 h-12 sm:w-16 sm:h-16"
+                        }`}
+                      >
+                        <BookOpen
+                          className={
+                            viewLayout === "grid"
+                              ? "w-7 h-7 text-primary"
+                              : "w-6 h-6 sm:w-8 sm:h-8 text-primary"
+                          }
+                        />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={
+                            viewLayout === "grid"
+                              ? "flex items-center justify-between mb-2"
+                              : "flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1"
+                          }
+                        >
+                          <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            {devotional.scheduledDate
+                              .toDate()
+                              .toLocaleDateString("en-US", {
+                                month: "short",
+                                year: "numeric",
+                              })}
+                          </span>
+                          {viewLayout === "grid" && (
+                            <div className="text-xs font-bold text-gray-300">
+                              #{(index + 1).toString().padStart(2, "0")}
+                            </div>
+                          )}
                         </div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+
+                        <h3
+                          className={`font-bold text-gray-900 group-hover:text-primary transition-colors leading-tight truncate ${
+                            viewLayout === "grid"
+                              ? "text-xl mb-4"
+                              : "text-base sm:text-xl mb-1 sm:mb-2"
+                          }`}
+                        >
+                          {devotional.title}
+                        </h3>
+
+                        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
                           {devotional.scheduledDate
                             .toDate()
                             .toLocaleDateString("en-US", {
-                              month: "short",
-                              year: "numeric",
+                              weekday: "short",
+                              month: "long",
+                              day: "numeric",
                             })}
-                        </span>
+                        </p>
                       </div>
 
-                      {/* Title */}
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                        {devotional.title}
-                      </h3>
-
-                      {/* Explicit Date */}
-                      <p className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-                        <Calendar className="w-4 h-4" />
-                        {devotional.scheduledDate
-                          .toDate()
-                          .toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                      </p>
-
-                      {/* Footer */}
-                      <div className="mt-auto pt-6 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-sm font-bold text-primary opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                          Read Now
-                        </span>
-                        <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all duration-300">
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      {/* Footer / CTA Action */}
+                      {viewLayout === "grid" ? (
+                        <div className="mt-auto pt-6 border-t border-gray-50 flex items-center justify-between">
+                          <span className="text-sm font-bold text-primary opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                            Read Now
+                          </span>
+                          <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all duration-300">
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="hidden sm:flex items-center gap-3 ml-auto px-4 py-2 rounded-xl bg-gray-50 group-hover:bg-primary group-hover:text-white transition-all">
+                          <span className="text-sm font-bold">Read</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      )}
                     </div>
                   </Link>
                 </motion.div>
