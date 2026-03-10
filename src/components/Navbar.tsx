@@ -76,7 +76,7 @@ const NAVIGATION_DATA: NavItem[] = [
     ],
   },
   {
-    label: "Resources",
+    label: "Spiritual Resources",
     children: [
       {
         label: "Daily Devotionals",
