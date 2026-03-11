@@ -59,7 +59,7 @@ const NAVIGATION_DATA: NavItem[] = [
     ],
   },
   {
-    label: "Media Resources",
+    label: "Media",
     children: [
       {
         label: "Audio Messages",
@@ -69,18 +69,18 @@ const NAVIGATION_DATA: NavItem[] = [
         label: "Video Messages",
         href: "/video-messages",
       },
-      // {
-      //   label: "Audio Messages",
-      //   href: "/media?type=audio",
-      // },
       {
-        label: "Blog",
-        href: "https://nlwc.church/blog/",
-        isExternal: true,
+        label: "Church Gallery",
+        href: "/gallery",
       },
+    ],
+  },
+  {
+    label: "Spiritual Resources",
+    children: [
       {
-        label: "House Fellowship",
-        href: "/fellowship",
+        label: "Daily Devotionals",
+        href: "/devotionals",
       },
       {
         label: "Sunday School Manual",
@@ -90,14 +90,23 @@ const NAVIGATION_DATA: NavItem[] = [
         label: "Message Transcripts",
         href: "/transcripts",
       },
-      {
-        label: "Daily Devotionals",
-        href: "/devotionals",
-      },
-      { label: "Church Gallery", href: "/gallery" },
     ],
   },
-  { label: "Contact", href: "/contact" },
+  {
+    label: "Connect",
+    children: [
+      {
+        label: "House Fellowship",
+        href: "/fellowship",
+      },
+      {
+        label: "Blog",
+        href: "https://nlwc.church/blog/",
+        isExternal: true,
+      },
+    ],
+  },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const SOCIAL_LINKS = [
