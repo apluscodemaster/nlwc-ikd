@@ -26,8 +26,8 @@ export default function HomePage() {
         {/* 3. Our Journey — Faith, Hope, Charity */}
         <OurJourney />
 
-        {/* 4. Meet Our Pastors */}
-        <LeadershipGrid />
+        {/* 4. Meet Our Pastors 
+        <LeadershipGrid />*/}
 
         {/* 5. Weekly Meetings */}
         <ServiceTimes />
