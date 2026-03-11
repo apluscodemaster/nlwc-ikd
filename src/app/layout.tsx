@@ -4,6 +4,9 @@ import Script from "next/script";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
+import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
+import CustomDialog from "@/components/shared/CustomDialog";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 
@@ -54,8 +57,39 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
           <ScrollToTop />
+          <FellowshipPrompt />
+          <RefTaggerReloader />
+          <CustomDialog />
         </Providers>
         <Footer />
+
+        {/* Logos RefTagger — auto-detects Bible references and shows verse on hover */}
+        <Script
+          id="reftagger-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.refTagger = {
+                settings: {
+                  bibleVersion: "KJV",
+                  tooltipStyle: "dark",
+                  socialSharing: [],
+                  tagChapters: true,
+                  dropShadow: true,
+                  noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
+                  customStyle: {
+                    heading: { fontSize: "14px" },
+                    body: { fontSize: "13px" }
+                  }
+                }
+              };
+            `,
+          }}
+        />
+        <Script
+          src="https://api.reftagger.com/v2/RefTagger.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

@@ -17,7 +17,7 @@ interface PageHeaderProps {
 // Map paths to readable names
 const PATH_NAMES: Record<string, string> = {
   about: "About Us",
-  contact: "Contact",
+  contact: "Contact Us",
   devotionals: "Daily Devotionals",
   fellowship: "House Fellowship",
   gallery: "Church Gallery",
