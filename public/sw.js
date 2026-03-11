@@ -23,9 +23,9 @@ self.addEventListener("install", (event) => {
       return Promise.allSettled(CACHE_FILES.map((url) => cache.add(url))).catch(
         (err) => {
           console.warn("Cache installation partial failure:", err);
-        }
+        },
       );
-    })
+    }),
   );
   self.skipWaiting();
 });
@@ -39,9 +39,9 @@ self.addEventListener("activate", (event) => {
           if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
-        })
+        }),
       );
-    })
+    }),
   );
   self.clients.claim();
 });
@@ -72,44 +72,39 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          // Network failed - try cached version
-          return caches
-            .match(event.request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
+          // Network failed - try cached version of the requested page
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+
+            // Page not cached - PRIMARY FALLBACK: use static fallback HTML
+            // This works even on first visit with no internet
+            return caches.match(OFFLINE_FALLBACK).then((fallback) => {
+              if (fallback) {
+                return fallback;
               }
 
-              // No cached version - try cached offline page
-              return caches
-                .match(OFFLINE_PAGE)
-                .then((offlinePage) => {
-                  if (offlinePage) {
-                    return offlinePage;
-                  }
+              // SECONDARY FALLBACK: try cached offline React page
+              return caches.match(OFFLINE_PAGE).then((offlinePage) => {
+                if (offlinePage) {
+                  return offlinePage;
+                }
 
-                  // Last resort - use static fallback
-                  return caches
-                    .match(OFFLINE_FALLBACK)
-                    .then((fallback) => {
-                      if (fallback) {
-                        return fallback;
-                      }
-
-                      // Return a custom offline response
-                      return new Response(
-                        "<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>No Connection</h1><p>Please check your internet connection and refresh.</p></body></html>",
-                        {
-                          headers: {
-                            "Content-Type": "text/html",
-                          },
-                          status: 503,
-                        }
-                      );
-                    });
-                });
+                // LAST RESORT: return minimal HTML response
+                return new Response(
+                  "<!DOCTYPE html><html><head><title>Offline</title><meta name='viewport' content='width=device-width, initial-scale=1'></head><body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f3f4f6'><div style='text-align:center;max-width:500px;padding:20px'><h1>No Connection</h1><p>Please check your internet connection and refresh.</p><button onclick='location.reload()' style='padding:10px 20px;margin-top:20px;background:#2563eb;color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px'>Try Again</button></div></body></html>",
+                  {
+                    headers: {
+                      "Content-Type": "text/html",
+                    },
+                    status: 503,
+                  },
+                );
+              });
             });
-        })
+          });
+        }),
     );
   } else {
     // For other resources (CSS, JS, images, etc.), try cache first, then network
@@ -135,7 +130,7 @@ self.addEventListener("fetch", (event) => {
             // (images, stylesheets, etc.)
             return new Response("", { status: 204 });
           });
-      })
+      }),
     );
   }
 });
