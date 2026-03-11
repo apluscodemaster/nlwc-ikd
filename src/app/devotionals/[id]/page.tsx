@@ -13,6 +13,7 @@ import {
   Download,
   Library,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import {
   getDevotionalById,
@@ -20,6 +21,8 @@ import {
   Devotional,
 } from "@/lib/devotionals";
 import PageHeader from "@/components/shared/PageHeader";
+import DevotionalSidebar from "@/components/devotionals/DevotionalSidebar";
+import { toast } from "sonner";
 
 export default function DevotionalViewPage({
   params,
@@ -59,10 +62,13 @@ export default function DevotionalViewPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-muted-foreground font-medium text-lg">
-          Loading devotional...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gray-50/30">
+        <div className="relative">
+          <div className="w-20 h-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+          <BookOpen className="w-8 h-8 text-primary absolute inset-0 m-auto" />
+        </div>
+        <p className="text-muted-foreground font-bold text-xl animate-pulse">
+          Opening the word...
         </p>
       </div>
     );
@@ -70,18 +76,21 @@ export default function DevotionalViewPage({
 
   if (error || !devotional) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
-        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-red-500" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 bg-gray-50/30">
+        <div className="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center shadow-inner">
+          <AlertCircle className="w-10 h-10 text-red-500" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900">
-          {error || "Not Found"}
+        <h2 className="text-2xl font-bold text-gray-900 mt-4">
+          {error || "Devotional not found"}
         </h2>
+        <p className="text-gray-500 mb-6 font-medium">
+          It might have been moved or removed.
+        </p>
         <Link
           href="/devotionals"
-          className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-white font-bold text-sm hover:scale-[1.02] active:scale-95 transition-all"
+          className="inline-flex items-center gap-2 h-14 px-8 rounded-full bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
         >
-          <Library className="w-4 h-4" />
+          <Library className="w-5 h-5" />
           Browse Archive
         </Link>
       </div>
@@ -97,158 +106,184 @@ export default function DevotionalViewPage({
       year: "numeric",
     });
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: devotional.title,
+          text: `Check out today's devotional: ${devotional.title}`,
+          url: window.location.href,
+        })
+        .catch(console.error);
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   return (
-    <main>
+    <main className="bg-gray-50/30 min-h-screen">
       <PageHeader
         title={devotional.title}
         subtitle="Daily Devotional"
         backgroundImage="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=2070&auto=format&fit=crop"
       />
 
-      <section className="py-10 sm:py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          {/* Breadcrumbs & Date */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
-          >
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link
-                href="/devotionals"
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+      <section className="py-12 sm:py-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12 lg:gap-16 items-start">
+            {/* Main Content Area */}
+            <div className="space-y-8">
+              {/* Breadcrumbs & Actions Row */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-6"
               >
-                Archive
-              </Link>
-              <span className="text-gray-300">/</span>
-              <span className="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-none">
-                {devotional.title}
-              </span>
-            </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 text-sm font-bold text-primary uppercase tracking-widest">
+                    <Calendar className="w-4 h-4" />
+                    {formattedDate}
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+                    {devotional.title}
+                  </h2>
+                </div>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              {formattedDate}
-            </div>
-          </motion.div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-600 hover:text-primary hover:bg-primary/5 shadow-sm transition-all"
+                    title="Share Devotional"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                  <a
+                    href={devotional.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 h-12 px-6 rounded-2xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </a>
+                </div>
+              </motion.div>
 
-          {/* Reading Interface */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex flex-col gap-6"
-          >
-            {/* Action Bar */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-3 text-sm font-semibold text-gray-600">
-                <BookOpen className="w-5 h-5 text-primary" />
-                Reading Mode
-              </div>
-              <div className="flex items-center gap-2">
-                {/* <a
-                  href={devotional.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex sm:hidden items-center gap-2 h-10 px-4 rounded-xl bg-white border border-gray-200 text-primary text-sm font-bold hover:bg-primary hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Full Screen
-                </a> */}
-                <a
-                  href={devotional.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 h-10 px-6 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <Download className="w-4 h-4" />
-                  Download PDF
-                </a>
-              </div>
-            </div>
+              {/* Reader Container */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative rounded-[40px] overflow-hidden border border-white bg-white shadow-2xl shadow-gray-200/50"
+              >
+                {/* Visual Accent */}
+                <div className="h-1.5 w-full bg-linear-to-r from-primary via-amber-400 to-primary" />
 
-            {/* Viewer */}
-            <div className="relative rounded-3xl overflow-hidden border border-gray-200/60 shadow-2xl bg-white group">
-              <div className="h-1.5 w-full bg-linear-to-r from-primary via-amber-400 to-primary" />
+                <div className="p-2 sm:p-4">
+                  <div
+                    className="relative w-full rounded-[28px] overflow-hidden bg-gray-100 shadow-inner"
+                    style={{ height: "85vh", minHeight: "750px" }}
+                  >
+                    <iframe
+                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
+                      className="w-full h-full border-none"
+                      title={devotional.title}
+                    />
 
-              <div className="p-1 sm:p-2 bg-gray-50">
-                <div
-                  className="relative w-full rounded-2xl overflow-hidden bg-white"
-                  style={{ height: "85vh", minHeight: "700px" }}
-                >
-                  <iframe
-                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
-                    className="w-full h-full border-none"
-                    title={devotional.title}
-                  />
-
-                  {/* Overlay for readers with float tools — hidden on mobile to avoid blocking PDF */}
-                  <div className="absolute top-4 right-4 hidden sm:flex items-center gap-3">
-                    <a
-                      href={devotional.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-gray-200 shadow-2xl text-sm font-bold text-primary hover:bg-primary hover:text-white hover:scale-105 transition-all"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      View Full Screen
-                    </a>
+                    {/* Floating Expand Tool */}
+                    <div className="absolute top-6 right-6 flex items-center gap-3">
+                      <a
+                        href={devotional.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/90 backdrop-blur-md border border-white shadow-xl text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all transform hover:scale-105"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Focus Mode
+                      </a>
+                    </div>
                   </div>
                 </div>
+              </motion.div>
+
+              {/* Navigation Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12">
+                {prev && (
+                  <Link
+                    href={`/devotionals/${prev.id}`}
+                    className="group flex items-center gap-6 p-6 rounded-3xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-gray-50 group-hover:bg-primary/10 flex items-center justify-center transition-colors shrink-0">
+                      <ChevronLeft className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                        Previous
+                      </p>
+                      <h4 className="text-base font-bold text-gray-900 truncate">
+                        {prev.title}
+                      </h4>
+                    </div>
+                  </Link>
+                )}
+
+                {next && (
+                  <Link
+                    href={`/devotionals/${next.id}`}
+                    className="group flex items-center justify-end gap-6 p-6 rounded-3xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all text-right ml-auto w-full"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                        Next
+                      </p>
+                      <h4 className="text-base font-bold text-gray-900 truncate">
+                        {next.title}
+                      </h4>
+                    </div>
+                    <div className="w-14 h-14 rounded-2xl bg-gray-50 group-hover:bg-primary/10 flex items-center justify-center transition-colors shrink-0">
+                      <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                )}
               </div>
             </div>
-          </motion.div>
 
-          {/* Prev / Next navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8"
-          >
-            {prev ? (
-              <Link
-                href={`/devotionals/${prev.id}`}
-                className="group flex items-center gap-4 p-5 rounded-2xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all"
+            {/* Sidebar */}
+            <aside className="sticky top-28 space-y-12">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors shrink-0">
-                  <ChevronLeft className="w-5 h-5 text-gray-500 group-hover:text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Previous
-                  </p>
-                  <p className="text-sm font-bold text-gray-900 truncate">
-                    {prev.title}
-                  </p>
-                </div>
-              </Link>
-            ) : (
-              <div />
-            )}
+                <DevotionalSidebar currentId={id} />
+              </motion.div>
 
-            {next ? (
-              <Link
-                href={`/devotionals/${next.id}`}
-                className="group flex items-center justify-end gap-4 p-5 rounded-2xl border border-gray-100 bg-white hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all text-right"
+              {/* Quick Support / Message Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="p-8 rounded-[32px] bg-linear-to-br from-primary to-amber-500 text-white shadow-xl shadow-primary/20 relative overflow-hidden group"
               >
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Next
-                  </p>
-                  <p className="text-sm font-bold text-gray-900 truncate">
-                    {next.title}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors shrink-0">
-                  <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-primary" />
-                </div>
-              </Link>
-            ) : (
-              <div />
-            )}
-          </motion.div>
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                <h4 className="text-xl font-bold mb-3 relative z-10">
+                  Help A Friend Grow
+                </h4>
+                <p className="text-white/80 text-sm mb-6 relative z-10">
+                  If these materials have blessed you, consider sharing with
+                  others to spread the word of God.
+                </p>
+                <button
+                  onClick={handleShare}
+                  className="w-full py-4 rounded-xl bg-white text-primary font-bold text-sm shadow-lg hover:bg-gray-50 transition-all relative z-10"
+                >
+                  Spread the Word
+                </button>
+              </motion.div>
+            </aside>
+          </div>
         </div>
       </section>
     </main>

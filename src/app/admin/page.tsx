@@ -36,6 +36,7 @@ import {
   Link as LinkIcon,
   Quote,
 } from "lucide-react";
+import { showPrompt } from "@/components/shared/CustomDialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentType = "sermon" | "transcript" | "manual";
@@ -148,47 +149,330 @@ function RichTextEditor({
     }
   };
 
-  const execCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    handleInput();
+  // Save and restore selection for operations that lose focus
+  const saveSelection = (): Range | null => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) return sel.getRangeAt(0).cloneRange();
+    return null;
   };
 
-  const insertLink = () => {
-    const url = prompt("Enter URL:");
-    if (url) {
-      execCommand("createLink", url);
+  const restoreSelection = (range: Range | null) => {
+    if (!range) return;
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
   };
 
+  // Basic formatting — still works via execCommand (bold, italic, underline)
+  const execBasicCommand = (command: string) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false);
+    handleInput();
+  };
+
+  // Wrap selection in a block element (h2, blockquote, p)
+  const formatBlock = (tag: string) => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+    editorRef.current.focus();
+
+    const range = sel.getRangeAt(0);
+    // Find the closest block-level parent within the editor
+    let block = range.startContainer as Node;
+    while (
+      block &&
+      block !== editorRef.current &&
+      block.parentNode !== editorRef.current
+    ) {
+      block = block.parentNode!;
+    }
+
+    if (block && block !== editorRef.current && block instanceof HTMLElement) {
+      // If already this tag, unwrap to <p>
+      if (block.tagName.toLowerCase() === tag.toLowerCase()) {
+        const p = document.createElement("p");
+        p.innerHTML = block.innerHTML;
+        block.replaceWith(p);
+      } else {
+        const newEl = document.createElement(tag);
+        newEl.innerHTML = block.innerHTML;
+        block.replaceWith(newEl);
+      }
+    } else {
+      // Wrap selected text in the block element
+      const newEl = document.createElement(tag);
+      try {
+        range.surroundContents(newEl);
+      } catch {
+        // If surroundContents fails (crosses DOM boundaries), wrap as HTML
+        const content = range.extractContents();
+        newEl.appendChild(content);
+        range.insertNode(newEl);
+      }
+    }
+    handleInput();
+  };
+
+  // Insert list (ul or ol)
+  const insertList = (ordered: boolean) => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+    editorRef.current.focus();
+
+    const range = sel.getRangeAt(0);
+
+    // Find the block-level parent
+    let block = range.startContainer as Node;
+    while (
+      block &&
+      block !== editorRef.current &&
+      block.parentNode !== editorRef.current
+    ) {
+      block = block.parentNode!;
+    }
+
+    const listTag = ordered ? "OL" : "UL";
+
+    // If we're already in a list, remove it
+    if (block instanceof HTMLElement) {
+      if (block.tagName === "UL" || block.tagName === "OL") {
+        // Unwrap: replace list with paragraphs
+        const items = block.querySelectorAll("li");
+        const frag = document.createDocumentFragment();
+        items.forEach((li) => {
+          const p = document.createElement("p");
+          p.innerHTML = li.innerHTML;
+          frag.appendChild(p);
+        });
+        block.replaceWith(frag);
+        handleInput();
+        return;
+      }
+    }
+
+    // Create a new list with the current content
+    const list = document.createElement(listTag);
+    const li = document.createElement("li");
+
+    if (
+      block &&
+      block !== editorRef.current &&
+      block instanceof HTMLElement
+    ) {
+      // Convert the current block to a list item
+      li.innerHTML = block.innerHTML || "List item";
+      list.appendChild(li);
+      block.replaceWith(list);
+    } else {
+      // Wrap selected text
+      const selectedText = range.toString() || "List item";
+      li.textContent = selectedText;
+      list.appendChild(li);
+      range.deleteContents();
+      range.insertNode(list);
+    }
+
+    // Place cursor inside the li
+    const newRange = document.createRange();
+    newRange.selectNodeContents(li);
+    newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+
+    handleInput();
+  };
+
+  // Set text alignment
+  const setAlignment = (align: "left" | "center" | "right") => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+    editorRef.current.focus();
+
+    const range = sel.getRangeAt(0);
+    let block = range.startContainer as Node;
+    while (
+      block &&
+      block !== editorRef.current &&
+      block.parentNode !== editorRef.current
+    ) {
+      block = block.parentNode!;
+    }
+
+    if (block && block !== editorRef.current && block instanceof HTMLElement) {
+      block.style.textAlign = align === "left" ? "" : align;
+    }
+    handleInput();
+  };
+
+  // Insert a hyperlink
+  const insertLink = async () => {
+    const savedRange = saveSelection();
+    const url = await showPrompt("Enter the URL for the link:", {
+      title: "Insert Link",
+      placeholder: "https://example.com",
+      confirmLabel: "Insert",
+    });
+    if (!url) {
+      restoreSelection(savedRange);
+      return;
+    }
+
+    editorRef.current?.focus();
+    restoreSelection(savedRange);
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const range = sel.getRangeAt(0);
+    const selectedText = range.toString();
+
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.textContent = selectedText || url;
+    anchor.style.color = "#2563eb";
+    anchor.style.textDecoration = "underline";
+
+    range.deleteContents();
+    range.insertNode(anchor);
+
+    // Place cursor after the link
+    const newRange = document.createRange();
+    newRange.setStartAfter(anchor);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+
+    handleInput();
+  };
+
   const toolbarButtons = [
-    { icon: Bold, command: "bold", title: "Bold" },
-    { icon: Italic, command: "italic", title: "Italic" },
-    { icon: UnderlineIcon, command: "underline", title: "Underline" },
-    { icon: null, command: "divider" },
-    { icon: Heading2, command: "formatBlock", value: "h2", title: "Heading" },
+    {
+      icon: Bold,
+      action: () => execBasicCommand("bold"),
+      title: "Bold",
+    },
+    {
+      icon: Italic,
+      action: () => execBasicCommand("italic"),
+      title: "Italic",
+    },
+    {
+      icon: UnderlineIcon,
+      action: () => execBasicCommand("underline"),
+      title: "Underline",
+    },
+    { icon: null, action: null, title: "divider" },
+    {
+      icon: Heading2,
+      action: () => formatBlock("h2"),
+      title: "Heading",
+    },
     {
       icon: Quote,
-      command: "formatBlock",
-      value: "blockquote",
+      action: () => formatBlock("blockquote"),
       title: "Quote",
     },
-    { icon: null, command: "divider" },
-    { icon: List, command: "insertUnorderedList", title: "Bullet List" },
-    { icon: ListOrdered, command: "insertOrderedList", title: "Numbered List" },
-    { icon: null, command: "divider" },
-    { icon: AlignLeft, command: "justifyLeft", title: "Align Left" },
-    { icon: AlignCenter, command: "justifyCenter", title: "Center" },
-    { icon: null, command: "divider" },
-    { icon: LinkIcon, command: "link", title: "Insert Link" },
+    { icon: null, action: null, title: "divider" },
+    {
+      icon: List,
+      action: () => insertList(false),
+      title: "Bullet List",
+    },
+    {
+      icon: ListOrdered,
+      action: () => insertList(true),
+      title: "Numbered List",
+    },
+    { icon: null, action: null, title: "divider" },
+    {
+      icon: AlignLeft,
+      action: () => setAlignment("left"),
+      title: "Align Left",
+    },
+    {
+      icon: AlignCenter,
+      action: () => setAlignment("center"),
+      title: "Center",
+    },
+    { icon: null, action: null, title: "divider" },
+    {
+      icon: LinkIcon,
+      action: () => insertLink(),
+      title: "Insert Link",
+    },
   ];
+
+  // Handle Enter key inside lists to create new list items
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+
+      const li = (sel.anchorNode as HTMLElement)?.closest?.("li") ||
+        (sel.anchorNode?.parentElement?.closest?.("li"));
+
+      if (li) {
+        e.preventDefault();
+        // If the li is empty, break out of the list
+        if (!li.textContent?.trim()) {
+          const list = li.closest("ul, ol");
+          if (list) {
+            const p = document.createElement("p");
+            p.innerHTML = "<br>";
+            list.after(p);
+            li.remove();
+            // If list is now empty, remove it
+            if (list.children.length === 0) list.remove();
+            // Place cursor in the new paragraph
+            const range = document.createRange();
+            range.selectNodeContents(p);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            handleInput();
+          }
+          return;
+        }
+
+        // Create a new list item
+        const newLi = document.createElement("li");
+        newLi.innerHTML = "<br>";
+        li.after(newLi);
+        const range = document.createRange();
+        range.selectNodeContents(newLi);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        handleInput();
+      }
+    }
+
+    // Tab key for indentation in lists
+    if (e.key === "Tab") {
+      const sel = window.getSelection();
+      if (!sel) return;
+      const li = (sel.anchorNode as HTMLElement)?.closest?.("li") ||
+        (sel.anchorNode?.parentElement?.closest?.("li"));
+      if (li) {
+        e.preventDefault();
+        // Simple indent: just add some padding
+        const current = parseInt(li.style.marginLeft || "0");
+        li.style.marginLeft = `${current + (e.shiftKey ? -20 : 20)}px`;
+        handleInput();
+      }
+    }
+  };
 
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 px-3 py-2 border-b border-gray-100 bg-gray-50/80">
         {toolbarButtons.map((btn, i) => {
-          if (btn.command === "divider") {
+          if (btn.title === "divider") {
             return (
               <div key={`div-${i}`} className="w-px h-5 bg-gray-200 mx-1" />
             );
@@ -196,18 +480,14 @@ function RichTextEditor({
           const Icon = btn.icon!;
           return (
             <button
-              key={btn.command + (btn.value || "") + i}
+              key={btn.title + i}
               type="button"
               title={btn.title}
-              onClick={() => {
-                if (btn.command === "link") {
-                  insertLink();
-                } else if (btn.value) {
-                  execCommand(btn.command, btn.value);
-                } else {
-                  execCommand(btn.command);
-                }
+              onMouseDown={(e) => {
+                // Prevent the button click from stealing focus/selection
+                e.preventDefault();
               }}
+              onClick={() => btn.action?.()}
               className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-200/60 transition-colors cursor-pointer"
             >
               <Icon className="w-4 h-4" />
@@ -221,14 +501,19 @@ function RichTextEditor({
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         data-placeholder={placeholder}
         className="min-h-[280px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed focus:outline-none prose prose-sm max-w-none
-          [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400"
+          [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400
+          [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
+          [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600
+          [&_a]:text-blue-600 [&_a]:underline [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2"
         style={{ wordBreak: "break-word" }}
       />
     </div>
   );
 }
+
 
 // ─── Content List Item ────────────────────────────────────────────────────────
 function ContentListItem({

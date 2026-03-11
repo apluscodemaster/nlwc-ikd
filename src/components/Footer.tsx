@@ -145,7 +145,7 @@ export default function Footer() {
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
                   <HiChevronRight color={orange} />
-                  Contact
+                  Contact Us
                 </Link>
               </li>
             </ul>
