@@ -339,17 +339,58 @@
         window.location.href = "/";
       }
 
-      // Listen for connection restoration
-      if (navigator.onLine) {
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1500);
+      // Helper function to verify actual internet connectivity
+      async function checkConnectivity() {
+        try {
+          const response = await fetch("/", {
+            method: "HEAD",
+            cache: "no-store",
+            signal: AbortSignal.timeout(5000),
+          });
+          return response.ok || response.type === "opaque";
+        } catch (error) {
+          return false;
+        }
       }
 
-      window.addEventListener("online", () => {
-        setTimeout(() => {
+      // Poll for connectivity every 3 seconds
+      let connectivityCheckInterval = null;
+
+      function startConnectivityCheck() {
+        if (connectivityCheckInterval) return;
+
+        connectivityCheckInterval = setInterval(async () => {
+          const isOnline = await checkConnectivity();
+          if (isOnline) {
+            clearInterval(connectivityCheckInterval);
+            console.log("Connection restored - redirecting to home");
+            window.location.href = "/";
+          }
+        }, 3000);
+      }
+
+      // Start polling on page load
+      startConnectivityCheck();
+
+      // Also listen for native online event (backup)
+      window.addEventListener("online", async () => {
+        console.log("Online event fired");
+        const isOnline = await checkConnectivity();
+        if (isOnline) {
+          console.log("Connection verified - redirecting to home");
           window.location.href = "/";
-        }, 1000);
+        } else {
+          // Still offline, restart polling
+          startConnectivityCheck();
+        }
+      });
+
+      window.addEventListener("offline", () => {
+        console.log("Offline event fired");
+        if (connectivityCheckInterval) {
+          clearInterval(connectivityCheckInterval);
+          connectivityCheckInterval = null;
+        }
       });
     </script>
   </body>

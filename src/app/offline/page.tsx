@@ -6,25 +6,81 @@ import { Button } from "@/components/ui/button";
 import { Home, Wifi, WifiOff, RotateCw, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
+/**
+ * Helper function to verify actual internet connectivity
+ */
+async function verifyConnectivity(): Promise<boolean> {
+  try {
+    const response = await fetch("/", {
+      method: "HEAD",
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok || response.type === "opaque";
+  } catch (error) {
+    return false;
+  }
+}
+
 export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(true);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(false);
 
   useEffect(() => {
     setShowAnimation(true);
     setIsOnline(navigator.onLine);
 
-    const handleOnline = () => {
-      setIsOnline(true);
-      // Redirect to home after 2 seconds when connection is restored
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+    // Poll for connectivity every 3 seconds when offline
+    let connectivityCheckInterval: NodeJS.Timeout | null = null;
+
+    const startConnectivityCheck = () => {
+      if (connectivityCheckInterval) return;
+      connectivityCheckInterval = setInterval(async () => {
+        const isConnected = await verifyConnectivity();
+        if (isConnected) {
+          console.log("Connection restored - navigating to home");
+          setIsOnline(true);
+          if (connectivityCheckInterval) {
+            clearInterval(connectivityCheckInterval);
+          }
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 1000);
+        }
+      }, 3000);
+    };
+
+    const handleOnline = async () => {
+      console.log("Online event detected, verifying connectivity...");
+      setCheckingConnection(true);
+      const isConnected = await verifyConnectivity();
+      setCheckingConnection(false);
+
+      if (isConnected) {
+        setIsOnline(true);
+        console.log("Connection verified - navigating to home");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        // Start polling if connection is not yet verified
+        startConnectivityCheck();
+      }
     };
 
     const handleOffline = () => {
       setIsOnline(false);
+      if (connectivityCheckInterval) {
+        clearInterval(connectivityCheckInterval);
+        connectivityCheckInterval = null;
+      }
     };
+
+    // If currently offline, start connectivity polling
+    if (!navigator.onLine) {
+      startConnectivityCheck();
+    }
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
@@ -32,13 +88,21 @@ export default function OfflinePage() {
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      if (connectivityCheckInterval !== null) {
+        clearInterval(connectivityCheckInterval);
+      }
     };
   }, []);
 
-  const handleRetry = () => {
-    if (navigator.onLine) {
+  const handleRetry = async () => {
+    setCheckingConnection(true);
+    const isConnected = await verifyConnectivity();
+    setCheckingConnection(false);
+
+    if (isConnected) {
       window.location.href = "/";
     } else {
+      // Just reload the page to retry
       window.location.reload();
     }
   };
@@ -189,10 +253,26 @@ export default function OfflinePage() {
           <Button
             size="lg"
             onClick={handleRetry}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-full px-8 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+            disabled={checkingConnection}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-full px-8 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RotateCw className="w-5 h-5" />
-            Try Again
+            {checkingConnection ? (
+              <>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-5 h-5"
+                >
+                  <RotateCw className="w-5 h-5" />
+                </motion.div>
+                Checking Connection...
+              </>
+            ) : (
+              <>
+                <RotateCw className="w-5 h-5" />
+                Try Again
+              </>
+            )}
           </Button>
           <Link href="/">
             <Button
