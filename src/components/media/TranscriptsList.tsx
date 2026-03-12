@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Search,
@@ -9,9 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  RefreshCw,
 } from "lucide-react";
 import { useTranscripts } from "@/hooks/useWordPress";
 import TranscriptCard from "./TranscriptCard";
+import { TRANSCRIPT_CATEGORIES } from "@/lib/wordpress";
 
 interface TranscriptsListProps {
   initialPage?: number;
@@ -27,6 +29,7 @@ export default function TranscriptsList({
   const pathname = usePathname();
 
   const urlPage = searchParams.get("page");
+  const urlCategory = searchParams.get("category") || "";
   const parsedPage = urlPage ? parseInt(urlPage, 10) : initialPage;
   const initialSearch = searchParams.get("q") || "";
 
@@ -35,6 +38,8 @@ export default function TranscriptsList({
   );
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -70,40 +75,144 @@ export default function TranscriptsList({
       params.delete("q");
     }
 
+    if (selectedCategory) {
+      params.set("category", selectedCategory);
+    } else {
+      params.delete("category");
+    }
+
     const currentUrlPage = searchParams.get("page") || "";
     const currentUrlQ = searchParams.get("q") || "";
+    const currentUrlCategory = searchParams.get("category") || "";
     const newUrlPage = params.get("page") || "";
     const newUrlQ = params.get("q") || "";
+    const newUrlCategory = params.get("category") || "";
 
-    if (currentUrlPage !== newUrlPage || currentUrlQ !== newUrlQ) {
+    if (
+      currentUrlPage !== newUrlPage ||
+      currentUrlQ !== newUrlQ ||
+      currentUrlCategory !== newUrlCategory
+    ) {
       const query = params.toString();
       router.push(query ? `${pathname}?${query}` : pathname, {
         scroll: false,
       });
     }
-  }, [page, debouncedSearch, pathname, router, searchParams]);
+  }, [page, debouncedSearch, selectedCategory, pathname, router, searchParams]);
+
+  const categoryParam = selectedCategory
+    ? parseInt(selectedCategory)
+    : undefined;
 
   const { data, isLoading, isError, error } = useTranscripts(
     page,
     perPage,
     debouncedSearch || undefined,
+    categoryParam,
   );
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Trigger client-side cache invalidation
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCategory) params.append("category", selectedCategory);
+
+      await fetch(`/api/transcripts?${params.toString()}`, {
+        cache: "no-cache",
+      });
+
+      // Refetch data
+      window.location.href =
+        pathname +
+        (searchParams.toString() ? `?${searchParams.toString()}` : "");
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const transcripts = data?.data || [];
   const pagination = data?.pagination;
 
   return (
     <div className="space-y-8">
-      {/* Search Bar */}
-      <div className="relative max-w-xl mx-auto px-2">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search transcripts..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-14 pl-14 pr-4 rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm placeholder:text-muted-foreground"
-        />
+      {/* Search Bar and Controls */}
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div className="relative max-w-xl mx-auto px-2 w-full">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search transcripts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-14 pl-14 pr-4 rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Category Filter and Refresh */}
+        <div className="max-w-3xl mx-auto px-2 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          {/* Category Selector */}
+          <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start w-full sm:w-auto">
+            <button
+              onClick={() => setSelectedCategory("")}
+              className={`px-4 py-2 rounded-full font-medium transition-all text-sm ${
+                !selectedCategory
+                  ? "bg-primary text-white shadow-lg shadow-primary/30"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All Transcripts
+            </button>
+            {Object.entries(TRANSCRIPT_CATEGORIES).map(([catId, category]) => (
+              <motion.button
+                key={catId}
+                onClick={() => {
+                  setSelectedCategory(catId === selectedCategory ? "" : catId);
+                  setPage(1);
+                }}
+                className={`px-4 py-2 rounded-full font-medium transition-all text-sm whitespace-nowrap ${
+                  String(catId) === selectedCategory
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {category.name}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Refresh Button */}
+          <motion.button
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="px-4 py-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title="Refresh content from WordPress"
+          >
+            <motion.div
+              animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
+              transition={{
+                duration: 1,
+                repeat: isRefreshing ? Infinity : 0,
+                ease: "linear",
+              }}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </motion.div>
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </motion.button>
+        </div>
       </div>
 
       {/* Loading State */}

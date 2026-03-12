@@ -17,6 +17,28 @@ export const WP_CATEGORIES = {
   POST: 21,
 } as const;
 
+// Category metadata for better organization
+export const TRANSCRIPT_CATEGORIES = {
+  [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS]: {
+    name: "Sunday Message Transcripts",
+    slug: "sunday-message-transcripts",
+    description: "Full written transcripts of Sunday messages",
+    color: "bg-blue-500",
+  },
+  [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS]: {
+    name: "Sunday School Transcripts",
+    slug: "sunday-school-transcripts",
+    description: "Written transcripts of Sunday School teachings",
+    color: "bg-purple-500",
+  },
+  [WP_CATEGORIES.SEASON_OF_THE_SPIRIT]: {
+    name: "Season of the Spirit",
+    slug: "season-of-the-spirit",
+    description: "Special spiritual teaching series",
+    color: "bg-orange-500",
+  },
+} as const;
+
 // =============================================================================
 // TYPE DEFINITIONS
 // =============================================================================
@@ -515,6 +537,58 @@ export async function getSundayMessageTranscripts(
     transcripts: posts.map(transformToTranscript),
     totalPages,
     total,
+    categoryId: WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+  };
+}
+
+/**
+ * Get all transcripts from all available categories (combined)
+ * Includes Sunday Messages, Sunday School, and Season of the Spirit
+ */
+export async function getAllTranscripts(
+  options: { page?: number; perPage?: number; search?: string } = {},
+) {
+  const transcriptCategoryIds = [
+    WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+    WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
+  ];
+
+  const { posts, totalPages, total } = await fetchWPPosts({
+    categories: transcriptCategoryIds,
+    page: options.page || 1,
+    perPage: options.perPage || 10,
+    search: options.search,
+    orderBy: "date",
+    order: "desc",
+  });
+
+  return {
+    transcripts: posts.map(transformToTranscript),
+    totalPages,
+    total,
+  };
+}
+
+/**
+ * Get transcripts by specific category
+ */
+export async function getTranscriptsByCategory(
+  categoryId: number,
+  options: { page?: number; perPage?: number; search?: string } = {},
+) {
+  const { posts, totalPages, total } = await fetchWPPosts({
+    categories: [categoryId],
+    page: options.page || 1,
+    perPage: options.perPage || 10,
+    search: options.search,
+  });
+
+  return {
+    transcripts: posts.map(transformToTranscript),
+    totalPages,
+    total,
+    categoryId,
   };
 }
 
