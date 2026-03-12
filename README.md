@@ -70,6 +70,162 @@ src/
 └── data/                 # Static data and types
 ```
 
+## 📄 Pages & Content Layout
+
+### 🏠 Home Page (`/`)
+
+The landing page is the main entry point featuring:
+
+- **Hero Section** - Eye-catching banner with church imagery and welcome message
+- **Welcome Section** - Warm greeting introducing visitors to the churches mission
+- **God Wants You** - Headline with clear call-to-action for spiritual engagement
+- **Our Journey** - Three-pillar faith statement highlighting Faith, Hope, and Charity
+- **Service Times** - Schedule of weekly meetings and congregation gatherings
+- **Media Hub** - Quick access to audio sermons, video messages, transcripts, and manuals
+- **Gallery Preview** - Showcase of recent church events and worship experiences
+- **Daily Devotional Invitation** - Prompt to browse daily devotionals
+
+### 📖 About Page (`/about`)
+
+Comprehensive church information including:
+
+- **Our Story** - Church history and background
+- **Leadership Grid** - Meet the pastors and church leaders
+- **Beliefs Accordion** - Theological principles and core beliefs
+- **Upcoming Events** - Calendar of special services and events
+- **Call-to-Action** - Invitation to join the community
+
+### 🎵 Media Center Pages
+
+#### Audio Messages (`/sermons`)
+
+Browse and listen to sermon recordings:
+
+- Responsive audio player with play controls
+- Search by speaker, category, or topic
+- Download capability for offline listening
+- Pagination for browsing large sermon libraries
+- Metadata display (date, speaker, duration)
+
+#### Message Transcripts (`/transcripts`)
+
+Read full written transcripts of sermons:
+
+- **140+ Sunday Message Transcripts** from WordPress
+- Search functionality for finding specific messages
+- Pagination (9 transcripts per page by default)
+- Share buttons for social media
+- Clean, readable typography optimized for reading
+- Tagged sermon titles with dates
+
+#### Sunday School Manuals (`/manuals`)
+
+Access to study materials and teaching resources:
+
+- **111+ Teaching Manuals** synced from WordPress
+- Browse by category or search by topic
+- Card-based layout with clear thumbnails
+- Download links to full manual documents
+- Organize materials by teaching subject
+
+#### Daily Devotionals (`/devotionals`)
+
+Archive of daily devotional materials:
+
+- Browse past devotional content
+- Read or download devotional materials
+- Archive view with date organization
+- Searchable devotional archive
+- Responsive grid layout for browsing
+
+#### Video Messages (`/video-messages`)
+
+Watch curated video content and teachings
+
+### 📷 Gallery Page (`/gallery`)
+
+Church event photo gallery:
+
+- **Auto-Scrolling Gallery** - Automatically rotating featured images
+- **Tabbed Interface** - Navigate images organized by event/date
+- **Responsive Masonry Layout** - Beautiful grid that adapts to screen size
+- **Images from Google Sheets** - Dynamically pulled from connected data source
+- **High-Performance Loading** - Optimized image delivery
+- **Error Handling** - Retry mechanism if data fetch fails
+
+### 🤝 Fellowship Page (`/fellowship`)
+
+Directory of house fellowship centers:
+
+- **Center Locations** - Addresses and contact information
+- **Leadership Details** - Names and contacts of center leaders
+- **Meeting Times** - Schedule for fellowship meetings
+- **Service Leaders** - Information about who leads each center
+- **Map Integration** - Visual location reference
+- **Navigation Links** - Easy connection to center leaders
+
+### 🎙️ Live Pages
+
+#### Listen Live (`/listen-live`)
+
+Real-time audio streaming platform:
+
+- **Live Audio Player** - Stream current services
+- **Service Countdown** - Timer showing time until next service
+- **Sermon Archive** - Recent and past messages available
+- **Download Options** - Save sermons for offline listening
+- **Now Playing** - Display current/upcoming service information
+- **Responsive Controls** - Works on mobile and desktop
+
+#### Video Live (`/live`)
+
+Video streaming for worship services (when available)
+
+### 📬 Contact Page (`/contact`)
+
+Church communication hub:
+
+- **Contact Form** - Send inquiries to church directly
+- **Location Map** - Embedded Google Maps showing church location
+- **Contact Information** - Phone numbers and email addresses
+- **Social Media Links** - Connect on various platforms
+- **Prayer Requests** - Submit prayer requests through form
+- **Service Information** - Display service times and locations
+- **Two-Column Layout** - Form on left, contact info on right
+
+### ❤️ Give Page (`/give`)
+
+Donations and giving platform:
+
+- **Multiple Giving Options** - Bank transfer, card payment, mobile money
+- **Bank Account Details** - Clear instructions for transfers
+- **Online Payment Integration** - Secure payment gateway
+- **Impact Stories** - Show how giving supports ministry
+- **Recurring Giving** - Option to set up automatic tithes
+- **Transparency** - Information about how funds are used
+
+### 🙏 Salvation Page (`/salvation`)
+
+Spiritual guidance page:
+
+- Gospel message and salvation information
+- Resources for new believers
+- Step-by-step guide to salvation
+- Call-to-action for spiritual commitments
+
+### 📱 Admin Dashboard (`/admin`)
+
+Management interface (restricted access):
+
+- Content management tools
+- Media uploads and organization
+- Event management
+- Newsletter management
+
+### 🚫 404 Page
+
+Custom not-found page with helpful navigation back to main content
+
 ## 🛠️ Getting Started
 
 ### Prerequisites
@@ -150,6 +306,26 @@ The build process:
 - Optimizes assets
 - Pre-renders static pages
 - Generates first 20 transcript pages (SSG)
+
+## 🗺️ Site Navigation Reference
+
+Here's a quick reference to access the main sections of the website:
+
+| Section        | URL               | Purpose                                           |
+| -------------- | ----------------- | ------------------------------------------------- |
+| Home           | `/`               | Landing page with overview of all content         |
+| About          | `/about`          | Church story, leadership, beliefs, events         |
+| Gallery        | `/gallery`        | Photo archive from church events                  |
+| Sermons        | `/sermons`        | Audio recordings of messages                      |
+| Transcripts    | `/transcripts`    | Written text of sermons (140+ available)          |
+| Manuals        | `/manuals`        | Sunday School teaching materials (111+ available) |
+| Devotionals    | `/devotionals`    | Daily spiritual devotional content                |
+| Video Messages | `/video-messages` | Video teachings and sermons                       |
+| Listen Live    | `/listen-live`    | Live audio streaming of services                  |
+| Fellowship     | `/fellowship`     | House fellowship center locations                 |
+| Contact        | `/contact`        | Contact form and church location                  |
+| Give           | `/give`           | Donation and tithing platform                     |
+| Salvation      | `/salvation`      | Gospel message and spiritual guidance             |
 
 ## 🎯 Key Features Breakdown
 
