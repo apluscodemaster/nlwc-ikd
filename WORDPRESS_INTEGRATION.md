@@ -34,6 +34,20 @@ The app fetches content from WordPress as a headless CMS using the WordPress RES
 - **Count**: 4 posts
 - **Description**: Written transcripts of Sunday School teachings
 
+### 4. Season of the Spirit
+
+- **Category ID**: 22
+- **Category Name**: "Season of the Spirit"
+- **Description**: Special spiritual teaching series
+
+## Fetching Transcripts
+
+The transcripts page now displays content from **all transcript categories** (Sunday Messages, Sunday School, and Season of the Spirit) by default. Users can:
+
+- **Filter by category** using inline category buttons
+- **Search across categories** with the search bar
+- **Manually refresh** content using the refresh button to fetch latest updates without waiting for cache expiration
+
 ## Architecture
 
 ### API Client (`src/lib/wordpress.ts`)
@@ -48,7 +62,16 @@ The WordPress API client provides:
 Key functions:
 
 ```typescript
-// Fetch Sunday message transcripts
+// Fetch all transcripts from all categories (default)
+await getAllTranscripts({ page: 1, perPage: 10, search: "faith" });
+
+// Fetch transcripts from a specific category
+await getTranscriptsByCategory(WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS, { 
+  page: 1, 
+  perPage: 10 
+});
+
+// Fetch Sunday message transcripts (legacy, now use getAllTranscripts)
 await getSundayMessageTranscripts({ page: 1, perPage: 10, search: "faith" });
 
 // Fetch Sunday School manuals
@@ -108,11 +131,13 @@ Frontend Components
 - **Revalidation**: 5 minutes (300 seconds)
 - **Method**: Next.js `fetch` with `next.revalidate`
 - **Benefit**: Fast page loads, reduced WordPress API calls
+- **Manual Refresh**: Users can manually refresh content via the refresh button without waiting for cache expiration
 
 ### Client-Side Caching
 
 - **Tool**: React Query
-- **Stale Time**: 5-10 minutes
+- **Stale Time**: 5 minutes
+- **Cache Key**: Includes page, perPage, search term, and category filter
 - **Benefit**: Instant navigation, optimistic updates
 
 ### Static Generation
@@ -120,6 +145,28 @@ Frontend Components
 - **Pre-rendering**: First 20 transcripts are statically generated at build time
 - **On-Demand**: Additional pages generated on first request
 - **Revalidation**: ISR (Incremental Static Regeneration) every 5 minutes
+
+### On-Demand Revalidation
+
+For immediate content updates without waiting for cache expiration:
+
+```bash
+# Using curl to trigger revalidation
+curl -X POST "https://yoursite.com/api/revalidate?secret=YOUR_WEBHOOK_SECRET&path=/transcripts"
+
+# Or for specific tags
+curl -X POST "https://yoursite.com/api/revalidate?secret=YOUR_WEBHOOK_SECRET&tag=transcripts"
+```
+
+Set the `WEBHOOK_SECRET` environment variable for security.
+
+### Automated Webhook Integration (Recommended)
+
+For **real-time updates** without manual intervention, set up **Uncanny Automator** webhooks:
+
+**See:** [WEBHOOK_SETUP.md](./WEBHOOK_SETUP.md) for complete setup instructions
+
+This allows WordPress to automatically notify your frontend when content is published, updating users within seconds instead of 5 minutes.
 
 ## Adding Content
 
@@ -208,11 +255,13 @@ export async function getSermonsByDateRange(start: string, end: string) {
 
 ### Issue: Content not updating
 
-**Solution**:
+**Solutions**:
 
-- Wait 5 minutes for cache to expire
+- **Wait 5 minutes** for cache to expire
+- **Use manual refresh button** on the transcripts page for immediate update
+- **Use revalidation endpoint** for even faster updates: `POST /api/revalidate?secret=YOUR_SECRET&path=/transcripts`
 - Check WordPress REST API is accessible
-- Manually trigger revalidation
+- Manually trigger full revalidation: `npm run build && npm start`
 
 ### Issue: Slow API responses
 
@@ -221,6 +270,7 @@ export async function getSermonsByDateRange(start: string, end: string) {
 - Reduce `perPage` limit
 - Implement infinite scroll instead of large pages
 - Consider local caching layer
+- Check WordPress server load
 
 ### Issue: WordPress API rate limiting
 
@@ -232,22 +282,25 @@ export async function getSermonsByDateRange(start: string, end: string) {
 
 ## Future Enhancements
 
-### 1. Webhook Integration
+### 1. Webhook Integration ✅ (Available)
 
-Set up WordPress webhook to trigger revalidation on content publish:
+The revalidation endpoint is now available for WordPress webhook integration:
 
-```typescript
-// src/app/api/revalidate/route.ts
-export async function POST(request: Request) {
-  const secret = request.headers.get("x-webhook-secret");
-  if (secret !== process.env.WEBHOOK_SECRET) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+**Configure in WordPress**:
 
-  revalidatePath("/transcripts");
-  return new Response("Revalidated", { status: 200 });
-}
+1. Install a webhook plugin (e.g., WordPress Webhooks by ironikus)
+2. Set webhook URL to: `https://yoursite.com/api/revalidate?secret=YOUR_WEBHOOK_SECRET`
+3. Trigger on: Post published, updated, or deleted
+4. Send POST request with appropriate path parameter
+
+**Automatic Revalidation Example**:
+
+```bash
+# WordPress webhook will call this on content publish
+curl -X POST "https://yoursite.com/api/revalidate?secret=YOUR_SECRET&path=/transcripts"
 ```
+
+Results in **instant content updates** after publishing in WordPress!
 
 ### 2. Audio File Support
 
