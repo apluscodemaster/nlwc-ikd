@@ -46,3 +46,7 @@ next-env.d.ts
 
 # WordPress mu-plugins (server-side, contains DB schema details)
 /wordpress/mu-plugins/
+
+# Documentation & Setup Guides (local reference only)
+WEBHOOK_SETUP.md
+WORDPRESS_INTEGRATION.md
