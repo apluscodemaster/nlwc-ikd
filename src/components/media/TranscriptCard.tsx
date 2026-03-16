@@ -34,8 +34,9 @@ export default function TranscriptCard({
     },
   };
 
-  const style = typeStyles[transcript.type];
+  const style = typeStyles[transcript.type] || typeStyles["sunday-message"];
   const TypeIcon = style.icon;
+  const displayLabel = transcript.categories?.[0] || style.label;
 
   // Highlight title if there's a search query
   const highlightedTitle = searchQuery
@@ -79,7 +80,7 @@ export default function TranscriptCard({
             className={`${style.bg} ${style.text} px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2`}
           >
             <TypeIcon className="w-3.5 h-3.5" />
-            {style.label}
+            {displayLabel}
           </div>
           <div className="flex items-center gap-3">
             <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
