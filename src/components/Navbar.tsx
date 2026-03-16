@@ -415,7 +415,7 @@ export default function Navbar() {
 
                       <div className="grid grid-cols-2 gap-4 mt-8">
                         <a
-                          href="tel:+2347035760085"
+                          href="tel:+2348137436770"
                           className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                           <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
