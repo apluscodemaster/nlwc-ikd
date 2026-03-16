@@ -23,8 +23,17 @@ export default function WelcomePage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const formData = new FormData(e.currentTarget);
+    const fullName = formData.get("fullName");
+    const phone = formData.get("phone");
+    const email = formData.get("email");
+    const address = formData.get("address");
+
+    const message = `Hello NLWC Ikorodu Welcome Team, I am a first-time guest!\n\n*Name:* ${fullName}\n*Phone:* ${phone}\n*Email:* ${email}\n*Address:* ${address}`;
+    window.open(
+      `https://wa.me/2348137436770?text=${encodeURIComponent(message)}`,
+      "_blank",
+    );
 
     setSubmitted(true);
     setLoading(false);
@@ -148,6 +157,7 @@ export default function WelcomePage() {
                       <User className="w-4 h-4 text-primary/60" /> Full Name
                     </label>
                     <input
+                      name="fullName"
                       required
                       type="text"
                       placeholder="John Doe"
@@ -159,6 +169,7 @@ export default function WelcomePage() {
                       <Phone className="w-4 h-4 text-primary/60" /> Phone Number
                     </label>
                     <input
+                      name="phone"
                       required
                       type="tel"
                       placeholder="+234 ..."
@@ -172,6 +183,7 @@ export default function WelcomePage() {
                     <Mail className="w-4 h-4 text-primary/60" /> Email Address
                   </label>
                   <input
+                    name="email"
                     required
                     type="email"
                     placeholder="john@example.com"
@@ -185,6 +197,7 @@ export default function WelcomePage() {
                     Address
                   </label>
                   <textarea
+                    name="address"
                     required
                     placeholder="Where are you joining us from?"
                     rows={3}
