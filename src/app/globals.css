@@ -243,3 +243,24 @@ mark.search-highlight-active {
   font-size: 11px !important;
 }
 
+/* Style Bible reference tags with app's orange color for clickable indication */
+.rtTag {
+  color: #FF7C18 !important;
+  font-weight: 500 !important;
+  text-decoration: underline !important;
+  text-decoration-color: #FF7C18 !important;
+  cursor: pointer !important;
+}
+
+.rtTag:hover {
+  opacity: 0.8 !important;
+}
+
+/* Ensure Bible reference links are consistently orange */
+.rtTag a,
+a.rtTag {
+  color: #FF7C18 !important;
+  text-decoration: underline !important;
+  text-decoration-color: #FF7C18 !important;
+}
+
