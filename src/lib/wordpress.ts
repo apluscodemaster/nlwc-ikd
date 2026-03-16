@@ -14,7 +14,9 @@ export const WP_CATEGORIES = {
   SUNDAY_SCHOOL_MANUAL: 19,
   SUNDAY_SCHOOL_TRANSCRIPTS: 31,
   SEASON_OF_THE_SPIRIT: 22,
-  POST: 21,
+  OTHER_MEETINGS: 21,
+  BIBLE_STUDY_TRANSCRIPTS: 33,
+  POST: 1,
 } as const;
 
 // Category metadata for better organization
@@ -30,6 +32,18 @@ export const TRANSCRIPT_CATEGORIES = {
     slug: "sunday-school-transcripts",
     description: "Written transcripts of Sunday School teachings",
     color: "bg-purple-500",
+  },
+  [WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS]: {
+    name: "Bible Study Transcripts",
+    slug: "bible-study-transcripts",
+    description: "Written transcripts of Bible Study sessions",
+    color: "bg-green-500",
+  },
+  [WP_CATEGORIES.OTHER_MEETINGS]: {
+    name: "Other Meetings",
+    slug: "other-meetings-transcripts",
+    description: "Transcripts from other meetings and gatherings",
+    color: "bg-amber-500",
   },
   [WP_CATEGORIES.SEASON_OF_THE_SPIRIT]: {
     name: "Season of the Spirit",
@@ -551,6 +565,8 @@ export async function getAllTranscripts(
   const transcriptCategoryIds = [
     WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
     WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+    WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+    WP_CATEGORIES.OTHER_MEETINGS,
     WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
   ];
 
