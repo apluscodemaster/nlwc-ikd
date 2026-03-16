@@ -83,6 +83,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   tagChapters: true,
                   dropShadow: true,
                   noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
+                  tagColor: "#FF7C18",
                   customStyle: {
                     heading: { fontSize: "14px", color: "#000000" },
                     body: { fontSize: "13px", color: "#ffffff" }
