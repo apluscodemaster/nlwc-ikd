@@ -18,7 +18,7 @@ export const team: TeamMember[] = [
     id: "2",
     name: "Pastor (Mrs.) Lilian Egwuchukwu",
     role: "Senior Pastor",
-    image: "/Pst.Lilian.png",
+    image: "/Mummy-Lilian.png",
     bio: "Pastor (Mrs.) Lilian Egwuchukwu is a dedicated pastor who has a heart for teaching and inspiring her congregation. With a passion for the Word of God, she leads the women's ministry and helps others find spiritual growth and transformation.",
   },
   {
