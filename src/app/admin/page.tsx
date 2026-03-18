@@ -101,7 +101,7 @@ const TABS: {
     id: "sermon",
     label: "Sermons",
     icon: Church,
-    description: "Audio messages & sermons",
+    description: "Audio messages",
     color: "from-primary to-amber-500",
   },
   {
