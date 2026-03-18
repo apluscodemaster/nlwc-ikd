@@ -35,6 +35,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import ManualThumbnail from "@/components/media/ManualThumbnail";
+import ResumePrompt from "@/components/media/ResumePrompt";
+import {
+  saveMediaProgress,
+  getMediaProgress,
+  clearMediaProgress,
+} from "@/lib/mediaProgress";
 
 // =============================================================================
 // Video Messages fetch
@@ -146,6 +152,10 @@ export default function MediaHub() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [showMobilePlayer, setShowMobilePlayer] = useState(false);
+  const [resumePrompt, setResumePrompt] = useState<{
+    sermon: AudioSermon;
+    savedProgress: ReturnType<typeof getMediaProgress>;
+  } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ---- Video state ----
@@ -175,6 +185,15 @@ export default function MediaHub() {
   } = useManuals(1, 3);
 
   // ---- Audio player controls ----
+  const startPlayback = useCallback((sermon: AudioSermon, startTime = 0) => {
+    if (audioRef.current && sermon.downloadUrl) {
+      audioRef.current.src = sermon.downloadUrl;
+      audioRef.current.currentTime = startTime;
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  }, []);
+
   const handlePlay = useCallback(
     async (sermon: AudioSermon) => {
       if (activeSermon?.id === sermon.id && audioRef.current?.src) {
@@ -200,15 +219,18 @@ export default function MediaHub() {
       }
 
       setActiveSermon(sermonToPlay);
-      if (audioRef.current && sermonToPlay.downloadUrl) {
-        audioRef.current.src = sermonToPlay.downloadUrl;
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-        setIsPlaying(true);
+
+      // Check for saved progress
+      const saved = getMediaProgress(sermonToPlay.id);
+      if (saved && saved.currentTime > 0) {
+        setResumePrompt({ sermon: sermonToPlay, savedProgress: saved });
+      } else {
+        startPlayback(sermonToPlay, 0);
       }
+
       setIsLoadingAudio(false);
     },
-    [activeSermon, isPlaying, fetchSermonDetail],
+    [activeSermon, isPlaying, fetchSermonDetail, startPlayback],
   );
 
   const togglePlay = useCallback(() => {
@@ -269,6 +291,23 @@ export default function MediaHub() {
     [duration],
   );
 
+  const handleResume = useCallback(() => {
+    if (!resumePrompt) return;
+    startPlayback(resumePrompt.sermon, resumePrompt.savedProgress.currentTime);
+    setResumePrompt(null);
+  }, [resumePrompt, startPlayback]);
+
+  const handleStartOver = useCallback(() => {
+    if (!resumePrompt) return;
+    clearMediaProgress(resumePrompt.sermon.id);
+    startPlayback(resumePrompt.sermon, 0);
+    setResumePrompt(null);
+  }, [resumePrompt, startPlayback]);
+
+  const handleDismissResume = useCallback(() => {
+    setResumePrompt(null);
+  }, []);
+
   const closePlayer = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -285,12 +324,38 @@ export default function MediaHub() {
 
   return (
     <section className="relative bg-white py-12 sm:py-32 overflow-hidden">
+      {/* Resume Prompt */}
+      {resumePrompt && resumePrompt.savedProgress && (
+        <ResumePrompt
+          isOpen={!!resumePrompt}
+          mediaProgress={resumePrompt.savedProgress}
+          mediaTitle={resumePrompt.sermon.title}
+          mediaThumbnailUrl={resumePrompt.sermon.thumbnailUrl}
+          mediaType="audio"
+          onResume={handleResume}
+          onStartOver={handleStartOver}
+          onDismiss={handleDismissResume}
+        />
+      )}
+
       {/* Hidden audio el */}
       <audio
         ref={audioRef}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onEnded={() => setIsPlaying(false)}
+        onPause={() => {
+          // Save progress when paused
+          if (audioRef.current && activeSermon) {
+            saveMediaProgress(
+              activeSermon.id,
+              audioRef.current.currentTime,
+              audioRef.current.duration || 0,
+              activeSermon.title,
+              "audio",
+            );
+          }
+        }}
         preload="none"
       />
 
