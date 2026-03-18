@@ -22,7 +22,7 @@ const contactDetails = [
   {
     icon: Phone,
     title: "Phone Number",
-    content: "+234 703 576 0085",
+    content: "+234 813 743 6770",
   },
   {
     icon: Mail,
@@ -101,16 +101,16 @@ export default function ContactInfo() {
             <h3 className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1 opacity-70">
               {item.title}
             </h3>
-            
+
             {item.title === "Phone Number" ? (
-              <a 
-                href={`tel:${item.content.replace(/\s/g, '')}`}
+              <a
+                href={`tel:${item.content.replace(/\s/g, "")}`}
                 className="block text-sm sm:text-base font-bold text-gray-900 group-hover:text-primary transition-colors wrap-break-word"
               >
                 {item.content}
               </a>
             ) : item.title === "Email Address" ? (
-              <a 
+              <a
                 href={`mailto:${item.content}`}
                 className="block text-sm sm:text-base font-bold text-gray-900 group-hover:text-primary transition-colors break-all"
               >

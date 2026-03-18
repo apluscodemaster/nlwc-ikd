@@ -21,7 +21,7 @@ const SOCIAL_LINKS = {
   facebook: "https://facebook.com/nlwclife",
   instagram: "https://www.instagram.com/nlwclife/",
   twitter: "https://x.com/nlwclife",
-  whatsapp: "https://wa.me/2347035760085",
+  whatsapp: "https://wa.me/2348137436770",
 };
 
 export default function Footer() {
@@ -294,10 +294,10 @@ export default function Footer() {
             <li className="flex items-center gap-2">
               <HiPhone color={orange} size={18} />
               <a
-                href="tel:+2347035760085"
+                href="tel:+2348137436770"
                 className="hover:text-primary transition-colors"
               >
-                +234 703 576 0085
+                +234 813 743 6770
               </a>
             </li>
           </ul>

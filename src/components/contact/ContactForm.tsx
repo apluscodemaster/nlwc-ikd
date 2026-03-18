@@ -14,10 +14,19 @@ export default function ContactForm() {
     e.preventDefault();
     setStatus("loading");
 
-    // Simulate API call
-    setTimeout(() => {
-      setStatus("success");
-    }, 2000);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const subject = formData.get("subject");
+    const message = formData.get("message");
+
+    const text = `Hello NLWC Ikorodu Admin, I have a message from the website.\n\n*Name:* ${name}\n*Email:* ${email}\n*Subject:* ${subject}\n\n*Message:*\n${message}`;
+    window.open(
+      `https://wa.me/2348137436770?text=${encodeURIComponent(text)}`,
+      "_blank",
+    );
+
+    setStatus("success");
   };
 
   if (status === "success") {
@@ -66,6 +75,7 @@ export default function ContactForm() {
               Full Name *
             </label>
             <input
+              name="name"
               required
               type="text"
               id="name"
@@ -81,6 +91,7 @@ export default function ContactForm() {
               Email Address *
             </label>
             <input
+              name="email"
               required
               type="email"
               id="email"
@@ -101,9 +112,11 @@ export default function ContactForm() {
             <select
               required
               id="subject"
+              name="subject"
+              defaultValue=""
               className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-white text-sm md:text-base pr-10"
             >
-              <option value="" selected disabled>
+              <option value="" disabled>
                 Select a subject
               </option>
               <option value="general">General Inquiry</option>
@@ -139,6 +152,7 @@ export default function ContactForm() {
           </label>
           <textarea
             required
+            name="message"
             id="message"
             rows={5}
             placeholder="How can we help you today?"
