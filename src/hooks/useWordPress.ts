@@ -29,12 +29,14 @@ async function fetchTranscripts(
   page = 1,
   perPage = 10,
   search?: string,
+  category?: number,
 ): Promise<PaginatedResponse<TranscriptPost>> {
   const params = new URLSearchParams({
     page: page.toString(),
     per_page: perPage.toString(),
   });
   if (search) params.append("search", search);
+  if (category) params.append("category", category.toString());
 
   const response = await fetch(`/api/transcripts?${params.toString()}`);
   if (!response.ok) throw new Error("Failed to fetch transcripts");
@@ -84,11 +86,12 @@ export function useTranscripts(
   page = 1,
   perPage = 10,
   search?: string,
+  category?: number,
   enabled = true,
 ) {
   return useQuery({
-    queryKey: ["transcripts", page, perPage, search],
-    queryFn: () => fetchTranscripts(page, perPage, search),
+    queryKey: ["transcripts", page, perPage, search, category],
+    queryFn: () => fetchTranscripts(page, perPage, search, category),
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSundayMessageTranscripts } from "@/lib/wordpress";
+import { getAllTranscripts, getTranscriptsByCategory } from "@/lib/wordpress";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,13 +7,29 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const perPage = parseInt(searchParams.get("per_page") || "10");
     const search = searchParams.get("search") || undefined;
+    const categoryId = searchParams.get("category") 
+      ? parseInt(searchParams.get("category")!)
+      : undefined;
 
-    const { transcripts, totalPages, total } =
-      await getSundayMessageTranscripts({
+    let result;
+
+    if (categoryId) {
+      // Fetch by specific category
+      result = await getTranscriptsByCategory(categoryId, {
         page,
         perPage,
         search,
       });
+    } else {
+      // Fetch all transcripts from all categories
+      result = await getAllTranscripts({
+        page,
+        perPage,
+        search,
+      });
+    }
+
+    const { transcripts, totalPages, total } = result;
 
     return NextResponse.json({
       data: transcripts,
