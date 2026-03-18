@@ -70,6 +70,9 @@ export default function AdminDevotionalsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10; // Display 10 items per page
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -282,6 +285,17 @@ export default function AdminDevotionalsPage() {
   };
 
   const isFiltered = searchTerm || filterStartDate || filterEndDate;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStartDate, filterEndDate]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredDevotionals.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedDevotionals = filteredDevotionals.slice(startIndex, endIndex);
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-8 sm:py-12">
@@ -584,7 +598,7 @@ export default function AdminDevotionalsPage() {
             </button>
           )}
         </div>
-      ) : (
+      ) : filteredDevotionals.length > 0 ? (
         <div className="rounded-3xl border border-gray-100 bg-white shadow-lg overflow-hidden">
           <div className="h-1 bg-linear-to-r from-primary via-amber-400 to-primary" />
 
@@ -596,6 +610,9 @@ export default function AdminDevotionalsPage() {
                   (Filters active)
                 </span>
               )}
+            </span>
+            <span className="text-xs font-semibold text-muted-foreground">
+              Page {currentPage} of {totalPages}
             </span>
           </div>
 
@@ -609,7 +626,7 @@ export default function AdminDevotionalsPage() {
 
           {/* Table rows */}
           <div className="divide-y divide-gray-50">
-            {filteredDevotionals.map((d) => {
+            {paginatedDevotionals.map((d) => {
               const isFuture = isScheduledFuture(d.scheduledDate);
 
               return (
@@ -730,8 +747,64 @@ export default function AdminDevotionalsPage() {
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (pageNum) => {
+                    const isCurrentPage = pageNum === currentPage;
+                    const isNear = Math.abs(pageNum - currentPage) <= 1;
+                    const isEdge = pageNum === 1 || pageNum === totalPages;
+
+                    if (!isCurrentPage && !isNear && !isEdge) {
+                      if (pageNum === 2 || pageNum === totalPages - 1) {
+                        return (
+                          <span key={`ellipsis-${pageNum}`} className="px-1">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`h-10 w-10 rounded-lg font-semibold text-sm transition-colors ${
+                          isCurrentPage
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="h-10 px-4 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
 
       {/* Hidden replace input */}
       <input
