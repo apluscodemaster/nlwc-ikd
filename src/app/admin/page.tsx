@@ -108,7 +108,7 @@ const TABS: {
     id: "transcript",
     label: "Transcripts",
     icon: FileText,
-    description: "Message & Sunday School transcripts",
+    description: "Sunday Message, Bible Study & Sunday School Transcripts",
     color: "from-blue-500 to-indigo-500",
   },
   {
@@ -256,11 +256,7 @@ function RichTextEditor({
     const list = document.createElement(listTag);
     const li = document.createElement("li");
 
-    if (
-      block &&
-      block !== editorRef.current &&
-      block instanceof HTMLElement
-    ) {
+    if (block && block !== editorRef.current && block instanceof HTMLElement) {
       // Convert the current block to a list item
       li.innerHTML = block.innerHTML || "List item";
       list.appendChild(li);
@@ -412,8 +408,9 @@ function RichTextEditor({
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
 
-      const li = (sel.anchorNode as HTMLElement)?.closest?.("li") ||
-        (sel.anchorNode?.parentElement?.closest?.("li"));
+      const li =
+        (sel.anchorNode as HTMLElement)?.closest?.("li") ||
+        sel.anchorNode?.parentElement?.closest?.("li");
 
       if (li) {
         e.preventDefault();
@@ -455,8 +452,9 @@ function RichTextEditor({
     if (e.key === "Tab") {
       const sel = window.getSelection();
       if (!sel) return;
-      const li = (sel.anchorNode as HTMLElement)?.closest?.("li") ||
-        (sel.anchorNode?.parentElement?.closest?.("li"));
+      const li =
+        (sel.anchorNode as HTMLElement)?.closest?.("li") ||
+        sel.anchorNode?.parentElement?.closest?.("li");
       if (li) {
         e.preventDefault();
         // Simple indent: just add some padding
@@ -513,7 +511,6 @@ function RichTextEditor({
     </div>
   );
 }
-
 
 // ─── Content List Item ────────────────────────────────────────────────────────
 function ContentListItem({
