@@ -45,7 +45,7 @@ export const services: Service[] = [
     icon: Users,
     color: "bg-blue-50",
     iconColor: "text-blue-600",
-    image: "/prayer-meeting.png",
+    image: "/prayer-meeting.avif",
   },
   {
     id: 3,
