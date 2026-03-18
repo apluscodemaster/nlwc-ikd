@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import LivePlayer from "@/components/live/LivePlayer";
@@ -19,6 +19,12 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import ResumePrompt from "@/components/media/ResumePrompt";
+import {
+  saveMediaProgress,
+  getMediaProgress,
+  clearMediaProgress,
+} from "@/lib/mediaProgress";
 
 interface VideoMessage {
   date: string;
@@ -47,6 +53,10 @@ export default function LivePage() {
   });
 
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
+  const [resumePrompt, setResumePrompt] = useState<{
+    video: VideoMessage;
+    savedProgress: ReturnType<typeof getMediaProgress>;
+  } | null>(null);
 
   // Scroll to top on mount — delayed so it runs after Next.js scroll restoration.
   // Skip when a #hash is present (e.g. /live#live-player from the listen-live page).
@@ -62,6 +72,34 @@ export default function LivePage() {
   }, []);
 
   const recentVideos = videos.slice(0, 3);
+
+  const handleVideoPlay = useCallback((video: VideoMessage) => {
+    // Check for saved progress
+    const saved = getMediaProgress(video.id);
+    if (saved && saved.currentTime > 0) {
+      setResumePrompt({ video, savedProgress: saved });
+    } else {
+      setSelectedVideo(video);
+    }
+  }, []);
+
+  const handleResume = useCallback(() => {
+    if (!resumePrompt) return;
+    // Save progress timestamp to URL params for YouTube embed
+    setSelectedVideo(resumePrompt.video);
+    setResumePrompt(null);
+  }, [resumePrompt]);
+
+  const handleStartOver = useCallback(() => {
+    if (!resumePrompt) return;
+    clearMediaProgress(resumePrompt.video.id);
+    setSelectedVideo(resumePrompt.video);
+    setResumePrompt(null);
+  }, [resumePrompt]);
+
+  const handleDismissResume = useCallback(() => {
+    setResumePrompt(null);
+  }, []);
 
   return (
     <main>
@@ -166,7 +204,7 @@ export default function LivePage() {
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -5, transition: { duration: 0.3 } }}
                 className="group relative flex flex-col bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer"
-                onClick={() => setSelectedVideo(video)}
+                onClick={() => handleVideoPlay(video)}
               >
                 {/* Video Thumbnail */}
                 <div className="relative aspect-video overflow-hidden bg-gray-900">
@@ -224,6 +262,19 @@ export default function LivePage() {
         )}
       </SectionContainer>
 
+      {/* Resume Prompt */}
+      {resumePrompt && resumePrompt.savedProgress && (
+        <ResumePrompt
+          isOpen={!!resumePrompt}
+          mediaProgress={resumePrompt.savedProgress}
+          mediaTitle={resumePrompt.video.title}
+          mediaType="video"
+          onResume={handleResume}
+          onStartOver={handleStartOver}
+          onDismiss={handleDismissResume}
+        />
+      )}
+
       {/* ===== VIDEO PLAYER MODAL ===== */}
       <AnimatePresence>
         {selectedVideo && (
@@ -232,7 +283,19 @@ export default function LivePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedVideo(null)}
+              onClick={() => {
+                // Save progress before closing
+                if (selectedVideo) {
+                  saveMediaProgress(
+                    selectedVideo.id,
+                    0, // Video player doesn't expose current time via iframe
+                    0,
+                    selectedVideo.title || "Video Message",
+                    "video",
+                  );
+                }
+                setSelectedVideo(null);
+              }}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
             />
 
@@ -243,7 +306,19 @@ export default function LivePage() {
               className="relative w-full max-w-5xl aspect-video bg-black rounded-none sm:rounded-3xl overflow-hidden shadow-2xl"
             >
               <button
-                onClick={() => setSelectedVideo(null)}
+                onClick={() => {
+                  // Save progress before closing
+                  if (selectedVideo) {
+                    saveMediaProgress(
+                      selectedVideo.id,
+                      0, // Video player doesn't expose current time via iframe
+                      0,
+                      selectedVideo.title || "Video Message",
+                      "video",
+                    );
+                  }
+                  setSelectedVideo(null);
+                }}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >
                 <X className="w-5 h-5" />
