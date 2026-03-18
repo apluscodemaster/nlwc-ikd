@@ -13,6 +13,8 @@ import {
   Heart,
   Sparkles,
   CheckCircle2,
+  Users,
+  Flame,
 } from "lucide-react";
 
 export default function WelcomePage() {
@@ -23,8 +25,21 @@ export default function WelcomePage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const formData = new FormData(e.currentTarget);
+    const fullName = formData.get("fullName");
+    const phone = formData.get("phone");
+    const email = formData.get("email");
+    const address = formData.get("address");
+    const bornAgain = formData.get("bornAgain");
+    const holyGhost = formData.get("holyGhost");
+    const invitedBy = formData.get("invitedBy");
+    const pageUrl = window.location.href;
+
+    const message = `Hello NLWC Ikorodu Welcome Team, I am a first-time guest!\n\n*Name:* ${fullName}\n*Phone:* ${phone}\n*Email:* ${email}\n*Address:* ${address}\n*Born Again:* ${bornAgain}\n*Holy Ghost Baptized (Speaking in tongues):* ${holyGhost}\n*Invited By:* ${invitedBy}\n\n*Sent from:* ${pageUrl}`;
+    window.open(
+      `https://wa.me/2348137436770?text=${encodeURIComponent(message)}`,
+      "_blank",
+    );
 
     setSubmitted(true);
     setLoading(false);
@@ -148,9 +163,10 @@ export default function WelcomePage() {
                       <User className="w-4 h-4 text-primary/60" /> Full Name
                     </label>
                     <input
+                      name="fullName"
                       required
                       type="text"
-                      placeholder="John Doe"
+                      placeholder="John Abiodun"
                       className="w-full h-14 px-6 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                     />
                   </div>
@@ -159,9 +175,10 @@ export default function WelcomePage() {
                       <Phone className="w-4 h-4 text-primary/60" /> Phone Number
                     </label>
                     <input
+                      name="phone"
                       required
                       type="tel"
-                      placeholder="+234 ..."
+                      placeholder="+234 123 456 789"
                       className="w-full h-14 px-6 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                     />
                   </div>
@@ -172,6 +189,7 @@ export default function WelcomePage() {
                     <Mail className="w-4 h-4 text-primary/60" /> Email Address
                   </label>
                   <input
+                    name="email"
                     required
                     type="email"
                     placeholder="john@example.com"
@@ -185,10 +203,100 @@ export default function WelcomePage() {
                     Address
                   </label>
                   <textarea
+                    name="address"
                     required
                     placeholder="Where are you joining us from?"
                     rows={3}
                     className="w-full p-6 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium resize-none"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-primary/60" /> Born Again?
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="bornAgain"
+                        required
+                        defaultValue=""
+                        className="w-full h-14 px-6 pr-10 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium appearance-none"
+                      >
+                        <option value="" disabled>
+                          Select an option
+                        </option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-primary/60" /> Holy Ghost
+                      Baptized?
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="holyGhost"
+                        required
+                        defaultValue=""
+                        className="w-full h-14 px-6 pr-10 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium appearance-none"
+                      >
+                        <option value="" disabled>
+                          Select an option
+                        </option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-400 ml-1 mt-1 leading-tight">
+                      With the evidence of speaking in tongues
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary/60" /> Who invited
+                    you to church?
+                  </label>
+                  <input
+                    name="invitedBy"
+                    required
+                    type="text"
+                    placeholder="Name of inviter, or 'Social Media', etc."
+                    className="w-full h-14 px-6 rounded-2xl border border-gray-100 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
 
