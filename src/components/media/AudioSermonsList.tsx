@@ -438,11 +438,6 @@ export default function AudioSermonsList({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Spacer when player is active */}
-      {activeSermon && activeSermon.downloadUrl && (
-        <div className="h-20 sm:h-24" />
-      )}
     </div>
   );
 }
