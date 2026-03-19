@@ -26,10 +26,17 @@ export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(true);
   const [showAnimation, setShowAnimation] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(false);
+  const [previousPage, setPreviousPage] = useState<string>("/");
 
   useEffect(() => {
     setShowAnimation(true);
     setIsOnline(navigator.onLine);
+    
+    // Retrieve the previous page from sessionStorage
+    const stored = sessionStorage.getItem("previousPage");
+    if (stored) {
+      setPreviousPage(stored);
+    }
 
     // Poll for connectivity every 3 seconds when offline
     let connectivityCheckInterval: NodeJS.Timeout | null = null;
@@ -39,13 +46,14 @@ export default function OfflinePage() {
       connectivityCheckInterval = setInterval(async () => {
         const isConnected = await verifyConnectivity();
         if (isConnected) {
-          console.log("Connection restored - navigating to home");
+          console.log(`Connection restored - navigating to ${previousPage || previousPage}`);
           setIsOnline(true);
           if (connectivityCheckInterval) {
             clearInterval(connectivityCheckInterval);
           }
           setTimeout(() => {
-            window.location.href = "/";
+            sessionStorage.removeItem("previousPage");
+            window.location.href = previousPage || "/";
           }, 1000);
         }
       }, 3000);
@@ -59,9 +67,10 @@ export default function OfflinePage() {
 
       if (isConnected) {
         setIsOnline(true);
-        console.log("Connection verified - navigating to home");
+        console.log(`Connection verified - navigating to ${previousPage}`);
         setTimeout(() => {
-          window.location.href = "/";
+          sessionStorage.removeItem("previousPage");
+          window.location.href = previousPage || "/";
         }, 1500);
       } else {
         // Start polling if connection is not yet verified
@@ -92,7 +101,7 @@ export default function OfflinePage() {
         clearInterval(connectivityCheckInterval);
       }
     };
-  }, []);
+  }, [previousPage]);
 
   const handleRetry = async () => {
     setCheckingConnection(true);
@@ -100,7 +109,8 @@ export default function OfflinePage() {
     setCheckingConnection(false);
 
     if (isConnected) {
-      window.location.href = "/";
+      sessionStorage.removeItem("previousPage");
+      window.location.href = previousPage || "/";
     } else {
       // Just reload the page to retry
       window.location.reload();
@@ -274,14 +284,14 @@ export default function OfflinePage() {
               </>
             )}
           </Button>
-          <Link href="/">
+          <Link href={previousPage || "/"}>
             <Button
               size="lg"
               variant="outline"
               className="rounded-full px-8 font-semibold border-2 hover:bg-gray-50 flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <Home className="w-5 h-5" />
-              Go Home
+              Go Back
             </Button>
           </Link>
         </motion.div>

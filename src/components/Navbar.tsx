@@ -137,8 +137,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hide Navbar on admin routes
-  if (pathname?.startsWith("/admin")) return null;
+  // Hide Navbar on admin and offline routes
+  if (pathname?.startsWith("/admin") || pathname === "/offline") return null;
 
   return (
     <header

@@ -21,7 +21,7 @@ async function verifyConnectivity(): Promise<boolean> {
 
 /**
  * Component to detect and redirect to offline page when connection is lost
- * Also handles automatic redirect back to home when connection is restored
+ * Also handles automatic redirect back to the previous page when connection is restored
  * Wrap your app with this component to automatically handle offline scenarios
  */
 export function OfflineDetector({ children }: { children: React.ReactNode }) {
@@ -33,17 +33,21 @@ export function OfflineDetector({ children }: { children: React.ReactNode }) {
 
     // If connection is lost, redirect to offline page
     if (!isOnline && window.location.pathname !== "/offline") {
+      // Store the current page so we can redirect back to it when connection is restored
+      sessionStorage.setItem("previousPage", window.location.pathname + window.location.search + window.location.hash);
       window.location.href = "/offline";
       return;
     }
 
-    // If connection is restored and we're on the offline page, redirect to home
+    // If connection is restored and we're on the offline page, redirect to previous page
     if (isOnline && window.location.pathname === "/offline") {
       console.log("Connection restored, verifying connectivity...");
       verifyConnectivity().then((isConnected) => {
         if (isConnected) {
-          console.log("Connectivity verified, redirecting to home");
-          window.location.href = "/";
+          const previousPage = sessionStorage.getItem("previousPage") || "/";
+          console.log(`Connectivity verified, redirecting to ${previousPage}`);
+          sessionStorage.removeItem("previousPage");
+          window.location.href = previousPage;
         }
       });
     }
