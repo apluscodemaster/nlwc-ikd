@@ -292,7 +292,7 @@ export default function MediaHub() {
   );
 
   const handleResume = useCallback(() => {
-    if (!resumePrompt) return;
+    if (!resumePrompt?.savedProgress) return;
     startPlayback(resumePrompt.sermon, resumePrompt.savedProgress.currentTime);
     setResumePrompt(null);
   }, [resumePrompt, startPlayback]);
