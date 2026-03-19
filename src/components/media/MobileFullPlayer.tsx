@@ -182,7 +182,7 @@ export default function MobileFullPlayer({
             </div>
             <div className="flex justify-between mt-2 text-[11px] text-white/40 font-mono">
               <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
+              <span>-{formatTime(duration - currentTime)}</span>
             </div>
           </div>
 
