@@ -101,7 +101,9 @@ export default function TranscriptsList({
   }, [page, debouncedSearch, selectedCategory, pathname, router, searchParams]);
 
   const categoryParam = selectedCategory
-    ? parseInt(selectedCategory)
+    ? isNaN(Number(selectedCategory))
+      ? (selectedCategory as unknown as number)
+      : parseInt(selectedCategory, 10)
     : undefined;
 
   const { data, isLoading, isError, error } = useTranscripts(
