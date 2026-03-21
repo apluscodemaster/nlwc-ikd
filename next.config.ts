@@ -1,38 +1,13 @@
 import type { NextConfig } from "next";
 
-const WP_ORIGIN = "https://ikorodu.nlwc.church";
-
 const nextConfig: NextConfig = {
-  // Ghost Proxy — transparently forward WP backend paths to the WordPress origin.
-  // Using "afterFiles" ensures Next.js filesystem routes (/admin/*) always win.
-  async rewrites() {
-    return {
-      beforeFiles: [],
-      afterFiles: [
-        {
-          source: "/wp-login.php",
-          destination: `${WP_ORIGIN}/wp-login.php`,
-        },
-        {
-          source: "/wp-admin",
-          destination: `${WP_ORIGIN}/wp-admin`,
-        },
-        {
-          source: "/wp-admin/:path*",
-          destination: `${WP_ORIGIN}/wp-admin/:path*`,
-        },
-        {
-          source: "/wp-includes/:path*",
-          destination: `${WP_ORIGIN}/wp-includes/:path*`,
-        },
-        {
-          source: "/wp-content/:path*",
-          destination: `${WP_ORIGIN}/wp-content/:path*`,
-        },
-      ],
-      fallback: [],
-    };
-  },
+  // NOTE: WP rewrite proxy removed — it caused a 508 Infinite Loop because
+  // the rewrite destination (ikorodu.nlwc.church) is the same domain Vercel
+  // serves this app on, so every rewrite hit Vercel again in an endless cycle.
+  //
+  // To re-enable wp-admin proxying, point WP_ORIGIN to a DIFFERENT host, e.g.:
+  //   const WP_ORIGIN = "https://wp.ikorodu.nlwc.church";  // dedicated WP subdomain
+  //   const WP_ORIGIN = "https://your-server-ip-or-cpanel-domain";  // direct server
   images: {
     remotePatterns: [
       {
