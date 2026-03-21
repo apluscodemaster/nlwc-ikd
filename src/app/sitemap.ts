@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
-    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://ikorodu.nlwc.church";
 
   const routes = ["", "/about", "/contact", "/gallery", "/media", "/live"].map(
     (route) => ({

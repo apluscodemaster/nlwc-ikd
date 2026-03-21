@@ -3,7 +3,7 @@
  * Fetches content from the NLWC Ikorodu WordPress backend
  */
 
-const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church"}/wp-json/wp/v2`;
+const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church"}/wp-json/wp/v2`;
 
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
 import { calculateReadingTime } from "@/utils/readingTime";
