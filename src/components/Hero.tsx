@@ -19,7 +19,7 @@ export default function Hero() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center">
         <div className="text-center w-full text-white">
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold">
-            Joyful Worship Moments
+            Our Worship Experience
           </h1>
         </div>
       </div>
