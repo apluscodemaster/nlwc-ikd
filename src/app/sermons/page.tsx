@@ -5,7 +5,7 @@ import SectionContainer from "@/components/shared/SectionContainer";
 import SermonsPageContent from "@/components/media/SermonsPageContent";
 
 export const metadata: Metadata = {
-  title: "Sermons & Audio Messages | NLWC Ikorodu",
+  title: "Audio Messages | NLWC Ikorodu",
   description:
     "Listen to life-changing messages from New and Living Way Church, Ikorodu.",
 };
