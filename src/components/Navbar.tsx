@@ -44,58 +44,83 @@ interface NavItem {
 }
 
 const NAVIGATION_DATA: NavItem[] = [
-  { label: "About Us", href: "https://ikorodu.nlwc.church/about/" },
+  { label: "About Us", href: "/about" },
   {
     label: "Live Streaming",
     children: [
       {
         label: "Audio Broadcast",
-        href: "https://ikorodu.nlwc.church/audio-broadcast/",
+        href: "/listen-live",
       },
       {
         label: "Video Broadcast",
-        href: "https://ikorodu.nlwc.church/video-broadcast/",
+        href: "/live",
       },
     ],
   },
   {
-    label: "Media Resources",
+    label: "Media",
     children: [
-      // {
-      //   label: "Sermons",
-      //   href: "/sermons",
-      // },
       {
         label: "Audio Messages",
-        href: "https://ikorodu.nlwc.church/audio-messages/",
+        href: "/sermons",
+      },
+      {
+        label: "Video Messages",
+        href: "/video-messages",
+      },
+      {
+        label: "Church Gallery",
+        href: "/gallery",
+      },
+    ],
+  },
+  {
+    label: "Spiritual Resources",
+    children: [
+      {
+        label: "Daily Devotionals",
+        href: "/devotionals",
+      },
+      {
+        label: "Sunday School Manual",
+        href: "/manuals",
+      },
+      {
+        label: "Message Transcripts",
+        href: "/transcripts",
+      },
+    ],
+  },
+  {
+    label: "Connect",
+    children: [
+      {
+        label: "House Fellowship",
+        href: "/fellowship",
       },
       {
         label: "Blog",
         href: "https://nlwc.church/blog/",
         isExternal: true,
       },
-      {
-        label: "House Fellowship",
-        href: "https://ikorodu.nlwc.church/house-fellowship/",
-      },
-      {
-        label: "Sunday School Manual",
-        href: "https://ikorodu.nlwc.church/category/sunday-school-manual/",
-      },
-      {
-        label: "Message Transcripts",
-        href: "https://ikorodu.nlwc.church/category/sunday-message-transcripts/",
-      },
-      { label: "Image Gallery", href: "/" },
     ],
   },
-  { label: "Contact", href: "https://ikorodu.nlwc.church/contact/" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-  { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
+  { icon: Facebook, href: "https://facebook.com/nlwclife", label: "Facebook" },
+  {
+    icon: Instagram,
+    href: "https://www.instagram.com/nlwclife/",
+    label: "Instagram",
+  },
+  {
+    icon: Youtube,
+    href: "https://www.youtube.com/@nlwclife",
+    label: "YouTube",
+  },
 ];
 
 export default function Navbar() {
@@ -112,6 +137,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Hide Navbar on admin routes
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <header
       className={cn(
@@ -121,11 +149,11 @@ export default function Navbar() {
           : "bg-white/70 backdrop-blur-md py-3",
       )}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
-            href="https://ikorodu.nlwc.church/"
+            href="/"
             className="relative z-10 transition-transform hover:scale-105 active:scale-95"
           >
             <Image
@@ -274,13 +302,15 @@ export default function Navbar() {
                   <SheetHeader className="p-6 border-b border-gray-100">
                     <div className="flex items-center justify-between">
                       <SheetTitle>
-                        <Image
-                          src="/logo-512x512-transparent.png"
-                          alt="NLWC Logo"
-                          width={100}
-                          height={40}
-                          className="h-auto w-auto"
-                        />
+                        <Link href="/">
+                          <Image
+                            src="/logo-512x512-transparent.png"
+                            alt="NLWC Logo"
+                            width={100}
+                            height={40}
+                            className="h-auto w-auto"
+                          />
+                        </Link>
                       </SheetTitle>
                     </div>
                   </SheetHeader>
@@ -385,7 +415,7 @@ export default function Navbar() {
 
                       <div className="grid grid-cols-2 gap-4 mt-8">
                         <a
-                          href="tel:+2347035760085"
+                          href="tel:+2348137436770"
                           className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                           <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
