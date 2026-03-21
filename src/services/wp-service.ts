@@ -9,7 +9,7 @@ import { WP_CATEGORIES } from "@/lib/wordpress";
 import type { WPPublishPayload } from "@/types/wp-types";
 
 const WP_URL =
-  process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
+  process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
 const WP_USER = process.env.WP_APPLICATION_USER || "admin";
 const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
 

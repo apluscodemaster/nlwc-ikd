@@ -1,12 +1,15 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://ikorodu.nlwc.church";
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: "/api/",
     },
-    sitemap: `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church"}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

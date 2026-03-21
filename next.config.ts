@@ -1,13 +1,38 @@
 import type { NextConfig } from "next";
 
+const WP_ORIGIN = "https://ikdadmin.nlwc.church";
+
 const nextConfig: NextConfig = {
-  // NOTE: WP rewrite proxy removed — it caused a 508 Infinite Loop because
-  // the rewrite destination (ikorodu.nlwc.church) is the same domain Vercel
-  // serves this app on, so every rewrite hit Vercel again in an endless cycle.
-  //
-  // To re-enable wp-admin proxying, point WP_ORIGIN to a DIFFERENT host, e.g.:
-  //   const WP_ORIGIN = "https://wp.ikorodu.nlwc.church";  // dedicated WP subdomain
-  //   const WP_ORIGIN = "https://your-server-ip-or-cpanel-domain";  // direct server
+  // Ghost Proxy — transparently forward WP backend paths to the WordPress origin.
+  // Now safe: WP lives on ikdadmin.nlwc.church, Vercel serves ikorodu.nlwc.church.
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [
+        {
+          source: "/wp-login.php",
+          destination: `${WP_ORIGIN}/wp-login.php`,
+        },
+        {
+          source: "/wp-admin",
+          destination: `${WP_ORIGIN}/wp-admin`,
+        },
+        {
+          source: "/wp-admin/:path*",
+          destination: `${WP_ORIGIN}/wp-admin/:path*`,
+        },
+        {
+          source: "/wp-includes/:path*",
+          destination: `${WP_ORIGIN}/wp-includes/:path*`,
+        },
+        {
+          source: "/wp-content/:path*",
+          destination: `${WP_ORIGIN}/wp-content/:path*`,
+        },
+      ],
+      fallback: [],
+    };
+  },
   images: {
     remotePatterns: [
       {
@@ -29,6 +54,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "ikorodu.nlwc.church",
+      },
+      {
+        protocol: "https",
+        hostname: "ikdadmin.nlwc.church",
       },
       {
         protocol: "https",
