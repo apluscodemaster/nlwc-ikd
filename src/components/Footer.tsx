@@ -29,8 +29,8 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Hide Footer on admin routes
-  if (pathname?.startsWith("/admin")) return null;
+  // Hide Footer on admin and offline routes
+  if (pathname?.startsWith("/admin") || pathname === "/offline") return null;
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
