@@ -1175,7 +1175,7 @@ export default function AdminChurchContentPage() {
               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
                 <p className="text-xs text-gray-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  Content synced from WordPress at ikorodu.nlwc.church
+                  Content synced from WordPress at ikdadmin.nlwc.church
                 </p>
               </div>
             </div>
@@ -1732,7 +1732,7 @@ export default function AdminChurchContentPage() {
                 <p className="text-xs text-gray-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   Content will be published to the WordPress database at
-                  ikorodu.nlwc.church
+                  ikdadmin.nlwc.church
                 </p>
               </div>
             </div>

@@ -13,7 +13,7 @@
  */
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
+  process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
 const WP_API_URL = `${BASE_URL}/wp-json/nlwc/v1`;
 const AUDIO_MESSAGES_URL = `${BASE_URL}/audio-messages/`;
 
