@@ -50,7 +50,7 @@ interface TranscriptStub {
 
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
   const WP_API =
-    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikorodu.nlwc.church";
+    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
   const CATEGORY_ID = 20; // Sunday Message Transcripts
 
   try {
