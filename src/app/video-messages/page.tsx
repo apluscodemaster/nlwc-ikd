@@ -15,7 +15,7 @@ export default function VideoMessagesPage() {
       <PageHeader
         title="Video Messages"
         subtitle="Watch the Video Format of all our teachings. Search by speaker, category, or topic to find the message you need."
-        backgroundImage="/video-hero-bg.avif"
+        backgroundImage="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247833/nlwc-ikd-assets/ygkueoffnv3wvqy4d7ir.avif"
       />
 
       <SectionContainer className="py-12 sm:py-20">
