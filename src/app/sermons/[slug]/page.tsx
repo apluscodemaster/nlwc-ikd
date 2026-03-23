@@ -14,6 +14,9 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// ISR: cache rendered pages for 5 minutes, then regenerate in background
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const sermon = await getMessageTranscriptBySlug(slug);

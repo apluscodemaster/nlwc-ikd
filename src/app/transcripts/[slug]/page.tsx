@@ -16,6 +16,9 @@ interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// ISR: cache rendered pages for 5 minutes, then regenerate in background
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const transcript = await getTranscriptBySlug(slug);
