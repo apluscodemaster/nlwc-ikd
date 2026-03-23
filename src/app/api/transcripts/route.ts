@@ -31,15 +31,22 @@ export async function GET(request: NextRequest) {
 
     const { transcripts, totalPages, total } = result;
 
-    return NextResponse.json({
-      data: transcripts,
-      pagination: {
-        page,
-        perPage,
-        totalPages,
-        total,
+    return NextResponse.json(
+      {
+        data: transcripts,
+        pagination: {
+          page,
+          perPage,
+          totalPages,
+          total,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch transcripts:", error);
     return NextResponse.json(
