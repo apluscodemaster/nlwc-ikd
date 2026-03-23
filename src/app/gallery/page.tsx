@@ -36,7 +36,7 @@ export default function GalleryPage() {
         <PageHeader
           title="Our Worship Experience"
           subtitle="Relive moments from our Church Services and Special Gatherings."
-          backgroundImage="/gallery-bg.avif"
+          backgroundImage="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247566/nlwc-ikd-assets/zeyif8gq4lxoxw06iull.avif"
         />
 
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">

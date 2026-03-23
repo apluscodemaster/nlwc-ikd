@@ -32,7 +32,7 @@ export const services: Service[] = [
     icon: Calendar,
     color: "bg-orange-50",
     iconColor: "text-orange-600",
-    image: "/sunday-service.avif",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247806/nlwc-ikd-assets/fzoehwwcmsuwx7w9y3pt.avif",
   },
   {
     id: 2,
@@ -45,7 +45,7 @@ export const services: Service[] = [
     icon: Users,
     color: "bg-blue-50",
     iconColor: "text-blue-600",
-    image: "/prayer-meeting.avif",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247627/nlwc-ikd-assets/m6cvj4hlycpdwzd61vfh.avif",
   },
   {
     id: 3,
@@ -58,7 +58,7 @@ export const services: Service[] = [
     icon: Book,
     color: "bg-green-50",
     iconColor: "text-green-600",
-    image: "/bible-study.avif",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247542/nlwc-ikd-assets/pm8b0f37oyetsclcesg7.avif",
   },
   {
     id: 4,
@@ -71,7 +71,7 @@ export const services: Service[] = [
     icon: Flame,
     color: "bg-purple-50",
     iconColor: "text-purple-600",
-    image: "/sithrah.avif",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247787/nlwc-ikd-assets/taxdkmtwzd7rn1np8wfm.avif",
   },
   {
     id: 5,
@@ -84,6 +84,6 @@ export const services: Service[] = [
     icon: Sparkles,
     color: "bg-amber-50",
     iconColor: "text-amber-600",
-    image: "/SOTS.avif",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247798/nlwc-ikd-assets/nu4dqvqovsnbodckjmnu.avif",
   },
 ];
