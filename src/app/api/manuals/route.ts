@@ -14,15 +14,22 @@ export async function GET(request: NextRequest) {
       search,
     });
 
-    return NextResponse.json({
-      data: manuals,
-      pagination: {
-        page,
-        perPage,
-        totalPages,
-        total,
+    return NextResponse.json(
+      {
+        data: manuals,
+        pagination: {
+          page,
+          perPage,
+          totalPages,
+          total,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch manuals:", error);
     return NextResponse.json(
