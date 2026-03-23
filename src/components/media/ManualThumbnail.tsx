@@ -16,11 +16,11 @@ function hashTitle(title: string): number {
 
 // Background images — warm, editorial-quality photographs
 const BACKGROUNDS = [
-  "/manual_bg_1.png",
-  "/manual_bg_2.png",
-  "/manual_bg_3.png",
-  "/manual_bg_4.png",
-  "/manual_bg_5.png",
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247571/nlwc-ikd-assets/xebxdhjcdfayfvunrps6.png",
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247584/nlwc-ikd-assets/tz3n3x9h037eaic8gr5d.png",
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247589/nlwc-ikd-assets/yp4zkve02wdprhaqkwzl.png",
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247598/nlwc-ikd-assets/pmefke827pbgssp3zvy8.png",
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247602/nlwc-ikd-assets/iwa9dccmroxtosppxcdm.png",
 ];
 
 interface ManualThumbnailProps {

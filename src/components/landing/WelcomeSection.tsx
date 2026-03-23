@@ -82,7 +82,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
             >
               <Image
-                src="/community.webp"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247545/nlwc-ikd-assets/yod0s9qidic53wxu5gmt.webp"
                 alt="Community 1"
                 fill
                 className="object-cover"
@@ -93,7 +93,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="/community2.webp"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247548/nlwc-ikd-assets/hap3okik3y0aeypz8y54.webp"
                 alt="Community 2"
                 fill
                 className="object-cover"
@@ -105,7 +105,7 @@ export default function WelcomeSection() {
             className="relative h-[350px] sm:h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="/community3.avif"
+              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247555/nlwc-ikd-assets/nnjinqr23gen813vyqrn.avif"
               alt="Church Pastor"
               fill
               className="object-cover"
