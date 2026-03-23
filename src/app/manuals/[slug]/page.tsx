@@ -25,6 +25,9 @@ interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// ISR: cache rendered pages for 5 minutes, then regenerate in background
+export const revalidate = 300;
+
 // Calculate read time from HTML content (~200 words per minute)
 function calculateReadTime(htmlContent: string): number {
   const textContent = htmlContent
