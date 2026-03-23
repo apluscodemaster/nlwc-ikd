@@ -27,15 +27,22 @@ export async function GET(request: NextRequest) {
       link: `/sermons/${transcript.slug}`,
     }));
 
-    return NextResponse.json({
-      sermons,
-      pagination: {
-        page,
-        perPage,
-        total: data.total,
-        totalPages: data.totalPages,
+    return NextResponse.json(
+      {
+        sermons,
+        pagination: {
+          page,
+          perPage,
+          total: data.total,
+          totalPages: data.totalPages,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching sermons:", error);
     return NextResponse.json(
