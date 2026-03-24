@@ -213,7 +213,7 @@ export default function Footer() {
             Don&apos;t miss our future updates. Get Subscribed today!
           </p>
 
-          <form onSubmit={handleSubscribe} className="space-y-3 mb-6">
+          {/* <form onSubmit={handleSubscribe} className="space-y-3 mb-6">
             <div className="relative">
               <input
                 type="email"
@@ -231,7 +231,7 @@ export default function Footer() {
                 {loading ? "..." : "JOIN"}
               </button>
             </div>
-          </form>
+          </form> */}
 
           <div className="flex items-center gap-2 mb-6">
             <a
