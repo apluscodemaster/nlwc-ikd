@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Headphones } from "lucide-react";
 import { getAudioSermonDetail } from "@/lib/audioSermons";
