@@ -206,11 +206,9 @@ export default function Footer() {
 
         {/* Column 4: Subscribe & contact */}
         <div>
-          <h3 className="font-semibold mb-4 text-white text-lg">
-            Get Subscribed
-          </h3>
+          <h3 className="font-semibold mb-4 text-white text-lg">Follow Us</h3>
           <p className="text-sm mb-4 text-gray-300">
-            Don&apos;t miss our future updates. Get Subscribed today!
+            Don&apos;t miss our future updates. Follow us today!
           </p>
 
           {/* <form onSubmit={handleSubscribe} className="space-y-3 mb-6">
