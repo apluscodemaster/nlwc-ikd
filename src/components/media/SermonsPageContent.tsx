@@ -37,6 +37,7 @@ import {
   SortDesc,
   RotateCcw,
   FastForward,
+  Share2,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
@@ -1711,6 +1712,16 @@ function SermonCard({
             <span className="hidden sm:inline">
               {matchedSlug ? "Transcript" : "Transcripts"}
             </span>
+          </Link>
+
+          {/* Share link */}
+          <Link
+            href={`/sermons/audio/${sermon.id}`}
+            className="flex items-center gap-1 p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
+            title="Shareable link"
+            aria-label="Share this message"
+          >
+            <Share2 className="w-4 h-4" />
           </Link>
 
           {/* Download */}
