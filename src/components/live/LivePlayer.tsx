@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
-import { isCurrentlyLive } from "@/lib/liveSchedule";
+import { isCurrentlyLive, getCurrentMeetingTitle } from "@/lib/liveSchedule";
 
 const TELEGRAM_URL = "https://bit.ly/nlwcikorodu_audio";
 const PAGE_URL = "https://nlwc-ikd-gallery.vercel.app/live";
@@ -42,11 +42,15 @@ export default function LivePlayer() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [streamEmbedUrl, setStreamEmbedUrl] = useState(FALLBACK_EMBED_URL);
   const [isLive, setIsLive] = useState(false);
+  const [meetingTitle, setMeetingTitle] = useState("Worship Experience");
   const shareRef = useRef<HTMLDivElement>(null);
 
   // Check live status every 30 seconds
   useEffect(() => {
-    const check = () => setIsLive(isCurrentlyLive());
+    const check = () => {
+      setIsLive(isCurrentlyLive());
+      setMeetingTitle(getCurrentMeetingTitle());
+    };
     check();
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
@@ -143,7 +147,7 @@ export default function LivePlayer() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-2">
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              Sunday Worship Experience
+              {meetingTitle}
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">

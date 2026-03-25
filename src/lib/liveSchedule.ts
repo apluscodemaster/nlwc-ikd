@@ -108,3 +108,29 @@ function formatServiceDate(date: Date): string {
   const month = date.toLocaleDateString("en-GB", { month: "long" });
   return `${dayName}, ${day} ${month}`;
 }
+
+/* ------------------------------------------------------------------ */
+
+/** Map of day-of-week to the meeting title shown on the streaming page. */
+const DAY_MEETING_TITLES: Record<number, string> = {
+  0: "Sunday Worship Experience",   // Sunday
+  3: "Prayer Meeting",              // Wednesday
+  5: "Bible Study",                 // Friday
+};
+
+/**
+ * Returns the meeting title for the current day.
+ *
+ * If today has a scheduled meeting, returns its title (e.g. "Prayer Meeting").
+ * Otherwise falls back to the next upcoming service label.
+ */
+export function getCurrentMeetingTitle(now = new Date()): string {
+  const day = now.getDay();
+  if (DAY_MEETING_TITLES[day]) {
+    return DAY_MEETING_TITLES[day];
+  }
+  // Not a meeting day — show the next service label
+  const next = getNextService(now);
+  return next.label;
+}
+
