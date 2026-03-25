@@ -51,6 +51,7 @@ export interface NextServiceInfo {
  * If we are currently in a live window the function still returns the
  * *next* service (i.e. "what comes after the one running now").
  */
+
 export function getNextService(now = new Date()): NextServiceInfo {
   const day = now.getDay();
   const hour = now.getHours();
@@ -113,9 +114,9 @@ function formatServiceDate(date: Date): string {
 
 /** Map of day-of-week to the meeting title shown on the streaming page. */
 const DAY_MEETING_TITLES: Record<number, string> = {
-  0: "Sunday Worship Experience",   // Sunday
-  3: "Prayer Meeting",              // Wednesday
-  5: "Bible Study",                 // Friday
+  0: "Sunday Worship Experience", // Sunday
+  3: "Prayer Meeting", // Wednesday
+  5: "Bible Study", // Friday
 };
 
 /**
@@ -133,4 +134,3 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   const next = getNextService(now);
   return next.label;
 }
-
