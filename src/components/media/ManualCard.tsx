@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { FileText, Calendar, ChevronRight, Clock } from "lucide-react";
+import { FileText, Calendar, ChevronRight, Clock, Share2, Check } from "lucide-react";
 import type { SundaySchoolManual } from "@/lib/wordpress";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,6 +21,25 @@ export default function ManualCard({
   manual,
   searchQuery = "",
 }: ManualCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const url = `${window.location.origin}/manuals/${manual.slug}`;
+      const title = manual.title.replace(/<[^>]*>/g, "");
+
+      if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    },
+    [manual],
+  );
   // Highlight title if there's a search query
   const highlightedTitle = searchQuery
     ? highlightSearchInHtml(manual.title, searchQuery)
@@ -104,7 +123,19 @@ export default function ManualCard({
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-end pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+              aria-label="Share this manual"
+              title="Share"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+            </button>
             <div className="flex items-center gap-1 text-amber-600 font-bold text-xs sm:text-sm group-hover:gap-2 transition-all">
               Read
               <ChevronRight className="w-4 h-4" />
