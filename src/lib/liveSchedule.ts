@@ -119,18 +119,35 @@ const DAY_MEETING_TITLES: Record<number, string> = {
   5: "Bible Study", // Friday
 };
 
+/** Ordered meeting days for look-back calculation. */
+const MEETING_DAYS = [0, 3, 5]; // Sun, Wed, Fri
+
 /**
- * Returns the meeting title for the current day.
+ * Returns the meeting title for the streaming page.
  *
- * If today has a scheduled meeting, returns its title (e.g. "Prayer Meeting").
- * Otherwise falls back to the next upcoming service label.
+ * If today is a meeting day, returns that day's title.
+ * Otherwise, returns the **most recent past** meeting's title so the
+ * label persists until the next meeting starts (e.g. on Monday/Tuesday
+ * it still shows "Sunday Worship Experience").
  */
 export function getCurrentMeetingTitle(now = new Date()): string {
   const day = now.getDay();
+
+  // If today is a meeting day, show its title
   if (DAY_MEETING_TITLES[day]) {
     return DAY_MEETING_TITLES[day];
   }
-  // Not a meeting day — show the next service label
-  const next = getNextService(now);
-  return next.label;
+
+  // Find the most recent past meeting day
+  // Walk backwards from today until we hit a meeting day
+  for (let offset = 1; offset <= 7; offset++) {
+    const checkDay = (day - offset + 7) % 7;
+    if (MEETING_DAYS.includes(checkDay)) {
+      return DAY_MEETING_TITLES[checkDay];
+    }
+  }
+
+  // Fallback (should never reach)
+  return "Worship Experience";
 }
+
