@@ -32,6 +32,7 @@ import {
   ListOrdered,
   AlignLeft,
   AlignCenter,
+  AlignJustify,
   Heading2,
   Link as LinkIcon,
   Quote,
@@ -281,7 +282,7 @@ function RichTextEditor({
   };
 
   // Set text alignment
-  const setAlignment = (align: "left" | "center" | "right") => {
+  const setAlignment = (align: "left" | "center" | "right" | "justify") => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
     editorRef.current.focus();
@@ -393,6 +394,11 @@ function RichTextEditor({
       icon: AlignCenter,
       action: () => setAlignment("center"),
       title: "Center",
+    },
+    {
+      icon: AlignJustify,
+      action: () => setAlignment("justify"),
+      title: "Justify",
     },
     { icon: null, action: null, title: "divider" },
     {
