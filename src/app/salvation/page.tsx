@@ -30,7 +30,7 @@ export default function SalvationPage() {
       <PageHeader
         title="Become Born-Again Today"
         subtitle="Receive Jesus into your heart and begin your eternal journey with God."
-        backgroundImage="https://images.unsplash.com/photo-1507692049790-de58290a4334?q=80&w=2070&auto=format&fit=crop"
+        backgroundImage="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774640624/salvation_lb2tsf.jpg"
       />
 
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
