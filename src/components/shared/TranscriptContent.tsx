@@ -24,7 +24,7 @@ export default function TranscriptContent({
 }: TranscriptContentProps) {
   const colorClasses =
     accentColor === "amber"
-      ? "prose-a:text-amber-600 prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5 text-justify sm:text-left"
+      ? "prose-a:text-amber-600 prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5"
       : "";
 
   // Apply search highlighting to the content if a query is provided
