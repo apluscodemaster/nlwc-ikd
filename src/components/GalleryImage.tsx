@@ -57,11 +57,13 @@ const GalleryImage: React.FC<Props> = ({
   const height = imgDims?.height || DEFAULT_HEIGHT;
 
   const baseUrl = toGoogleImageURL(src);
-  const isDrive = baseUrl.includes("lh3.googleusercontent.com");
+  // Both Google Drive (/d/) and Google Photos (/pw/) use lh3.googleusercontent.com
+  // and support the same size-parameter system (=wN-hN-no, =s0, etc.)
+  const isGoogleusercontent = baseUrl.includes("lh3.googleusercontent.com");
 
   // Use a flexible image URL: prefer high-res
-  const displaySrc = isDrive ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
-  const downloadSrc = isDrive ? `${baseUrl}=s0` : baseUrl;
+  const displaySrc = isGoogleusercontent ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
+  const downloadSrc = isGoogleusercontent ? `${baseUrl}=s0` : baseUrl;
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
