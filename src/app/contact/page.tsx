@@ -17,7 +17,7 @@ export default function ContactPage() {
         backgroundImage="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247564/nlwc-ikd-assets/zaxi2cv9e51ooer7uvrl.jpg"
       />
 
-      <SectionContainer containerClassName="max-w-screen-2xl">
+      <SectionContainer containerClassName="max-w-7xl">
         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 md:gap-16 items-start">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -56,7 +56,7 @@ export default function ContactPage() {
         </div>
       </SectionContainer>
 
-      <SectionContainer containerClassName="max-w-screen-2xl" className="pt-0 md:pt-4">
+      <SectionContainer containerClassName="max-w-7xl" className="pt-0 md:pt-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
