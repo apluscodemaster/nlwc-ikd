@@ -225,7 +225,10 @@ function AccordionItem({
                   <div className="p-2 bg-primary/5 rounded-xl border border-primary/10">
                     <BookOpen className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs font-bold text-primary tracking-widest uppercase">
+                  <span
+                    className="text-xs font-bold text-primary tracking-widest uppercase"
+                    data-scripture-content
+                  >
                     {belief.scripture}
                   </span>
                 </div>
