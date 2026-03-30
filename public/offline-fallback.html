@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Jost:100,200,300,regular,500,600,700,800,900,100italic,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic"
+      rel="stylesheet"
+    />
+    <title>No Connection - The New & Living Way Church, Ikorodu</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Jost", sans-serif;
+        background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #111827;
+        position: relative;
+        overflow: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: -200px;
+        left: -200px;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(239, 68, 68, 0.1) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      body::after {
+        content: "";
+        position: absolute;
+        bottom: -200px;
+        right: -200px;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(249, 115, 22, 0.05) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .container {
+        position: relative;
+        z-index: 10;
+        max-width: 600px;
+        width: 100%;
+        padding: 24px;
+        text-align: center;
+      }
+
+      .icon-box {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 32px;
+        background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+        border-radius: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.3);
+      }
+
+      .icon-box svg {
+        width: 56px;
+        height: 56px;
+        color: white;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #111827;
+      }
+
+      h2 {
+        font-size: 24px;
+        font-weight: 600;
+        background: linear-gradient(90deg, #dc2626 0%, #ea580c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 16px;
+      }
+
+      .description {
+        font-size: 18px;
+        color: #4b5563;
+        margin-bottom: 24px;
+        line-height: 1.6;
+      }
+
+      .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: #fef2f2;
+        border: 2px solid #fecaca;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        font-size: 14px;
+        color: #7f1d1d;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #ef4444;
+        border-radius: 50%;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .tips-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 32px;
+        text-align: left;
+      }
+
+      .tips-box h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e3a8a;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .tips-box ol {
+        list-style: none;
+        counter-reset: step-counter;
+      }
+
+      .tips-box li {
+        counter-increment: step-counter;
+        margin-bottom: 12px;
+        color: #1e3a8a;
+        font-size: 14px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .tips-box li::before {
+        content: counter(step-counter);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      @media (min-width: 640px) {
+        .buttons {
+          flex-direction: row;
+          justify-content: center;
+        }
+
+        button {
+          min-width: 160px;
+        }
+      }
+
+      button {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 24px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #1f2937;
+        border: 2px solid #e5e7eb;
+      }
+
+      .btn-secondary:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+      }
+
+      .footer-text {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 24px;
+      }
+
+      .home-link {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .home-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Icon -->
+      <div class="icon-box">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071l3.534-3.534a1 1 0 011.415 0l4.242 4.242a1 1 0 010 1.415l-3.534 3.534m7.778 0l3.534-3.534a1 1 0 000-1.415l-4.242-4.242a1 1 0 00-1.415 0l-3.534 3.534"
+          />
+        </svg>
+      </div>
+
+      <!-- Heading -->
+      <h1>No Connection</h1>
+      <h2>Internet Offline</h2>
+
+      <!-- Description -->
+      <p class="description">
+        It looks like you've lost your internet connection. Please check your
+        network and try again.
+      </p>
+
+      <!-- Status -->
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        Connection Status: <strong>Offline</strong>
+      </div>
+
+      <!-- Troubleshooting Tips -->
+      <div class="tips-box">
+        <h3><span>❓</span> Troubleshooting Steps</h3>
+        <ol>
+          <li>Check your WiFi or mobile data connection</li>
+          <li>Turn off Airplane mode if it's enabled</li>
+          <li>Restart your router or mobile device</li>
+          <li>Check if other apps can access the internet</li>
+        </ol>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="buttons">
+        <button class="btn-primary" onclick="location.reload()">
+          <span>🔄</span> Try Again
+        </button>
+        <button class="btn-secondary" onclick="goHome()">
+          <span>🏠</span> Go Home
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <p class="footer-text">
+        Once your connection is restored, you'll be able to browse normally.
+        <br />
+        <a href="/" class="home-link">Return to homepage</a>
+      </p>
+    </div>
+
+    <script>
+      function goHome() {
+        window.location.href = "/";
+      }
+
+      // Helper function to verify actual internet connectivity
+      async function checkConnectivity() {
+        try {
+          const response = await fetch("/", {
+            method: "HEAD",
+            cache: "no-store",
+            signal: AbortSignal.timeout(5000),
+          });
+          return response.ok || response.type === "opaque";
+        } catch (error) {
+          return false;
+        }
+      }
+
+      // Poll for connectivity every 3 seconds
+      let connectivityCheckInterval = null;
+
+      function startConnectivityCheck() {
+        if (connectivityCheckInterval) return;
+
+        connectivityCheckInterval = setInterval(async () => {
+          const isOnline = await checkConnectivity();
+          if (isOnline) {
+            clearInterval(connectivityCheckInterval);
+            console.log("Connection restored - redirecting to home");
+            window.location.href = "/";
+          }
+        }, 3000);
+      }
+
+      // Start polling on page load
+      startConnectivityCheck();
+
+      // Also listen for native online event (backup)
+      window.addEventListener("online", async () => {
+        console.log("Online event fired");
+        const isOnline = await checkConnectivity();
+        if (isOnline) {
+          console.log("Connection verified - redirecting to home");
+          window.location.href = "/";
+        } else {
+          // Still offline, restart polling
+          startConnectivityCheck();
+        }
+      });
+
+      window.addEventListener("offline", () => {
+        console.log("Offline event fired");
+        if (connectivityCheckInterval) {
+          clearInterval(connectivityCheckInterval);
+          connectivityCheckInterval = null;
+        }
+      });
+    </script>
+  </body>
+</html>
