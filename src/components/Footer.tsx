@@ -200,6 +200,15 @@ export default function Footer() {
                   Message Transcripts
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/salvation"
+                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                >
+                  <HiChevronRight color={orange} />
+                  Become Born-Again
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

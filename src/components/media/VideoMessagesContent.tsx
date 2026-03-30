@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Tag,
 } from "lucide-react";
 
 interface VideoMessage {
@@ -22,6 +23,7 @@ interface VideoMessage {
   youtubeUrl: string;
   title?: string;
   minister?: string;
+  serviceCategory?: string;
   id: string;
 }
 
@@ -37,6 +39,7 @@ async function fetchVideoMessages(): Promise<VideoMessage[]> {
 export default function VideoMessagesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMinister, setSelectedMinister] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -57,14 +60,18 @@ export default function VideoMessagesContent() {
       const matchesSearch =
         v.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.date.includes(searchQuery) ||
-        v.minister?.toLowerCase().includes(searchQuery.toLowerCase());
+        v.minister?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.serviceCategory?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesMinister =
         selectedMinister === "All" || v.minister === selectedMinister;
 
-      return matchesSearch && matchesMinister;
+      const matchesCategory =
+        selectedCategory === "All" || v.serviceCategory === selectedCategory;
+
+      return matchesSearch && matchesMinister && matchesCategory;
     });
-  }, [videos, searchQuery, selectedMinister]);
+  }, [videos, searchQuery, selectedMinister, selectedCategory]);
 
   // Extract unique ministers for filter
   const ministers = useMemo(() => {
@@ -72,6 +79,16 @@ export default function VideoMessagesContent() {
       "All",
       ...(Array.from(
         new Set(videos.map((v) => v.minister).filter(Boolean)),
+      ) as string[]),
+    ];
+  }, [videos]);
+
+  // Extract unique service categories for filter
+  const serviceCategories = useMemo(() => {
+    return [
+      "All",
+      ...(Array.from(
+        new Set(videos.map((v) => v.serviceCategory).filter(Boolean)),
       ) as string[]),
     ];
   }, [videos]);
@@ -86,7 +103,7 @@ export default function VideoMessagesContent() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedMinister]);
+  }, [searchQuery, selectedMinister, selectedCategory]);
 
   if (isLoading) {
     return (
@@ -117,14 +134,14 @@ export default function VideoMessagesContent() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      {/* Controls: Search + Filter */}
-      <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
+      {/* Controls: Search + Filters */}
+      <div className="flex flex-col md:flex-row gap-4 max-w-5xl mx-auto">
         {/* Search */}
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
-            placeholder="Search by title, date, or minister..."
+            placeholder="Search by title, date, minister, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm"
@@ -132,7 +149,7 @@ export default function VideoMessagesContent() {
         </div>
 
         {/* Minister Filter */}
-        <div className="relative w-full md:w-64">
+        <div className="relative w-full md:w-56">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           <select
             value={selectedMinister}
@@ -147,6 +164,25 @@ export default function VideoMessagesContent() {
           </select>
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         </div>
+
+        {/* Service Category Filter */}
+        {serviceCategories.length > 1 && (
+          <div className="relative w-full md:w-56">
+            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full h-12 sm:h-14 pl-12 pr-10 rounded-2xl border border-gray-200 bg-white appearance-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm font-medium cursor-pointer"
+            >
+              {serviceCategories.map((c) => (
+                <option key={c} value={c}>
+                  {c === "All" ? "All Categories" : c}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
+        )}
       </div>
 
       {/* Grid */}
@@ -218,7 +254,7 @@ export default function VideoMessagesContent() {
 
                   <div className="mt-5 pt-5 border-t border-gray-50 flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
-                      Video Message
+                      {video.serviceCategory || "Video Message"}
                     </span>
                     <Youtube className="w-5 h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
                   </div>
@@ -238,6 +274,7 @@ export default function VideoMessagesContent() {
             onClick={() => {
               setSearchQuery("");
               setSelectedMinister("All");
+              setSelectedCategory("All");
             }}
             className="mt-4 text-primary font-bold hover:underline"
           >

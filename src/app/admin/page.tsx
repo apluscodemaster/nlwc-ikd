@@ -54,12 +54,32 @@ interface SermonFormData {
   thumbnailFile: FileList | null;
 }
 
+type TranscriptType = "sunday-message" | "sunday-school" | "bible-study" | "other-meetings" | "season-of-the-spirit";
+
+// Map transcript types to WP category IDs for save operations
+const TRANSCRIPT_TYPE_TO_CATEGORY: Record<TranscriptType, number> = {
+  "sunday-message": 20, // WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS
+  "sunday-school": 31, // WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS
+  "bible-study": 33, // WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS
+  "other-meetings": 21, // WP_CATEGORIES.OTHER_MEETINGS
+  "season-of-the-spirit": 22, // WP_CATEGORIES.SEASON_OF_THE_SPIRIT
+};
+
+// Map WP category IDs back to transcript type slugs
+const CATEGORY_TO_TRANSCRIPT_TYPE: Record<number, TranscriptType> = {
+  20: "sunday-message",
+  31: "sunday-school",
+  33: "bible-study",
+  21: "other-meetings",
+  22: "season-of-the-spirit",
+};
+
 interface TextFormData {
   title: string;
   content: string;
   status: "draft" | "publish";
   speaker: string;
-  transcriptType: "sunday-message" | "sunday-school";
+  transcriptType: TranscriptType;
 }
 
 interface ContentItem {
@@ -661,6 +681,7 @@ export default function AdminChurchContentPage() {
   const [editUploadingThumbnail, setEditUploadingThumbnail] = useState(false);
   const editThumbnailInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [editTranscriptType, setEditTranscriptType] = useState<TranscriptType>("sunday-message");
 
   const sermonForm = useForm<SermonFormData>({
     defaultValues: {
@@ -788,6 +809,12 @@ export default function AdminChurchContentPage() {
     setEditThumbnailPreview(item.thumbnail || null);
     setEditUploadedMediaId(null); // Will be set if user uploads a new one
     setEditUploadingThumbnail(false);
+    // Pre-populate transcript type from item
+    if (item.transcriptType) {
+      setEditTranscriptType(item.transcriptType as TranscriptType);
+    } else {
+      setEditTranscriptType("sunday-message");
+    }
   };
 
   // ── Handle Edit Thumbnail Upload ──
@@ -844,8 +871,16 @@ export default function AdminChurchContentPage() {
         payload.featuredMediaId = editUploadedMediaId;
       }
       // Include categories if series was selected (for sermons)
-      if (editSeriesId) {
+      if (activeTab === "sermon" && editSeriesId) {
         payload.categories = [Number(editSeriesId)];
+      }
+      // Include categories for transcript edits (map transcript type to WP category)
+      if (activeTab === "transcript") {
+        payload.categories = [TRANSCRIPT_TYPE_TO_CATEGORY[editTranscriptType]];
+      }
+      // Include categories for manual edits
+      if (activeTab === "manual") {
+        payload.categories = [19]; // WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL
       }
 
       const res = await fetch("/api/wp/update", {
@@ -1549,6 +1584,15 @@ export default function AdminChurchContentPage() {
                         <option value="sunday-school">
                           Sunday School Transcript
                         </option>
+                        <option value="bible-study">
+                          Bible Study Transcript
+                        </option>
+                        <option value="other-meetings">
+                          Other Meetings Transcript
+                        </option>
+                        <option value="season-of-the-spirit">
+                          Season of the Spirit
+                        </option>
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
@@ -1807,8 +1851,8 @@ export default function AdminChurchContentPage() {
                   />
                 </div>
 
-                {/* Speaker Dropdown - Sermon only */}
-                {activeTab === "sermon" && (
+                {/* Speaker Dropdown - Sermon and Transcript */}
+                {(activeTab === "sermon" || activeTab === "transcript") && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
@@ -1829,6 +1873,29 @@ export default function AdminChurchContentPage() {
                             </option>
                           ))
                         )}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Transcript Type Dropdown - Transcript only */}
+                {activeTab === "transcript" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Transcript Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editTranscriptType}
+                        onChange={(e) => setEditTranscriptType(e.target.value as TranscriptType)}
+                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="sunday-message">Sunday Message Transcript</option>
+                        <option value="sunday-school">Sunday School Transcript</option>
+                        <option value="bible-study">Bible Study Transcript</option>
+                        <option value="other-meetings">Other Meetings Transcript</option>
+                        <option value="season-of-the-spirit">Season of the Spirit</option>
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>

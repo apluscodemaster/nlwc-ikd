@@ -50,6 +50,7 @@ interface VideoMessage {
   youtubeUrl: string;
   title?: string;
   minister?: string;
+  serviceCategory?: string;
   id: string;
 }
 
@@ -624,7 +625,7 @@ export default function MediaHub() {
                         </div>
                         <div className="mt-3 sm:mt-5 pt-3 sm:pt-5 border-t border-gray-50 flex items-center justify-between">
                           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
-                            Video Message
+                            {video.serviceCategory || "Video Message"}
                           </span>
                           <Youtube className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
                         </div>
