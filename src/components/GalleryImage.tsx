@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Props = {
   src: string;
@@ -56,11 +57,13 @@ const GalleryImage: React.FC<Props> = ({
   const height = imgDims?.height || DEFAULT_HEIGHT;
 
   const baseUrl = toGoogleImageURL(src);
-  const isDrive = baseUrl.includes("lh3.googleusercontent.com");
+  // Both Google Drive (/d/) and Google Photos (/pw/) use lh3.googleusercontent.com
+  // and support the same size-parameter system (=wN-hN-no, =s0, etc.)
+  const isGoogleusercontent = baseUrl.includes("lh3.googleusercontent.com");
 
   // Use a flexible image URL: prefer high-res
-  const displaySrc = isDrive ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
-  const downloadSrc = isDrive ? `${baseUrl}=s0` : baseUrl;
+  const displaySrc = isGoogleusercontent ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
+  const downloadSrc = isGoogleusercontent ? `${baseUrl}=s0` : baseUrl;
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -81,7 +84,7 @@ const GalleryImage: React.FC<Props> = ({
 
   return (
     <Dialog>
-      <figure className="relative group overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+      <figure className="relative group overflow-hidden rounded-[32px] border border-gray-100 shadow-sm transition-all duration-700 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-2 bg-gray-50">
         {!imgDims ? (
           <Skeleton
             className="w-full"
@@ -95,51 +98,74 @@ const GalleryImage: React.FC<Props> = ({
         ) : (
           <>
             <DialogTrigger asChild>
-              <div className="relative cursor-zoom-in">
+              <div className="relative cursor-zoom-in overflow-hidden">
                 <Image
                   src={displaySrc}
                   alt={alt || "Gallery image"}
                   width={width}
                   height={height}
-                  className="w-full block object-cover opacity-0 transition-all duration-700 group-hover:scale-105"
+                  className="w-full block object-cover opacity-0 transition-all duration-1000 group-hover:scale-110"
                   style={{ aspectRatio: `${width}/${height}` }}
                   unoptimized
                   onLoadingComplete={(img) => img.classList.remove("opacity-0")}
                 />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <ZoomIn className="text-white w-8 h-8 scale-50 group-hover:scale-100 transition-transform duration-300" />
+
+                {/* Visual Overlay on Hover */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 shadow-2xl">
+                    <ZoomIn className="text-white w-6 h-6" />
+                  </div>
                 </div>
               </div>
             </DialogTrigger>
 
-            <div className="absolute bottom-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+            <div className="absolute bottom-4 right-4 z-10 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 delay-100">
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleDownload}
-                className="bg-white/90 hover:bg-white text-black font-medium gap-2 h-8 px-3 rounded-lg shadow-lg backdrop-blur-md"
+                disabled={downloading}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xl font-bold gap-2 h-10 px-5 rounded-2xl shadow-2xl transition-all active:scale-95"
               >
-                <Download className="h-3.5 w-3.5" />
-                <span className="text-xs">Download</span>
+                <Download
+                  className={cn("h-4 w-4", downloading && "animate-bounce")}
+                />
+                <span className="text-xs uppercase tracking-widest">
+                  {downloading ? "Saving..." : "Download"}
+                </span>
               </Button>
             </div>
           </>
         )}
       </figure>
 
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none shadow-2xl backdrop-blur-2xl">
         <VisuallyHidden>
           <DialogTitle>{alt || "Gallery Image Preview"}</DialogTitle>
         </VisuallyHidden>
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full h-[95vh] flex items-center justify-center p-4">
           <Image
             src={downloadSrc}
             alt={alt || "Full resolution gallery image"}
             width={1920}
             height={1080}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-500"
             unoptimized
           />
+
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleDownload}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xl font-bold gap-3 h-14 px-8 rounded-full shadow-2xl transition-all active:scale-95"
+            >
+              <Download className="h-5 w-5" />
+              <span>Save High Resolution Image</span>
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
