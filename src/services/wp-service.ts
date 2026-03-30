@@ -28,10 +28,16 @@ function getCategoryIds(payload: WPPublishPayload): number[] {
   switch (payload.type) {
     case "sermon":
       return [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS];
-    case "transcript":
-      return payload.transcriptType === "sunday-school"
-        ? [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS]
-        : [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS];
+    case "transcript": {
+      const typeToCategory: Record<string, number> = {
+        "sunday-message": WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+        "sunday-school": WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+        "bible-study": WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+        "other-meetings": WP_CATEGORIES.OTHER_MEETINGS,
+        "season-of-the-spirit": WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
+      };
+      return [typeToCategory[payload.transcriptType] || WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS];
+    }
     case "manual":
       return [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL];
   }
