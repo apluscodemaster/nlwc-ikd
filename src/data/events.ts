@@ -218,7 +218,7 @@ export function getUpcomingEvents(): ChurchEvent[] {
       id: "teen-retreat-apr-2026",
       title: "Teenager's Retreat",
       description:
-        "A special retreat for teenagers — evening session today at 6 PM; morning (9 AM) and evening (6 PM) sessions tomorrow. All teenagers are invited!",
+        "A special retreat for teenagers — evening session today at 5 PM; morning (9 AM) and evening (5 PM) sessions tomorrow. All teenagers are invited!",
       date: teenRetreatStart,
       endDate: teenRetreatEnd,
       time: "5:00 PM",
