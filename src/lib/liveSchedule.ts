@@ -39,12 +39,15 @@ interface SpecialService {
 
 /** One-off services that should trigger live status & appear in countdown. */
 const SPECIAL_SERVICES: SpecialService[] = [
-  // Teenager's Retreat — April 2, 2026 evening session
-  { year: 2026, month: 3, day: 2, startHour: 18, endHour: 21, label: "Teenager's Retreat" },
-  // Teenager's Retreat — April 3, 2026 morning session
-  { year: 2026, month: 3, day: 3, startHour: 9, endHour: 12, label: "Teenager's Retreat" },
-  // Teenager's Retreat — April 3, 2026 evening session
-  { year: 2026, month: 3, day: 3, startHour: 18, endHour: 21, label: "Teenager's Retreat" },
+  // ── Teenager's Retreat (April 2–5, 2026) ──
+  { year: 2026, month: 3, day: 2, startHour: 18, endHour: 21, label: "Teenager's Retreat — Day 1 Evening Session" },
+  { year: 2026, month: 3, day: 3, startHour: 9,  endHour: 12, label: "Teenager's Retreat — Day 2 Morning Session" },
+  { year: 2026, month: 3, day: 3, startHour: 18, endHour: 21, label: "Teenager's Retreat — Day 2 Evening Session" },
+
+  // ── Special Meeting with Pastor Tosin Gabriel (April 9–11, 2026) ──
+  { year: 2026, month: 3, day: 9,  startHour: 18, endHour: 21, label: "Special Meeting with Pastor Tosin Gabriel — Day 1" },
+  { year: 2026, month: 3, day: 10, startHour: 18, endHour: 21, label: "Special Meeting with Pastor Tosin Gabriel — Day 2" },
+  { year: 2026, month: 3, day: 11, startHour: 18, endHour: 21, label: "Special Meeting with Pastor Tosin Gabriel — Day 3" },
 ];
 
 /** Check if a special service is live right now. */
