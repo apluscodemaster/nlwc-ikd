@@ -92,13 +92,28 @@ export function getUpcomingEvents(): ChurchEvent[] {
   });
 
   // --- 3. Bible Study (Friday) ---
+  // NOTE: Bible Study cancelled on April 3 (Teenager's Retreat) and
+  //       April 10 (Special Meeting with Pastor Tosin Gabriel).
   const nextFriday = getNextWeekday(5, 18, 0);
+  const skipBibleStudyDates = [
+    new Date(2026, 3, 3).toDateString(), // April 3 — retreat
+    new Date(2026, 3, 10).toDateString(), // April 10 — special meeting
+  ];
+
+  let bibleStudyDate = nextFriday;
+  // If the next Friday is a skip date, advance to the Friday after
+  while (skipBibleStudyDates.includes(bibleStudyDate.toDateString())) {
+    bibleStudyDate = new Date(bibleStudyDate);
+    bibleStudyDate.setDate(bibleStudyDate.getDate() + 7);
+    bibleStudyDate.setHours(18, 0, 0, 0);
+  }
+
   events.push({
     id: "bible-study",
     title: "Bible Study",
     description:
       "A deep dive into God's word to build your faith and strengthen your walk with Christ.",
-    date: nextFriday,
+    date: bibleStudyDate,
     time: "6:00 PM",
     location: "Church Auditorium, Ikorodu",
     category: "Study",
@@ -196,17 +211,17 @@ export function getUpcomingEvents(): ChurchEvent[] {
   }
 
   // --- 4c. Teenager's Retreat (April 2-5, 2026) ---
-  const teenRetreatStart = new Date(2026, 3, 2, 9, 0, 0, 0); // April 2
+  const teenRetreatStart = new Date(2026, 3, 2, 18, 0, 0, 0); // April 2, 6pm
   const teenRetreatEnd = new Date(2026, 3, 5, 16, 0, 0, 0); // April 5
   if (teenRetreatEnd > now) {
     events.push({
       id: "teen-retreat-apr-2026",
       title: "Teenager's Retreat",
       description:
-        "A special retreat for teenagers — a time of fellowship, fun, and spiritual growth. All teenagers are invited!",
+        "A special retreat for teenagers — evening session today at 6 PM; morning (9 AM) and evening (6 PM) sessions tomorrow. All teenagers are invited!",
       date: teenRetreatStart,
       endDate: teenRetreatEnd,
-      time: "9:00 AM",
+      time: "5:00 PM",
       location: "Church Auditorium, Ikorodu",
       category: "Youth",
       recurrence: "April 2–5, 2026",
