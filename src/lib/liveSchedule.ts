@@ -43,6 +43,7 @@ const SPECIAL_SERVICES: SpecialService[] = [
   { year: 2026, month: 3, day: 2, startHour: 18, endHour: 23.5, label: "Teenager's Retreat — Day 1 Evening Session" },
   { year: 2026, month: 3, day: 3, startHour: 9,  endHour: 12,   label: "Teenager's Retreat — Day 2 Morning Session" },
   { year: 2026, month: 3, day: 3, startHour: 18, endHour: 23.5, label: "Teenager's Retreat — Day 2 Evening Session" },
+  { year: 2026, month: 3, day: 4, startHour: 18, endHour: 23.5, label: "Teenager's Retreat Grand Finale" },
 
   // ── Special Meeting with Pastor Tosin Gabriel (April 9–11, 2026) ──
   { year: 2026, month: 3, day: 9,  startHour: 18, endHour: 23.5, label: "Special Meeting with Pastor Tosin Gabriel — Day 1" },
