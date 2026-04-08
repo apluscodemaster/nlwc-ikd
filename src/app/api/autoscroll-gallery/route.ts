@@ -1,5 +1,5 @@
-import { google } from "googleapis";
 import { NextResponse } from "next/server";
+import { getGoogleSheetsClient } from "@/lib/googleSheets";
 import { toGoogleImageURL } from "@/utils/driveImage";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
@@ -12,29 +12,9 @@ export async function GET() {
       { status: 500 }
     );
 
-  const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
-  const GOOGLE_PRIVATE_KEY_RAW = process.env.GOOGLE_PRIVATE_KEY;
-
-  if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY_RAW)
-    return NextResponse.json(
-      { error: "Missing Google credentials" },
-      { status: 500 }
-    );
-
   try {
-    const privateKey = GOOGLE_PRIVATE_KEY_RAW.includes("\\n")
-      ? GOOGLE_PRIVATE_KEY_RAW.replace(/\\n/g, "\n")
-      : GOOGLE_PRIVATE_KEY_RAW;
-
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: GOOGLE_CLIENT_EMAIL,
-        private_key: privateKey,
-      },
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-
-    const sheets = google.sheets({ version: "v4", auth });
+    // ⚡ Reuse shared Google Sheets client instead of duplicating auth init
+    const sheets = await getGoogleSheetsClient();
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,

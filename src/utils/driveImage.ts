@@ -27,7 +27,7 @@ export function detectGoogleImageSource(url: string): GoogleImageSource {
   if (
     u.includes("drive.google.com") ||
     u.includes("docs.google.com") ||
-    u.match(/[?&]id=[a-zA-Z0-9_-]{10,}/)
+    /[?&]id=[a-zA-Z0-9_-]{10,}/.test(u)
   ) {
     return "drive";
   }
