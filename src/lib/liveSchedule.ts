@@ -40,15 +40,64 @@ interface SpecialService {
 /** One-off services that should trigger live status & appear in countdown. */
 const SPECIAL_SERVICES: SpecialService[] = [
   // ── Teenager's Retreat (April 2–5, 2026) ──
-  { year: 2026, month: 3, day: 2, startHour: 18, endHour: 23.5, label: "Teenager's Retreat — Day 1 Evening Session" },
-  { year: 2026, month: 3, day: 3, startHour: 9,  endHour: 12,   label: "Teenager's Retreat — Day 2 Morning Session" },
-  { year: 2026, month: 3, day: 3, startHour: 18, endHour: 23.5, label: "Teenager's Retreat — Day 2 Evening Session" },
-  { year: 2026, month: 3, day: 4, startHour: 18, endHour: 23.5, label: "Teenager's Retreat Grand Finale" },
+  {
+    year: 2026,
+    month: 3,
+    day: 2,
+    startHour: 18,
+    endHour: 23.5,
+    label: "Teenager's Retreat — Day 1 Evening Session",
+  },
+  {
+    year: 2026,
+    month: 3,
+    day: 3,
+    startHour: 9,
+    endHour: 12,
+    label: "Teenager's Retreat — Day 2 Morning Session",
+  },
+  {
+    year: 2026,
+    month: 3,
+    day: 3,
+    startHour: 18,
+    endHour: 23.5,
+    label: "Teenager's Retreat — Day 2 Evening Session",
+  },
+  {
+    year: 2026,
+    month: 3,
+    day: 4,
+    startHour: 18,
+    endHour: 23.5,
+    label: "Teenager's Retreat Grand Finale",
+  },
 
   // ── Special Meeting with Pastor Tosin Gabriel (April 9–11, 2026) ──
-  { year: 2026, month: 3, day: 9,  startHour: 18, endHour: 23.5, label: "Special Meeting with Pastor Tosin Gabriel — Day 1" },
-  { year: 2026, month: 3, day: 10, startHour: 18, endHour: 23.5, label: "Special Meeting with Pastor Tosin Gabriel — Day 2" },
-  { year: 2026, month: 3, day: 11, startHour: 18, endHour: 23.5, label: "Special Meeting with Pastor Tosin Gabriel — Day 3" },
+  {
+    year: 2026,
+    month: 3,
+    day: 9,
+    startHour: 18,
+    endHour: 23.5,
+    label: "Special Meeting with Pastor Tosin Gabriel — Day 1",
+  },
+  {
+    year: 2026,
+    month: 3,
+    day: 10,
+    startHour: 18,
+    endHour: 23.5,
+    label: "Special Meeting with Pastor Tosin Gabriel — Day 2",
+  },
+  {
+    year: 2026,
+    month: 3,
+    day: 11,
+    startHour: 10,
+    endHour: 23.5,
+    label: "Special Meeting with Pastor Tosin Gabriel — Day 3",
+  },
 ];
 
 /** Convert fractional hour to total minutes for precise comparison. */
@@ -63,7 +112,12 @@ function isSpecialServiceLive(now: Date): boolean {
   const d = now.getDate();
   const nowMins = toMinutes(now);
   return SPECIAL_SERVICES.some(
-    (s) => s.year === y && s.month === m && s.day === d && nowMins >= s.startHour * 60 && nowMins < s.endHour * 60,
+    (s) =>
+      s.year === y &&
+      s.month === m &&
+      s.day === d &&
+      nowMins >= s.startHour * 60 &&
+      nowMins < s.endHour * 60,
   );
 }
 
@@ -74,7 +128,12 @@ function getSpecialServiceLabel(now: Date): string | null {
   const d = now.getDate();
   const nowMins = toMinutes(now);
   const match = SPECIAL_SERVICES.find(
-    (s) => s.year === y && s.month === m && s.day === d && nowMins >= s.startHour * 60 && nowMins < s.endHour * 60,
+    (s) =>
+      s.year === y &&
+      s.month === m &&
+      s.day === d &&
+      nowMins >= s.startHour * 60 &&
+      nowMins < s.endHour * 60,
   );
   return match?.label ?? null;
 }
@@ -185,8 +244,6 @@ const DAY_MEETING_TITLES: Record<number, string> = {
   5: "Bible Study", // Friday
 };
 
-
-
 /**
  * Fridays where Bible Study is cancelled.
  * April 3  – Teenager's Retreat
@@ -291,4 +348,3 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   // Fallback (should never reach)
   return "Worship Experience";
 }
-
