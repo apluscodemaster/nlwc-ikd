@@ -6,7 +6,7 @@ import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
 import { isCurrentlyLive, getCurrentMeetingTitle } from "@/lib/liveSchedule";
 
 const TELEGRAM_URL = "https://bit.ly/nlwcikorodu_audio";
-const PAGE_URL = "https://nlwc-ikd-gallery.vercel.app/live";
+const PAGE_URL = "https://ikorodu.nlwc.church/live";
 const PAGE_TITLE = "NLWC Ikorodu — Live Video Broadcast";
 
 // Fallback embed URL from env if API fails
