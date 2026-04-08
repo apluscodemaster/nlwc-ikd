@@ -52,8 +52,13 @@ function getColorForName(name: string): string {
 
 function pruneExpiredMessages() {
   const cutoff = Date.now() - MESSAGE_TTL_MS;
-  while (messages.length > 0 && messages[0].timestamp < cutoff) {
-    messages.shift();
+  // ⚡ Find first non-expired message and remove everything before it in one operation (O(n))
+  // instead of repeated shift() calls which are each O(n)
+  const firstValid = messages.findIndex((m) => m.timestamp >= cutoff);
+  if (firstValid > 0) {
+    messages.splice(0, firstValid);
+  } else if (firstValid === -1 && messages.length > 0) {
+    messages.length = 0; // All expired
   }
 }
 

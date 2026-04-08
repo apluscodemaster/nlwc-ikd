@@ -11,9 +11,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Simulate database operation
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
     // Here you would typically integrate with Mailchimp, ConvertKit, etc.
     console.log(`Newsletter signup for: ${email}`);
 

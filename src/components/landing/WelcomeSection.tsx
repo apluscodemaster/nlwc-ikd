@@ -93,7 +93,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247548/nlwc-ikd-assets/hap3okik3y0aeypz8y54.webp"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1775202695/community-2_vwupj4.jpg"
                 alt="Community 2"
                 fill
                 className="object-cover"
