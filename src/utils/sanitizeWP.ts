@@ -6,6 +6,10 @@
  *
  * Use `sanitizeWPText()` for plain text (titles, excerpts) and
  * `sanitizeWPHtml()` for rich HTML content (post body).
+ *
+ * ⚡ Optimised for Vercel Serverless:
+ *   - All regex patterns pre-compiled at module load (zero per-call cost)
+ *   - Single combined regex replaces 28 individual entity loops
  */
 
 // ─── HTML Entity Map ──────────────────────────────────────────────────────────
@@ -38,29 +42,44 @@ const HTML_ENTITIES: Record<string, string> = {
   "&#174;": "®", // registered
 };
 
+// ⚡ Pre-compile a SINGLE combined regex for all known entities (runs ONCE at module load)
+const ENTITY_KEYS = Object.keys(HTML_ENTITIES).map((k) =>
+  k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+);
+const COMBINED_ENTITY_RE = new RegExp(ENTITY_KEYS.join("|"), "gi");
+
+// ⚡ Pre-compile remaining regex patterns (runs ONCE at module load)
+const NUMERIC_DECIMAL_ENTITY_RE = /&#(\d+);/g;
+const NUMERIC_HEX_ENTITY_RE = /&#x([0-9a-fA-F]+);/g;
+const NBSP_UNICODE_RE = /\u00A0/g;
+const HTML_TAG_RE = /<[^>]*>/g;
+const MULTI_SPACE_RE = /\s{2,}/g;
+const TEXT_BETWEEN_TAGS_RE = />([^<]+)</g;
+const NBSP_NAMED_RE = /&nbsp;/gi;
+const EMPTY_PARAGRAPH_RE = /<p[^>]*>\s*<\/p>/gi;
+const NBSP_PARAGRAPH_RE = /<p[^>]*>(\s|&nbsp;)*<\/p>/gi;
+const EXCESSIVE_BR_RE = /(<br\s*\/?>[\s]*){3,}/gi;
+const EXCESSIVE_NEWLINES_RE = /\n{3,}/g;
+
 /**
  * Decode known HTML entities to their real characters.
+ * ⚡ Uses a single pre-compiled regex instead of 28 individual loops.
  */
 function decodeHTMLEntities(text: string): string {
-  let result = text;
-
-  // Replace named/numeric entities from our map
-  for (const [entity, char] of Object.entries(HTML_ENTITIES)) {
-    // Use case-insensitive regex for each entity
-    result = result.replace(
-      new RegExp(entity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-      char,
-    );
-  }
+  // Single-pass replacement for all known entities
+  let result = text.replace(
+    COMBINED_ENTITY_RE,
+    (match) => HTML_ENTITIES[match.toLowerCase()] ?? HTML_ENTITIES[match] ?? match,
+  );
 
   // Catch any remaining numeric HTML entities (decimal)  &#123;
-  result = result.replace(/&#(\d+);/g, (_, code) => {
+  result = result.replace(NUMERIC_DECIMAL_ENTITY_RE, (_, code) => {
     const num = parseInt(code, 10);
     return num > 0 ? String.fromCharCode(num) : "";
   });
 
   // Catch any remaining hex HTML entities  &#x1F4A9;
-  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+  result = result.replace(NUMERIC_HEX_ENTITY_RE, (_, hex) => {
     const num = parseInt(hex, 16);
     return num > 0 ? String.fromCharCode(num) : "";
   });
@@ -85,13 +104,13 @@ export function sanitizeWPText(text: string): string {
   clean = decodeHTMLEntities(clean);
 
   // Replace non-breaking spaces (unicode \u00A0) with regular spaces
-  clean = clean.replace(/\u00A0/g, " ");
+  clean = clean.replace(NBSP_UNICODE_RE, " ");
 
   // Strip any remaining HTML tags
-  clean = clean.replace(/<[^>]*>/g, "");
+  clean = clean.replace(HTML_TAG_RE, "");
 
   // Collapse multiple spaces into one
-  clean = clean.replace(/\s{2,}/g, " ");
+  clean = clean.replace(MULTI_SPACE_RE, " ");
 
   // Trim
   clean = clean.trim();
@@ -114,26 +133,26 @@ export function sanitizeWPHtml(html: string): string {
 
   // ── Entity decoding (only in text, not in tags) ──
   // Process text between tags: decode entities
-  clean = clean.replace(/>([^<]+)</g, (match, textContent) => {
+  clean = clean.replace(TEXT_BETWEEN_TAGS_RE, (match, textContent) => {
     return ">" + decodeHTMLEntities(textContent) + "<";
   });
 
   // ── Clean up &nbsp; artifacts ──
   // Replace standalone &nbsp; with regular space (in text nodes)
-  clean = clean.replace(/&nbsp;/gi, " ");
+  clean = clean.replace(NBSP_NAMED_RE, " ");
 
   // Replace unicode non-breaking spaces
-  clean = clean.replace(/\u00A0/g, " ");
+  clean = clean.replace(NBSP_UNICODE_RE, " ");
 
   // ── Remove empty / whitespace-only paragraphs ──
-  clean = clean.replace(/<p[^>]*>\s*<\/p>/gi, "");
-  clean = clean.replace(/<p[^>]*>(\s| )*<\/p>/gi, "");
+  clean = clean.replace(EMPTY_PARAGRAPH_RE, "");
+  clean = clean.replace(NBSP_PARAGRAPH_RE, "");
 
   // ── Collapse excessive <br> tags (more than 2) ──
-  clean = clean.replace(/(<br\s*\/?>\s*){3,}/gi, "<br /><br />");
+  clean = clean.replace(EXCESSIVE_BR_RE, "<br /><br />");
 
   // ── Collapse multiple blank lines ──
-  clean = clean.replace(/\n{3,}/g, "\n\n");
+  clean = clean.replace(EXCESSIVE_NEWLINES_RE, "\n\n");
 
   return clean;
 }
