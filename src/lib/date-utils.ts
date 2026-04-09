@@ -12,7 +12,8 @@ export function formatDate(dateString: string): string {
 }
 
 /**
- * Normalizes a Google Drive image ID to a direct link.
+ * Normalizes a Google image ID to a direct lh3 link.
+ * Works for both Google Drive and Google Photos IDs.
  * (Reused from driveImage.ts)
  */
 export function toGoogleImageURL(src: string): string {

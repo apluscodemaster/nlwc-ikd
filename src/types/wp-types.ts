@@ -24,7 +24,7 @@ export interface WPSermon extends WPContentBase {
 export interface WPTranscript extends WPContentBase {
   type: "transcript";
   speaker?: string;
-  transcriptType: "sunday-message" | "sunday-school";
+  transcriptType: "sunday-message" | "sunday-school" | "bible-study" | "other-meetings" | "season-of-the-spirit";
 }
 
 export interface WPManual extends WPContentBase {
@@ -54,7 +54,7 @@ export const wpTranscriptSchema = z.object({
   content: z.string().min(1, "Content is required"),
   status: statusSchema,
   speaker: z.string().optional(),
-  transcriptType: z.enum(["sunday-message", "sunday-school"]),
+  transcriptType: z.enum(["sunday-message", "sunday-school", "bible-study", "other-meetings", "season-of-the-spirit"]),
 });
 
 export const wpManualSchema = z.object({

@@ -133,7 +133,7 @@ export default function StorySection() {
             className="relative h-[350px] sm:h-[600px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="/about-img.jpg"
+              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247540/nlwc-ikd-assets/zq1kz50plmzpptw5rcdn.jpg"
               alt="Church Community"
               fill
               className="object-cover"

@@ -85,6 +85,23 @@ function getFetchOptions(): RequestInit {
   } as RequestInit;
 }
 
+/**
+ * Fix thumbnail URLs that use the frontend domain (ikorodu.nlwc.church)
+ * instead of the actual WP server (ikdadmin.nlwc.church).
+ *
+ * WP's siteurl is set to the frontend domain, so all media URLs reference it.
+ * But images are physically served from ikdadmin.nlwc.church. The Next.js
+ * Image component fetches external URLs directly (bypassing Next rewrites),
+ * so we need to rewrite the hostname.
+ */
+function fixThumbnailUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  return url.replace(
+    "://ikorodu.nlwc.church/wp-content/",
+    "://ikdadmin.nlwc.church/wp-content/",
+  );
+}
+
 // =============================================================================
 // PRIMARY: WordPress REST API (requires nlwc-sermons-api.php mu-plugin)
 // =============================================================================
@@ -132,7 +149,7 @@ async function fetchFromWpApi(
         date: formatDate(item.date as string),
         listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
         downloadUrl: (item.audioUrl as string) || undefined,
-        thumbnailUrl: (item.thumbnail as string) || undefined,
+        thumbnailUrl: fixThumbnailUrl(item.thumbnail as string),
         series: (item.seriesTitle as string) || undefined,
         seriesId: item.seriesId as number,
         duration: (item.duration as string) || undefined,
@@ -174,7 +191,7 @@ async function fetchDetailFromWpApi(
       date: formatDate(item.date),
       listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
       downloadUrl: item.audioUrl || undefined,
-      thumbnailUrl: item.thumbnail || item.speakerThumbnail || undefined,
+      thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
       series: item.seriesTitle || undefined,
     };
   } catch {
@@ -212,7 +229,7 @@ function parseListingHtml(html: string): {
 
     // Extract thumbnail
     const thumbMatch = cardHtml.match(/src="([^"]+)"\s+alt="[^"]*Image"/i);
-    const thumbnailUrl = thumbMatch?.[1] || undefined;
+    const thumbnailUrl = fixThumbnailUrl(thumbMatch?.[1]);
 
     // Extract date from <h6>
     const dateMatch = cardHtml.match(/<h6>(.*?)<\/h6>/i);
@@ -434,7 +451,7 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
       id: item.id as number,
       title: item.title as string,
       description: item.description as string,
-      thumbnail: item.thumbnail as string,
+      thumbnail: fixThumbnailUrl(item.thumbnail as string) || (item.thumbnail as string),
       messageCount: item.messageCount as number,
     }));
   } catch {
