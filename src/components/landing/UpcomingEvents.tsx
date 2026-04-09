@@ -103,6 +103,11 @@ const CATEGORY_COLORS: Record<
     text: "text-amber-300",
     border: "border-amber-500/30",
   },
+  Youth: {
+    bg: "bg-cyan-500/20",
+    text: "text-cyan-300",
+    border: "border-cyan-500/30",
+  },
 };
 
 function EventCard({ event }: { event: ChurchEvent }) {

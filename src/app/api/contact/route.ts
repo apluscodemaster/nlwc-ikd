@@ -4,9 +4,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
     console.log("Contact form submission received:", body);
 
     // Here you would typically send an email via Resend, SendGrid, etc.

@@ -39,7 +39,7 @@ export async function GET() {
       columnsRaw,
     ) as NormalizedColumn[];
 
-    // ✅ Step 2: Transform all image URLs to proper Googleusercontent links
+    // ✅ Step 2: Transform all image URLs (Drive & Photos) to proper Googleusercontent links
     const cleaned = cleanImageColumns(normalized);
 
     // ✅ Step 3: Group columns by date (no limit)
