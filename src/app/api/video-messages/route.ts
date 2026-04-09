@@ -6,11 +6,12 @@ export interface VideoMessage {
   youtubeUrl: string;
   title?: string;
   minister?: string;
+  serviceCategory?: string;
   id: string; // YouTube ID for thumbnails
 }
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
-const RANGE = "video_messages!A:D"; // Date, URL, Title, Minister
+const RANGE = "video_messages!A:E"; // Date, URL, Title, Minister, Service_Category
 
 export async function GET() {
   if (!SHEET_ID) {
@@ -38,7 +39,7 @@ export async function GET() {
 
     const messages: VideoMessage[] = dataRows
       .map((row, index) => {
-        const [date, url, title, minister] = row;
+        const [date, url, title, minister, serviceCategory] = row;
         const youtubeId = extractYoutubeId(url);
 
         return {
@@ -46,6 +47,7 @@ export async function GET() {
           youtubeUrl: url || "",
           title: title || `Message - ${date}`,
           minister: minister || "Minister",
+          serviceCategory: serviceCategory?.trim() || undefined,
           id: youtubeId || `msg-${index}`,
         };
       })
