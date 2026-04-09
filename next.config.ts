@@ -15,11 +15,11 @@ const nextConfig: NextConfig = {
       // WP page slugs that likely existed
       { source: "/about-us", destination: "/about", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
-      { source: "/sermons/:slug*", destination: "/sermons", permanent: true },
-      { source: "/gallery/:slug*", destination: "/gallery", permanent: true },
-      { source: "/media/:slug*", destination: "/media", permanent: true },
+      { source: "/sermons/:slug+", destination: "/sermons", permanent: true },
+      { source: "/gallery/:slug+", destination: "/gallery", permanent: true },
+      { source: "/media/:slug+", destination: "/media", permanent: true },
       { source: "/giving", destination: "/give", permanent: true },
-      { source: "/fellowship/:slug*", destination: "/fellowship", permanent: true },
+      { source: "/fellowship/:slug+", destination: "/fellowship", permanent: true },
       // WP query string style permalinks
       { source: "/index.php", destination: "/", permanent: true },
       // WP feeds
