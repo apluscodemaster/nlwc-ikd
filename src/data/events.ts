@@ -92,13 +92,28 @@ export function getUpcomingEvents(): ChurchEvent[] {
   });
 
   // --- 3. Bible Study (Friday) ---
+  // NOTE: Bible Study cancelled on April 3 (Teenager's Retreat) and
+  //       April 10 (Special Meeting with Pastor Tosin Gabriel).
   const nextFriday = getNextWeekday(5, 18, 0);
+  const skipBibleStudyDates = [
+    new Date(2026, 3, 3).toDateString(), // April 3 — retreat
+    new Date(2026, 3, 10).toDateString(), // April 10 — special meeting
+  ];
+
+  let bibleStudyDate = nextFriday;
+  // If the next Friday is a skip date, advance to the Friday after
+  while (skipBibleStudyDates.includes(bibleStudyDate.toDateString())) {
+    bibleStudyDate = new Date(bibleStudyDate);
+    bibleStudyDate.setDate(bibleStudyDate.getDate() + 7);
+    bibleStudyDate.setHours(18, 0, 0, 0);
+  }
+
   events.push({
     id: "bible-study",
     title: "Bible Study",
     description:
       "A deep dive into God's word to build your faith and strengthen your walk with Christ.",
-    date: nextFriday,
+    date: bibleStudyDate,
     time: "6:00 PM",
     location: "Church Auditorium, Ikorodu",
     category: "Study",
@@ -107,12 +122,22 @@ export function getUpcomingEvents(): ChurchEvent[] {
   });
 
   // --- 4. Sithrah (2nd Saturday of each month) ---
+  // NOTE: April 2026 Sithrah is cancelled — replaced by Special Meeting
+  // with Pastor Tosin Gabriel (April 9-12). Next Sithrah is May 2026.
   let sithrahDate = getSecondSaturday(now.getFullYear(), now.getMonth());
   if (sithrahDate <= now) {
     // Move to next month
     const nextMonth = now.getMonth() + 1;
     const year = nextMonth > 11 ? now.getFullYear() + 1 : now.getFullYear();
     sithrahDate = getSecondSaturday(year, nextMonth % 12);
+  }
+
+  // Skip April 2026 Sithrah — special meeting that month instead
+  if (
+    sithrahDate.getFullYear() === 2026 &&
+    sithrahDate.getMonth() === 3 // April = month 3 (0-indexed)
+  ) {
+    sithrahDate = getSecondSaturday(2026, 4); // Jump to May 2026
   }
 
   events.push({
@@ -163,6 +188,44 @@ export function getUpcomingEvents(): ChurchEvent[] {
       category: "Prayer",
       recurrence: "Friday before Sithrah",
       icon: "🔥",
+    });
+  }
+
+  // --- 4b. Special Meeting with Pastor Tosin Gabriel (April 9-12, 2026) ---
+  const specialMeetingStart = new Date(2026, 3, 9, 18, 0, 0, 0); // April 9
+  const specialMeetingEnd = new Date(2026, 3, 12, 14, 0, 0, 0); // April 12
+  if (specialMeetingEnd > now) {
+    events.push({
+      id: "special-meeting-apr-2026",
+      title: "Special Meeting with Pastor Tosin Gabriel",
+      description:
+        "A powerful time of ministry with Pastor Tosin Gabriel. Come expectant for a life-changing encounter with God.",
+      date: specialMeetingStart,
+      endDate: specialMeetingEnd,
+      time: "6:00 PM",
+      location: "Church Auditorium, Ikorodu",
+      category: "Special",
+      recurrence: "April 9–12, 2026",
+      icon: "🔥",
+    });
+  }
+
+  // --- 4c. Teenager's Retreat (April 2-5, 2026) ---
+  const teenRetreatStart = new Date(2026, 3, 2, 18, 0, 0, 0); // April 2, 6pm
+  const teenRetreatEnd = new Date(2026, 3, 5, 16, 0, 0, 0); // April 5
+  if (teenRetreatEnd > now) {
+    events.push({
+      id: "teen-retreat-apr-2026",
+      title: "Teenager's Retreat",
+      description:
+        "A special retreat for teenagers — evening session today at 5 PM; morning (9 AM) and evening (5 PM) sessions tomorrow. All teenagers are invited!",
+      date: teenRetreatStart,
+      endDate: teenRetreatEnd,
+      time: "5:00 PM",
+      location: "Church Auditorium, Ikorodu",
+      category: "Youth",
+      recurrence: "April 2–5, 2026",
+      icon: "🎯",
     });
   }
 

@@ -26,8 +26,8 @@ export default function ScriptureContent({
   return (
     <div
       data-scripture-content="true"
-      className={`prose prose-sm sm:prose-base md:prose-lg prose-gray max-w-none
-        prose-headings:font-bold prose-headings:text-gray-900
+      className={`prose prose-sm sm:prose-base md:prose-lg prose-gray max-w-none text-justify
+        prose-headings:font-bold prose-headings:text-gray-900 prose-headings:text-left
         prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-justify
         prose-strong:text-gray-900
         prose-a:text-primary prose-a:no-underline hover:prose-a:underline

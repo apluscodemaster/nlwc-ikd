@@ -78,10 +78,10 @@ export const fellowshipCenters: FellowshipCenter[] = [
   {
     id: "6",
     name: "Ketu Center II",
-    address: "1, Adenola Street, Ketu, Ikorodu Road.",
+    address: "30, Adisa Akintoye Street, Ketu, Lagos.",
     coordinator: "Bro. Ayo Idowu",
     meetingTime: "Every Sunday, 6:00 PM",
-    mapLink: "https://maps.app.goo.gl/WzFRoGiLSAvS5yET8",
+    mapLink: "https://maps.app.goo.gl/Doa9TXCFcQFkJoSQ9",
     whatsappLink: "https://wa.me/2348139782910",
     lat: 6.5983,
     lng: 3.3883,
