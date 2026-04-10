@@ -86,7 +86,7 @@ const SPECIAL_SERVICES: SpecialService[] = [
     year: 2026,
     month: 3,
     day: 10,
-    startHour: 18,
+    startHour: 17,
     endHour: 23.5,
     label: "Special Meeting with Pastor Tosin Gabriel — Day 2",
   },
