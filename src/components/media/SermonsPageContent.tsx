@@ -38,6 +38,8 @@ import {
   RotateCcw,
   FastForward,
   Share2,
+  Repeat2,
+  Shuffle,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
@@ -334,6 +336,8 @@ export default function SermonsPageContent() {
   const [showMobilePlayer, setShowMobilePlayer] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
+  const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Resume playback state
@@ -673,13 +677,54 @@ export default function SermonsPageContent() {
     setDuration(0);
   }, [activeSermon]);
 
-  // Handle sermon finished — clear saved progress
+  // Handle sermon finished — clear saved progress and auto-play next
   const handleAudioEnded = useCallback(() => {
-    setIsPlaying(false);
     if (activeSermon) {
       clearProgress(activeSermon.id);
     }
-  }, [activeSermon]);
+
+    // Repeat-one: replay the same sermon
+    if (repeatMode === "one" && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      return;
+    }
+
+    // Auto-play next sermon in the list
+    if (activeSermon && sermons.length > 0) {
+      const currentIndex = sermons.findIndex((s) => s.id === activeSermon.id);
+
+      let nextSermon: AudioSermon | undefined;
+
+      if (isShuffled) {
+        // Pick a random sermon that isn't the current one
+        const others = sermons.filter((s) => s.id !== activeSermon.id);
+        if (others.length > 0) {
+          nextSermon = others[Math.floor(Math.random() * others.length)];
+        }
+      } else if (currentIndex !== -1 && currentIndex < sermons.length - 1) {
+        // Play the next sermon in order
+        nextSermon = sermons[currentIndex + 1];
+      }
+
+      if (nextSermon) {
+        // Use handlePlay so it fetches detail if needed and checks for saved progress
+        handlePlay(nextSermon);
+        return;
+      }
+    }
+
+    // No next sermon — just stop
+    setIsPlaying(false);
+  }, [activeSermon, repeatMode, isShuffled, sermons, handlePlay]);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((prev) => (prev === "off" ? "one" : "off"));
+  }, []);
+
+  const toggleShuffle = useCallback(() => {
+    setIsShuffled((prev) => !prev);
+  }, []);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -1246,6 +1291,37 @@ export default function SermonsPageContent() {
                     {playbackRate}x
                   </button>
 
+                  {/* Shuffle */}
+                  <button
+                    onClick={toggleShuffle}
+                    className={`hidden sm:flex items-center justify-center p-1 rounded-full transition-colors ${
+                      isShuffled
+                        ? "text-primary"
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+                    title={isShuffled ? "Shuffle on" : "Shuffle off"}
+                  >
+                    <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+
+                  {/* Repeat */}
+                  <button
+                    onClick={toggleRepeat}
+                    className={`hidden sm:flex items-center justify-center p-1 rounded-full transition-colors relative ${
+                      repeatMode === "one"
+                        ? "text-primary"
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+                    title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
+                  >
+                    <Repeat2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    {repeatMode === "one" && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">1</span>
+                    )}
+                  </button>
+
                   {activeSermon.downloadUrl && (
                     <a
                       href={activeSermon.downloadUrl}
@@ -1408,7 +1484,34 @@ export default function SermonsPageContent() {
             </div>
 
             {/* Secondary Controls */}
-            <div className="flex items-center justify-center gap-5 pb-[calc(1rem+env(safe-area-inset-bottom))] px-8">
+            <div className="flex items-center justify-center gap-4 pb-[calc(1rem+env(safe-area-inset-bottom))] px-8">
+              <button
+                onClick={toggleShuffle}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 ${
+                  isShuffled
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+              >
+                <Shuffle className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={toggleRepeat}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 relative ${
+                  repeatMode === "one"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+              >
+                <Repeat2 className="w-5 h-5" />
+                {repeatMode === "one" && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">1</span>
+                )}
+              </button>
+
               <button
                 onClick={cycleSpeed}
                 className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all active:scale-95 min-w-[52px]"

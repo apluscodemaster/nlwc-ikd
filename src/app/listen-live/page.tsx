@@ -23,6 +23,8 @@ import {
   Download,
   ChevronDown,
   Sparkles,
+  Repeat2,
+  Shuffle,
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
@@ -60,6 +62,8 @@ export default function ListenLivePage() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [showMobilePlayer, setShowMobilePlayer] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
+  const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlay = useCallback(
@@ -175,6 +179,48 @@ export default function ListenLivePage() {
     setDuration(0);
   }, []);
 
+  // Handle sermon finished — auto-play next
+  const handleAudioEnded = useCallback(() => {
+    // Repeat-one: replay the same sermon
+    if (repeatMode === "one" && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      return;
+    }
+
+    // Auto-play next sermon in the list
+    const sermonList = sermons.slice(0, 3);
+    if (activeSermon && sermonList.length > 0) {
+      const currentIndex = sermonList.findIndex((s) => s.id === activeSermon.id);
+
+      let nextSermon: AudioSermon | undefined;
+
+      if (isShuffled) {
+        const others = sermonList.filter((s) => s.id !== activeSermon.id);
+        if (others.length > 0) {
+          nextSermon = others[Math.floor(Math.random() * others.length)];
+        }
+      } else if (currentIndex !== -1 && currentIndex < sermonList.length - 1) {
+        nextSermon = sermonList[currentIndex + 1];
+      }
+
+      if (nextSermon) {
+        handlePlay(nextSermon);
+        return;
+      }
+    }
+
+    setIsPlaying(false);
+  }, [activeSermon, repeatMode, isShuffled, sermons, handlePlay]);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((prev) => (prev === "off" ? "one" : "off"));
+  }, []);
+
+  const toggleShuffle = useCallback(() => {
+    setIsShuffled((prev) => !prev);
+  }, []);
+
   return (
     <main>
       {/* Hidden Audio Element */}
@@ -182,7 +228,7 @@ export default function ListenLivePage() {
         ref={audioRef}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleAudioEnded}
         preload="none"
       />
 
@@ -539,6 +585,37 @@ export default function ListenLivePage() {
                     {playbackRate}x
                   </button>
 
+                  {/* Shuffle */}
+                  <button
+                    onClick={toggleShuffle}
+                    className={`hidden sm:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
+                      isShuffled
+                        ? "text-primary bg-primary/10"
+                        : "text-gray-500 hover:text-primary hover:bg-primary/5"
+                    }`}
+                    aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+                    title={isShuffled ? "Shuffle on" : "Shuffle off"}
+                  >
+                    <Shuffle className="w-4 h-4" />
+                  </button>
+
+                  {/* Repeat */}
+                  <button
+                    onClick={toggleRepeat}
+                    className={`hidden sm:flex w-9 h-9 items-center justify-center rounded-full transition-colors relative ${
+                      repeatMode === "one"
+                        ? "text-primary bg-primary/10"
+                        : "text-gray-500 hover:text-primary hover:bg-primary/5"
+                    }`}
+                    aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+                    title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
+                  >
+                    <Repeat2 className="w-4 h-4" />
+                    {repeatMode === "one" && (
+                      <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">1</span>
+                    )}
+                  </button>
+
                   <button
                     onClick={closePlayer}
                     className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
@@ -574,6 +651,10 @@ export default function ListenLivePage() {
           onToggleMute={toggleMute}
           onCycleSpeed={cycleSpeed}
           onProgressClick={handleProgressClick}
+          repeatMode={repeatMode}
+          isShuffled={isShuffled}
+          onToggleRepeat={toggleRepeat}
+          onToggleShuffle={toggleShuffle}
         />
       )}
 
