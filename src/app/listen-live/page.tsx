@@ -30,6 +30,7 @@ import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
+import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
@@ -575,6 +576,9 @@ export default function ListenLivePage() {
           onProgressClick={handleProgressClick}
         />
       )}
+
+      {/* First Time Streaming User Popup */}
+      <FirstTimeStreamingForm />
     </main>
   );
 }
