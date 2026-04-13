@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
       // WP page slugs that likely existed
       { source: "/about-us", destination: "/about", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
-      { source: "/sermons/:slug+", destination: "/sermons", permanent: true },
       { source: "/gallery/:slug+", destination: "/gallery", permanent: true },
       { source: "/media/:slug+", destination: "/media", permanent: true },
       { source: "/giving", destination: "/give", permanent: true },
