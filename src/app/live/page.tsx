@@ -285,19 +285,6 @@ export default function LivePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                // Save progress before closing
-                if (selectedVideo) {
-                  saveMediaProgress(
-                    selectedVideo.id,
-                    0, // Video player doesn't expose current time via iframe
-                    0,
-                    selectedVideo.title || "Video Message",
-                    "video",
-                  );
-                }
-                setSelectedVideo(null);
-              }}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
             />
 
