@@ -4,6 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
 import { isCurrentlyLive, getCurrentMeetingTitle } from "@/lib/liveSchedule";
+import {
+  subscribeToChatMessages,
+  sendChatMessage,
+  type ChatMessage,
+} from "@/lib/liveChatService";
 
 const TELEGRAM_URL = "https://bit.ly/nlwcikorodu_audio";
 const PAGE_URL = "https://ikorodu.nlwc.church/live";
@@ -223,14 +228,6 @@ export default function LivePlayer() {
 // LIVE CHAT COMPONENT
 // =============================================================================
 
-interface ChatMessage {
-  id: string;
-  name: string;
-  message: string;
-  timestamp: number;
-  color: string;
-}
-
 function formatChatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -249,7 +246,6 @@ function LiveChat() {
   const [showInfo, setShowInfo] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const lastFetchTimestamp = useRef(0);
 
   // Load saved name from localStorage
   useEffect(() => {
@@ -260,45 +256,13 @@ function LiveChat() {
     }
   }, []);
 
-  // Poll for new messages every 3 seconds
+  // Subscribe to real-time Firestore messages
   useEffect(() => {
-    async function fetchMessages() {
-      try {
-        const url = lastFetchTimestamp.current
-          ? `/api/live-chat?since=${lastFetchTimestamp.current}`
-          : "/api/live-chat";
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
+    const unsubscribe = subscribeToChatMessages((messages) => {
+      setChatMessages(messages);
+    });
 
-        if (lastFetchTimestamp.current === 0) {
-          // Initial load — replace all
-          setChatMessages(data.messages);
-        } else if (data.messages.length > 0) {
-          // Append new messages
-          setChatMessages((prev) => {
-            const existingIds = new Set(prev.map((m) => m.id));
-            const newMsgs = data.messages.filter(
-              (m: ChatMessage) => !existingIds.has(m.id),
-            );
-            return [...prev, ...newMsgs];
-          });
-        }
-
-        if (data.messages.length > 0) {
-          lastFetchTimestamp.current =
-            data.messages[data.messages.length - 1].timestamp;
-        } else if (data.serverTime) {
-          lastFetchTimestamp.current = data.serverTime;
-        }
-      } catch {
-        // Silently fail — chat is non-critical
-      }
-    }
-
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -327,18 +291,8 @@ function LiveChat() {
 
     setIsSending(true);
     try {
-      const res = await fetch("/api/live-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: userName, message: messageInput.trim() }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setChatMessages((prev) => [...prev, data.message]);
-        lastFetchTimestamp.current = data.message.timestamp;
-        setMessageInput("");
-      }
+      await sendChatMessage(userName, messageInput.trim());
+      setMessageInput("");
     } catch {
       // Silently fail
     } finally {
