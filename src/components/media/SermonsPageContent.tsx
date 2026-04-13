@@ -83,8 +83,6 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
   }
 }
 
-
-
 function normalizeTitle(title: string): string {
   return (
     title
@@ -1299,7 +1297,9 @@ export default function SermonsPageContent() {
                         ? "text-primary"
                         : "text-white/70 hover:text-white"
                     }`}
-                    aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+                    aria-label={
+                      isShuffled ? "Disable shuffle" : "Enable shuffle"
+                    }
                     title={isShuffled ? "Shuffle on" : "Shuffle off"}
                   >
                     <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1313,12 +1313,16 @@ export default function SermonsPageContent() {
                         ? "text-primary"
                         : "text-white/70 hover:text-white"
                     }`}
-                    aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+                    aria-label={
+                      repeatMode === "one" ? "Disable repeat" : "Repeat current"
+                    }
                     title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
                   >
                     <Repeat2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     {repeatMode === "one" && (
-                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">1</span>
+                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">
+                        1
+                      </span>
                     )}
                   </button>
 
@@ -1504,11 +1508,15 @@ export default function SermonsPageContent() {
                     ? "bg-primary/20 text-primary"
                     : "bg-white/10 text-white/60 hover:text-white"
                 }`}
-                aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+                aria-label={
+                  repeatMode === "one" ? "Disable repeat" : "Repeat current"
+                }
               >
                 <Repeat2 className="w-5 h-5" />
                 {repeatMode === "one" && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">1</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">
+                    1
+                  </span>
                 )}
               </button>
 
