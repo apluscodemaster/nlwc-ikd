@@ -1,5 +1,8 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
+
+// ISR: Revalidate every 10 minutes (matches cache duration)
+export const revalidate = 600;
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import SermonsPageContent from "@/components/media/SermonsPageContent";

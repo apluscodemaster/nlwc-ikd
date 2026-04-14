@@ -1,5 +1,9 @@
 "use client";
 
+// Note: This is a client component with dynamic filters,
+// so ISR revalidate doesn't apply. Client-side fetching with
+// HTTP Cache-Control headers handles cache management.
+
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
