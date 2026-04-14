@@ -40,7 +40,10 @@ import {
   saveMediaProgress,
   getMediaProgress,
   clearMediaProgress,
+  formatProgressTime,
+  type MediaProgress,
 } from "@/lib/mediaProgress";
+import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
 
 // =============================================================================
 // Video Messages fetch
@@ -170,6 +173,16 @@ export default function MediaHub() {
     staleTime: 5 * 60 * 1000,
   });
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
+  const [videoResumeStartTime, setVideoResumeStartTime] = useState(0);
+  const [videoResumePrompt, setVideoResumePrompt] = useState<{
+    video: VideoMessage;
+    savedProgress: MediaProgress;
+  } | null>(null);
+
+  // YouTube player refs
+  const ytPlayerRef = useRef<YT.Player | null>(null);
+  const ytPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const videoProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ---- Transcripts ----
   const {
@@ -319,6 +332,156 @@ export default function MediaHub() {
     setCurrentTime(0);
     setDuration(0);
   }, []);
+
+  // ---- Video player controls (YouTube IFrame API) ----
+  const saveVideoProgress = useCallback(() => {
+    if (!ytPlayerRef.current || !selectedVideo) return;
+    try {
+      const time = ytPlayerRef.current.getCurrentTime();
+      const dur = ytPlayerRef.current.getDuration();
+      if (time > 0 && dur > 0) {
+        saveMediaProgress(
+          selectedVideo.id,
+          time,
+          dur,
+          selectedVideo.title || "Video Message",
+          "video",
+        );
+      }
+    } catch {
+      // Player may have been destroyed
+    }
+  }, [selectedVideo]);
+
+  const startVideoProgressInterval = useCallback(() => {
+    if (videoProgressIntervalRef.current) {
+      clearInterval(videoProgressIntervalRef.current);
+    }
+    videoProgressIntervalRef.current = setInterval(() => {
+      saveVideoProgress();
+    }, 5000);
+  }, [saveVideoProgress]);
+
+  const stopVideoProgressInterval = useCallback(() => {
+    if (videoProgressIntervalRef.current) {
+      clearInterval(videoProgressIntervalRef.current);
+      videoProgressIntervalRef.current = null;
+    }
+  }, []);
+
+  // Initialise YouTube player when selectedVideo changes
+  useEffect(() => {
+    if (!selectedVideo || !ytPlayerContainerRef.current) return;
+
+    let cancelled = false;
+
+    async function initPlayer() {
+      await loadYouTubeIframeAPI();
+      if (cancelled || !ytPlayerContainerRef.current) return;
+
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+        ytPlayerRef.current = null;
+      }
+
+      ytPlayerRef.current = new window.YT.Player(
+        ytPlayerContainerRef.current!,
+        {
+          videoId: selectedVideo!.id,
+          playerVars: {
+            autoplay: 1,
+            rel: 0,
+            modestbranding: 1,
+            start: Math.floor(videoResumeStartTime),
+          },
+          events: {
+            onStateChange: (event: YT.OnStateChangeEvent) => {
+              if (event.data === YT.PlayerState.PLAYING) {
+                startVideoProgressInterval();
+              } else if (
+                event.data === YT.PlayerState.PAUSED ||
+                event.data === YT.PlayerState.BUFFERING
+              ) {
+                stopVideoProgressInterval();
+                saveVideoProgress();
+              } else if (event.data === YT.PlayerState.ENDED) {
+                stopVideoProgressInterval();
+                if (selectedVideo) {
+                  clearMediaProgress(selectedVideo.id);
+                }
+              }
+            },
+          },
+        },
+      );
+    }
+
+    initPlayer();
+
+    return () => {
+      cancelled = true;
+      stopVideoProgressInterval();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideo]);
+
+  // Clean up YouTube player on unmount
+  useEffect(() => {
+    return () => {
+      stopVideoProgressInterval();
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+        ytPlayerRef.current = null;
+      }
+    };
+  }, [stopVideoProgressInterval]);
+
+  // Save video progress on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => saveVideoProgress();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [saveVideoProgress]);
+
+  const handleVideoPlay = useCallback((video: VideoMessage) => {
+    const saved = getMediaProgress(video.id);
+    if (saved && saved.currentTime > 0) {
+      setVideoResumePrompt({ video, savedProgress: saved });
+    } else {
+      setVideoResumeStartTime(0);
+      setSelectedVideo(video);
+    }
+  }, []);
+
+  const handleVideoResume = useCallback(() => {
+    if (!videoResumePrompt) return;
+    setVideoResumeStartTime(videoResumePrompt.savedProgress.currentTime);
+    setSelectedVideo(videoResumePrompt.video);
+    setVideoResumePrompt(null);
+  }, [videoResumePrompt]);
+
+  const handleVideoStartOver = useCallback(() => {
+    if (!videoResumePrompt) return;
+    clearMediaProgress(videoResumePrompt.video.id);
+    setVideoResumeStartTime(0);
+    setSelectedVideo(videoResumePrompt.video);
+    setVideoResumePrompt(null);
+  }, [videoResumePrompt]);
+
+  const handleVideoDismissResume = useCallback(() => {
+    setVideoResumePrompt(null);
+  }, []);
+
+  const handleCloseVideoPlayer = useCallback(() => {
+    saveVideoProgress();
+    stopVideoProgressInterval();
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+      ytPlayerRef.current = null;
+    }
+    setSelectedVideo(null);
+    setVideoResumeStartTime(0);
+  }, [saveVideoProgress, stopVideoProgressInterval]);
 
   // ---- Active tab config ----
   const activeTabConfig = TABS.find((t) => t.key === activeTab)!;
@@ -583,7 +746,7 @@ export default function MediaHub() {
                       variants={cardVariants}
                       whileHover={{ y: -5, transition: { duration: 0.3 } }}
                       className="group cursor-pointer flex flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500"
-                      onClick={() => setSelectedVideo(video)}
+                      onClick={() => handleVideoPlay(video)}
                     >
                       <div className="relative aspect-video overflow-hidden bg-gray-900">
                         <Image
@@ -954,7 +1117,23 @@ export default function MediaHub() {
         />
       )}
 
-      {/* Video Player Modal */}
+      {/* Video Resume Prompt */}
+      <AnimatePresence>
+        {videoResumePrompt && (
+          <ResumePrompt
+            isOpen={!!videoResumePrompt}
+            mediaProgress={videoResumePrompt.savedProgress}
+            mediaTitle={videoResumePrompt.video.title}
+            mediaThumbnailUrl={`https://img.youtube.com/vi/${videoResumePrompt.video.id}/maxresdefault.jpg`}
+            mediaType="video"
+            onResume={handleVideoResume}
+            onStartOver={handleVideoStartOver}
+            onDismiss={handleVideoDismissResume}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Video Player Modal (YouTube IFrame API) */}
       <AnimatePresence>
         {selectedVideo && (
           <div className="fixed inset-0 z-100 flex items-center justify-center p-0 sm:p-6 lg:p-8">
@@ -971,17 +1150,14 @@ export default function MediaHub() {
               className="relative w-full max-w-5xl aspect-video bg-black rounded-none sm:rounded-3xl overflow-hidden shadow-2xl"
             >
               <button
-                onClick={() => setSelectedVideo(null)}
+                onClick={handleCloseVideoPlayer}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >
                 <X className="w-5 h-5" />
               </button>
-              <iframe
-                src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1&rel=0&modestbranding=1`}
-                title={selectedVideo.title}
-                className="w-full h-full border-none relative z-10"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              <div
+                ref={ytPlayerContainerRef}
+                className="w-full h-full relative z-10"
               />
             </motion.div>
           </div>
