@@ -10,7 +10,13 @@
  *      Used when the custom API endpoint is not yet deployed.
  *
  * Audio files are hosted on AWS S3 (nlwc-ikorodu.s3.us-east-2.amazonaws.com).
+ *
+ * Caching & Deduplication:
+ *   - HTTP Cache-Control: 10 minutes (s-maxage=600)
+ *   - Request deduplication: Prevents duplicate in-flight requests within 1 minute
  */
+
+import { deduplicatedFetch } from "./requestCache";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -126,7 +132,7 @@ async function fetchFromWpApi(
     if (filters.year) params.set("year", filters.year.toString());
     if (filters.order) params.set("order", filters.order);
 
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons?${params}`,
       getFetchOptions(),
     );
@@ -173,7 +179,7 @@ async function fetchDetailFromWpApi(
   messageId: number,
 ): Promise<AudioSermon | null> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/${messageId}`,
       getFetchOptions(),
     );
@@ -441,7 +447,7 @@ export async function getAudioSermonDetail(
  */
 export async function getSeriesList(): Promise<SeriesItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/series`,
       getFetchOptions(),
     );
@@ -465,7 +471,7 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
  */
 export async function getSpeakersList(): Promise<SpeakerItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/speakers`,
       getFetchOptions(),
     );
@@ -486,7 +492,7 @@ export async function getSpeakersList(): Promise<SpeakerItem[]> {
  */
 export async function getTopicsList(): Promise<TopicItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/topics`,
       getFetchOptions(),
     );
