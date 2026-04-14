@@ -108,6 +108,9 @@ self.addEventListener("fetch", (event) => {
     );
   } else {
     // For other resources (CSS, JS, images, etc.), try cache first, then network
+    // BUT: Skip caching API responses - let HTTP Cache-Control headers handle it
+    const isApiRequest = url.includes("/api/");
+    
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -116,8 +119,8 @@ self.addEventListener("fetch", (event) => {
 
         return fetch(event.request)
           .then((response) => {
-            // Cache successful responses for future use
-            if (response && response.status === 200) {
+            // Cache successful responses for future use, BUT skip API requests
+            if (response && response.status === 200 && !isApiRequest) {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME).then((cache) => {
                 cache.put(event.request, responseToCache);
