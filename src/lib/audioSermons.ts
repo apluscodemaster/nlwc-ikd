@@ -81,7 +81,7 @@ function getFetchOptions(): RequestInit {
     headers: {
       "User-Agent": "Mozilla/5.0 (compatible; NLWCGallery/1.0)",
     },
-    next: { revalidate: 3600 }, // Cache for 1 hour
+    next: { revalidate: 600 }, // Cache for 10 minutes
   } as RequestInit;
 }
 
@@ -451,7 +451,8 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
       id: item.id as number,
       title: item.title as string,
       description: item.description as string,
-      thumbnail: fixThumbnailUrl(item.thumbnail as string) || (item.thumbnail as string),
+      thumbnail:
+        fixThumbnailUrl(item.thumbnail as string) || (item.thumbnail as string),
       messageCount: item.messageCount as number,
     }));
   } catch {
