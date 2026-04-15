@@ -175,6 +175,7 @@ async function fetchFromWpApi(
 /**
  * Try fetching a single sermon detail from the custom WP REST API.
  * Includes retry logic for transient failures.
+ * Uses plain fetch() for retries to avoid "Body already read" errors from deduplicatedFetch caching.
  */
 async function fetchDetailFromWpApi(
   messageId: number,
@@ -184,10 +185,10 @@ async function fetchDetailFromWpApi(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const response = await deduplicatedFetch(
-        `${WP_API_URL}/sermons/${messageId}`,
-        getFetchOptions(),
-      );
+      // Use plain fetch() for retries to get fresh response objects
+      // (deduplicatedFetch caches the promise, causing "Body already read" on retries)
+      const url = `${WP_API_URL}/sermons/${messageId}`;
+      const response = await fetch(url, getFetchOptions());
 
       if (response.status === 404) {
         // 404 means the sermon doesn't exist, don't retry
@@ -482,10 +483,47 @@ export async function getAudioSermons(
 }
 
 /**
+ * Fetch recent sermons and search for a specific ID (limited fallback to avoid CPU burn)
+ * Only fetches the first page of recent sermons (most likely to contain the ID)
+ */
+async function searchRecentSermons(
+  messageId: number,
+): Promise<AudioSermon | null> {
+  try {
+    console.log(
+      `[AudioSermons] Searching for sermon ${messageId} in recent sermons`,
+    );
+    // Only fetch first page (12 items) to minimize API load
+    const response = await getAudioSermons({ perPage: 12, page: 1 });
+
+    if (response && response.data.length > 0) {
+      const found = response.data.find((s) => s.id === messageId);
+      if (found) {
+        console.log(
+          `[AudioSermons] Found sermon ${messageId} in recent sermons`,
+        );
+        return found;
+      }
+    }
+
+    console.warn(
+      `[AudioSermons] Sermon ${messageId} not in recent sermons (may be older)`,
+    );
+  } catch (error) {
+    console.warn(
+      `[AudioSermons] Recent sermons search failed:`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  return null;
+}
+
+/**
  * Fetch details for a specific audio sermon
- * Automatically uses WP REST API if available, falls back to scraping.
- * Returns a minimal sermon object with listen URL if both methods fail,
- * allowing the player to still function.
+ * Automatically uses WP REST API if available, falls back to scraping,
+ * then to searching the full listing as a last resort.
+ * If all fail, returns a minimal sermon object with a playable listen URL.
  */
 export async function getAudioSermonDetail(
   messageId: number,
@@ -514,10 +552,32 @@ export async function getAudioSermonDetail(
     return scrapedResult;
   }
 
-  console.error(
-    `[AudioSermons] Both API and scraping failed for sermon ${messageId}`,
+  console.log(
+    `[AudioSermons] Scraping failed, searching recent sermons for sermon ${messageId}`,
   );
-  return null;
+
+  // Last resort: search recent sermons (minimal API impact)
+  const recentResult = await searchRecentSermons(messageId);
+  if (recentResult) {
+    return recentResult;
+  }
+
+  console.error(
+    `[AudioSermons] All fetch methods failed for sermon ${messageId}. Creating minimal object with playable URL.`,
+  );
+
+  // Final fallback: Return a minimal sermon object with a playableURL
+  // The Series Engine player can work with just the ID and listen URL
+  return {
+    id: messageId,
+    title: `Message #${messageId}`,
+    speaker: "",
+    date: "",
+    listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`,
+    downloadUrl: undefined,
+    thumbnailUrl: undefined,
+    series: undefined,
+  };
 }
 
 // =============================================================================
