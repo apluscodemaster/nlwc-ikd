@@ -174,35 +174,73 @@ async function fetchFromWpApi(
 
 /**
  * Try fetching a single sermon detail from the custom WP REST API.
+ * Includes retry logic for transient failures.
  */
 async function fetchDetailFromWpApi(
   messageId: number,
 ): Promise<AudioSermon | null> {
-  try {
-    const response = await deduplicatedFetch(
-      `${WP_API_URL}/sermons/${messageId}`,
-      getFetchOptions(),
-    );
+  const maxRetries = 2;
+  let lastError: Error | null = null;
 
-    if (response.status === 404 || !response.ok) {
-      return null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await deduplicatedFetch(
+        `${WP_API_URL}/sermons/${messageId}`,
+        getFetchOptions(),
+      );
+
+      if (response.status === 404) {
+        // 404 means the sermon doesn't exist, don't retry
+        console.warn(
+          `[AudioSermons] Sermon ${messageId} not found in API (404)`,
+        );
+        return null;
+      }
+
+      if (!response.ok) {
+        lastError = new Error(`API returned ${response.status}`);
+        // Retry on server errors
+        if (attempt < maxRetries) {
+          console.warn(
+            `[AudioSermons] API error for sermon ${messageId} (attempt ${attempt + 1}/${maxRetries + 1}): ${response.status}`,
+          );
+          // Brief delay before retry
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          continue;
+        }
+        return null;
+      }
+
+      const item = await response.json();
+
+      return {
+        id: item.id,
+        title: item.title,
+        speaker: item.speaker,
+        date: formatDate(item.date),
+        listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
+        downloadUrl: item.audioUrl || undefined,
+        thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
+        series: item.seriesTitle || undefined,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries) {
+        console.warn(
+          `[AudioSermons] API request failed for sermon ${messageId} (attempt ${attempt + 1}/${maxRetries + 1}):`,
+          lastError?.message,
+        );
+        // Brief delay before retry
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     }
-
-    const item = await response.json();
-
-    return {
-      id: item.id,
-      title: item.title,
-      speaker: item.speaker,
-      date: formatDate(item.date),
-      listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
-      downloadUrl: item.audioUrl || undefined,
-      thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
-      series: item.seriesTitle || undefined,
-    };
-  } catch {
-    return null;
   }
+
+  console.warn(
+    `[AudioSermons] API failed for sermon ${messageId} after ${maxRetries + 1} attempts`,
+    lastError?.message,
+  );
+  return null;
 }
 
 // =============================================================================
@@ -364,26 +402,46 @@ async function fetchFromScraping(
 async function fetchDetailFromScraping(
   messageId: number,
 ): Promise<AudioSermon | null> {
-  const url = `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`;
+  const scrapeUrl = `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`;
 
-  const response = await fetch(url, getFetchOptions());
+  try {
+    // Use direct fetch (not deduplicatedFetch) to avoid caching issues on failures
+    const response = await fetch(scrapeUrl, getFetchOptions());
 
-  if (!response.ok) {
+    if (!response.ok) {
+      console.warn(
+        `[AudioSermons] Scraping failed for sermon ${messageId}: HTTP ${response.status}`,
+      );
+      return null;
+    }
+
+    const html = await response.text();
+    const detail = parseDetailHtml(html);
+
+    // Check if we got meaningful data
+    if (!detail.title) {
+      console.warn(
+        `[AudioSermons] Scraping returned no title for sermon ${messageId}`,
+      );
+      return null;
+    }
+
+    return {
+      id: messageId,
+      title: detail.title || "",
+      speaker: detail.speaker || "",
+      date: detail.date || "",
+      listenUrl: scrapeUrl,
+      downloadUrl: detail.downloadUrl,
+      series: detail.series,
+    };
+  } catch (error) {
+    console.warn(
+      `[AudioSermons] Scraping error for sermon ${messageId}:`,
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
-
-  const html = await response.text();
-  const detail = parseDetailHtml(html);
-
-  return {
-    id: messageId,
-    title: detail.title || "",
-    speaker: detail.speaker || "",
-    date: detail.date || "",
-    listenUrl: url,
-    downloadUrl: detail.downloadUrl,
-    series: detail.series,
-  };
 }
 
 // =============================================================================
@@ -426,16 +484,40 @@ export async function getAudioSermons(
 /**
  * Fetch details for a specific audio sermon
  * Automatically uses WP REST API if available, falls back to scraping.
+ * Returns a minimal sermon object with listen URL if both methods fail,
+ * allowing the player to still function.
  */
 export async function getAudioSermonDetail(
   messageId: number,
 ): Promise<AudioSermon | null> {
+  console.log(`[AudioSermons] Fetching detail for sermon ${messageId}`);
+
   // Try WP REST API first
   const apiResult = await fetchDetailFromWpApi(messageId);
-  if (apiResult) return apiResult;
+  if (apiResult) {
+    console.log(
+      `[AudioSermons] Successfully fetched sermon ${messageId} from API`,
+    );
+    return apiResult;
+  }
+
+  console.log(
+    `[AudioSermons] API failed, falling back to scraping for sermon ${messageId}`,
+  );
 
   // Fall back to scraping
-  return fetchDetailFromScraping(messageId);
+  const scrapedResult = await fetchDetailFromScraping(messageId);
+  if (scrapedResult) {
+    console.log(
+      `[AudioSermons] Successfully fetched sermon ${messageId} via scraping`,
+    );
+    return scrapedResult;
+  }
+
+  console.error(
+    `[AudioSermons] Both API and scraping failed for sermon ${messageId}`,
+  );
+  return null;
 }
 
 // =============================================================================
