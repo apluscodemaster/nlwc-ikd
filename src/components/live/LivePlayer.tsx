@@ -136,17 +136,26 @@ export default function LivePlayer() {
             </div>
           )}
 
-          {/* YouTube Embed */}
-          <iframe
-            width="100%"
-            height="100%"
-            src={streamEmbedUrl}
-            title="NLWC Ikorodu Live Stream"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="w-full h-full"
-          ></iframe>
+          {/* YouTube Embed — only render if we have a valid URL */}
+          {streamEmbedUrl ? (
+            <iframe
+              width="100%"
+              height="100%"
+              src={streamEmbedUrl}
+              title="NLWC Ikorodu Live Stream"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
+              <div className="text-center">
+                <Radio className="w-12 h-12 animate-pulse opacity-50 mx-auto mb-4" />
+                <p className="text-sm text-gray-400">Loading stream...</p>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-2">
@@ -244,6 +253,7 @@ function LiveChat() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [isServiceHours, setIsServiceHours] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -254,6 +264,20 @@ function LiveChat() {
       setUserName(saved);
       setHasSetName(true);
     }
+  }, []);
+
+  // Check if we're in service hours and update every minute
+  useEffect(() => {
+    const checkServiceHours = () => {
+      setIsServiceHours(isCurrentlyLive());
+    };
+
+    // Check immediately
+    checkServiceHours();
+
+    // Check every minute (60000ms)
+    const interval = setInterval(checkServiceHours, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   // Subscribe to real-time Firestore messages
@@ -338,9 +362,17 @@ function LiveChat() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-5 py-3 bg-primary/5 border-b border-primary/10 text-xs text-muted-foreground leading-relaxed">
-              💬 Messages are visible to all visitors and automatically cleared
-              after 24 hours. Be respectful and stay blessed!
+            <div className="px-5 py-3 bg-primary/5 border-b border-primary/10 text-xs text-muted-foreground leading-relaxed space-y-2">
+              <p>
+                💬 Messages are visible to all visitors and automatically
+                cleared after 24 hours. Be respectful and stay blessed!
+              </p>
+              {!isServiceHours && (
+                <p className="text-orange-600 font-medium">
+                  ⏰ Chat is active during service times: Sundays 8 AM,
+                  Wednesdays 6 PM, and Fridays 6 PM (WAT)
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -399,8 +431,39 @@ function LiveChat() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        {!hasSetName ? (
+      <div
+        className={`p-4 bg-white border-t border-gray-100 transition-opacity ${!isServiceHours ? "opacity-50" : ""}`}
+      >
+        {!isServiceHours ? (
+          /* Chat Disabled Outside Service Hours */
+          <div className="space-y-3">
+            <div className="px-4 py-3 bg-gray-100 rounded-2xl text-center">
+              <p className="text-xs font-semibold text-gray-600 mb-1">
+                💬 Chat is only active during service hours
+              </p>
+              <p className="text-[10px] text-gray-500">
+                Join us on Sundays at 8 AM, Wednesdays at 6 PM, or Fridays at
+                6PM (WAT)
+              </p>
+            </div>
+            <div className="relative pointer-events-none">
+              <input
+                type="text"
+                placeholder="Chat is inactive outside service hours..."
+                value=""
+                onChange={() => {}}
+                disabled
+                className="w-full h-12 pl-6 pr-12 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-sm disabled:cursor-not-allowed"
+              />
+              <button
+                disabled
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center disabled:opacity-40"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : !hasSetName ? (
           /* Name Entry */
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground font-medium text-center">
@@ -414,11 +477,12 @@ function LiveChat() {
                 onChange={(e) => setNameInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 maxLength={30}
-                className="w-full h-12 pl-6 pr-24 rounded-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
+                disabled={!isServiceHours}
+                className="w-full h-12 pl-6 pr-24 rounded-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
               <button
                 onClick={handleSetName}
-                disabled={!nameInput.trim()}
+                disabled={!nameInput.trim() || !isServiceHours}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-4 rounded-full bg-primary text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
               >
                 Join Chat
@@ -452,11 +516,12 @@ function LiveChat() {
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 maxLength={500}
-                className="w-full h-12 pl-6 pr-12 rounded-full bg-gray-50 border-none focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                disabled={!isServiceHours}
+                className="w-full h-12 pl-6 pr-12 rounded-full bg-gray-50 border-none focus:ring-2 focus:ring-primary/20 outline-none text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
               <button
                 onClick={handleSend}
-                disabled={!messageInput.trim() || isSending}
+                disabled={!messageInput.trim() || isSending || !isServiceHours}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
               >
                 <Send className="w-4 h-4" />
