@@ -19,8 +19,9 @@ export interface ScheduledService {
 
 /** All recurring services that are streamed live. */
 export const LIVE_SERVICES: ScheduledService[] = [
-  { dayOfWeek: 0, startHour: 8, endHour: 12, label: "Sunday Service" },
+  { dayOfWeek: 0, startHour: 8, endHour: 15, label: "Sunday Service" },
   { dayOfWeek: 3, startHour: 18, endHour: 21, label: "Prayer Meeting" },
+  { dayOfWeek: 5, startHour: 18, endHour: 22, label: "Bible Study" },
 ];
 
 /* ------------------------------------------------------------------ */
