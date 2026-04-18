@@ -205,6 +205,8 @@ export default function Navbar() {
                 ) : (
                   <div className="relative">
                     <button
+                      aria-haspopup="menu"
+                      aria-expanded={activeDropdown === item.label}
                       className={cn(
                         "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold transition-all",
                         isScrolled

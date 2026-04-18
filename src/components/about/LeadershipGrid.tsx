@@ -2,6 +2,7 @@
 
 import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { team } from "@/data/team";
 import Image from "next/image";
 import { motion, Variants } from "framer-motion";
@@ -25,9 +26,7 @@ export default function LeadershipGrid() {
   return (
     <SectionContainer className="bg-gray-50">
       <div className="text-center mb-16 space-y-4">
-        <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-          — OUR LEADERSHIP
-        </h4>
+        <SectionLabel>Our Leadership</SectionLabel>
         <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
           Meet Our <span className="text-primary">Pastors</span>
         </h2>
