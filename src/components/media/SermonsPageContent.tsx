@@ -44,6 +44,7 @@ import {
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
+import { logWarn, logError } from "@/lib/devLog";
 
 // Transcript slug lookup
 // Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
@@ -97,9 +98,7 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
 
         if (!res.ok) {
-          console.warn(
-            `[TranscriptMatch] WP API failed on page ${page}: ${res.status}`,
-          );
+          logWarn("Failed to fetch transcript data", { page, status: res.status }, { tag: "Transcripts" });
           break; // Stop pagination if we get an error
         }
 
@@ -125,9 +124,7 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
           // Verify category is correct (even though we filtered by it)
           const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
           if (!hasCorrectCategory) {
-            console.warn(
-              `[TranscriptMatch] Post ID ${p.id} returned but not in category ${CATEGORY_ID}. Categories: ${p.categories.join(", ")}`,
-            );
+            logWarn("Category mismatch detected", { postId: p.id }, { tag: "Transcripts" });
           }
 
           return {
@@ -142,14 +139,14 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         allTranscripts.push(...pageTranscripts);
         totalFetched += posts.length;
       } catch (pageErr) {
-        console.warn(`[TranscriptMatch] Error fetching page ${page}:`, pageErr);
+        logError("Failed to fetch transcript page", pageErr, { tag: "Transcripts" });
         break;
       }
     }
 
     return allTranscripts;
   } catch (err) {
-    console.error("[TranscriptMatch] Failed to fetch transcript slugs:", err);
+    logError("Failed to load transcript data", err, { tag: "Transcripts" });
     return [];
   }
 }
