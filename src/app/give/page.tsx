@@ -229,7 +229,14 @@ export default function GivePage() {
 
   const copyToClipboard = async (text: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      // Sanitize: trim whitespace, remove newlines, and collapse spaces
+      const sanitized = text
+        .trim()
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      
+      await navigator.clipboard.writeText(sanitized);
       setCopiedId(id);
       toast.success("Account details copied!");
       setTimeout(() => setCopiedId(null), 2000);

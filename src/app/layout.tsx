@@ -90,8 +90,71 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const churchSchemaData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": SITE_URL,
+    name: "The New & Living Way Church",
+    alternateName: "NLWC Ikorodu",
+    description:
+      "A Word of Righteousness community in Ikorodu, Lagos. Join us for worship, sermons, daily devotionals, and live services online.",
+    url: SITE_URL,
+    telephone: "+2348137436770",
+    email: "ikoroduchurchadmin@nlwc.church",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "15, Alhaji Jimoh Olosugbo Close, Off Kokoro Abu Street",
+      addressLocality: "Ikorodu",
+      addressRegion: "Lagos",
+      postalCode: "234",
+      addressCountry: "NG",
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Sunday",
+        opens: "08:00",
+        closes: "15:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Wednesday",
+        opens: "18:00",
+        closes: "21:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Friday",
+        opens: "18:00",
+        closes: "22:00",
+      },
+    ],
+    image: OG_IMAGE,
+    sameAs: [
+      "https://www.facebook.com/nlwcikorodu",
+      "https://www.youtube.com/@nlwcikorodu",
+      "https://www.instagram.com/nlwcikorodu",
+      "https://www.whatsapp.com",
+    ],
+    foundingDate: "2009",
+    founder: {
+      "@type": "Organization",
+      name: "NLWC Leadership",
+    },
+  };
+
   return (
     <html lang="en" className={jost.variable} suppressHydrationWarning={true}>
+      <head>
+        {/* Schema.org JSON-LD for Local Business & Church */}
+        <Script
+          id="church-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(churchSchemaData),
+          }}
+        />
+      </head>
       {/* Google tag (gtag.js) */}
       <Script
         async

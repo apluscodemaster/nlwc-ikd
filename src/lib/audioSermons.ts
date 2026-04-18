@@ -17,6 +17,7 @@
  */
 
 import { deduplicatedFetch } from "./requestCache";
+import { logWarn, logDebug } from "./devLog";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -167,7 +168,7 @@ async function fetchFromWpApi(
       pagination: result.pagination,
     };
   } catch (error) {
-    console.warn("WP REST API not available, falling back to scraping:", error);
+    logWarn("API endpoint unavailable, fallback mode activated", error, { tag: "AudioSermons" });
     return null;
   }
 }
@@ -192,9 +193,7 @@ async function fetchDetailFromWpApi(
 
       if (response.status === 404) {
         // 404 means the sermon doesn't exist, don't retry
-        console.warn(
-          `[AudioSermons] Sermon ${messageId} not found in API (404)`,
-        );
+        logDebug("Sermon not found", { messageId }, { tag: "AudioSermons" });
         return null;
       }
 
@@ -202,9 +201,7 @@ async function fetchDetailFromWpApi(
         lastError = new Error(`API returned ${response.status}`);
         // Retry on server errors
         if (attempt < maxRetries) {
-          console.warn(
-            `[AudioSermons] API error for sermon ${messageId} (attempt ${attempt + 1}/${maxRetries + 1}): ${response.status}`,
-          );
+          logDebug("Retrying API request", { attempt: attempt + 1, maxRetries: maxRetries + 1 }, { tag: "AudioSermons" });
           // Brief delay before retry
           await new Promise((resolve) => setTimeout(resolve, 100));
           continue;
@@ -227,20 +224,14 @@ async function fetchDetailFromWpApi(
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries) {
-        console.warn(
-          `[AudioSermons] API request failed for sermon ${messageId} (attempt ${attempt + 1}/${maxRetries + 1}):`,
-          lastError?.message,
-        );
+        logDebug("API request retry", { attempt: attempt + 1, maxRetries: maxRetries + 1, error: lastError?.message }, { tag: "AudioSermons" });
         // Brief delay before retry
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
   }
 
-  console.warn(
-    `[AudioSermons] API failed for sermon ${messageId} after ${maxRetries + 1} attempts`,
-    lastError?.message,
-  );
+  logWarn("API requests exhausted", { error: lastError?.message }, { tag: "AudioSermons" });
   return null;
 }
 
@@ -421,9 +412,7 @@ async function fetchDetailFromScraping(
 
     // Check if we got meaningful data
     if (!detail.title) {
-      console.warn(
-        `[AudioSermons] Scraping returned no title for sermon ${messageId}`,
-      );
+      logDebug("Incomplete scrape data returned", {}, { tag: "AudioSermons" });
       return null;
     }
 
@@ -437,10 +426,7 @@ async function fetchDetailFromScraping(
       series: detail.series,
     };
   } catch (error) {
-    console.warn(
-      `[AudioSermons] Scraping error for sermon ${messageId}:`,
-      error instanceof Error ? error.message : String(error),
-    );
+    logDebug("Scrape fallback activated", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
     return null;
   }
 }
@@ -499,21 +485,14 @@ async function searchRecentSermons(
     if (response && response.data.length > 0) {
       const found = response.data.find((s) => s.id === messageId);
       if (found) {
-        console.log(
-          `[AudioSermons] Found sermon ${messageId} in recent sermons`,
-        );
+        logDebug("Sermon found in recent list", {}, { tag: "AudioSermons" });
         return found;
       }
     }
 
-    console.warn(
-      `[AudioSermons] Sermon ${messageId} not in recent sermons (may be older)`,
-    );
+    logDebug("Sermon not in recent list", {}, { tag: "AudioSermons" });
   } catch (error) {
-    console.warn(
-      `[AudioSermons] Recent sermons search failed:`,
-      error instanceof Error ? error.message : String(error),
-    );
+    logDebug("Recent sermons search completed", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
   }
 
   return null;

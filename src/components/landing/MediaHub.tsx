@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from "react";
 import Link from "next/link";
+import SectionLabel from "@/components/shared/SectionLabel";
 import {
   Play,
   Pause,
@@ -532,9 +533,7 @@ export default function MediaHub() {
           variants={headingVariants}
           className="text-center mb-8 sm:mb-12 space-y-4"
         >
-          <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-            — SPIRITUAL NOURISHMENT
-          </h4>
+          <SectionLabel>Spiritual Nourishment</SectionLabel>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900">
             Catch Up on the <span className="text-primary">Word</span>
           </h2>

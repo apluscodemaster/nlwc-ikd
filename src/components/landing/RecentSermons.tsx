@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { Button } from "@/components/ui/button";
 import {
   Play,
@@ -217,9 +218,7 @@ export default function RecentSermons() {
           className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"
         >
           <div className="space-y-4 max-w-2xl">
-            <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-              — RECENT MESSAGES
-            </h4>
+            <SectionLabel>Recent Messages</SectionLabel>
             <h2 className="text-3xl md:text-5xl font-bold text-foreground">
               Spiritual <span className="text-primary">Nourishment</span>
             </h2>

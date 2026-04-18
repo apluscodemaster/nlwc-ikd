@@ -66,6 +66,7 @@ export default function PageHeader({
           fill
           className="object-cover"
           priority
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
         />
         <div className="absolute inset-0 bg-black/60" />
       </motion.div>
