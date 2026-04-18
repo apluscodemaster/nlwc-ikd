@@ -15,7 +15,7 @@ export default function AboutPage() {
       <PageHeader
         title="Our Story & Mission"
         subtitle="Discover who we are, what we believe, and the heart behind everything we do at The New & Living Way Church."
-        backgroundImage="/about-hero.JPG"
+        backgroundImage="/about-hero.jpg"
       />
 
       <StorySection />
