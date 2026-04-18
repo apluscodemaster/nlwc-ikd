@@ -46,37 +46,108 @@ import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
 
 // Transcript slug lookup
+// Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
+// titles exist in different categories. We use POST ID as the primary identifier to avoid
+// false matches across categories, and include category verification.
 interface TranscriptStub {
   slug: string;
   title: string;
+  id: number;
+  categories: number[]; // Verify category to prevent cross-category matches
+  baseSlug?: string; // Slug with numeric suffix removed (e.g., "slug" from "slug-2")
+}
+
+/**
+ * Strip numeric suffix from WordPress slugs (e.g., "the-gospel-of-christ-2" → "the-gospel-of-christ")
+ * UNLESS the transcript title contains an intentional part reference like "Part 2", "pt 2", etc.
+ * This handles cases where WordPress generates variant slugs for posts with identical titles,
+ * while preserving intentional series continuations.
+ */
+function getBaseSlug(slug: string, transcriptTitle: string): string {
+  // Pattern to detect intentional part references: "Part 2", "part 2", "Pt 2", "pt 2", "PT 2", "pt. 2", etc.
+  const partPattern = /\b(?:part|pt\.?)\s*\d+\b/i;
+
+  // If transcript title contains "Part X" or "pt X", it's intentional - keep the full slug
+  if (partPattern.test(transcriptTitle)) {
+    return slug;
+  }
+
+  // Otherwise, strip numeric suffix (WordPress collision variant)
+  return slug.replace(/-\d+$/, "");
 }
 
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
   const WP_API =
     process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
   const CATEGORY_ID = 20; // Sunday Message Transcripts
+  const MAX_PAGES = 5; // Fetch up to 5 pages × 100 = 500 transcripts
+  const PER_PAGE = 100;
 
   try {
-    // Fetch only the most recent 100 transcripts for title matching
-    // (Previously fetched up to 10 pages × 100 = 1,000 posts, burning excessive CPU)
-    const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=100&page=1&_fields=title,slug&orderby=date&order=desc`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn(`[TranscriptMatch] WP API failed: ${res.status}`);
-      return [];
+    const allTranscripts: TranscriptStub[] = [];
+    let totalFetched = 0;
+    let slugCollisionCount = 0;
+
+    // Fetch multiple pages to capture older transcripts
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      // Include categories array to verify we're getting posts from the correct category
+      const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
+
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+        if (!res.ok) {
+          console.warn(
+            `[TranscriptMatch] WP API failed on page ${page}: ${res.status}`,
+          );
+          break; // Stop pagination if we get an error
+        }
+
+        const posts: {
+          title: { rendered: string };
+          slug: string;
+          id: number;
+          categories: number[];
+        }[] = await res.json();
+
+        if (posts.length === 0) {
+          break;
+        }
+
+        const pageTranscripts = posts.map((p) => {
+          const baseSlug = getBaseSlug(p.slug, p.title.rendered);
+          const hasSlugSuffix = baseSlug !== p.slug;
+
+          if (hasSlugSuffix) {
+            slugCollisionCount++;
+          }
+
+          // Verify category is correct (even though we filtered by it)
+          const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
+          if (!hasCorrectCategory) {
+            console.warn(
+              `[TranscriptMatch] Post ID ${p.id} returned but not in category ${CATEGORY_ID}. Categories: ${p.categories.join(", ")}`,
+            );
+          }
+
+          return {
+            slug: p.slug,
+            title: p.title.rendered,
+            id: p.id,
+            categories: p.categories,
+            baseSlug,
+          };
+        });
+
+        allTranscripts.push(...pageTranscripts);
+        totalFetched += posts.length;
+      } catch (pageErr) {
+        console.warn(`[TranscriptMatch] Error fetching page ${page}:`, pageErr);
+        break;
+      }
     }
 
-    const posts: { title: { rendered: string }; slug: string }[] =
-      await res.json();
-    const transcripts = posts.map((p) => ({
-      slug: p.slug,
-      title: p.title.rendered,
-    }));
-
-    console.log(
-      `[TranscriptMatch] Fetched ${transcripts.length} transcript slugs (latest page)`,
-    );
-    return transcripts;
+    return allTranscripts;
   } catch (err) {
     console.error("[TranscriptMatch] Failed to fetch transcript slugs:", err);
     return [];
@@ -113,14 +184,17 @@ function normalizeTitle(title: string): string {
 function findTranscriptSlug(
   sermonTitle: string,
   transcripts: TranscriptStub[],
+  sermonId?: number,
 ): string | null {
   const normalizedSermon = normalizeTitle(sermonTitle);
   if (!normalizedSermon) return null;
 
-  // 1. Exact match first
+  // 1. Exact title match — prefer base slug (without numeric suffix)
+  //    This avoids false positives when similar posts exist in different categories
   for (const t of transcripts) {
     if (normalizeTitle(t.title) === normalizedSermon) {
-      return t.slug;
+      const finalSlug = t.baseSlug || t.slug; // Use base slug if available
+      return finalSlug;
     }
   }
 
@@ -132,7 +206,8 @@ function findTranscriptSlug(
         normalizedSermon.includes(normalizedTranscript) ||
         normalizedTranscript.includes(normalizedSermon)
       ) {
-        return t.slug;
+        const finalSlug = t.baseSlug || t.slug;
+        return finalSlug;
       }
     }
   }
@@ -140,7 +215,12 @@ function findTranscriptSlug(
   // 3. Word-overlap scoring for fuzzy matching
   const sermonWords = normalizedSermon.split(" ").filter((w) => w.length > 2);
   if (sermonWords.length >= 2) {
-    let bestMatch: { slug: string; score: number } | null = null;
+    let bestMatch: {
+      slug: string;
+      baseSlug: string;
+      score: number;
+      postId: number;
+    } | null = null;
     for (const t of transcripts) {
       const transcriptWords = normalizeTitle(t.title)
         .split(" ")
@@ -155,10 +235,17 @@ function findTranscriptSlug(
         Math.max(sermonWords.length, transcriptWords.length);
       // Require at least 60% word overlap
       if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
-        bestMatch = { slug: t.slug, score };
+        bestMatch = {
+          slug: t.slug,
+          baseSlug: t.baseSlug || t.slug,
+          score,
+          postId: t.id,
+        };
       }
     }
-    if (bestMatch) return bestMatch.slug;
+    if (bestMatch) {
+      return bestMatch.baseSlug;
+    }
   }
 
   return null;
@@ -438,6 +525,7 @@ export default function SermonsPageContent() {
     queryKey: ["transcript-slugs"],
     queryFn: fetchTranscriptSlugs,
     staleTime: 30 * 60 * 1000, // 30 minutes — slugs change infrequently
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours — keep in cache to prevent frequent refetches
   });
 
   // Page changes
@@ -1657,8 +1745,8 @@ function SermonCard({
   transcriptSlugs: TranscriptStub[];
 }) {
   const matchedSlug = useMemo(
-    () => findTranscriptSlug(sermon.title, transcriptSlugs),
-    [sermon.title, transcriptSlugs],
+    () => findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id),
+    [sermon.title, transcriptSlugs, sermon.id],
   );
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`
