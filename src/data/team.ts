@@ -12,7 +12,7 @@ export const team: TeamMember[] = [
     name: "Pst. Emeka & Pst. (Mrs.) Lilian Egwuchukwu",
     role: "Lead Pastors, NLWC Global",
     image:
-      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1776633000/mummy_and_daddy_egwuchukwu_alyhyw.jpg",
+      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1776636908/pst._emeka_lilian_egwuchukwu_mjfb57.jpg",
     bio: [
       "God is interested in you. He wants you to inherit His glory. He wants you to lay hold on Eternal life. God’s life cannot be compared with anything of the present. So you need to go after Him.",
       "You need to pant after His glory. That’s the best investment you can ever embark upon!",
