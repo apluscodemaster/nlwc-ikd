@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -15,13 +15,24 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Tag,
 } from "lucide-react";
+import ResumePrompt from "@/components/media/ResumePrompt";
+import {
+  saveMediaProgress,
+  getMediaProgress,
+  clearMediaProgress,
+  formatProgressTime,
+  type MediaProgress,
+} from "@/lib/mediaProgress";
+import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
 
 interface VideoMessage {
   date: string;
   youtubeUrl: string;
   title?: string;
   minister?: string;
+  serviceCategory?: string;
   id: string;
 }
 
@@ -34,11 +45,64 @@ async function fetchVideoMessages(): Promise<VideoMessage[]> {
   return data.messages;
 }
 
+// =============================================================================
+// Progress bar indicator on video cards
+// =============================================================================
+
+function VideoProgressBar({ videoId }: { videoId: string }) {
+  const [progress, setProgress] = useState<MediaProgress | null>(null);
+
+  useEffect(() => {
+    setProgress(getMediaProgress(videoId));
+  }, [videoId]);
+
+  if (!progress || progress.duration <= 0) return null;
+
+  const percent = Math.min(
+    (progress.currentTime / progress.duration) * 100,
+    100,
+  );
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 z-10">
+      <div className="h-1.5 bg-black/30">
+        <div
+          className="h-full bg-primary transition-[width] duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="absolute right-2 bottom-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+        {formatProgressTime(progress.currentTime)} /{" "}
+        {formatProgressTime(progress.duration)}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
 export default function VideoMessagesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMinister, setSelectedMinister] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
+  const [resumeStartTime, setResumeStartTime] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Resume prompt state
+  const [resumePrompt, setResumePrompt] = useState<{
+    video: VideoMessage;
+    savedProgress: MediaProgress;
+  } | null>(null);
+
+  // YouTube player instance ref
+  const ytPlayerRef = useRef<YT.Player | null>(null);
+  const ytPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   // TanStack Query integration
   const {
@@ -57,14 +121,18 @@ export default function VideoMessagesContent() {
       const matchesSearch =
         v.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.date.includes(searchQuery) ||
-        v.minister?.toLowerCase().includes(searchQuery.toLowerCase());
+        v.minister?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.serviceCategory?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesMinister =
         selectedMinister === "All" || v.minister === selectedMinister;
 
-      return matchesSearch && matchesMinister;
+      const matchesCategory =
+        selectedCategory === "All" || v.serviceCategory === selectedCategory;
+
+      return matchesSearch && matchesMinister && matchesCategory;
     });
-  }, [videos, searchQuery, selectedMinister]);
+  }, [videos, searchQuery, selectedMinister, selectedCategory]);
 
   // Extract unique ministers for filter
   const ministers = useMemo(() => {
@@ -72,6 +140,16 @@ export default function VideoMessagesContent() {
       "All",
       ...(Array.from(
         new Set(videos.map((v) => v.minister).filter(Boolean)),
+      ) as string[]),
+    ];
+  }, [videos]);
+
+  // Extract unique service categories for filter
+  const serviceCategories = useMemo(() => {
+    return [
+      "All",
+      ...(Array.from(
+        new Set(videos.map((v) => v.serviceCategory).filter(Boolean)),
       ) as string[]),
     ];
   }, [videos]);
@@ -86,7 +164,190 @@ export default function VideoMessagesContent() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedMinister]);
+  }, [searchQuery, selectedMinister, selectedCategory]);
+
+  // ===========================================================================
+  // YouTube IFrame Player API integration for progress tracking
+  // ===========================================================================
+
+  // Save current video progress from the YT player
+  const saveCurrentProgress = useCallback(() => {
+    if (!ytPlayerRef.current || !selectedVideo) return;
+    try {
+      const time = ytPlayerRef.current.getCurrentTime();
+      const dur = ytPlayerRef.current.getDuration();
+      if (time > 0 && dur > 0) {
+        saveMediaProgress(
+          selectedVideo.id,
+          time,
+          dur,
+          selectedVideo.title || "Video Message",
+          "video",
+        );
+      }
+    } catch {
+      // Player may have been destroyed — ignore
+    }
+  }, [selectedVideo]);
+
+  // Start periodic progress saving when a video is playing
+  const startProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    progressIntervalRef.current = setInterval(() => {
+      saveCurrentProgress();
+    }, 5000);
+  }, [saveCurrentProgress]);
+
+  const stopProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
+
+  // Initialise the YouTube player when selectedVideo changes
+  useEffect(() => {
+    if (!selectedVideo || !ytPlayerContainerRef.current) return;
+
+    let cancelled = false;
+
+    async function initPlayer() {
+      await loadYouTubeIframeAPI();
+      if (cancelled || !ytPlayerContainerRef.current) return;
+
+      // Destroy previous player if any
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        ytPlayerRef.current = null;
+      }
+
+      ytPlayerRef.current = new window.YT.Player(
+        ytPlayerContainerRef.current!,
+        {
+          videoId: selectedVideo!.id,
+          playerVars: {
+            autoplay: 1,
+            rel: 0,
+            modestbranding: 1,
+            start: Math.floor(resumeStartTime),
+          },
+          events: {
+            onStateChange: (event: YT.OnStateChangeEvent) => {
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                startProgressInterval();
+              } else if (
+                event.data === window.YT.PlayerState.PAUSED ||
+                event.data === window.YT.PlayerState.BUFFERING
+              ) {
+                stopProgressInterval();
+                saveCurrentProgress();
+              } else if (event.data === window.YT.PlayerState.ENDED) {
+                stopProgressInterval();
+                // Clear progress when video finishes
+                if (selectedVideo) {
+                  clearMediaProgress(selectedVideo.id);
+                }
+              }
+            },
+          },
+        },
+      );
+    }
+
+    initPlayer();
+
+    return () => {
+      cancelled = true;
+      stopProgressInterval();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideo]);
+
+  // Clean up player and interval on unmount
+  useEffect(() => {
+    return () => {
+      stopProgressInterval();
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        ytPlayerRef.current = null;
+      }
+    };
+  }, [stopProgressInterval]);
+
+  // Save progress on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveCurrentProgress();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [saveCurrentProgress]);
+
+  // ===========================================================================
+  // Video play handlers (with resume prompt)
+  // ===========================================================================
+
+  const handleVideoClick = useCallback((video: VideoMessage) => {
+    const saved = getMediaProgress(video.id);
+    if (saved && saved.currentTime > 0) {
+      setResumePrompt({ video, savedProgress: saved });
+    } else {
+      setResumeStartTime(0);
+      setSelectedVideo(video);
+    }
+  }, []);
+
+  const handleResume = useCallback(() => {
+    if (!resumePrompt) return;
+    setResumeStartTime(resumePrompt.savedProgress.currentTime);
+    setSelectedVideo(resumePrompt.video);
+    setResumePrompt(null);
+  }, [resumePrompt]);
+
+  const handleStartOver = useCallback(() => {
+    if (!resumePrompt) return;
+    clearMediaProgress(resumePrompt.video.id);
+    setResumeStartTime(0);
+    setSelectedVideo(resumePrompt.video);
+    setResumePrompt(null);
+  }, [resumePrompt]);
+
+  const handleDismissResume = useCallback(() => {
+    setResumePrompt(null);
+  }, []);
+
+  const handleClosePlayer = useCallback(() => {
+    // Save progress before closing
+    saveCurrentProgress();
+    stopProgressInterval();
+
+    // Destroy player
+    if (ytPlayerRef.current) {
+      try {
+        ytPlayerRef.current.destroy();
+      } catch {
+        // ignore
+      }
+      ytPlayerRef.current = null;
+    }
+
+    setSelectedVideo(null);
+    setResumeStartTime(0);
+  }, [saveCurrentProgress, stopProgressInterval]);
+
+  // ===========================================================================
+  // Render
+  // ===========================================================================
 
   if (isLoading) {
     return (
@@ -117,14 +378,30 @@ export default function VideoMessagesContent() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      {/* Controls: Search + Filter */}
-      <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
+      {/* ===== RESUME PROMPT ===== */}
+      <AnimatePresence>
+        {resumePrompt && (
+          <ResumePrompt
+            isOpen={!!resumePrompt}
+            mediaProgress={resumePrompt.savedProgress}
+            mediaTitle={resumePrompt.video.title}
+            mediaThumbnailUrl={`https://img.youtube.com/vi/${resumePrompt.video.id}/maxresdefault.jpg`}
+            mediaType="video"
+            onResume={handleResume}
+            onStartOver={handleStartOver}
+            onDismiss={handleDismissResume}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Controls: Search + Filters */}
+      <div className="flex flex-col md:flex-row gap-4 max-w-5xl mx-auto">
         {/* Search */}
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
-            placeholder="Search by title, date, or minister..."
+            placeholder="Search by title, date, minister, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm"
@@ -132,7 +409,7 @@ export default function VideoMessagesContent() {
         </div>
 
         {/* Minister Filter */}
-        <div className="relative w-full md:w-64">
+        <div className="relative w-full md:w-56">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           <select
             value={selectedMinister}
@@ -147,6 +424,25 @@ export default function VideoMessagesContent() {
           </select>
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         </div>
+
+        {/* Service Category Filter */}
+        {serviceCategories.length > 1 && (
+          <div className="relative w-full md:w-56">
+            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full h-12 sm:h-14 pl-12 pr-10 rounded-2xl border border-gray-200 bg-white appearance-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm font-medium cursor-pointer"
+            >
+              {serviceCategories.map((c) => (
+                <option key={c} value={c}>
+                  {c === "All" ? "All Categories" : c}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
+        )}
       </div>
 
       {/* Grid */}
@@ -167,7 +463,7 @@ export default function VideoMessagesContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className="group relative flex flex-col bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer"
-                onClick={() => setSelectedVideo(video)}
+                onClick={() => handleVideoClick(video)}
               >
                 {/* Video Preview */}
                 <div className="relative aspect-video overflow-hidden bg-gray-900">
@@ -190,6 +486,9 @@ export default function VideoMessagesContent() {
                       <Play className="w-6 h-6 text-white fill-white ml-1" />
                     </motion.div>
                   </div>
+
+                  {/* Progress bar overlay */}
+                  <VideoProgressBar videoId={video.id} />
                 </div>
 
                 {/* Content */}
@@ -218,7 +517,7 @@ export default function VideoMessagesContent() {
 
                   <div className="mt-5 pt-5 border-t border-gray-50 flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
-                      Video Message
+                      {video.serviceCategory || "Video Message"}
                     </span>
                     <Youtube className="w-5 h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
                   </div>
@@ -238,6 +537,7 @@ export default function VideoMessagesContent() {
             onClick={() => {
               setSearchQuery("");
               setSelectedMinister("All");
+              setSelectedCategory("All");
             }}
             className="mt-4 text-primary font-bold hover:underline"
           >
@@ -322,6 +622,7 @@ export default function VideoMessagesContent() {
         </div>
       )}
 
+      {/* ===== VIDEO PLAYER MODAL (YouTube IFrame API) ===== */}
       <AnimatePresence>
         {selectedVideo && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-6 lg:p-8">
@@ -329,7 +630,6 @@ export default function VideoMessagesContent() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedVideo(null)}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
             />
 
@@ -341,18 +641,16 @@ export default function VideoMessagesContent() {
             >
               {/* Close Button */}
               <button
-                onClick={() => setSelectedVideo(null)}
+                onClick={handleClosePlayer}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <iframe
-                src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1&rel=0&modestbranding=1`}
-                title={selectedVideo.title}
-                className="w-full h-full border-none relative z-10"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              {/* YouTube Player Container (managed by YT IFrame API) */}
+              <div
+                ref={ytPlayerContainerRef}
+                className="w-full h-full relative z-10"
               />
 
               {/* Info Overlay - Hidden on Mobile */}

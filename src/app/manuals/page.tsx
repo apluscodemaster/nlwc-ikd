@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Sunday School Manuals | NLWC Ikorodu",
+  title: "Sunday School Manuals",
   description:
     "Access Sunday School study materials and teaching resources from New and Living Way Church, Ikorodu.",
 };

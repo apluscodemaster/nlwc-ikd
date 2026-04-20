@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Calendar, User, ChevronRight, Clock } from "lucide-react";
+import { BookOpen, Calendar, User, ChevronRight, Clock, Share2, Check } from "lucide-react";
 import type { TranscriptPost } from "@/lib/wordpress";
 import Link from "next/link";
 import {
@@ -19,6 +19,25 @@ export default function TranscriptCard({
   transcript,
   searchQuery = "",
 }: TranscriptCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const url = `${window.location.origin}/transcripts/${transcript.slug}`;
+      const title = transcript.title.replace(/<[^>]*>/g, "");
+
+      if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    },
+    [transcript],
+  );
   const typeStyles = {
     "sunday-message": {
       bg: "bg-primary/10",
@@ -129,20 +148,34 @@ export default function TranscriptCard({
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100 gap-2">
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground overflow-hidden">
-            {transcript.categories.slice(0, 1).map((cat, index) => (
-              <span
-                key={index}
-                className="bg-gray-100 px-2 py-1 rounded-md truncate max-w-[80px]"
-              >
-                {cat}
-              </span>
-            ))}
-            {transcript.categories.length > 1 && (
-              <span className="bg-gray-100 px-2 py-1 rounded-md">
-                +{transcript.categories.length - 1}
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
+              aria-label="Share this transcript"
+              title="Share"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Share2 className="w-4 h-4" />
+              )}
+            </button>
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground overflow-hidden">
+              {transcript.categories.slice(0, 1).map((cat, index) => (
+                <span
+                  key={index}
+                  className="bg-gray-100 px-2 py-1 rounded-md truncate max-w-[80px]"
+                >
+                  {cat}
+                </span>
+              ))}
+              {transcript.categories.length > 1 && (
+                <span className="bg-gray-100 px-2 py-1 rounded-md">
+                  +{transcript.categories.length - 1}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1 text-primary font-bold text-xs sm:text-sm group-hover:gap-2 transition-all whitespace-nowrap">
             Read

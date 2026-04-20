@@ -3,6 +3,8 @@
 import React, { useRef } from "react";
 import { MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, Variants } from "framer-motion";
+import Image from "next/image";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { services } from "@/data/services";
 
 const containerVariants: Variants = {
@@ -110,13 +112,19 @@ export default function ServiceTimes() {
                 {/* Image Section */}
                 <div className="relative h-64 overflow-hidden">
                   {service.image ? (
-                    <motion.img
+                    <motion.div
+                      className="relative w-full h-full"
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.6 }}
-                      src={service.image}
-                      alt={service.name}
-                      className="w-full h-full object-cover transition-transform duration-500"
-                    />
+                    >
+                      <Image
+                        src={service.image}
+                        alt={service.name}
+                        fill
+                        className="object-cover transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 380px, 380px"
+                      />
+                    </motion.div>
                   ) : (
                     <div className={`w-full h-full ${service.color}`} />
                   )}

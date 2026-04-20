@@ -60,6 +60,13 @@ export default function DevotionalViewPage({
       });
   }, [id]);
 
+  // Update browser tab title when devotional loads
+  useEffect(() => {
+    if (devotional) {
+      document.title = `${devotional.title} | Daily Devotional | NLWC Ikorodu`;
+    }
+  }, [devotional]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gray-50/30">

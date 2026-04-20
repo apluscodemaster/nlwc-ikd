@@ -7,6 +7,7 @@ const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmi
 
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { logError } from "@/lib/devLog";
 
 // WordPress Category IDs
 export const WP_CATEGORIES = {
@@ -426,21 +427,23 @@ export async function fetchCustomPostTypeBySlug(
 // DATA TRANSFORMERS
 // =============================================================================
 
+// ⚡ Pre-compiled speaker extraction patterns (runs ONCE at module load)
+const SPEAKER_PATTERNS = [
+  /Minister\(?s?\)?:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
+  /Speaker:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
+  /Pastor\s+([A-Z][a-z]+\s*[A-Z]?[a-z]*)/,
+] as const;
+
+const HTML_TAG_STRIP_RE = /<[^>]*>/g;
+
 /**
  * Extract speaker name from post content (commonly formatted as "Minister: Pastor Name")
  */
 function extractSpeaker(content: string): string | undefined {
-  // Try to find patterns like "Minister: Pastor Name" or "Speaker: Name"
-  const patterns = [
-    /Minister\(?s?\)?:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
-    /Speaker:\s*(?:<[^>]*>)*\s*([^<\n]+)/i,
-    /Pastor\s+([A-Z][a-z]+\s*[A-Z]?[a-z]*)/,
-  ];
-
-  for (const pattern of patterns) {
+  for (const pattern of SPEAKER_PATTERNS) {
     const match = content.match(pattern);
     if (match && match[1]) {
-      return match[1].trim().replace(/<[^>]*>/g, "");
+      return match[1].trim().replace(HTML_TAG_STRIP_RE, "");
     }
   }
 
@@ -488,7 +491,7 @@ function getCategoryNames(post: WPPost): string[] {
 }
 
 /**
- * Transform WP post to Transcript format
+ * Transform WP post to Transcript format (full — for detail pages)
  */
 export function transformToTranscript(post: WPPost): TranscriptPost {
   const isSundaySchool = post.categories.includes(
@@ -499,7 +502,7 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: sanitizeWPHtml(post.content.rendered),
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(/<[^>]*>/g, "")),
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
@@ -513,14 +516,58 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
 }
 
 /**
- * Transform WP post to Sunday School Manual format
+ * ⚡ Lightweight transform for listing pages — skips content sanitization
+ * and heavy HTML processing to reduce CPU time on listings.
+ */
+export function transformToTranscriptListing(post: WPPost): TranscriptPost {
+  const isSundaySchool = post.categories.includes(
+    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+  );
+
+  return {
+    id: post.id,
+    title: sanitizeWPText(post.title.rendered),
+    content: "", // Content not needed for listings — fetched on detail view
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    date: post.date,
+    formattedDate: formatDate(post.date),
+    slug: post.slug,
+    link: post.link,
+    speaker: extractSpeaker(post.content.rendered),
+    thumbnail: getFeaturedImage(post),
+    categories: getCategoryNames(post),
+    type: isSundaySchool ? "sunday-school" : "sunday-message",
+    readingTime: calculateReadingTime(post.content.rendered),
+  };
+}
+
+/**
+ * Transform WP post to Sunday School Manual format (full — for detail pages)
  */
 export function transformToManual(post: WPPost): SundaySchoolManual {
   return {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: sanitizeWPHtml(post.content.rendered),
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(/<[^>]*>/g, "")),
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    date: post.date,
+    formattedDate: formatDate(post.date),
+    slug: post.slug,
+    link: post.link,
+    thumbnail: getFeaturedImage(post) || undefined,
+    readingTime: calculateReadingTime(post.content.rendered),
+  };
+}
+
+/**
+ * ⚡ Lightweight transform for listing pages — skips content sanitization.
+ */
+export function transformToManualListing(post: WPPost): SundaySchoolManual {
+  return {
+    id: post.id,
+    title: sanitizeWPText(post.title.rendered),
+    content: "", // Content not needed for listings — fetched on detail view
+    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
@@ -548,7 +595,7 @@ export async function getSundayMessageTranscripts(
   });
 
   return {
-    transcripts: posts.map(transformToTranscript),
+    transcripts: posts.map(transformToTranscriptListing),
     totalPages,
     total,
     categoryId: WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
@@ -580,7 +627,7 @@ export async function getAllTranscripts(
   });
 
   return {
-    transcripts: posts.map(transformToTranscript),
+    transcripts: posts.map(transformToTranscriptListing),
     totalPages,
     total,
   };
@@ -601,7 +648,7 @@ export async function getTranscriptsByCategory(
   });
 
   return {
-    transcripts: posts.map(transformToTranscript),
+    transcripts: posts.map(transformToTranscriptListing),
     totalPages,
     total,
     categoryId,
@@ -622,7 +669,7 @@ export async function getSundaySchoolManuals(
   });
 
   return {
-    manuals: posts.map(transformToManual),
+    manuals: posts.map(transformToManualListing),
     totalPages,
     total,
   };
@@ -680,7 +727,7 @@ export async function getAdjacentManuals(
         : null,
     };
   } catch (error) {
-    console.error("Failed to fetch adjacent manuals:", error);
+    logError("Failed to fetch adjacent manuals", error, { tag: "WordPress" });
     return { previous: null, next: null };
   }
 }
@@ -699,7 +746,7 @@ export async function getSundaySchoolTranscripts(
   });
 
   return {
-    transcripts: posts.map(transformToTranscript),
+    transcripts: posts.map(transformToTranscriptListing),
     totalPages,
     total,
   };
@@ -763,7 +810,7 @@ export async function getMessageTranscripts(
   );
 
   return {
-    transcripts: posts.map(transformToTranscript),
+    transcripts: posts.map(transformToTranscriptListing),
     totalPages,
     total,
   };
@@ -799,7 +846,7 @@ export async function getSundaySchoolManualsFromCPT(
   );
 
   return {
-    manuals: posts.map(transformToManual),
+    manuals: posts.map(transformToManualListing),
     totalPages,
     total,
   };
