@@ -27,9 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Extract meaningful title — use actual title if available, otherwise generic but specific
   const hasTitle = sermon.title && !sermon.title.includes("Message #");
-  const title = hasTitle
-    ? sermon.title
-    : `Audio Message ${sermon.id}`;
+  const title = hasTitle ? sermon.title : `Audio Message ${sermon.id}`;
 
   // Build description from available metadata
   const descriptionParts = [
