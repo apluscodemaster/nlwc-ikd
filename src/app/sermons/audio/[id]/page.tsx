@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // If we couldn't get any sermon data at all (shouldn't happen with new fallback)
   if (!sermon) {
     return {
-      title: "Message Not Found | NLWC Ikorodu",
+      title: "Message Not Found",
       description: "The requested audio message could not be found.",
     };
   }
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const hasTitle = sermon.title && !sermon.title.includes("Message #");
   const title = hasTitle
     ? sermon.title
-    : `Audio Message ${sermon.id} | NLWC Ikorodu`;
+    : `Audio Message ${sermon.id}`;
 
   // Build description from available metadata
   const descriptionParts = [
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `Listen to message #${sermon.id} from NLWC Ikorodu`;
 
   return {
-    title: `${title} | NLWC Ikorodu`,
+    title: `${title}`,
     description,
     openGraph: {
       title,

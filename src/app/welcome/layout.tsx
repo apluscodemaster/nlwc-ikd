@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "First Timer — Welcome to NLWC Ikorodu",
+  title: "First Timer — Welcome",
   description:
     "Are you visiting NLWC Ikorodu for the first time? Fill out our first-timer form and our welcome team will personally reach out to make you feel at home.",
   openGraph: {
