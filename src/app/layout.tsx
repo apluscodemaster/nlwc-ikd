@@ -1,9 +1,11 @@
 import "./globals.css";
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import Script from "next/script";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
 import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
 import CustomDialog from "@/components/shared/CustomDialog";
@@ -18,15 +20,141 @@ const jost = Jost({
   variable: "--font-jost",
 });
 
-export const metadata = {
-  title: "The New & Living Way Church | Ikorodu, Lagos",
+const SITE_URL = "https://ikorodu.nlwc.church";
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "The New & Living Way Church | Ikorodu, Lagos",
+    template: "%s | NLWC Ikorodu",
+  },
   description:
-    "Welcome to The New & Living Way Church, a community of faith, hope, and love in Ikorodu, Lagos. Join us for a life-transforming experience.",
+    "Welcome to The New & Living Way Church — a community of faith, hope, and love in Ikorodu, Lagos, Nigeria. Join us for life-transforming worship, Bible study, and fellowship.",
+  keywords: [
+    "NLWC Ikorodu",
+    "New and Living Way Church",
+    "church in Ikorodu",
+    "church in Lagos",
+    "Word of Righteousness",
+    "Christian church Ikorodu",
+    "live church service Nigeria",
+    "Bible study Ikorodu",
+    "house fellowship Lagos",
+  ],
+  authors: [{ name: "NLWC Ikorodu", url: SITE_URL }],
+  creator: "NLWC Ikorodu",
+  openGraph: {
+    type: "website",
+    locale: "en_NG",
+    url: SITE_URL,
+    siteName: "The New & Living Way Church, Ikorodu",
+    title: "The New & Living Way Church | Ikorodu, Lagos",
+    description:
+      "A Word of Righteousness community in Ikorodu, Lagos. Join us for worship, sermons, daily devotionals, and live services online.",
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "The New & Living Way Church, Ikorodu — Watch Live, Listen, and Grow",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@nlwcikorodu",
+    title: "The New & Living Way Church | Ikorodu, Lagos",
+    description:
+      "A Word of Righteousness community in Ikorodu, Lagos. Join us for worship, sermons, daily devotionals, and live services online.",
+    images: [OG_IMAGE],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/nlwcikd-logo-512x512.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const churchSchemaData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": SITE_URL,
+    name: "The New & Living Way Church",
+    alternateName: "NLWC Ikorodu",
+    description:
+      "A Word of Righteousness community in Ikorodu, Lagos. Join us for worship, sermons, daily devotionals, and live services online.",
+    url: SITE_URL,
+    telephone: "+2348137436770",
+    email: "ikoroduchurchadmin@nlwc.church",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "15, Alhaji Jimoh Olosugbo Close, Off Kokoro Abu Street",
+      addressLocality: "Ikorodu",
+      addressRegion: "Lagos",
+      postalCode: "234",
+      addressCountry: "NG",
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Sunday",
+        opens: "08:00",
+        closes: "15:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Wednesday",
+        opens: "18:00",
+        closes: "21:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Friday",
+        opens: "18:00",
+        closes: "22:00",
+      },
+    ],
+    image: OG_IMAGE,
+    sameAs: [
+      "https://www.facebook.com/nlwcikorodu",
+      "https://www.youtube.com/@nlwcikorodu",
+      "https://www.instagram.com/nlwcikorodu",
+      "https://www.whatsapp.com",
+    ],
+    foundingDate: "2009",
+    founder: {
+      "@type": "Organization",
+      name: "NLWC Leadership",
+    },
+  };
+
   return (
     <html lang="en" className={jost.variable} suppressHydrationWarning={true}>
+      <head>
+        {/* Schema.org JSON-LD for Local Business & Church */}
+        <Script
+          id="church-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(churchSchemaData),
+          }}
+        />
+      </head>
       {/* Google tag (gtag.js) */}
       <Script
         async
@@ -61,6 +189,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 {children}
               </main>
               <ScrollToTop />
+              <WhatsAppButton />
               <FellowshipPrompt />
               <RefTaggerReloader />
               <CustomDialog />
@@ -83,11 +212,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   tagChapters: true,
                   dropShadow: true,
                   noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
-                  tagColor: "#FF7C18",
-                  customStyle: {
-                    heading: { fontSize: "14px", color: "#000000" },
-                    body: { fontSize: "13px", color: "#ffffff" }
-                  }
+                  tagColor: "#FF7C18"
                 }
               };
             `,
@@ -96,6 +221,46 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script
           src="https://api.reftagger.com/v2/RefTagger.js"
           strategy="lazyOnload"
+        />
+
+        {/* JSON-LD: Church Structured Data */}
+        <Script
+          id="church-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Church",
+              name: "The New & Living Way Church, Ikorodu",
+              alternateName: "NLWC Ikorodu",
+              url: "https://ikorodu.nlwc.church",
+              logo: "https://ikorodu.nlwc.church/nlwcikd-logo-512x512.png",
+              image: "https://ikorodu.nlwc.church/og-image.png",
+              description:
+                "A Word of Righteousness community in Ikorodu, Lagos, Nigeria. Dedicated to faith, hope, love, and the gospel of Jesus Christ.",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Ikorodu",
+                addressLocality: "Ikorodu",
+                addressRegion: "Lagos",
+                addressCountry: "NG",
+              },
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: 6.6194,
+                longitude: 3.5106,
+              },
+              telephone: "+2347066644051",
+              email: "ikoroduchurchadmin@nlwc.church",
+              openingHours: ["Su 08:00-20:00", "We 17:00-20:00"],
+              sameAs: ["", "https://nlwc.church"],
+              parentOrganization: {
+                "@type": "Organization",
+                name: "New & Living Way Church",
+                url: "https://nlwc.church",
+              },
+            }),
+          }}
         />
       </body>
     </html>

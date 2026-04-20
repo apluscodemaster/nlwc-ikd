@@ -2,5 +2,5 @@
   "cSpell.words": ["IKORODU", "NLWC"],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "workbench.preferredHighContrastLightColorTheme": "Default High Contrast Light",
-  "workbench.preferredLightColorTheme": "Default Light+"
+  "workbench.preferredLightColorTheme": "Light+"
 }

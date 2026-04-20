@@ -37,50 +37,119 @@ import {
   SortDesc,
   RotateCcw,
   FastForward,
+  Share2,
+  Repeat2,
+  Shuffle,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
+import { logWarn, logError } from "@/lib/devLog";
 
 // Transcript slug lookup
+// Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
+// titles exist in different categories. We use POST ID as the primary identifier to avoid
+// false matches across categories, and include category verification.
 interface TranscriptStub {
   slug: string;
   title: string;
+  id: number;
+  categories: number[]; // Verify category to prevent cross-category matches
+  baseSlug?: string; // Slug with numeric suffix removed (e.g., "slug" from "slug-2")
+}
+
+/**
+ * Strip numeric suffix from WordPress slugs (e.g., "the-gospel-of-christ-2" → "the-gospel-of-christ")
+ * UNLESS the transcript title contains an intentional part reference like "Part 2", "pt 2", etc.
+ * This handles cases where WordPress generates variant slugs for posts with identical titles,
+ * while preserving intentional series continuations.
+ */
+function getBaseSlug(slug: string, transcriptTitle: string): string {
+  // Pattern to detect intentional part references: "Part 2", "part 2", "Pt 2", "pt 2", "PT 2", "pt. 2", etc.
+  const partPattern = /\b(?:part|pt\.?)\s*\d+\b/i;
+
+  // If transcript title contains "Part X" or "pt X", it's intentional - keep the full slug
+  if (partPattern.test(transcriptTitle)) {
+    return slug;
+  }
+
+  // Otherwise, strip numeric suffix (WordPress collision variant)
+  return slug.replace(/-\d+$/, "");
 }
 
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
   const WP_API =
     process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
   const CATEGORY_ID = 20; // Sunday Message Transcripts
+  const MAX_PAGES = 5; // Fetch up to 5 pages × 100 = 500 transcripts
+  const PER_PAGE = 100;
 
   try {
-    // Fetch only the most recent 100 transcripts for title matching
-    // (Previously fetched up to 10 pages × 100 = 1,000 posts, burning excessive CPU)
-    const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=100&page=1&_fields=title,slug&orderby=date&order=desc`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn(`[TranscriptMatch] WP API failed: ${res.status}`);
-      return [];
+    const allTranscripts: TranscriptStub[] = [];
+    let totalFetched = 0;
+    let slugCollisionCount = 0;
+
+    // Fetch multiple pages to capture older transcripts
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      // Include categories array to verify we're getting posts from the correct category
+      const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
+
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+        if (!res.ok) {
+          logWarn("Failed to fetch transcript data", { page, status: res.status }, { tag: "Transcripts" });
+          break; // Stop pagination if we get an error
+        }
+
+        const posts: {
+          title: { rendered: string };
+          slug: string;
+          id: number;
+          categories: number[];
+        }[] = await res.json();
+
+        if (posts.length === 0) {
+          break;
+        }
+
+        const pageTranscripts = posts.map((p) => {
+          const baseSlug = getBaseSlug(p.slug, p.title.rendered);
+          const hasSlugSuffix = baseSlug !== p.slug;
+
+          if (hasSlugSuffix) {
+            slugCollisionCount++;
+          }
+
+          // Verify category is correct (even though we filtered by it)
+          const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
+          if (!hasCorrectCategory) {
+            logWarn("Category mismatch detected", { postId: p.id }, { tag: "Transcripts" });
+          }
+
+          return {
+            slug: p.slug,
+            title: p.title.rendered,
+            id: p.id,
+            categories: p.categories,
+            baseSlug,
+          };
+        });
+
+        allTranscripts.push(...pageTranscripts);
+        totalFetched += posts.length;
+      } catch (pageErr) {
+        logError("Failed to fetch transcript page", pageErr, { tag: "Transcripts" });
+        break;
+      }
     }
 
-    const posts: { title: { rendered: string }; slug: string }[] =
-      await res.json();
-    const transcripts = posts.map((p) => ({
-      slug: p.slug,
-      title: p.title.rendered,
-    }));
-
-    console.log(
-      `[TranscriptMatch] Fetched ${transcripts.length} transcript slugs (latest page)`,
-    );
-    return transcripts;
+    return allTranscripts;
   } catch (err) {
-    console.error("[TranscriptMatch] Failed to fetch transcript slugs:", err);
+    logError("Failed to load transcript data", err, { tag: "Transcripts" });
     return [];
   }
 }
-
-
 
 function normalizeTitle(title: string): string {
   return (
@@ -112,14 +181,17 @@ function normalizeTitle(title: string): string {
 function findTranscriptSlug(
   sermonTitle: string,
   transcripts: TranscriptStub[],
+  sermonId?: number,
 ): string | null {
   const normalizedSermon = normalizeTitle(sermonTitle);
   if (!normalizedSermon) return null;
 
-  // 1. Exact match first
+  // 1. Exact title match — prefer base slug (without numeric suffix)
+  //    This avoids false positives when similar posts exist in different categories
   for (const t of transcripts) {
     if (normalizeTitle(t.title) === normalizedSermon) {
-      return t.slug;
+      const finalSlug = t.baseSlug || t.slug; // Use base slug if available
+      return finalSlug;
     }
   }
 
@@ -131,7 +203,8 @@ function findTranscriptSlug(
         normalizedSermon.includes(normalizedTranscript) ||
         normalizedTranscript.includes(normalizedSermon)
       ) {
-        return t.slug;
+        const finalSlug = t.baseSlug || t.slug;
+        return finalSlug;
       }
     }
   }
@@ -139,7 +212,12 @@ function findTranscriptSlug(
   // 3. Word-overlap scoring for fuzzy matching
   const sermonWords = normalizedSermon.split(" ").filter((w) => w.length > 2);
   if (sermonWords.length >= 2) {
-    let bestMatch: { slug: string; score: number } | null = null;
+    let bestMatch: {
+      slug: string;
+      baseSlug: string;
+      score: number;
+      postId: number;
+    } | null = null;
     for (const t of transcripts) {
       const transcriptWords = normalizeTitle(t.title)
         .split(" ")
@@ -154,10 +232,17 @@ function findTranscriptSlug(
         Math.max(sermonWords.length, transcriptWords.length);
       // Require at least 60% word overlap
       if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
-        bestMatch = { slug: t.slug, score };
+        bestMatch = {
+          slug: t.slug,
+          baseSlug: t.baseSlug || t.slug,
+          score,
+          postId: t.id,
+        };
       }
     }
-    if (bestMatch) return bestMatch.slug;
+    if (bestMatch) {
+      return bestMatch.baseSlug;
+    }
   }
 
   return null;
@@ -333,6 +418,8 @@ export default function SermonsPageContent() {
   const [showMobilePlayer, setShowMobilePlayer] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
+  const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Resume playback state
@@ -435,6 +522,7 @@ export default function SermonsPageContent() {
     queryKey: ["transcript-slugs"],
     queryFn: fetchTranscriptSlugs,
     staleTime: 30 * 60 * 1000, // 30 minutes — slugs change infrequently
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours — keep in cache to prevent frequent refetches
   });
 
   // Page changes
@@ -672,13 +760,54 @@ export default function SermonsPageContent() {
     setDuration(0);
   }, [activeSermon]);
 
-  // Handle sermon finished — clear saved progress
+  // Handle sermon finished — clear saved progress and auto-play next
   const handleAudioEnded = useCallback(() => {
-    setIsPlaying(false);
     if (activeSermon) {
       clearProgress(activeSermon.id);
     }
-  }, [activeSermon]);
+
+    // Repeat-one: replay the same sermon
+    if (repeatMode === "one" && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      return;
+    }
+
+    // Auto-play next sermon in the list
+    if (activeSermon && sermons.length > 0) {
+      const currentIndex = sermons.findIndex((s) => s.id === activeSermon.id);
+
+      let nextSermon: AudioSermon | undefined;
+
+      if (isShuffled) {
+        // Pick a random sermon that isn't the current one
+        const others = sermons.filter((s) => s.id !== activeSermon.id);
+        if (others.length > 0) {
+          nextSermon = others[Math.floor(Math.random() * others.length)];
+        }
+      } else if (currentIndex !== -1 && currentIndex < sermons.length - 1) {
+        // Play the next sermon in order
+        nextSermon = sermons[currentIndex + 1];
+      }
+
+      if (nextSermon) {
+        // Use handlePlay so it fetches detail if needed and checks for saved progress
+        handlePlay(nextSermon);
+        return;
+      }
+    }
+
+    // No next sermon — just stop
+    setIsPlaying(false);
+  }, [activeSermon, repeatMode, isShuffled, sermons, handlePlay]);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((prev) => (prev === "off" ? "one" : "off"));
+  }, []);
+
+  const toggleShuffle = useCallback(() => {
+    setIsShuffled((prev) => !prev);
+  }, []);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -1245,6 +1374,43 @@ export default function SermonsPageContent() {
                     {playbackRate}x
                   </button>
 
+                  {/* Shuffle */}
+                  <button
+                    onClick={toggleShuffle}
+                    className={`hidden sm:flex items-center justify-center p-1 rounded-full transition-colors ${
+                      isShuffled
+                        ? "text-primary"
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    aria-label={
+                      isShuffled ? "Disable shuffle" : "Enable shuffle"
+                    }
+                    title={isShuffled ? "Shuffle on" : "Shuffle off"}
+                  >
+                    <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+
+                  {/* Repeat */}
+                  <button
+                    onClick={toggleRepeat}
+                    className={`hidden sm:flex items-center justify-center p-1 rounded-full transition-colors relative ${
+                      repeatMode === "one"
+                        ? "text-primary"
+                        : "text-white/70 hover:text-white"
+                    }`}
+                    aria-label={
+                      repeatMode === "one" ? "Disable repeat" : "Repeat current"
+                    }
+                    title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
+                  >
+                    <Repeat2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    {repeatMode === "one" && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">
+                        1
+                      </span>
+                    )}
+                  </button>
+
                   {activeSermon.downloadUrl && (
                     <a
                       href={activeSermon.downloadUrl}
@@ -1407,7 +1573,38 @@ export default function SermonsPageContent() {
             </div>
 
             {/* Secondary Controls */}
-            <div className="flex items-center justify-center gap-5 pb-[calc(1rem+env(safe-area-inset-bottom))] px-8">
+            <div className="flex items-center justify-center gap-4 pb-[calc(1rem+env(safe-area-inset-bottom))] px-8">
+              <button
+                onClick={toggleShuffle}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 ${
+                  isShuffled
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+              >
+                <Shuffle className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={toggleRepeat}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 relative ${
+                  repeatMode === "one"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={
+                  repeatMode === "one" ? "Disable repeat" : "Repeat current"
+                }
+              >
+                <Repeat2 className="w-5 h-5" />
+                {repeatMode === "one" && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">
+                    1
+                  </span>
+                )}
+              </button>
+
               <button
                 onClick={cycleSpeed}
                 className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all active:scale-95 min-w-[52px]"
@@ -1545,8 +1742,8 @@ function SermonCard({
   transcriptSlugs: TranscriptStub[];
 }) {
   const matchedSlug = useMemo(
-    () => findTranscriptSlug(sermon.title, transcriptSlugs),
-    [sermon.title, transcriptSlugs],
+    () => findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id),
+    [sermon.title, transcriptSlugs, sermon.id],
   );
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`
@@ -1711,6 +1908,16 @@ function SermonCard({
             <span className="hidden sm:inline">
               {matchedSlug ? "Transcript" : "Transcripts"}
             </span>
+          </Link>
+
+          {/* Share link */}
+          <Link
+            href={`/sermons/audio/${sermon.id}`}
+            className="flex items-center gap-1 p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-all"
+            title="Shareable link"
+            aria-label="Share this message"
+          >
+            <Share2 className="w-4 h-4" />
           </Link>
 
           {/* Download */}
