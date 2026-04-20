@@ -10,7 +10,14 @@
  *      Used when the custom API endpoint is not yet deployed.
  *
  * Audio files are hosted on AWS S3 (nlwc-ikorodu.s3.us-east-2.amazonaws.com).
+ *
+ * Caching & Deduplication:
+ *   - HTTP Cache-Control: 10 minutes (s-maxage=600)
+ *   - Request deduplication: Prevents duplicate in-flight requests within 1 minute
  */
+
+import { deduplicatedFetch } from "./requestCache";
+import { logWarn, logDebug } from "./devLog";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -81,8 +88,25 @@ function getFetchOptions(): RequestInit {
     headers: {
       "User-Agent": "Mozilla/5.0 (compatible; NLWCGallery/1.0)",
     },
-    next: { revalidate: 3600 }, // Cache for 1 hour
+    next: { revalidate: 600 }, // Cache for 10 minutes
   } as RequestInit;
+}
+
+/**
+ * Fix thumbnail URLs that use the frontend domain (ikorodu.nlwc.church)
+ * instead of the actual WP server (ikdadmin.nlwc.church).
+ *
+ * WP's siteurl is set to the frontend domain, so all media URLs reference it.
+ * But images are physically served from ikdadmin.nlwc.church. The Next.js
+ * Image component fetches external URLs directly (bypassing Next rewrites),
+ * so we need to rewrite the hostname.
+ */
+function fixThumbnailUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  return url.replace(
+    "://ikorodu.nlwc.church/wp-content/",
+    "://ikdadmin.nlwc.church/wp-content/",
+  );
 }
 
 // =============================================================================
@@ -109,7 +133,7 @@ async function fetchFromWpApi(
     if (filters.year) params.set("year", filters.year.toString());
     if (filters.order) params.set("order", filters.order);
 
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons?${params}`,
       getFetchOptions(),
     );
@@ -132,7 +156,7 @@ async function fetchFromWpApi(
         date: formatDate(item.date as string),
         listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
         downloadUrl: (item.audioUrl as string) || undefined,
-        thumbnailUrl: (item.thumbnail as string) || undefined,
+        thumbnailUrl: fixThumbnailUrl(item.thumbnail as string),
         series: (item.seriesTitle as string) || undefined,
         seriesId: item.seriesId as number,
         duration: (item.duration as string) || undefined,
@@ -144,42 +168,71 @@ async function fetchFromWpApi(
       pagination: result.pagination,
     };
   } catch (error) {
-    console.warn("WP REST API not available, falling back to scraping:", error);
+    logWarn("API endpoint unavailable, fallback mode activated", error, { tag: "AudioSermons" });
     return null;
   }
 }
 
 /**
  * Try fetching a single sermon detail from the custom WP REST API.
+ * Includes retry logic for transient failures.
+ * Uses plain fetch() for retries to avoid "Body already read" errors from deduplicatedFetch caching.
  */
 async function fetchDetailFromWpApi(
   messageId: number,
 ): Promise<AudioSermon | null> {
-  try {
-    const response = await fetch(
-      `${WP_API_URL}/sermons/${messageId}`,
-      getFetchOptions(),
-    );
+  const maxRetries = 2;
+  let lastError: Error | null = null;
 
-    if (response.status === 404 || !response.ok) {
-      return null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Use plain fetch() for retries to get fresh response objects
+      // (deduplicatedFetch caches the promise, causing "Body already read" on retries)
+      const url = `${WP_API_URL}/sermons/${messageId}`;
+      const response = await fetch(url, getFetchOptions());
+
+      if (response.status === 404) {
+        // 404 means the sermon doesn't exist, don't retry
+        logDebug("Sermon not found", { messageId }, { tag: "AudioSermons" });
+        return null;
+      }
+
+      if (!response.ok) {
+        lastError = new Error(`API returned ${response.status}`);
+        // Retry on server errors
+        if (attempt < maxRetries) {
+          logDebug("Retrying API request", { attempt: attempt + 1, maxRetries: maxRetries + 1 }, { tag: "AudioSermons" });
+          // Brief delay before retry
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          continue;
+        }
+        return null;
+      }
+
+      const item = await response.json();
+
+      return {
+        id: item.id,
+        title: item.title,
+        speaker: item.speaker,
+        date: formatDate(item.date),
+        listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
+        downloadUrl: item.audioUrl || undefined,
+        thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
+        series: item.seriesTitle || undefined,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries) {
+        logDebug("API request retry", { attempt: attempt + 1, maxRetries: maxRetries + 1, error: lastError?.message }, { tag: "AudioSermons" });
+        // Brief delay before retry
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     }
-
-    const item = await response.json();
-
-    return {
-      id: item.id,
-      title: item.title,
-      speaker: item.speaker,
-      date: formatDate(item.date),
-      listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
-      downloadUrl: item.audioUrl || undefined,
-      thumbnailUrl: item.thumbnail || item.speakerThumbnail || undefined,
-      series: item.seriesTitle || undefined,
-    };
-  } catch {
-    return null;
   }
+
+  logWarn("API requests exhausted", { error: lastError?.message }, { tag: "AudioSermons" });
+  return null;
 }
 
 // =============================================================================
@@ -212,7 +265,7 @@ function parseListingHtml(html: string): {
 
     // Extract thumbnail
     const thumbMatch = cardHtml.match(/src="([^"]+)"\s+alt="[^"]*Image"/i);
-    const thumbnailUrl = thumbMatch?.[1] || undefined;
+    const thumbnailUrl = fixThumbnailUrl(thumbMatch?.[1]);
 
     // Extract date from <h6>
     const dateMatch = cardHtml.match(/<h6>(.*?)<\/h6>/i);
@@ -341,26 +394,41 @@ async function fetchFromScraping(
 async function fetchDetailFromScraping(
   messageId: number,
 ): Promise<AudioSermon | null> {
-  const url = `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`;
+  const scrapeUrl = `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`;
 
-  const response = await fetch(url, getFetchOptions());
+  try {
+    // Use direct fetch (not deduplicatedFetch) to avoid caching issues on failures
+    const response = await fetch(scrapeUrl, getFetchOptions());
 
-  if (!response.ok) {
+    if (!response.ok) {
+      console.warn(
+        `[AudioSermons] Scraping failed for sermon ${messageId}: HTTP ${response.status}`,
+      );
+      return null;
+    }
+
+    const html = await response.text();
+    const detail = parseDetailHtml(html);
+
+    // Check if we got meaningful data
+    if (!detail.title) {
+      logDebug("Incomplete scrape data returned", {}, { tag: "AudioSermons" });
+      return null;
+    }
+
+    return {
+      id: messageId,
+      title: detail.title || "",
+      speaker: detail.speaker || "",
+      date: detail.date || "",
+      listenUrl: scrapeUrl,
+      downloadUrl: detail.downloadUrl,
+      series: detail.series,
+    };
+  } catch (error) {
+    logDebug("Scrape fallback activated", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
     return null;
   }
-
-  const html = await response.text();
-  const detail = parseDetailHtml(html);
-
-  return {
-    id: messageId,
-    title: detail.title || "",
-    speaker: detail.speaker || "",
-    date: detail.date || "",
-    listenUrl: url,
-    downloadUrl: detail.downloadUrl,
-    series: detail.series,
-  };
 }
 
 // =============================================================================
@@ -401,18 +469,94 @@ export async function getAudioSermons(
 }
 
 /**
+ * Fetch recent sermons and search for a specific ID (limited fallback to avoid CPU burn)
+ * Only fetches the first page of recent sermons (most likely to contain the ID)
+ */
+async function searchRecentSermons(
+  messageId: number,
+): Promise<AudioSermon | null> {
+  try {
+    console.log(
+      `[AudioSermons] Searching for sermon ${messageId} in recent sermons`,
+    );
+    // Only fetch first page (12 items) to minimize API load
+    const response = await getAudioSermons({ perPage: 12, page: 1 });
+
+    if (response && response.data.length > 0) {
+      const found = response.data.find((s) => s.id === messageId);
+      if (found) {
+        logDebug("Sermon found in recent list", {}, { tag: "AudioSermons" });
+        return found;
+      }
+    }
+
+    logDebug("Sermon not in recent list", {}, { tag: "AudioSermons" });
+  } catch (error) {
+    logDebug("Recent sermons search completed", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
+  }
+
+  return null;
+}
+
+/**
  * Fetch details for a specific audio sermon
- * Automatically uses WP REST API if available, falls back to scraping.
+ * Automatically uses WP REST API if available, falls back to scraping,
+ * then to searching the full listing as a last resort.
+ * If all fail, returns a minimal sermon object with a playable listen URL.
  */
 export async function getAudioSermonDetail(
   messageId: number,
 ): Promise<AudioSermon | null> {
+  console.log(`[AudioSermons] Fetching detail for sermon ${messageId}`);
+
   // Try WP REST API first
   const apiResult = await fetchDetailFromWpApi(messageId);
-  if (apiResult) return apiResult;
+  if (apiResult) {
+    console.log(
+      `[AudioSermons] Successfully fetched sermon ${messageId} from API`,
+    );
+    return apiResult;
+  }
+
+  console.log(
+    `[AudioSermons] API failed, falling back to scraping for sermon ${messageId}`,
+  );
 
   // Fall back to scraping
-  return fetchDetailFromScraping(messageId);
+  const scrapedResult = await fetchDetailFromScraping(messageId);
+  if (scrapedResult) {
+    console.log(
+      `[AudioSermons] Successfully fetched sermon ${messageId} via scraping`,
+    );
+    return scrapedResult;
+  }
+
+  console.log(
+    `[AudioSermons] Scraping failed, searching recent sermons for sermon ${messageId}`,
+  );
+
+  // Last resort: search recent sermons (minimal API impact)
+  const recentResult = await searchRecentSermons(messageId);
+  if (recentResult) {
+    return recentResult;
+  }
+
+  console.error(
+    `[AudioSermons] All fetch methods failed for sermon ${messageId}. Creating minimal object with playable URL.`,
+  );
+
+  // Final fallback: Return a minimal sermon object with a playableURL
+  // The Series Engine player can work with just the ID and listen URL
+  return {
+    id: messageId,
+    title: `Message #${messageId}`,
+    speaker: "",
+    date: "",
+    listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${messageId}&enmse_av=1`,
+    downloadUrl: undefined,
+    thumbnailUrl: undefined,
+    series: undefined,
+  };
 }
 
 // =============================================================================
@@ -424,7 +568,7 @@ export async function getAudioSermonDetail(
  */
 export async function getSeriesList(): Promise<SeriesItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/series`,
       getFetchOptions(),
     );
@@ -434,7 +578,8 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
       id: item.id as number,
       title: item.title as string,
       description: item.description as string,
-      thumbnail: item.thumbnail as string,
+      thumbnail:
+        fixThumbnailUrl(item.thumbnail as string) || (item.thumbnail as string),
       messageCount: item.messageCount as number,
     }));
   } catch {
@@ -447,7 +592,7 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
  */
 export async function getSpeakersList(): Promise<SpeakerItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/speakers`,
       getFetchOptions(),
     );
@@ -468,7 +613,7 @@ export async function getSpeakersList(): Promise<SpeakerItem[]> {
  */
 export async function getTopicsList(): Promise<TopicItem[]> {
   try {
-    const response = await fetch(
+    const response = await deduplicatedFetch(
       `${WP_API_URL}/sermons/topics`,
       getFetchOptions(),
     );

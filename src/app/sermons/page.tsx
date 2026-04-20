@@ -1,13 +1,30 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
+
+// ISR: Revalidate every 10 minutes (matches cache duration)
+export const revalidate = 600;
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import SermonsPageContent from "@/components/media/SermonsPageContent";
 
 export const metadata: Metadata = {
-  title: "Audio Messages | NLWC Ikorodu",
+  title: "Audio Messages",
   description:
-    "Listen to life-changing messages from New and Living Way Church, Ikorodu.",
+    "Listen to life-changing messages from New and Living Way Church, Ikorodu. Search by speaker, category, or topic to find exactly what you need for your spiritual growth.",
+  keywords: [
+    "NLWC sermons",
+    "audio messages Ikorodu",
+    "church messages Lagos",
+    "Christian sermons Nigeria",
+    "Bible teaching Lagos",
+  ],
+  openGraph: {
+    title: "Audio Messages | NLWC Ikorodu",
+    description:
+      "Listen to life-changing messages from NLWC Ikorodu. Search by speaker, topic, or category.",
+    url: "https://ikorodu.nlwc.church/sermons",
+  },
+  alternates: { canonical: "https://ikorodu.nlwc.church/sermons" },
 };
 
 export default function SermonsPage() {

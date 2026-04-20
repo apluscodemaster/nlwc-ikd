@@ -2,6 +2,7 @@
 
 import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { BookOpen, Users, Church, Heart } from "lucide-react";
@@ -61,9 +62,7 @@ export default function StorySection() {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-                — WHO WE ARE
-              </h4>
+              <SectionLabel>Who We Are</SectionLabel>
               <h2 className="text-2xl xs:text-3xl md:text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
                 A New Testament <span className="text-primary">Church</span>,{" "}
                 <br className="hidden sm:block" />
@@ -133,7 +132,7 @@ export default function StorySection() {
             className="relative h-[350px] sm:h-[600px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="/about-img.jpg"
+              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247540/nlwc-ikd-assets/zq1kz50plmzpptw5rcdn.jpg"
               alt="Church Community"
               fill
               className="object-cover"
@@ -145,9 +144,7 @@ export default function StorySection() {
       {/* What We Stand For Section */}
       <SectionContainer className="bg-linear-to-b from-gray-50/50 to-white">
         <div className="text-center mb-12">
-          <h4 className="text-primary font-bold uppercase tracking-widest text-sm mb-4">
-            — OUR IDENTITY
-          </h4>
+          <SectionLabel>Our Identity</SectionLabel>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
             What We <span className="text-primary">Stand For</span>
           </h2>
