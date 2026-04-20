@@ -24,6 +24,7 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  MessageCircleHeart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,6 +56,12 @@ const NAV_ITEMS = [
     href: "/admin/devotionals",
     icon: BookOpen,
     description: "Daily Devotionals Management",
+  },
+  {
+    label: "Testimonies",
+    href: "/admin/testimonies",
+    icon: MessageCircleHeart,
+    description: "Review & Verify Testimonies",
   },
 ];
 
