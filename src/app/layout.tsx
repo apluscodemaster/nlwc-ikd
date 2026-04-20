@@ -13,6 +13,7 @@ import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 import { ServiceWorkerProvider } from "@/components/ServiceWorkerProvider";
 import { OfflineDetector } from "@/components/OfflineDetector";
+import GoogleTranslate from "@/components/GoogleTranslate";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -190,6 +191,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </main>
               <ScrollToTop />
               <WhatsAppButton />
+              <GoogleTranslate />
               <FellowshipPrompt />
               <RefTaggerReloader />
               <CustomDialog />
