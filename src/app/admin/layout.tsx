@@ -474,7 +474,7 @@ export default function AdminLayout({
         </AnimatePresence>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 lg:ml-72 pt-14 lg:pt-0 min-h-screen">
+        <main className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
           {children}
         </main>
       </div>
