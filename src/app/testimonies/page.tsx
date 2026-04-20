@@ -134,11 +134,15 @@ function TestimonyForm() {
       }
 
       // 2. Send email notifications via API
-      await fetch("/api/testimonies", {
+      const response = await fetch("/api/testimonies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      if (!response.ok) {
+        console.warn("Testimony email API failed, but testimony was saved to database.");
+      }
 
       setFormStatus("success");
       toast.success("Testimony submitted successfully!");

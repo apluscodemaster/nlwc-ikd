@@ -59,15 +59,19 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+    <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm min-w-0">
       <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}
+        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}
       >
-        <Icon className="w-5 h-5" />
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
       </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{count}</p>
-        <p className="text-xs text-muted-foreground font-medium">{label}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-lg sm:text-2xl font-bold text-gray-900 leading-none mb-0.5">
+          {count}
+        </p>
+        <p className="text-[9px] sm:text-xs text-muted-foreground font-medium uppercase tracking-tight truncate w-full">
+          {label}
+        </p>
       </div>
     </div>
   );
@@ -119,72 +123,76 @@ function AdminTestimonyCard({
       className="rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-4 sm:p-5 pb-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md shadow-primary/20">
+      <div className="flex items-start justify-between gap-2 p-3 sm:p-5 pb-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0 shadow-md shadow-primary/20">
             {testimony.name.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h4 className="font-bold text-gray-900 text-sm truncate">
               {testimony.name}
             </h4>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" /> {date}
             </p>
           </div>
         </div>
         <span
-          className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border shrink-0 ${statusColors[testimony.status]}`}
+          className={`inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 sm:px-2.5 py-1 rounded-full border shrink-0 ${statusColors[testimony.status]}`}
         >
-          <StatusIcon className="w-3 h-3" />
+          <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           {testimony.status}
         </span>
       </div>
 
-      {/* Details grid */}
-      <div className="grid grid-cols-2 gap-3 p-4 sm:p-5 pt-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <span className="truncate">{testimony.location}</span>
+      {/* Details list */}
+      <div className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-5 pt-2 sm:pt-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-gray-500">
+            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <span className="truncate">{testimony.location}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-gray-500">
+            <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <span className="truncate">{testimony.phone}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <span className="truncate">{testimony.phone}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <a
-            href={`mailto:${testimony.email}`}
-            className="truncate hover:text-primary transition-colors"
-          >
-            {testimony.email}
-          </a>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          {testimony.displayPreference === "public" ? (
-            <>
-              <Eye className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="text-emerald-600 font-medium">Public</span>
-            </>
-          ) : (
-            <>
-              <EyeOff className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="text-amber-600 font-medium">Private</span>
-            </>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-gray-500">
+            <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            <a
+              href={`mailto:${testimony.email}`}
+              className="truncate hover:text-primary transition-colors underline sm:no-underline"
+            >
+              {testimony.email}
+            </a>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-gray-500">
+            {testimony.displayPreference === "public" ? (
+              <>
+                <Eye className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="text-emerald-600 font-medium">Public</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-amber-600 font-medium">Private</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Testimony body */}
-      <div className="mx-4 sm:mx-5 mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+      <div className="mx-3 sm:mx-5 mb-3 sm:mb-4 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
           {testimony.testimony}
         </p>
       </div>
 
       {/* Action buttons — only for pending testimonies */}
       {testimony.status === "pending" && (
-        <div className="flex items-center gap-2 p-4 sm:p-5 pt-0">
+        <div className="flex items-stretch gap-2 p-3 sm:p-5 pt-0">
           <button
             onClick={() => onApprove(testimony.id)}
             disabled={acting === testimony.id}
@@ -214,7 +222,7 @@ function AdminTestimonyCard({
 
       {/* Re-action buttons for already decided testimonies */}
       {testimony.status !== "pending" && (
-        <div className="flex items-center gap-2 p-4 sm:p-5 pt-0">
+        <div className="flex items-center gap-2 p-3 sm:p-5 pt-0">
           {testimony.status === "rejected" && (
             <button
               onClick={() => onApprove(testimony.id)}
@@ -222,7 +230,8 @@ function AdminTestimonyCard({
               className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-medium text-xs hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors cursor-pointer disabled:opacity-50"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Approve Instead
+              <span className="sm:inline">Approve</span>
+              <span className="hidden sm:inline"> Instead</span>
             </button>
           )}
           {testimony.status === "verified" && (
@@ -232,7 +241,8 @@ function AdminTestimonyCard({
               className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-medium text-xs hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50"
             >
               <ShieldX className="w-3.5 h-3.5" />
-              Revoke Approval
+              <span className="sm:inline">Revoke</span>
+              <span className="hidden sm:inline"> Approval</span>
             </button>
           )}
         </div>
@@ -305,7 +315,7 @@ export default function AdminTestimoniesPage() {
     });
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="min-h-screen p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto overflow-x-hidden">
       {/* Page header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -324,7 +334,7 @@ export default function AdminTestimoniesPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-6">
         <StatCard
           label="Total"
           count={counts.all}
@@ -352,41 +362,43 @@ export default function AdminTestimoniesPage() {
       </div>
 
       {/* Filter tabs + search */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl">
-          {FILTER_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveFilter(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeFilter === tab.id
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              {tab.label}
-              <span
-                className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] ${
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="overflow-x-auto pb-1 hide-scrollbar snap-x snap-mandatory -mx-3 px-3 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-gray-100/80 rounded-2xl w-max">
+            {FILTER_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap snap-start ${
                   activeFilter === tab.id
-                    ? "bg-primary/10 text-primary"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                 }`}
               >
-                {counts[tab.id]}
-              </span>
-            </button>
-          ))}
+                <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                {tab.label}
+                <span
+                  className={`ml-0.5 sm:ml-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${
+                    activeFilter === tab.id
+                      ? "bg-primary text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {counts[tab.id]}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="relative flex-1 w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="relative flex-1 w-full lg:max-w-md">
+          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search testimonies..."
+            placeholder="Search name, location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-3 sm:pr-4 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
           />
         </div>
       </div>
@@ -414,7 +426,7 @@ export default function AdminTestimoniesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
           <AnimatePresence mode="popLayout">
             {filtered.map((t) => (
               <AdminTestimonyCard
