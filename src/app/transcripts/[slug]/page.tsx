@@ -85,14 +85,38 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
             {/* Type Badge */}
             <div className="flex items-center gap-3 mb-4">
               {(() => {
-                const typeConfig: Record<string, { bg: string; text: string; label: string }> = {
-                  "sunday-message": { bg: "bg-primary/10", text: "text-primary", label: "Sunday Message Transcript" },
-                  "sunday-school": { bg: "bg-amber-500/10", text: "text-amber-600", label: "Sunday School Transcript" },
-                  "bible-study": { bg: "bg-green-500/10", text: "text-green-600", label: "Bible Study Transcript" },
-                  "other-meetings": { bg: "bg-violet-500/10", text: "text-violet-600", label: "Other Meetings" },
-                  "season-of-the-spirit": { bg: "bg-orange-500/10", text: "text-orange-600", label: "Season of the Spirit" },
+                const typeConfig: Record<
+                  string,
+                  { bg: string; text: string; label: string }
+                > = {
+                  "sunday-message": {
+                    bg: "bg-primary/10",
+                    text: "text-primary",
+                    label: "Sunday Message Transcript",
+                  },
+                  "sunday-school": {
+                    bg: "bg-amber-500/10",
+                    text: "text-amber-600",
+                    label: "Sunday School Transcript",
+                  },
+                  "bible-study": {
+                    bg: "bg-green-500/10",
+                    text: "text-green-600",
+                    label: "Bible Study Transcript",
+                  },
+                  "other-meetings": {
+                    bg: "bg-violet-500/10",
+                    text: "text-violet-600",
+                    label: "Other Meetings",
+                  },
+                  "season-of-the-spirit": {
+                    bg: "bg-orange-500/10",
+                    text: "text-orange-600",
+                    label: "Season of the Spirit",
+                  },
                 };
-                const config = typeConfig[transcript.type] || typeConfig["sunday-message"];
+                const config =
+                  typeConfig[transcript.type] || typeConfig["sunday-message"];
                 // Use the first WP category name if available, otherwise use config label
                 const displayLabel = transcript.categories?.[0] || config.label;
                 return (
