@@ -24,6 +24,7 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  MessageCircleHeart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,6 +56,12 @@ const NAV_ITEMS = [
     href: "/admin/devotionals",
     icon: BookOpen,
     description: "Daily Devotionals Management",
+  },
+  {
+    label: "Testimonies",
+    href: "/admin/testimonies",
+    icon: MessageCircleHeart,
+    description: "Review & Verify Testimonies",
   },
 ];
 
@@ -467,7 +474,7 @@ export default function AdminLayout({
         </AnimatePresence>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 lg:ml-72 pt-14 lg:pt-0 min-h-screen">
+        <main className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
           {children}
         </main>
       </div>

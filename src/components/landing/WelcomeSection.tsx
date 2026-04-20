@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { ArrowRight, Radio } from "lucide-react";
 import Image from "next/image";
 import { motion, Variants } from "framer-motion";
@@ -82,10 +83,11 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
             >
               <Image
-                src="/community.webp"
-                alt="Community 1"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247545/nlwc-ikd-assets/yod0s9qidic53wxu5gmt.webp"
+                alt="Members of NLWC Ikorodu fellowshipping together"
                 fill
                 className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
               />
             </motion.div>
             <motion.div
@@ -93,10 +95,11 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="/community2.webp"
-                alt="Community 2"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1775202695/community-2_vwupj4.jpg"
+                alt="Congregation gathered for worship at NLWC Ikorodu"
                 fill
                 className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
               />
             </motion.div>
           </div>
@@ -105,10 +108,11 @@ export default function WelcomeSection() {
             className="relative h-[350px] sm:h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="/community3.avif"
-              alt="Church Pastor"
+              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247555/nlwc-ikd-assets/nnjinqr23gen813vyqrn.avif"
+              alt="NLWC Ikorodu leadership during worship service"
               fill
               className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 550px"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-6 left-6 text-white">
@@ -129,9 +133,7 @@ export default function WelcomeSection() {
           className="space-y-8"
         >
           <motion.div variants={itemVariants} className="space-y-4">
-            <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-              — WHO WE ARE
-            </h4>
+            <SectionLabel>Who We Are</SectionLabel>
             {/* <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
               A Place Encountering <br className="hidden sm:block" />{" "}
               <span className="text-primary">God&apos;s Love</span>
@@ -196,7 +198,7 @@ export default function WelcomeSection() {
                         key={unit.label}
                         className="flex flex-col items-center justify-center w-12 h-14 sm:w-14 sm:h-16 rounded-xl bg-gray-900 text-white"
                       >
-                        <span className="text-lg sm:text-xl font-bold leading-none tabular-nums">
+                        <span suppressHydrationWarning className="text-lg sm:text-xl font-bold leading-none tabular-nums">
                           {unit.value.toString().padStart(2, "0")}
                         </span>
                         <span className="text-[9px] font-bold text-white/50 uppercase mt-0.5">

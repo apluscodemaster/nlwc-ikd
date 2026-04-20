@@ -6,7 +6,7 @@ export default function Hero() {
   return (
     <section className="relative w-full h-[360px] md:h-[380px]">
       <Image
-        src="/gallery-bg.avif"
+        src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247566/nlwc-ikd-assets/zeyif8gq4lxoxw06iull.avif"
         alt="hero background"
         fill
         className="object-cover"

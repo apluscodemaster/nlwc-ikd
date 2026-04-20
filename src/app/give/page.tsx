@@ -47,7 +47,7 @@ const GIVING_OPTIONS: GivingOption[] = [
     accountName: "Life in the Spirit Ministry Ikorodu.",
     bankName: "ZENITH BANK",
     accountNumber: "1014942555",
-    logo: "/Zenith-Bank-logo.png",
+    logo: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247836/nlwc-ikd-assets/y87kx4xhn3ul7g8ftyac.png",
     accentColor: "primary",
     note: "Please include the purpose (e.g. Tithe, Offering, SOTS) in the description.",
   },
@@ -58,17 +58,17 @@ const GIVING_OPTIONS: GivingOption[] = [
     accountName: "Life in the Spirit Ministry IKD-PRJT",
     bankName: "ZENITH BANK",
     accountNumber: "1227683067",
-    logo: "/Zenith-Bank-logo.png",
+    logo: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247836/nlwc-ikd-assets/y87kx4xhn3ul7g8ftyac.png",
     accentColor: "primary",
   },
   {
     id: "welfare",
     title: "Welfare Offering",
     description: "Supporting those in need in our community",
-    accountName: "Olusegun Adefolu Adeeko",
-    bankName: "Polaris Bank",
-    accountNumber: "3011163846",
-    logo: "/Polaris-Bank-logo.png",
+    accountName: "Olayinka Esther Olanrewaju",
+    bankName: "Sterling",
+    accountNumber: "0062575473",
+    logo: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774721547/Sterling-Bank-logo_gph1d2.webp",
     accentColor: "blue",
     note: "Please kindly indicate 'Welfare' when making the transfer.",
   },
@@ -229,7 +229,14 @@ export default function GivePage() {
 
   const copyToClipboard = async (text: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      // Sanitize: trim whitespace, remove newlines, and collapse spaces
+      const sanitized = text
+        .trim()
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      
+      await navigator.clipboard.writeText(sanitized);
       setCopiedId(id);
       toast.success("Account details copied!");
       setTimeout(() => setCopiedId(null), 2000);

@@ -14,6 +14,21 @@ export type NormalizedColumn = RawColumn & {
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
 
+/**
+ * Filter out empty image URLs that couldn't be resolved
+ */
+function filterEmptyUrls(columns: NormalizedColumn[]): NormalizedColumn[] {
+  return columns.map((col) => ({
+    ...col,
+    values: Array.isArray(col.values)
+      ? col.values.filter((url) => url && url.trim().length > 0)
+      : col.values,
+    images: Array.isArray(col.images)
+      ? col.images.filter((url) => url && url.trim().length > 0)
+      : [],
+  }));
+}
+
 export async function GET() {
   if (!SHEET_ID) {
     return NextResponse.json(
@@ -39,11 +54,15 @@ export async function GET() {
       columnsRaw,
     ) as NormalizedColumn[];
 
-    // ✅ Step 2: Transform all image URLs to proper Googleusercontent links
-    const cleaned = cleanImageColumns(normalized);
+    // ✅ Step 2: Transform all image URLs (Drive & Photos) to proper Googleusercontent links
+    // This now includes async resolution of Google Photos share links
+    const cleaned = await cleanImageColumns(normalized);
+
+    // ✅ Step 2.5: Filter out empty URLs that couldn't be resolved
+    const filtered = filterEmptyUrls(cleaned);
 
     // ✅ Step 3: Group columns by date (no limit)
-    const grouped = groupColumnsToDates(cleaned);
+    const grouped = groupColumnsToDates(filtered);
 
     // ✅ Step 4: Return JSON response
     return NextResponse.json({ dates: grouped });

@@ -5,11 +5,14 @@ export default function robots(): MetadataRoute.Robots {
     process.env.NEXT_PUBLIC_SITE_URL || "https://ikorodu.nlwc.church";
 
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: "/api/",
-    },
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/api/", "/admin/", "/admin", "/offline"],
+      },
+    ],
     sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }
