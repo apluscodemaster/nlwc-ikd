@@ -23,13 +23,23 @@ const testimonySchema = z.object({
 // ──────────────────────────────────────────────
 
 function createTransporter() {
+  const host = process.env.SMTP_HOST || "send.one.com";
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const user = process.env.CHURCH_EMAIL_ADDRESS;
+
+  console.log(`📡 Initializing SMTP transporter: ${host}:${port} (${user})`);
+
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "send.one.com",
-    port: Number(process.env.SMTP_PORT) || 465,
+    host,
+    port,
     secure: true, // SSL
     auth: {
-      user: process.env.CHURCH_EMAIL_ADDRESS,
+      user,
       pass: process.env.CHURCH_EMAIL_PASSWORD,
+    },
+    tls: {
+      // One.com often has incomplete cert chains
+      rejectUnauthorized: false,
     },
   });
 }
@@ -182,10 +192,10 @@ export async function POST(req: Request) {
 
     // Send emails (don't block the response if SMTP is not configured)
     if (churchEmail && process.env.CHURCH_EMAIL_PASSWORD) {
-      try {
-        const transporter = createTransporter();
+      const transporter = createTransporter();
 
-        // 1. Notification to church admin
+      // 1. Notification to church admin
+      try {
         const adminEmail = buildAdminNotificationEmail(data);
         await transporter.sendMail({
           from: `"NLWC Ikorodu" <${churchEmail}>`,
@@ -193,26 +203,26 @@ export async function POST(req: Request) {
           replyTo: data.email,
           ...adminEmail,
         });
+        console.log(`✅ Admin notification sent for testimony from ${data.name}`);
+      } catch (adminError) {
+        console.error("⚠️ Failed to send admin notification:", adminError);
+      }
 
-        // 2. Auto-reply acknowledgement to sender
+      // 2. Auto-reply acknowledgement to sender
+      try {
         const replyEmail = buildAutoReplyEmail(data);
         await transporter.sendMail({
           from: `"NLWC Ikorodu" <${churchEmail}>`,
           to: data.email,
+          replyTo: churchEmail,
           ...replyEmail,
         });
-
-        console.log(
-          `✅ Testimony emails sent for ${data.name} (${data.email})`,
-        );
-      } catch (emailError) {
-        // Log but don't fail the request — testimony is already in Firestore
-        console.error("⚠️ Failed to send testimony emails:", emailError);
+        console.log(`✅ Auto-reply sent to ${data.email}`);
+      } catch (replyError) {
+        console.error(`⚠️ Failed to send auto-reply to ${data.email}:`, replyError);
       }
     } else {
-      console.warn(
-        "⚠️ SMTP credentials not configured — skipping email notifications",
-      );
+      console.warn("⚠️ SMTP credentials not configured — skipping email notifications");
     }
 
     return NextResponse.json(
