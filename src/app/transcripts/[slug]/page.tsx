@@ -25,12 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!transcript) {
     return {
-      title: "Transcript Not Found | NLWC Ikorodu",
+      title: "Transcript Not Found",
     };
   }
 
   return {
-    title: `${transcript.title} | NLWC Ikorodu`,
+    title: `${transcript.title}`,
     description:
       transcript.excerpt || `Read the transcript of ${transcript.title}`,
   };
