@@ -93,7 +93,7 @@ function buildAdminNotificationEmail(data: z.infer<typeof testimonySchema>) {
                 <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; ${
                   data.displayPreference === "public"
                     ? "background: #ecfdf5; color: #059669;"
-                    : "background: #fef3c7; color: #d97706;"
+                    : "background: #fef3c7; color: #333333;"
                 }">${data.displayPreference === "public" ? "Public" : "Private"}</span>
               </td>
             </tr>
