@@ -34,6 +34,8 @@ import {
 // Public Testimony Card (name + body only)
 // ──────────────────────────────────────────────
 
+const TESTIMONY_CHAR_LIMIT = 250;
+
 function PublicTestimonyCard({
   testimony,
   index,
@@ -41,6 +43,12 @@ function PublicTestimonyCard({
   testimony: Testimony;
   index: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = testimony.testimony.length > TESTIMONY_CHAR_LIMIT;
+  const displayText = expanded || !isLong
+    ? testimony.testimony
+    : testimony.testimony.slice(0, TESTIMONY_CHAR_LIMIT).trimEnd() + "…";
+
   const date = new Date(testimony.createdAt).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "short",
@@ -55,7 +63,7 @@ function PublicTestimonyCard({
       transition={{ duration: 0.5, delay: index * 0.08 }}
       className="group relative"
     >
-      <div className="h-full p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500">
+      <div className="h-full flex flex-col p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500">
         {/* Quote icon */}
         <div className="mb-4">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -64,12 +72,22 @@ function PublicTestimonyCard({
         </div>
 
         {/* Testimony body */}
-        <p className="text-gray-700 leading-relaxed text-[15px] mb-6 whitespace-pre-wrap">
-          &ldquo;{testimony.testimony}&rdquo;
-        </p>
+        <div className="flex-1 mb-6">
+          <p className="text-gray-700 leading-relaxed text-[15px] whitespace-pre-wrap">
+            &ldquo;{displayText}&rdquo;
+          </p>
+          {isLong && (
+            <button
+              onClick={() => setExpanded((prev) => !prev)}
+              className="mt-2 text-primary text-sm font-semibold hover:underline"
+            >
+              {expanded ? "Show less" : "Read more"}
+            </button>
+          )}
+        </div>
 
         {/* Footer: name + date */}
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-50 mt-auto">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20">
             {testimony.name.charAt(0).toUpperCase()}
           </div>
