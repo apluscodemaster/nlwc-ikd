@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -92,6 +94,7 @@ function TestimonyForm() {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [displayPref, setDisplayPref] = useState<DisplayPreference>("public");
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,7 +104,7 @@ function TestimonyForm() {
     const data = {
       name: formData.get("name") as string,
       location: formData.get("location") as string,
-      phone: formData.get("phone") as string,
+      phone: "+" + phone,
       email: formData.get("email") as string,
       testimony: formData.get("testimony") as string,
       displayPreference: displayPref,
@@ -111,7 +114,7 @@ function TestimonyForm() {
     if (
       !data.name?.trim() ||
       !data.location?.trim() ||
-      !data.phone?.trim() ||
+      !phone?.trim() ||
       !data.email?.trim() ||
       !data.testimony?.trim()
     ) {
@@ -245,13 +248,20 @@ function TestimonyForm() {
             >
               <Phone className="w-3.5 h-3.5 text-gray-400" /> Phone Number *
             </label>
-            <input
-              name="phone"
-              required
-              type="tel"
-              id="testimony-phone"
-              placeholder="+234 800 000 0000"
-              className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm md:text-base"
+            <PhoneInput
+              country="ng"
+              value={phone}
+              onChange={(value) => setPhone(value)}
+              inputProps={{
+                id: "testimony-phone",
+                required: true,
+              }}
+              enableSearch
+              searchPlaceholder="Search country..."
+              containerClass="!w-full"
+              inputClass="!w-full !h-12 md:!h-14 !px-4 md:!px-6 !pl-[48px] md:!pl-[56px] !rounded-2xl !border !border-gray-200 focus:!border-primary focus:!ring-[2px] focus:!ring-primary/20 !outline-none !transition-all !font-medium !text-sm md:!text-base !bg-white"
+              buttonClass="!bg-transparent !border-0 !rounded-l-2xl hover:!bg-transparent focus:!bg-transparent !pl-1 md:!pl-2"
+              dropdownClass="!rounded-2xl !shadow-xl !border-gray-100 !mt-1"
             />
           </div>
           <div className="space-y-2">
@@ -432,7 +442,7 @@ export default function TestimoniesPage() {
 
       {/* ─── Share Section ─── */}
       <SectionContainer id="share" containerClassName="max-w-7xl">
-        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 md:gap-16 items-start">
+        <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-10 md:gap-16 items-start">
           {/* Left column — description */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
