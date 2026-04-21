@@ -396,9 +396,12 @@ function TestimonyForm() {
 // Main page
 // ──────────────────────────────────────────────
 
+const TESTIMONIES_PER_PAGE = 9;
+
 export default function TestimoniesPage() {
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(TESTIMONIES_PER_PAGE);
 
   useEffect(() => {
     let cancelled = false;
@@ -583,11 +586,23 @@ export default function TestimoniesPage() {
             </a>
           </motion.div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonies.map((t, i) => (
-              <PublicTestimonyCard key={t.id} testimony={t} index={i} />
-            ))}
-          </div>
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonies.slice(0, visibleCount).map((t, i) => (
+                <PublicTestimonyCard key={t.id} testimony={t} index={i} />
+              ))}
+            </div>
+            {visibleCount < testimonies.length && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={() => setVisibleCount((prev) => prev + TESTIMONIES_PER_PAGE)}
+                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </SectionContainer>
     </main>
