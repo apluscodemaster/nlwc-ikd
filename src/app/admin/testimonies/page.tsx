@@ -81,6 +81,8 @@ function StatCard({
 // Admin Testimony Card
 // ──────────────────────────────────────────────
 
+const TESTIMONY_CHAR_LIMIT = 250;
+
 function AdminTestimonyCard({
   testimony,
   onApprove,
@@ -92,6 +94,12 @@ function AdminTestimonyCard({
   onReject: (id: string) => void;
   acting: string | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = testimony.testimony.length > TESTIMONY_CHAR_LIMIT;
+  const displayText = expanded || !isLong
+    ? testimony.testimony
+    : testimony.testimony.slice(0, TESTIMONY_CHAR_LIMIT).trimEnd() + "…";
+
   const date = new Date(testimony.createdAt).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "short",
@@ -186,8 +194,16 @@ function AdminTestimonyCard({
       {/* Testimony body */}
       <div className="mx-3 sm:mx-5 mb-3 sm:mb-4 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
         <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-          {testimony.testimony}
+          {displayText}
         </p>
+        {isLong && (
+          <button
+            onClick={() => setExpanded((prev) => !prev)}
+            className="mt-2 text-primary text-xs font-semibold hover:underline"
+          >
+            {expanded ? "Show less" : "Read more"}
+          </button>
+        )}
       </div>
 
       {/* Action buttons — only for pending testimonies */}
@@ -426,7 +442,7 @@ export default function AdminTestimoniesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid md:grid-cols-2 gap-3 sm:gap-4 items-start">
           <AnimatePresence mode="popLayout">
             {filtered.map((t) => (
               <AdminTestimonyCard

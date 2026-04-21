@@ -63,7 +63,7 @@ function PublicTestimonyCard({
       transition={{ duration: 0.5, delay: index * 0.08 }}
       className="group relative"
     >
-      <div className="h-full flex flex-col p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500">
         {/* Quote icon */}
         <div className="mb-4">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -72,7 +72,7 @@ function PublicTestimonyCard({
         </div>
 
         {/* Testimony body */}
-        <div className="flex-1 mb-6">
+        <div className="mb-6">
           <p className="text-gray-700 leading-relaxed text-[15px] whitespace-pre-wrap">
             &ldquo;{displayText}&rdquo;
           </p>
@@ -87,7 +87,7 @@ function PublicTestimonyCard({
         </div>
 
         {/* Footer: name + date */}
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-50 mt-auto">
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20">
             {testimony.name.charAt(0).toUpperCase()}
           </div>
@@ -605,7 +605,7 @@ export default function TestimoniesPage() {
           </motion.div>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
               {testimonies.slice(0, visibleCount).map((t, i) => (
                 <PublicTestimonyCard key={t.id} testimony={t} index={i} />
               ))}
