@@ -140,7 +140,7 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
             is a powerful encouragement to the body of Christ!
           </p>
           <p style="color: #444; line-height: 1.7; font-size: 15px; margin: 0 0 16px;">
-            Your testimony is currently being reviewed by our team. ${
+            Your testimony is currently being reviewed by our Pastors. ${
               data.displayPreference === "public"
                 ? "Once verified, it will be displayed on our testimonies page for others to be blessed by your story."
                 : "As you requested, your testimony will remain private and will not be displayed publicly."
@@ -160,7 +160,7 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
         
         <div style="padding: 16px 24px; background: #f9fafb; text-align: center; border-top: 1px solid #f0f0f0;">
           <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-            New Life Worldwide Church, Ikorodu • 
+            The New & Living Way Church, Ikorodu • 
             <a href="https://ikorodu.nlwc.church" style="color: #FF7C18; text-decoration: none;">ikorodu.nlwc.church</a>
           </p>
         </div>
@@ -203,7 +203,9 @@ export async function POST(req: Request) {
           replyTo: data.email,
           ...adminEmail,
         });
-        console.log(`✅ Admin notification sent for testimony from ${data.name}`);
+        console.log(
+          `✅ Admin notification sent for testimony from ${data.name}`,
+        );
       } catch (adminError) {
         console.error("⚠️ Failed to send admin notification:", adminError);
       }
@@ -219,10 +221,15 @@ export async function POST(req: Request) {
         });
         console.log(`✅ Auto-reply sent to ${data.email}`);
       } catch (replyError) {
-        console.error(`⚠️ Failed to send auto-reply to ${data.email}:`, replyError);
+        console.error(
+          `⚠️ Failed to send auto-reply to ${data.email}:`,
+          replyError,
+        );
       }
     } else {
-      console.warn("⚠️ SMTP credentials not configured — skipping email notifications");
+      console.warn(
+        "⚠️ SMTP credentials not configured — skipping email notifications",
+      );
     }
 
     return NextResponse.json(
