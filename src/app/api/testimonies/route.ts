@@ -61,7 +61,7 @@ function buildAdminNotificationEmail(data: z.infer<typeof testimonySchema>) {
   return {
     subject: `📢 New Testimony Submission from ${data.name}`,
     html: `
-      <div style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
+      <div style="font-family: 'Jost', 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
         <div style="background: linear-gradient(135deg, #FF7C18 0%, #FF9A47 100%); padding: 32px 24px; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">New Testimony Received</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">${dateStr}</p>
@@ -125,7 +125,7 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
   return {
     subject: "Thank You for Sharing Your Testimony — NLWC Ikorodu",
     html: `
-      <div style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
+      <div style="font-family: 'Jost', 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
         <div style="background: linear-gradient(135deg, #FF7C18 0%, #FF9A47 100%); padding: 32px 24px; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">Thank You, ${data.name}!</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">Your testimony has been received</p>
@@ -194,12 +194,15 @@ export async function POST(req: Request) {
     if (churchEmail && process.env.CHURCH_EMAIL_PASSWORD) {
       const transporter = createTransporter();
 
-      // 1. Notification to church admin
+      // 1. Notification to church admin(s)
       try {
         const adminEmail = buildAdminNotificationEmail(data);
+        const notifyEmails = process.env.TESTIMONY_NOTIFY_EMAILS
+          ? process.env.TESTIMONY_NOTIFY_EMAILS.split(",").map((e) => e.trim()).filter(Boolean)
+          : [churchEmail];
         await transporter.sendMail({
           from: `"NLWC Ikorodu" <${churchEmail}>`,
-          to: churchEmail,
+          to: notifyEmails,
           replyTo: data.email,
           ...adminEmail,
         });
