@@ -25,6 +25,7 @@ import {
   Eye,
   EyeOff,
   MessageCircleHeart,
+  BrainCircuit,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -62,6 +63,12 @@ const NAV_ITEMS = [
     href: "/admin/testimonies",
     icon: MessageCircleHeart,
     description: "Review & Verify Testimonies",
+  },
+  {
+    label: "Quiz",
+    href: "/admin/quiz",
+    icon: BrainCircuit,
+    description: "Manage Quiz Questions & Stats",
   },
 ];
 
