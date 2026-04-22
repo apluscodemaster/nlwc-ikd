@@ -1,13 +1,4 @@
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  query,
-  where,
-  limit,
-} from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 import { getSupabase } from "@/lib/supabase";
 import type {
   QuizQuestion,
@@ -24,16 +15,14 @@ export async function fetchQuizQuestions(
   category?: QuizCategory,
   count: number = 10,
 ): Promise<QuizQuestion[]> {
-  const ref = collection(db, "quiz_questions");
-  const constraints = [];
+  let q: FirebaseFirestore.Query = adminDb.collection("quiz_questions");
 
   if (category) {
-    constraints.push(where("category", "==", category));
+    q = q.where("category", "==", category);
   }
-  constraints.push(limit(count));
+  q = q.limit(count);
 
-  const q = query(ref, ...constraints);
-  const snapshot = await getDocs(q);
+  const snapshot = await q.get();
 
   const questions: QuizQuestion[] = snapshot.docs.map((d) => ({
     id: d.id,
@@ -48,9 +37,9 @@ export async function fetchQuizQuestions(
 export async function fetchQuestionById(
   questionId: string,
 ): Promise<QuizQuestion | null> {
-  const ref = doc(db, "quiz_questions", questionId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
+  const ref = adminDb.collection("quiz_questions").doc(questionId);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
   return { id: snap.id, ...(snap.data() as Omit<QuizQuestion, "id">) };
 }
 
