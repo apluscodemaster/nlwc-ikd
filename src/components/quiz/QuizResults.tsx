@@ -10,7 +10,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { QuizResult } from "@/types/quiz";
+import type { QuizResult, QuizCategory } from "@/types/quiz";
 
 interface QuizResultsProps {
   result: QuizResult;
@@ -18,9 +18,7 @@ interface QuizResultsProps {
 }
 
 export default function QuizResults({ result, onRetry }: QuizResultsProps) {
-  const pct = Math.round(
-    (result.correct_answers / result.total_questions) * 100,
-  );
+  const pct = result.score_percent;
 
   const grade =
     pct >= 80
@@ -61,24 +59,26 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
           </div>
         </div>
 
-        {/* Weak Areas */}
-        {result.weak_areas.length > 0 && (
+        {/* Category Breakdown */}
+        {Object.keys(result.by_category).length > 0 && (
           <div className="mb-8 text-left">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               Areas to Improve
             </h3>
             <div className="space-y-2">
-              {result.weak_areas.map((area) => (
+              {(Object.entries(result.by_category) as [QuizCategory, { correct: number; total: number }][])
+                .filter(([, data]) => data.total > 0 && data.correct / data.total < 0.6)
+                .map(([category, data]) => (
                 <div
-                  key={area.category}
+                  key={category}
                   className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100"
                 >
                   <span className="text-sm font-medium text-gray-800">
-                    {area.category}
+                    {category}
                   </span>
                   <span className="text-xs font-bold text-amber-600">
-                    {Math.round(area.fail_rate * 100)}% incorrect
+                    {Math.round(((data.total - data.correct) / data.total) * 100)}% incorrect
                   </span>
                 </div>
               ))}
@@ -94,19 +94,17 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
               Recommended Content
             </h3>
             <div className="space-y-2">
-              {result.recommendations.map((rec) => (
+              {result.recommendations.map((rec, idx) => (
                 <a
-                  key={rec.wp_post_id}
-                  href={rec.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  key={idx}
+                  href={rec.listen_url || rec.read_url || "#"}
                   className="block p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors"
                 >
                   <p className="text-sm font-medium text-gray-800">
-                    {rec.title}
+                    {rec.content.title}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {rec.quiz_category}
+                    {rec.category} · {rec.reason}
                   </p>
                 </a>
               ))}

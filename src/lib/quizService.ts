@@ -1,5 +1,6 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getSupabase } from "@/lib/supabase";
+import type { FirebaseFirestore } from "firebase-admin";
 import type {
   QuizQuestion,
   QuizAttempt,
