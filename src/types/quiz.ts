@@ -61,6 +61,7 @@ export interface ContentMapping {
 
 // ── Leaderboard ──
 export interface LeaderboardEntry {
+  session_id: string;
   username: string;
   total_score: number;
   quizzes_taken: number;
