@@ -15,6 +15,19 @@ const CACHE_FILES = [
   "/devotionals",
 ];
 
+/**
+ * Check if a URL can be cached (must be http or https)
+ * Prevents "chrome-extension://" and other unsupported schemes from causing errors
+ */
+function isCacheable(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 // Install event - cache files
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -62,8 +75,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Cache successful responses
-          if (response && response.status === 200) {
+          // Cache successful responses (only if URL is cacheable)
+          if (response && response.status === 200 && isCacheable(event.request.url)) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
@@ -108,6 +121,9 @@ self.addEventListener("fetch", (event) => {
     );
   } else {
     // For other resources (CSS, JS, images, etc.), try cache first, then network
+    // BUT: Skip caching API responses - let HTTP Cache-Control headers handle it
+    const isApiRequest = url.includes("/api/");
+    
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -116,8 +132,10 @@ self.addEventListener("fetch", (event) => {
 
         return fetch(event.request)
           .then((response) => {
-            // Cache successful responses for future use
-            if (response && response.status === 200) {
+            // Cache successful responses for future use, BUT:
+            // - Skip API requests (HTTP Cache-Control headers handle it)
+            // - Skip unsupported schemes (chrome-extension, etc.)
+            if (response && response.status === 200 && !isApiRequest && isCacheable(event.request.url)) {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME).then((cache) => {
                 cache.put(event.request, responseToCache);

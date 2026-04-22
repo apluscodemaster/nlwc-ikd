@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { motion, Variants } from "framer-motion";
 import { Cross, Heart, Anchor } from "lucide-react";
 
@@ -74,9 +75,7 @@ export default function OurJourney() {
         variants={headingVariants}
         className="text-center mb-16 sm:mb-20 space-y-4"
       >
-        <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-          — Our Journey
-        </h4>
+        <SectionLabel>Our Journey</SectionLabel>
         <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
           Faith · Hope · <span className="text-primary">Charity</span>
         </h2>
