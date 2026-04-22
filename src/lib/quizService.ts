@@ -1,4 +1,4 @@
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { getSupabase } from "@/lib/supabase";
 import type {
   QuizQuestion,
@@ -15,6 +15,7 @@ export async function fetchQuizQuestions(
   category?: QuizCategory,
   count: number = 10,
 ): Promise<QuizQuestion[]> {
+  const adminDb = getAdminDb();
   let q: FirebaseFirestore.Query = adminDb.collection("quiz_questions");
 
   if (category) {
@@ -37,6 +38,7 @@ export async function fetchQuizQuestions(
 export async function fetchQuestionById(
   questionId: string,
 ): Promise<QuizQuestion | null> {
+  const adminDb = getAdminDb();
   const ref = adminDb.collection("quiz_questions").doc(questionId);
   const snap = await ref.get();
   if (!snap.exists) return null;
