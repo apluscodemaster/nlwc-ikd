@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-} from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 import type { QuizCategory } from "@/types/quiz";
 
 // ── GET: List all questions (admin only — no answer stripping) ──
 export async function GET() {
   try {
-    const ref = collection(db, "quiz_questions");
-    const q = query(ref, orderBy("category"));
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection("quiz_questions").orderBy("category").get();
 
     const questions = snapshot.docs.map((d) => ({
       id: d.id,
@@ -101,8 +89,7 @@ export async function POST(req: NextRequest) {
     if (difficulty) docData.difficulty = difficulty;
     if (sermon_ref) docData.sermon_ref = sermon_ref.trim();
 
-    const ref = collection(db, "quiz_questions");
-    const docRef = await addDoc(ref, docData);
+    const docRef = await adminDb.collection("quiz_questions").add(docData);
 
     return NextResponse.json({ id: docRef.id, ...docData }, { status: 201 });
   } catch (error) {
@@ -156,8 +143,8 @@ export async function PUT(req: NextRequest) {
     if (updates.question) updates.question = updates.question.trim();
     if (updates.sermon_ref) updates.sermon_ref = updates.sermon_ref.trim();
 
-    const ref = doc(db, "quiz_questions", id);
-    await updateDoc(ref, updates);
+    const ref = adminDb.collection("quiz_questions").doc(id);
+    await ref.update(updates);
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
@@ -182,8 +169,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const ref = doc(db, "quiz_questions", id);
-    await deleteDoc(ref);
+    const ref = adminDb.collection("quiz_questions").doc(id);
+    await ref.delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {
