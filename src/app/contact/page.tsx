@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ContactForm from "@/components/contact/ContactForm";
 import ContactInfo, { SocialConnect } from "@/components/contact/ContactInfo";
 import MapEmbed from "@/components/contact/MapEmbed";
 import { motion } from "framer-motion";
+import { PenLine, BookOpen } from "lucide-react";
 
 export default function ContactPage() {
   return (
@@ -41,6 +43,30 @@ export default function ContactPage() {
             </div>
 
             <ContactInfo />
+
+            {/* Testimony Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-row gap-2 xs:gap-3 mt-6"
+            >
+              <Link
+                href="/testimonies#share"
+                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full bg-primary text-white font-bold text-[9px] xs:text-[11px] sm:text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                <PenLine className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 group-hover:rotate-[-8deg] transition-transform shrink-0" />
+                Share Testimony
+              </Link>
+              <Link
+                href="/testimonies#view"
+                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full border-2 border-primary text-primary font-bold text-[9px] xs:text-[11px] sm:text-sm hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                <BookOpen className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 group-hover:rotate-[5deg] transition-transform shrink-0" />
+                View Testimonies
+              </Link>
+            </motion.div>
           </motion.div>
 
           <motion.div

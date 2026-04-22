@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import LivePlayer from "@/components/live/LivePlayer";
@@ -20,11 +20,15 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResumePrompt from "@/components/media/ResumePrompt";
+import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import {
   saveMediaProgress,
   getMediaProgress,
   clearMediaProgress,
+  formatProgressTime,
+  type MediaProgress,
 } from "@/lib/mediaProgress";
+import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
 
 interface VideoMessage {
   date: string;
@@ -42,6 +46,40 @@ async function fetchVideoMessages(): Promise<VideoMessage[]> {
   return data.messages;
 }
 
+// =============================================================================
+// Progress bar overlay for video cards
+// =============================================================================
+
+function VideoProgressBar({ videoId }: { videoId: string }) {
+  const [progress, setProgress] = useState<MediaProgress | null>(null);
+
+  useEffect(() => {
+    setProgress(getMediaProgress(videoId));
+  }, [videoId]);
+
+  if (!progress || progress.duration <= 0) return null;
+
+  const percent = Math.min(
+    (progress.currentTime / progress.duration) * 100,
+    100,
+  );
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 z-10">
+      <div className="h-1.5 bg-black/30">
+        <div
+          className="h-full bg-primary transition-[width] duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="absolute right-2 bottom-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+        {formatProgressTime(progress.currentTime)} /{" "}
+        {formatProgressTime(progress.duration)}
+      </div>
+    </div>
+  );
+}
+
 export default function LivePage() {
   const {
     data: videos = [],
@@ -54,10 +92,18 @@ export default function LivePage() {
   });
 
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
+  const [resumeStartTime, setResumeStartTime] = useState(0);
   const [resumePrompt, setResumePrompt] = useState<{
     video: VideoMessage;
-    savedProgress: ReturnType<typeof getMediaProgress>;
+    savedProgress: MediaProgress;
   } | null>(null);
+
+  // YouTube player refs
+  const ytPlayerRef = useRef<YT.Player | null>(null);
+  const ytPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   // Scroll to top on mount — delayed so it runs after Next.js scroll restoration.
   // Skip when a #hash is present (e.g. /live#live-player from the listen-live page).
@@ -74,19 +120,147 @@ export default function LivePage() {
 
   const recentVideos = videos.slice(0, 3);
 
+  // ===========================================================================
+  // YouTube IFrame Player API integration for progress tracking
+  // ===========================================================================
+
+  const saveCurrentProgress = useCallback(() => {
+    if (!ytPlayerRef.current || !selectedVideo) return;
+    try {
+      const time = ytPlayerRef.current.getCurrentTime();
+      const dur = ytPlayerRef.current.getDuration();
+      if (time > 0 && dur > 0) {
+        saveMediaProgress(
+          selectedVideo.id,
+          time,
+          dur,
+          selectedVideo.title || "Video Message",
+          "video",
+        );
+      }
+    } catch {
+      // Player may have been destroyed
+    }
+  }, [selectedVideo]);
+
+  const startProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    progressIntervalRef.current = setInterval(() => {
+      saveCurrentProgress();
+    }, 5000);
+  }, [saveCurrentProgress]);
+
+  const stopProgressInterval = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
+
+  // Initialise YouTube player when selectedVideo changes
+  useEffect(() => {
+    if (!selectedVideo || !ytPlayerContainerRef.current) return;
+
+    let cancelled = false;
+
+    async function initPlayer() {
+      await loadYouTubeIframeAPI();
+      if (cancelled || !ytPlayerContainerRef.current) return;
+
+      // Destroy previous player if any
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        ytPlayerRef.current = null;
+      }
+
+      ytPlayerRef.current = new window.YT.Player(
+        ytPlayerContainerRef.current!,
+        {
+          videoId: selectedVideo!.id,
+          playerVars: {
+            autoplay: 1,
+            rel: 0,
+            modestbranding: 1,
+            start: Math.floor(resumeStartTime),
+          },
+          events: {
+            onStateChange: (event: YT.OnStateChangeEvent) => {
+              if (event.data === YT.PlayerState.PLAYING) {
+                startProgressInterval();
+              } else if (
+                event.data === YT.PlayerState.PAUSED ||
+                event.data === YT.PlayerState.BUFFERING
+              ) {
+                stopProgressInterval();
+                saveCurrentProgress();
+              } else if (event.data === YT.PlayerState.ENDED) {
+                stopProgressInterval();
+                if (selectedVideo) {
+                  clearMediaProgress(selectedVideo.id);
+                }
+              }
+            },
+          },
+        },
+      );
+    }
+
+    initPlayer();
+
+    return () => {
+      cancelled = true;
+      stopProgressInterval();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideo]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopProgressInterval();
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          // ignore
+        }
+        ytPlayerRef.current = null;
+      }
+    };
+  }, [stopProgressInterval]);
+
+  // Save progress on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveCurrentProgress();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [saveCurrentProgress]);
+
+  // ===========================================================================
+  // Video play handlers (with resume prompt)
+  // ===========================================================================
+
   const handleVideoPlay = useCallback((video: VideoMessage) => {
-    // Check for saved progress
     const saved = getMediaProgress(video.id);
     if (saved && saved.currentTime > 0) {
       setResumePrompt({ video, savedProgress: saved });
     } else {
+      setResumeStartTime(0);
       setSelectedVideo(video);
     }
   }, []);
 
   const handleResume = useCallback(() => {
     if (!resumePrompt) return;
-    // Save progress timestamp to URL params for YouTube embed
+    setResumeStartTime(resumePrompt.savedProgress.currentTime);
     setSelectedVideo(resumePrompt.video);
     setResumePrompt(null);
   }, [resumePrompt]);
@@ -94,6 +268,7 @@ export default function LivePage() {
   const handleStartOver = useCallback(() => {
     if (!resumePrompt) return;
     clearMediaProgress(resumePrompt.video.id);
+    setResumeStartTime(0);
     setSelectedVideo(resumePrompt.video);
     setResumePrompt(null);
   }, [resumePrompt]);
@@ -101,6 +276,23 @@ export default function LivePage() {
   const handleDismissResume = useCallback(() => {
     setResumePrompt(null);
   }, []);
+
+  const handleClosePlayer = useCallback(() => {
+    saveCurrentProgress();
+    stopProgressInterval();
+
+    if (ytPlayerRef.current) {
+      try {
+        ytPlayerRef.current.destroy();
+      } catch {
+        // ignore
+      }
+      ytPlayerRef.current = null;
+    }
+
+    setSelectedVideo(null);
+    setResumeStartTime(0);
+  }, [saveCurrentProgress, stopProgressInterval]);
 
   return (
     <main>
@@ -224,6 +416,9 @@ export default function LivePage() {
                       <Play className="w-6 h-6 text-white fill-white ml-1" />
                     </div>
                   </div>
+
+                  {/* Progress bar overlay */}
+                  <VideoProgressBar videoId={video.id} />
                 </div>
 
                 {/* Content */}
@@ -264,19 +459,22 @@ export default function LivePage() {
       </SectionContainer>
 
       {/* Resume Prompt */}
-      {resumePrompt && resumePrompt.savedProgress && (
-        <ResumePrompt
-          isOpen={!!resumePrompt}
-          mediaProgress={resumePrompt.savedProgress}
-          mediaTitle={resumePrompt.video.title}
-          mediaType="video"
-          onResume={handleResume}
-          onStartOver={handleStartOver}
-          onDismiss={handleDismissResume}
-        />
-      )}
+      <AnimatePresence>
+        {resumePrompt && (
+          <ResumePrompt
+            isOpen={!!resumePrompt}
+            mediaProgress={resumePrompt.savedProgress}
+            mediaTitle={resumePrompt.video.title}
+            mediaThumbnailUrl={`https://img.youtube.com/vi/${resumePrompt.video.id}/maxresdefault.jpg`}
+            mediaType="video"
+            onResume={handleResume}
+            onStartOver={handleStartOver}
+            onDismiss={handleDismissResume}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* ===== VIDEO PLAYER MODAL ===== */}
+      {/* ===== VIDEO PLAYER MODAL (YouTube IFrame API) ===== */}
       <AnimatePresence>
         {selectedVideo && (
           <div className="fixed inset-0 z-100 flex items-center justify-center p-0 sm:p-6 lg:p-8">
@@ -284,19 +482,6 @@ export default function LivePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                // Save progress before closing
-                if (selectedVideo) {
-                  saveMediaProgress(
-                    selectedVideo.id,
-                    0, // Video player doesn't expose current time via iframe
-                    0,
-                    selectedVideo.title || "Video Message",
-                    "video",
-                  );
-                }
-                setSelectedVideo(null);
-              }}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
             />
 
@@ -307,30 +492,16 @@ export default function LivePage() {
               className="relative w-full max-w-5xl aspect-video bg-black rounded-none sm:rounded-3xl overflow-hidden shadow-2xl"
             >
               <button
-                onClick={() => {
-                  // Save progress before closing
-                  if (selectedVideo) {
-                    saveMediaProgress(
-                      selectedVideo.id,
-                      0, // Video player doesn't expose current time via iframe
-                      0,
-                      selectedVideo.title || "Video Message",
-                      "video",
-                    );
-                  }
-                  setSelectedVideo(null);
-                }}
+                onClick={handleClosePlayer}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <iframe
-                src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1&rel=0&modestbranding=1`}
-                title={selectedVideo.title}
-                className="w-full h-full border-none relative z-10"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              {/* YouTube Player Container (managed by YT IFrame API) */}
+              <div
+                ref={ytPlayerContainerRef}
+                className="w-full h-full relative z-10"
               />
 
               {/* Info Overlay */}
@@ -353,6 +524,9 @@ export default function LivePage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* First Time Streaming User Popup */}
+      <FirstTimeStreamingForm />
     </main>
   );
 }

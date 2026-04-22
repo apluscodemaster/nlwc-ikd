@@ -2,6 +2,7 @@
 
 import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { meetings } from "@/data/meetings";
 import { motion, Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -26,9 +27,7 @@ export default function MeetingsGrid() {
   return (
     <SectionContainer className="bg-gray-900 text-white">
       <div className="text-center mb-16 space-y-4">
-        <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-          — OUR MEETINGS
-        </h4>
+        <SectionLabel>Our Meetings</SectionLabel>
         <h2 className="text-3xl md:text-5xl font-bold">
           Something for <span className="text-primary">Everyone</span>
         </h2>

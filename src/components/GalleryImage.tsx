@@ -41,6 +41,12 @@ const GalleryImage: React.FC<Props> = ({
       return;
     }
 
+    // Skip probing for unresolved Google Photos share links (they'll 403)
+    if (src.includes("photos.app.goo.gl") || src.includes("photos.google.com/share")) {
+      setImgDims({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+      return;
+    }
+
     const img = new window.Image();
     const probeSrc = toGoogleImageURL(src);
     img.src = probeSrc;
@@ -56,7 +62,13 @@ const GalleryImage: React.FC<Props> = ({
   const width = imgDims?.width || DEFAULT_WIDTH;
   const height = imgDims?.height || DEFAULT_HEIGHT;
 
-  const baseUrl = toGoogleImageURL(src);
+  // Strip any existing size parameters from lh3 URLs (e.g. =w600-h315-p-k)
+  // before we append our own size params
+  let baseUrl = toGoogleImageURL(src);
+  if (baseUrl.includes("lh3.googleusercontent.com")) {
+    baseUrl = baseUrl.replace(/=[whspkno\d\-]+$/, "");
+  }
+
   // Both Google Drive (/d/) and Google Photos (/pw/) use lh3.googleusercontent.com
   // and support the same size-parameter system (=wN-hN-no, =s0, etc.)
   const isGoogleusercontent = baseUrl.includes("lh3.googleusercontent.com");
