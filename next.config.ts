@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const WP_ORIGIN = "https://ikdadmin.nlwc.church";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   // 301 redirects: reclaim ranking power from old WordPress URLs that may still be indexed.
   // These patterns are common on WordPress sites at this domain. Google will credit the new URLs.
   async redirects() {

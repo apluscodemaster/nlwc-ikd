@@ -32,7 +32,9 @@ export default function ScriptureContent({
         prose-strong:text-gray-900
         prose-a:text-primary prose-a:no-underline hover:prose-a:underline
         prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-        prose-li:text-gray-700 prose-li:text-justify
+        prose-ul:my-4 prose-ul:pl-6
+        prose-ol:my-4 prose-ol:pl-6
+        prose-li:text-gray-700 prose-li:text-justify prose-li:my-2
         wrap-break-word
         [&_p:empty]:hidden [&_p:empty+br]:hidden
         [&_p]:mb-4 [&_p]:mt-0
