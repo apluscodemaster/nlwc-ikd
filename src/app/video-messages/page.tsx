@@ -4,9 +4,16 @@ import SectionContainer from "@/components/shared/SectionContainer";
 import VideoMessagesContent from "@/components/media/VideoMessagesContent";
 
 export const metadata: Metadata = {
-  title: "Video Messages | NLWC Ikorodu",
+  title: "Video Messages",
   description:
-    "Watch life-changing video messages and teachings from New and Living Way Church, Ikorodu.",
+    "Watch life-changing video messages and teachings from New and Living Way Church, Ikorodu. Browse by speaker, topic, or service category.",
+  openGraph: {
+    title: "Video Messages | NLWC Ikorodu",
+    description:
+      "Watch teachings and sermons from NLWC Ikorodu. Browse by speaker or topic.",
+    url: "https://ikorodu.nlwc.church/video-messages",
+  },
+  alternates: { canonical: "https://ikorodu.nlwc.church/video-messages" },
 };
 
 export default function VideoMessagesPage() {

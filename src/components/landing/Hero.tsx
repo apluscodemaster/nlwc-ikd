@@ -26,10 +26,11 @@ export default function Hero() {
       >
         <Image
           src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247833/nlwc-ikd-assets/ygkueoffnv3wvqy4d7ir.avif"
-          alt="Church Worship Sanctuary"
+          alt="Congregation worshipping at NLWC Ikorodu during Sunday service"
           fill
           className="object-cover"
           priority
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
         />
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/60" />

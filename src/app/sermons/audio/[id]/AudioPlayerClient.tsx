@@ -24,6 +24,7 @@ import {
   X,
   FastForward,
   RotateCcw,
+  Repeat2,
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 import {
@@ -49,6 +50,7 @@ export default function AudioPlayerClient({
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [copied, setCopied] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Resume prompt state
@@ -243,9 +245,16 @@ export default function AudioPlayerClient({
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onEnded={() => {
-          setIsPlaying(false);
-          // Clear progress when finished
           if (sermon) clearMediaProgress(sermon.id);
+
+          // Repeat-one: replay the same sermon
+          if (repeatMode === "one" && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play();
+            return;
+          }
+
+          setIsPlaying(false);
         }}
         preload="metadata"
       />
@@ -523,6 +532,23 @@ export default function AudioPlayerClient({
 
         {/* Secondary Controls */}
         <div className="flex items-center justify-center gap-4 mt-6 pb-8">
+          {/* Repeat */}
+          <button
+            onClick={() => setRepeatMode((prev) => (prev === "off" ? "one" : "off"))}
+            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 relative ${
+              repeatMode === "one"
+                ? "bg-primary/20 text-primary"
+                : "bg-white/10 text-white/60 hover:text-white hover:bg-white/20"
+            }`}
+            aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat this message"}
+            title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
+          >
+            <Repeat2 className="w-5 h-5" />
+            {repeatMode === "one" && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">1</span>
+            )}
+          </button>
+
           <button
             onClick={cycleSpeed}
             className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all hover:bg-white/20 active:scale-95 min-w-[52px]"

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Daily Devotional | NLWC Ikorodu",
+  title: "Daily Devotional",
   description:
     "Read today's daily devotional from The New & Living Way Church, Ikorodu.",
 };

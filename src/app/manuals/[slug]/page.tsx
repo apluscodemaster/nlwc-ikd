@@ -44,12 +44,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!manual) {
     return {
-      title: "Manual Not Found | NLWC Ikorodu",
+      title: "Manual Not Found",
     };
   }
 
   return {
-    title: `${manual.title} | Sunday School Manuals | NLWC Ikorodu`,
+    title: `${manual.title} | Sunday School Manuals`,
     description:
       manual.excerpt || `Read the Sunday School manual: ${manual.title}`,
   };

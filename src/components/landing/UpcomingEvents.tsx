@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import SectionLabel from "@/components/shared/SectionLabel";
 import {
   Calendar,
   MapPin,
@@ -233,9 +234,7 @@ export default function UpcomingEvents() {
           variants={headingVariants}
           className="text-center mb-16 space-y-4"
         >
-          <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-            — THIS WEEK &amp; BEYOND
-          </h4>
+          <SectionLabel>This Week &amp; Beyond</SectionLabel>
           <h2 className="text-3xl md:text-5xl font-bold text-white">
             Upcoming <span className="text-primary">Gatherings</span>
           </h2>

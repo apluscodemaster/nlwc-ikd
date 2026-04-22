@@ -23,12 +23,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!sermon) {
     return {
-      title: "Sermon Not Found | NLWC Ikorodu",
+      title: "Sermon Not Found",
     };
   }
 
   return {
-    title: `${sermon.title} | NLWC Ikorodu`,
+    title: `${sermon.title}`,
     description: sermon.excerpt || `Read the message: ${sermon.title}`,
   };
 }
