@@ -7,6 +7,7 @@ const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmi
 
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
 import { calculateReadingTime } from "@/utils/readingTime";
+import { logError } from "@/lib/devLog";
 
 // WordPress Category IDs
 export const WP_CATEGORIES = {
@@ -726,7 +727,7 @@ export async function getAdjacentManuals(
         : null,
     };
   } catch (error) {
-    console.error("Failed to fetch adjacent manuals:", error);
+    logError("Failed to fetch adjacent manuals", error, { tag: "WordPress" });
     return { previous: null, next: null };
   }
 }

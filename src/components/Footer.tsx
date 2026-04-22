@@ -71,8 +71,9 @@ export default function Footer() {
               <Image
                 src="/logo-200-x-80.png"
                 alt="NLWC logo"
-                width={100}
+                width={200}
                 height={80}
+                style={{ width: "auto", height: "auto" }}
               />
             </Link>
           </div>

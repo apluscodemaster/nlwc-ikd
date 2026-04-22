@@ -6,9 +6,16 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Daily Devotionals Archive | NLWC Ikorodu",
+  title: "Daily Devotionals Archive",
   description:
-    "Browse the complete archive of daily devotionals from New and Living Way Church, Ikorodu. Read or download past devotional materials.",
+    "Browse the complete archive of daily devotionals from New and Living Way Church, Ikorodu. Read or download past devotional materials to enrich your daily walk with God.",
+  openGraph: {
+    title: "Daily Devotionals | NLWC Ikorodu",
+    description:
+      "Browse our archive of daily devotional materials from NLWC Ikorodu to enrich your walk with God.",
+    url: "https://ikorodu.nlwc.church/devotionals",
+  },
+  alternates: { canonical: "https://ikorodu.nlwc.church/devotionals" },
 };
 
 // Revalidate every 60 seconds (ISR)

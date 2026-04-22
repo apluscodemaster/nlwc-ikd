@@ -13,6 +13,8 @@ import {
   Download,
   Headphones,
   ChevronDown,
+  Repeat2,
+  Shuffle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -49,6 +51,12 @@ export interface MobileFullPlayerProps {
   onProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   /** Use "dark" for dark-themed pages, "light" for white/light pages */
   variant?: "dark" | "light";
+  /** Repeat mode: "off" = no repeat, "one" = repeat current track */
+  repeatMode?: "off" | "one";
+  /** Whether shuffle is active */
+  isShuffled?: boolean;
+  onToggleRepeat?: () => void;
+  onToggleShuffle?: () => void;
 }
 
 export default function MobileFullPlayer({
@@ -70,6 +78,10 @@ export default function MobileFullPlayer({
   onToggleMute,
   onCycleSpeed,
   onProgressClick,
+  repeatMode = "off",
+  isShuffled = false,
+  onToggleRepeat,
+  onToggleShuffle,
 }: MobileFullPlayerProps) {
   // Prevent background scroll when player is shown
   useEffect(() => {
@@ -218,7 +230,38 @@ export default function MobileFullPlayer({
           </div>
 
           {/* Secondary Controls */}
-          <div className="flex items-center justify-center gap-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] px-8">
+          <div className="flex items-center justify-center gap-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] px-8">
+            {onToggleShuffle && (
+              <button
+                onClick={onToggleShuffle}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 ${
+                  isShuffled
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+              >
+                <Shuffle className="w-5 h-5" />
+              </button>
+            )}
+
+            {onToggleRepeat && (
+              <button
+                onClick={onToggleRepeat}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 relative ${
+                  repeatMode === "one"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/10 text-white/60 hover:text-white"
+                }`}
+                aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+              >
+                <Repeat2 className="w-5 h-5" />
+                {repeatMode === "one" && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">1</span>
+                )}
+              </button>
+            )}
+
             <button
               onClick={onCycleSpeed}
               className="flex items-center justify-center px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm font-bold transition-all active:scale-95 min-w-[52px]"

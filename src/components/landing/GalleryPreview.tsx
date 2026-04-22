@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import SectionLabel from "@/components/shared/SectionLabel";
 import { useQuery } from "@tanstack/react-query";
 import type { DateColumns } from "@/lib/sheets";
 import Link from "next/link";
@@ -63,9 +64,7 @@ export default function GalleryPreview() {
         className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"
       >
         <div className="space-y-4 max-w-2xl">
-          <h4 className="text-primary font-bold uppercase tracking-widest text-sm">
-            — OUR GALLERY
-          </h4>
+          <SectionLabel>Our Gallery</SectionLabel>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">
             Our Worship <span className="text-primary">Experience</span>
           </h2>
