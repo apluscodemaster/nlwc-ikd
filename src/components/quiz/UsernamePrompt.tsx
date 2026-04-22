@@ -6,7 +6,7 @@ import { User, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface UsernamePromptProps {
-  onSubmit: (username: string) => Promise<void>;
+  onSubmit: (username: string) => Promise<unknown>;
 }
 
 export default function UsernamePrompt({ onSubmit }: UsernamePromptProps) {
