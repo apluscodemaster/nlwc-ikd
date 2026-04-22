@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import type { QuizCategory } from "@/types/quiz";
 
 // ── GET: List all questions (admin only — no answer stripping) ──
 export async function GET() {
   try {
-    const snapshot = await adminDb.collection("quiz_questions").orderBy("category").get();
+    const adminDb = getAdminDb();
+    const snapshot = await adminDb
+      .collection("quiz_questions")
+      .orderBy("category")
+      .get();
 
     const questions = snapshot.docs.map((d) => ({
       id: d.id,
@@ -84,18 +88,21 @@ export async function POST(req: NextRequest) {
       options: options.map((o: string) => o.trim()),
       correctAnswer,
       category,
+      created_at: new Date().toISOString(),
     };
 
     if (difficulty) docData.difficulty = difficulty;
     if (sermon_ref) docData.sermon_ref = sermon_ref.trim();
 
+    const adminDb = getAdminDb();
     const docRef = await adminDb.collection("quiz_questions").add(docData);
 
     return NextResponse.json({ id: docRef.id, ...docData }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create question:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Failed to create question:", errorMessage);
     return NextResponse.json(
-      { error: "Failed to create question" },
+      { error: "Failed to create question", details: errorMessage },
       { status: 500 },
     );
   }
@@ -143,6 +150,7 @@ export async function PUT(req: NextRequest) {
     if (updates.question) updates.question = updates.question.trim();
     if (updates.sermon_ref) updates.sermon_ref = updates.sermon_ref.trim();
 
+    const adminDb = getAdminDb();
     const ref = adminDb.collection("quiz_questions").doc(id);
     await ref.update(updates);
 
@@ -169,6 +177,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const adminDb = getAdminDb();
     const ref = adminDb.collection("quiz_questions").doc(id);
     await ref.delete();
 
