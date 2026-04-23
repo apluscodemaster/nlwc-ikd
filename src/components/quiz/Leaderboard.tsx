@@ -40,7 +40,7 @@ export default function Leaderboard({
 
           return (
             <motion.div
-              key={entry.session_id}
+              key={`${entry.session_id}-${i}`}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
