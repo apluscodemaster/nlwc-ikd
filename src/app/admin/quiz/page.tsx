@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
+import { showConfirm } from "@/components/shared/CustomDialog";
 
 // ──────────────────────────────────────────────
 // Types
@@ -604,7 +605,16 @@ export default function AdminQuizPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this question? This cannot be undone.")) return;
+    const confirmed = await showConfirm(
+      "Delete this question? This cannot be undone.",
+      {
+        title: "Delete Question",
+        variant: "warning",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+      },
+    );
+    if (!confirmed) return;
     setDeletingId(id);
     try {
       const res = await fetch(
