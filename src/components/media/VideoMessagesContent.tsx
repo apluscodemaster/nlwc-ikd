@@ -351,7 +351,7 @@ export default function VideoMessagesContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center">
+      <div className="min-h-100 flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
         <p className="text-muted-foreground font-medium animate-pulse">
           Fetching latest video messages...
@@ -362,7 +362,7 @@ export default function VideoMessagesContent() {
 
   if (error) {
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center text-center px-4">
+      <div className="min-h-100 flex flex-col items-center justify-center text-center px-4">
         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
           <Youtube className="w-8 h-8" />
         </div>
@@ -446,7 +446,7 @@ export default function VideoMessagesContent() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 min-h-[400px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 min-h-100">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPage + searchQuery + selectedMinister}
@@ -515,11 +515,66 @@ export default function VideoMessagesContent() {
                     </h3>
                   </div>
 
-                  <div className="mt-5 pt-5 border-t border-gray-50 flex items-center justify-between">
+                  <div className="mt-5 pt-5 border-t border-gray-50 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
                       {video.serviceCategory || "Video Message"}
                     </span>
-                    <Youtube className="w-5 h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
+                    <div className="flex items-center gap-2">
+                      {/* Share Button */}
+                      <button
+                        type="button"
+                        title="Share this video"
+                        className="p-1 rounded-full hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Slugify the title for the URL
+                          function slugify(text: string) {
+                            return text
+                              .toString()
+                              .normalize("NFKD")
+                              .replace(/[\u0300-\u036F]/g, "") // Remove accents
+                              .replace(/[^a-zA-Z0-9\s-]/g, "") // Remove non-alphanumeric
+                              .trim()
+                              .replace(/\s+/g, "-")
+                              .replace(/-+/g, "-")
+                              .toLowerCase();
+                          }
+                          const slug = slugify(video.title || "video-message");
+                          // Optionally append ID for uniqueness if needed:
+                          // const url = `${window.location.origin}/video-messages/${slug}-${video.id}`;
+                          const url = `${window.location.origin}/video-messages/${slug}`;
+                          const shareData = {
+                            title: video.title || "Video Message",
+                            text: video.title || "Video Message",
+                            url,
+                          };
+                          if (navigator.share) {
+                            navigator.share(shareData).catch(() => {
+                              navigator.clipboard.writeText(url);
+                              alert("Link copied to clipboard!");
+                            });
+                          } else {
+                            navigator.clipboard.writeText(url);
+                            alert("Link copied to clipboard!");
+                          }
+                        }}
+                        aria-label="Share video"
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          fill="none"
+                          viewBox="0 0 20 20"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0-5.83 1.17A3 3 0 1 0 5 12.83V13a3 3 0 1 0 4 2.83V15a3 3 0 0 0 6-2.83V12.83A3 3 0 0 0 15 8Zm0-4a2 2 0 1 1-2 2 2 2 0 0 1 2-2ZM7 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm-4 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm4 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm8 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm2-7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
+                            fill="#888"
+                          />
+                        </svg>
+                      </button>
+                      <Youtube className="w-5 h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -625,7 +680,7 @@ export default function VideoMessagesContent() {
       {/* ===== VIDEO PLAYER MODAL (YouTube IFrame API) ===== */}
       <AnimatePresence>
         {selectedVideo && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-6 lg:p-8">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-0 sm:p-6 lg:p-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
