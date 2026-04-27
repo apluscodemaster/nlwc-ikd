@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Tag,
+  Share2,
 } from "lucide-react";
 import ResumePrompt from "@/components/media/ResumePrompt";
 import {
@@ -560,18 +561,7 @@ export default function VideoMessagesContent() {
                         }}
                         aria-label="Share video"
                       >
-                        <svg
-                          width="18"
-                          height="18"
-                          fill="none"
-                          viewBox="0 0 20 20"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0-5.83 1.17A3 3 0 1 0 5 12.83V13a3 3 0 1 0 4 2.83V15a3 3 0 0 0 6-2.83V12.83A3 3 0 0 0 15 8Zm0-4a2 2 0 1 1-2 2 2 2 0 0 1 2-2ZM7 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm-4 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm4 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm8 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm2-7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
-                            fill="#888"
-                          />
-                        </svg>
+                        <Share2 className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
                       </button>
                       <Youtube className="w-5 h-5 text-gray-300 group-hover:text-red-600 transition-colors" />
                     </div>
