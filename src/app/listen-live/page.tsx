@@ -191,7 +191,9 @@ export default function ListenLivePage() {
     // Auto-play next sermon in the list
     const sermonList = sermons.slice(0, 3);
     if (activeSermon && sermonList.length > 0) {
-      const currentIndex = sermonList.findIndex((s) => s.id === activeSermon.id);
+      const currentIndex = sermonList.findIndex(
+        (s) => s.id === activeSermon.id,
+      );
 
       let nextSermon: AudioSermon | undefined;
 
@@ -567,6 +569,7 @@ export default function ListenLivePage() {
                     onClick={toggleMute}
                     className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
                     aria-label={isMuted ? "Unmute" : "Mute"}
+                    title="Adjust volume"
                   >
                     {isMuted ? (
                       <VolumeX className="w-4 h-4" />
@@ -593,7 +596,9 @@ export default function ListenLivePage() {
                         ? "text-primary bg-primary/10"
                         : "text-gray-500 hover:text-primary hover:bg-primary/5"
                     }`}
-                    aria-label={isShuffled ? "Disable shuffle" : "Enable shuffle"}
+                    aria-label={
+                      isShuffled ? "Disable shuffle" : "Enable shuffle"
+                    }
                     title={isShuffled ? "Shuffle on" : "Shuffle off"}
                   >
                     <Shuffle className="w-4 h-4" />
@@ -607,12 +612,16 @@ export default function ListenLivePage() {
                         ? "text-primary bg-primary/10"
                         : "text-gray-500 hover:text-primary hover:bg-primary/5"
                     }`}
-                    aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat current"}
+                    aria-label={
+                      repeatMode === "one" ? "Disable repeat" : "Repeat current"
+                    }
                     title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
                   >
                     <Repeat2 className="w-4 h-4" />
                     {repeatMode === "one" && (
-                      <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">1</span>
+                      <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">
+                        1
+                      </span>
                     )}
                   </button>
 
