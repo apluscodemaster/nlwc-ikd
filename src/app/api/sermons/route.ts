@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMessageTranscripts } from "@/lib/wordpress";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
+  // Apply rate limiting to public endpoint
+  const rateLimitError = rateLimitMiddleware(request, "public");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get("page") || "1");
-  const perPage = parseInt(searchParams.get("per_page") || "9");
+  let perPage = parseInt(searchParams.get("per_page") || "9");
   const search = searchParams.get("search") || undefined;
+
+  // Validate pagination parameters
+  if (page < 1) {
+    return NextResponse.json({ error: "Page must be >= 1" }, { status: 400 });
+  }
+
+  // Enforce max page size
+  perPage = Math.min(Math.max(perPage, 1), 100);
 
   try {
     const data = await getMessageTranscripts({
@@ -27,7 +42,7 @@ export async function GET(request: NextRequest) {
       link: `/sermons/${transcript.slug}`,
     }));
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         sermons,
         pagination: {
@@ -43,6 +58,7 @@ export async function GET(request: NextRequest) {
         },
       }
     );
+    return response;
   } catch (error) {
     console.error("Error fetching sermons:", error);
     return NextResponse.json(
