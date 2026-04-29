@@ -27,7 +27,11 @@ const DEFAULT_CONFIGS: Record<string, RateLimitConfig> = {
  */
 function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
-  return (forwarded ? forwarded.split(",")[0].trim() : request.ip) || "unknown";
+  return (
+    (forwarded
+      ? forwarded.split(",")[0].trim()
+      : request.headers.get("x-real-ip")) || "unknown"
+  );
 }
 
 /**
@@ -43,7 +47,9 @@ function isWithinRateLimit(key: string, config: RateLimitConfig): boolean {
   }
 
   // Remove old timestamps outside the window
-  rateLimitStore[key] = rateLimitStore[key].filter((time) => time > windowStart);
+  rateLimitStore[key] = rateLimitStore[key].filter(
+    (time) => time > windowStart,
+  );
 
   // Check if under limit
   if (rateLimitStore[key].length < config.maxRequests) {
@@ -94,7 +100,9 @@ export function cleanupRateLimitStore(olderThanMs: number = 3600000) {
   const threshold = Date.now() - olderThanMs;
 
   Object.keys(rateLimitStore).forEach((key) => {
-    rateLimitStore[key] = rateLimitStore[key].filter((time) => time > threshold);
+    rateLimitStore[key] = rateLimitStore[key].filter(
+      (time) => time > threshold,
+    );
 
     // Remove key if empty
     if (rateLimitStore[key].length === 0) {

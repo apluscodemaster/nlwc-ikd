@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getGoogleSheetsClient } from "@/lib/googleSheets";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export interface VideoMessage {
   date: string;
@@ -13,10 +14,16 @@ export interface VideoMessage {
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const RANGE = "video_messages!A:E"; // Date, URL, Title, Minister, Service_Category
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Apply rate limiting to public endpoint
+  const rateLimitError = rateLimitMiddleware(request, "public");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   if (!SHEET_ID) {
     return NextResponse.json(
-      { error: "Missing GOOGLE_SHEETS_ID" },
+      { error: "Server configuration error" },
       { status: 500 },
     );
   }
@@ -24,12 +31,12 @@ export async function GET() {
   try {
     const sheets = await getGoogleSheetsClient();
 
-    const response = await sheets.spreadsheets.values.get({
+    const sheetsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: RANGE,
     });
 
-    const rows = response.data.values ?? [];
+    const rows = sheetsResponse.data.values ?? [];
 
     // Skip header row if it exists and looks like headers
     const dataRows =
@@ -54,7 +61,10 @@ export async function GET() {
       .filter((m) => m.youtubeUrl && m.date) // Basic validation
       .reverse(); // Latest first
 
-    return NextResponse.json({ messages });
+    // Add cache headers for successful responses
+    const response = NextResponse.json({ messages });
+    response.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
+    return response;
   } catch (err: unknown) {
     console.error("Video Messages API Error:", err);
     return NextResponse.json(
