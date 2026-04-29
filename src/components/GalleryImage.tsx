@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTrigger,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,9 @@ const GalleryImage: React.FC<Props> = ({
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none shadow-2xl backdrop-blur-2xl">
         <VisuallyHidden>
           <DialogTitle>{alt || "Gallery Image Preview"}</DialogTitle>
+          <DialogDescription>
+            High resolution preview of the gallery image. Use the download button to save the full resolution version.
+          </DialogDescription>
         </VisuallyHidden>
         <div className="relative w-full h-[95vh] flex items-center justify-center p-4">
           <Image
