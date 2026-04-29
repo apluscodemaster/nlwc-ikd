@@ -108,6 +108,58 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Security headers including Content Security Policy
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Content Security Policy to prevent XSS attacks
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com; " +
+              "style-src 'self' 'unsafe-inline' fonts.googleapis.com *.cloudinary.com; " +
+              "img-src 'self' data: https: blob:; " +
+              "font-src 'self' data: fonts.gstatic.com; " +
+              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.firebase.com *.firebaseio.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church googleapis.com one.com; " +
+              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com; " +
+              "media-src 'self' https: blob:; " +
+              "object-src 'none'; " +
+              "base-uri 'self'; " +
+              "form-action 'self'",
+          },
+          // Prevent X-Frame-Options (clickjacking) attacks
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          // Prevent MIME type sniffing
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          // Enable XSS protection in older browsers
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          // Referrer policy for privacy
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          // Permission policy (feature policy)
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

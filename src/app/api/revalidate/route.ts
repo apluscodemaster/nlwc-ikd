@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { verifyWebhookSecret } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
  * On-demand revalidation endpoint
@@ -7,19 +9,26 @@ import { revalidatePath } from "next/cache";
  * Allows manual triggering of ISR revalidation for faster updates
  *
  * Usage:
- * - POST /api/revalidate?path=/transcripts&secret=<WEBHOOK_SECRET>
- * - POST /api/revalidate?tag=transcripts&secret=<WEBHOOK_SECRET>
+ * POST /api/revalidate?path=/transcripts
+ * Headers: Authorization: Bearer <WEBHOOK_SECRET>
  *
  * The secret must match WEBHOOK_SECRET environment variable for security
+ *
+ * ⚠️ BREAKING CHANGE: Secret now passed in Authorization header, not query param
+ * This prevents secrets from being logged in browser history and server logs
  */
 export async function POST(request: NextRequest) {
-  // Verify webhook secret
-  const secret = request.nextUrl.searchParams.get("secret");
-  const webhookSecret = process.env.WEBHOOK_SECRET;
+  // Apply rate limiting (strict for revalidation)
+  const rateLimitError = rateLimitMiddleware(request, "strict");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
 
-  if (!secret || !webhookSecret || secret !== webhookSecret) {
+  // Verify webhook secret from Authorization header
+  const secretCheck = verifyWebhookSecret(request);
+  if (!secretCheck.isValid) {
     return NextResponse.json(
-      { error: "Unauthorized: Invalid or missing secret" },
+      { error: secretCheck.error || "Unauthorized" },
       { status: 401 },
     );
   }
