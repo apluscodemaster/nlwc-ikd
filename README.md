@@ -2,6 +2,17 @@
 
 A modern, fast, and beautiful web application for New and Living Way Church, Ikorodu. Built with Next.js 16, this app serves as a digital hub for church media, resources, and content.
 
+## 🎯 Project Status
+
+| Phase | Status | Items |
+|-------|--------|-------|
+| **Phase 1** - Critical Security | ✅ Complete | Authentication, Rate Limiting, CSP Headers, Input Validation, Webhook Security |
+| **Phase 2** - High Priority UX | ✅ Complete | Error Boundaries, Form Validation, Loading States, Success/Error Messages |
+| **Phase 3** - Performance | ⏳ Pending | Image Optimization, Lazy Loading, Cache Optimization, Code Splitting |
+| **Phase 4** - Polish | ⏳ Pending | Accessibility, Keyboard Navigation, SEO Metadata, SSL Configuration |
+
+**Last Updated:** April 29, 2026
+
 ## ✨ Features
 
 ### 🎥 Media Gallery
@@ -249,17 +260,60 @@ npm install
 ```
 
 3. Set up environment variables:
-   Create a `.env.local` file in the root directory:
+   Create a `.env.local` file in the root directory with the following variables:
 
 ```env
-# Google Sheets API
-GOOGLE_SHEETS_PRIVATE_KEY=your_private_key
-GOOGLE_SHEETS_CLIENT_EMAIL=your_client_email
-SPREADSHEET_ID=your_spreadsheet_id
+# 🔐 Admin API Authentication
+ADMIN_API_KEY=your_secure_api_key_here
 
-# Optional: WordPress webhook secret (for revalidation)
-WEBHOOK_SECRET=your_webhook_secret
+# 🔗 Webhook Security (moved from query params to Authorization header)
+WEBHOOK_SECRET=your_webhook_secret_here
+
+# 📊 Google Sheets API
+GOOGLE_SHEETS_ID=your_spreadsheet_id
+GOOGLE_PROJECT_ID=your_project_id
+GOOGLE_PRIVATE_KEY=your_private_key
+GOOGLE_CLIENT_EMAIL=your_client_email
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+GOOGLE_TOKEN_URI=https://oauth2.googleapis.com/token
+GOOGLE_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+GOOGLE_CLIENT_CERT_URL=your_client_cert_url
+
+# ☁️ Cloudinary Config
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# 🔥 Firebase Config
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# 📧 Church Email (SMTP)
+CHURCH_EMAIL_ADDRESS=your_email@church.com
+CHURCH_EMAIL_PASSWORD=your_email_password
+SMTP_HOST=send.one.com
+SMTP_PORT=465
+
+# 🗄️ Supabase Config
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+# 🔥 Firebase Admin Config
+FIREBASE_ADMIN_PROJECT_ID=your_project_id
+FIREBASE_ADMIN_CLIENT_EMAIL=your_admin_email
+FIREBASE_ADMIN_PRIVATE_KEY=your_admin_private_key
 ```
+
+**Security Notes:**
+- Generate `ADMIN_API_KEY` with: `openssl rand -base64 32`
+- Never commit `.env.local` to git (already in `.gitignore`)
+- In production (Vercel), add these via Project Settings → Environment Variables
+- For development, `NODE_ENV=development` allows self-signed SSL certs
 
 4. Run the development server:
 
@@ -269,15 +323,28 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## � Security Implementation
+
+The app has been hardened with comprehensive security measures (Phase 1 & 2 Complete):
+
+- **Authentication**: Bearer token authentication on all admin endpoints
+- **Rate Limiting**: IP-based rate limiting (100 req/min public, 1000 req/min authenticated, 10 req/min sensitive)
+- **Input Validation**: Zod schema validation on all forms
+- **Content Security Policy**: XSS protection with strict CSP headers
+- **Error Handling**: Graceful error boundaries with user-friendly messages
+- **TLS/SSL**: Strict certificate validation in production
+
+For detailed security status, see **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)**.
+
 ## 📝 WordPress Integration
 
-The app integrates with WordPress at `https://ikorodu.nlwc.church` as a headless CMS. See **[WORDPRESS_INTEGRATION.md](./WORDPRESS_INTEGRATION.md)** for comprehensive documentation on:
+The app integrates with WordPress at `https://ikorodu.nlwc.church` as a headless CMS with the following capabilities:
 
-- Architecture and data flow
-- Caching strategies
-- API endpoints
-- Customization guide
-- Troubleshooting tips
+- **140+ Sunday Message Transcripts** with search and pagination
+- **111+ Sunday School Manuals** with category organization
+- **Real-time sync** with on-demand ISR revalidation
+- **Advanced search** with 300ms debounce
+- **Cached responses** for optimal performance
 
 ### Quick Start with WordPress Content
 
@@ -306,6 +373,55 @@ The build process:
 - Optimizes assets
 - Pre-renders static pages
 - Generates first 20 transcript pages (SSG)
+
+## ⚠️ Breaking API Changes (Phase 1 & 2)
+
+If you're using the protected API endpoints, update your code:
+
+### Admin Endpoints Now Require Authentication
+
+**Before:**
+```javascript
+const response = await fetch("/api/wp/publish", {
+  method: "POST",
+  body: JSON.stringify(data),
+});
+```
+
+**After:**
+```javascript
+const response = await fetch("/api/wp/publish", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.ADMIN_API_KEY}`,
+  },
+  body: JSON.stringify(data),
+});
+```
+
+**Affected Endpoints:**
+- `/api/wp/publish`
+- `/api/wp/upload-media`
+- `/api/devotionals/upload`
+- `/api/devotionals/delete`
+
+### Revalidation Endpoint (Secret in Header, Not URL)
+
+**Before:**
+```javascript
+fetch("/api/revalidate?path=/page&secret=WEBHOOK_SECRET")
+```
+
+**After:**
+```javascript
+fetch("/api/revalidate?path=/page", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.WEBHOOK_SECRET}`,
+  },
+})
+```
 
 ## 🗺️ Site Navigation Reference
 
@@ -357,8 +473,10 @@ Here's a quick reference to access the main sections of the website:
 
 ## 📚 Documentation
 
-- **[WORDPRESS_INTEGRATION.md](./WORDPRESS_INTEGRATION.md)** - WordPress API integration guide
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Feature implementation details
+- **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)** - Security audit and implementation status
+- **[IMPLEMENTATION_PROGRESS.md](./IMPLEMENTATION_PROGRESS.md)** - Phase 1 & 2 implementation details
+- **[APP_AUDIT_REPORT.md](./APP_AUDIT_REPORT.md)** - Full 50-issue audit report (reference)
+- **[QUIZ_IMPLEMENTATION.md](./QUIZ_IMPLEMENTATION.md)** - Quiz feature documentation
 
 ## 🤝 Contributing
 
