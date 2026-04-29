@@ -1,11 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import crypto from "crypto";
+import { requireAuth } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const API_KEY = process.env.CLOUDINARY_API_KEY;
 const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
+  // Verify authentication
+  const authError = requireAuth(request);
+  if (authError) {
+    return authError;
+  }
+
+  // Apply rate limiting
+  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   try {
     const { publicId } = await request.json();
 

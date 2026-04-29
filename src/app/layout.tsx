@@ -137,7 +137,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       "https://www.instagram.com/nlwcikorodu",
       "https://www.whatsapp.com",
     ],
-    foundingDate: "2009",
+    foundingDate: "2016",
     founder: {
       "@type": "Organization",
       name: "NLWC Leadership",
@@ -254,7 +254,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               },
               telephone: "+2347066644051",
               email: "ikoroduchurchadmin@nlwc.church",
-              openingHours: ["Su 08:00-20:00", "We 17:00-20:00"],
+              openingHours: [
+                "Su 08:00-20:00",
+                "We 17:00-20:00",
+                "Fr 17:00-22:00",
+              ],
               sameAs: ["", "https://nlwc.church"],
               parentOrganization: {
                 "@type": "Organization",

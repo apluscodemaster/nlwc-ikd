@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -11,12 +13,25 @@ const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
  * Accepts a multipart form with a single file field ("file")
  * and uploads it to the WordPress Media Library.
  *
+ * Requires authentication via Authorization header: Bearer <ADMIN_API_KEY>
  * Returns { id, url } of the created media attachment.
  */
 export async function POST(request: NextRequest) {
+  // Verify authentication
+  const authError = requireAuth(request);
+  if (authError) {
+    return authError;
+  }
+
+  // Apply rate limiting
+  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   if (!WP_APP_PASSWORD) {
     return NextResponse.json(
-      { error: "WP_APPLICATION_PASSWORD is not configured" },
+      { error: "Server configuration error" },
       { status: 500 },
     );
   }
