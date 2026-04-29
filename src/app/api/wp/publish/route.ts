@@ -1,14 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { wpPublishSchema } from "@/types/wp-types";
 import { publishToWordPress } from "@/services/wp-service";
+import { requireAuth } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
  * POST /api/wp/publish
  *
  * Accepts a JSON body matching one of the WP content schemas,
  * validates it, and publishes to WordPress.
+ *
+ * Requires authentication via Authorization header: Bearer <ADMIN_API_KEY>
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verify authentication
+  const authError = requireAuth(request);
+  if (authError) {
+    return authError;
+  }
+
+  // Apply rate limiting
+  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   try {
     const body = await request.json();
 
