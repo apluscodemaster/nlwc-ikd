@@ -38,8 +38,7 @@ function createTransporter() {
       pass: process.env.CHURCH_EMAIL_PASSWORD,
     },
     tls: {
-      // One.com often has incomplete cert chains
-      rejectUnauthorized: false,
+      rejectUnauthorized: process.env.NODE_ENV === "development" ? false : true,
     },
   });
 }
@@ -198,7 +197,9 @@ export async function POST(req: Request) {
       try {
         const adminEmail = buildAdminNotificationEmail(data);
         const notifyEmails = process.env.TESTIMONY_NOTIFY_EMAILS
-          ? process.env.TESTIMONY_NOTIFY_EMAILS.split(",").map((e) => e.trim()).filter(Boolean)
+          ? process.env.TESTIMONY_NOTIFY_EMAILS.split(",")
+              .map((e) => e.trim())
+              .filter(Boolean)
           : [churchEmail];
         await transporter.sendMail({
           from: `"NLWC Ikorodu" <${churchEmail}>`,
