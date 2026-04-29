@@ -37,6 +37,9 @@ const LANGUAGES = [
   { code: "hi", label: "हिन्दी" },
   { code: "de", label: "Deutsch" },
   { code: "ko", label: "한국어" },
+  { code: "ja", label: "日本語" },
+  { code: "vi", label: "Tiếng Việt" },
+  { code: "nl", label: "Nederlands" },
 ];
 
 /**
