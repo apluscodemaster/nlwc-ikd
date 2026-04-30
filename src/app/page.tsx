@@ -2,6 +2,7 @@
 
 import React from "react";
 import Hero from "@/components/landing/Hero";
+import WelcomeSection from "@/components/landing/WelcomeSection";
 import GodWantsYou from "@/components/landing/GodWantsYou";
 import OurJourney from "@/components/landing/OurJourney";
 import LeadershipGrid from "@/components/about/LeadershipGrid";
@@ -9,7 +10,6 @@ import ServiceTimes from "@/components/landing/ServiceTimes";
 import MediaHub from "@/components/landing/MediaHub";
 import GalleryPreview from "@/components/landing/GalleryPreview";
 import DevotionalPrompt from "@/components/devotionals/DevotionalPrompt";
-import WelcomeSection from "@/components/landing/WelcomeSection";
 
 export default function HomePage() {
   return (

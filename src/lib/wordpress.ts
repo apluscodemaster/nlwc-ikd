@@ -166,6 +166,23 @@ export interface SundaySchoolManual {
 }
 
 // =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Normalize WordPress links to use the correct public domain
+ * Replaces admin domain with public domain
+ */
+export function normalizeWPLink(link: string): string {
+  if (!link) return link;
+  // Replace ikdadmin.nlwc.church with ikorodu.nlec.church
+  return link.replace(
+    /https?:\/\/ikdadmin\.nlwc\.church/i,
+    "https://ikorodu.nlec.church",
+  );
+}
+
+// =============================================================================
 // FETCH UTILITIES
 // =============================================================================
 
@@ -502,11 +519,13 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: sanitizeWPHtml(post.content.rendered),
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    excerpt: sanitizeWPText(
+      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+    ),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
-    link: post.link,
+    link: normalizeWPLink(post.link),
     speaker: extractSpeaker(post.content.rendered),
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
@@ -528,11 +547,13 @@ export function transformToTranscriptListing(post: WPPost): TranscriptPost {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: "", // Content not needed for listings — fetched on detail view
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    excerpt: sanitizeWPText(
+      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+    ),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
-    link: post.link,
+    link: normalizeWPLink(post.link),
     speaker: extractSpeaker(post.content.rendered),
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
@@ -549,11 +570,13 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: sanitizeWPHtml(post.content.rendered),
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    excerpt: sanitizeWPText(
+      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+    ),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
-    link: post.link,
+    link: normalizeWPLink(post.link),
     thumbnail: getFeaturedImage(post) || undefined,
     readingTime: calculateReadingTime(post.content.rendered),
   };
@@ -567,11 +590,13 @@ export function transformToManualListing(post: WPPost): SundaySchoolManual {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: "", // Content not needed for listings — fetched on detail view
-    excerpt: sanitizeWPText(post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, "")),
+    excerpt: sanitizeWPText(
+      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+    ),
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
-    link: post.link,
+    link: normalizeWPLink(post.link),
     thumbnail: getFeaturedImage(post) || undefined,
     readingTime: calculateReadingTime(post.content.rendered),
   };
