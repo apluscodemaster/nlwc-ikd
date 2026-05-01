@@ -15,6 +15,7 @@ import {
   DocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getAuthorizationHeader } from "./authClient";
 
 // ──────────────────────────────────────────────
 // Types
@@ -169,8 +170,11 @@ export async function createDevotional(
 
   onProgress?.(20);
 
+  const authHeader = await getAuthorizationHeader();
+
   const response = await fetch("/api/devotionals/upload", {
     method: "POST",
+    headers: { Authorization: authHeader },
     body: formData,
   });
 
@@ -227,8 +231,11 @@ export async function replaceDevotionalPdf(
 
   onProgress?.(20);
 
+  const authHeader = await getAuthorizationHeader();
+
   const response = await fetch("/api/devotionals/upload", {
     method: "POST",
+    headers: { Authorization: authHeader },
     body: formData,
   });
 
@@ -251,9 +258,13 @@ export async function deleteDevotional(id: string) {
 
   // Delete from Cloudinary
   try {
+    const authHeader = await getAuthorizationHeader();
     const response = await fetch("/api/devotionals/delete", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
       body: JSON.stringify({ publicId: devotional.storagePath }),
     });
 
