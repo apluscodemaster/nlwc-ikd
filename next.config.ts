@@ -125,7 +125,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
               "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church one.com; " +
-              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com; " +
+              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io; " +
               "media-src 'self' https: blob:; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
