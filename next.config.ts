@@ -120,11 +120,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com api.reftagger.com translate.googleapis.com www.gstatic.com; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com api.reftagger.com; " +
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com *.cloudinary.com www.gstatic.com; " +
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
-              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.firebase.com *.firebaseio.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church googleapis.com one.com; " +
+              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church one.com; " +
               "frame-src 'self' *.youtube.com *.google.com *.gstatic.com; " +
               "media-src 'self' https: blob:; " +
               "object-src 'none'; " +
