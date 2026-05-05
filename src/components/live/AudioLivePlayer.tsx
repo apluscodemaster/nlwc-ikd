@@ -11,7 +11,7 @@ const WAYSTREAM_EMBED_URL =
   "https://app.waystream.io/embed/nlwcikorodu?orientation=portrait";
 
 export default function AudioLivePlayer() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
   // Check live status every 30 seconds
