@@ -171,11 +171,33 @@ function normalizeTitle(title: string): string {
       .replace(/[\u2018\u2019\u0027]/g, "'")
       .replace(/[\u201C\u201D\u0022]/g, '"')
       .replace(/[\u2013\u2014]/g, "-")
+      // Normalize part references: "Pt.", "pt", "PT.", "Part" all become "part"
+      .replace(/\bpt\.?\s*/gi, "part ")
       // Remove all non-alphanumeric chars except spaces
       .replace(/[^a-z0-9\s]/g, "")
       .replace(/\s+/g, " ")
       .trim()
   );
+}
+
+/**
+ * Extract the part/series number from a normalized title.
+ * Returns the number if found (e.g. "part 2" → 2), or null.
+ */
+function extractPartNumber(normalizedTitle: string): number | null {
+  const match = normalizedTitle.match(/\bpart\s*(\d+)\b/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Get the "core" title by stripping part/series indicators and trailing numbers.
+ * E.g. "the love of god part 2" → "the love of god"
+ */
+function getCoreTitle(normalizedTitle: string): string {
+  return normalizedTitle
+    .replace(/\bpart\s*\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function findTranscriptSlug(
@@ -186,16 +208,51 @@ function findTranscriptSlug(
   const normalizedSermon = normalizeTitle(sermonTitle);
   if (!normalizedSermon) return null;
 
-  // 1. Exact title match — prefer base slug (without numeric suffix)
-  //    This avoids false positives when similar posts exist in different categories
+  const sermonPartNum = extractPartNumber(normalizedSermon);
+  const sermonCore = getCoreTitle(normalizedSermon);
+
+  // 1. Exact normalized title match (most reliable)
   for (const t of transcripts) {
     if (normalizeTitle(t.title) === normalizedSermon) {
-      const finalSlug = t.baseSlug || t.slug; // Use base slug if available
-      return finalSlug;
+      return t.baseSlug || t.slug;
     }
   }
 
-  // 2. Substring match — only if the sermon title is long enough to avoid false positives
+  // 2. Core title + part number match
+  //    Matches "The Gospel Part 1" sermon to "The Gospel Pt. 1" transcript
+  if (sermonCore) {
+    const coreCandidates: { t: TranscriptStub; normTitle: string }[] = [];
+    for (const t of transcripts) {
+      const normT = normalizeTitle(t.title);
+      const tCore = getCoreTitle(normT);
+      if (tCore === sermonCore) {
+        coreCandidates.push({ t, normTitle: normT });
+      }
+    }
+
+    if (coreCandidates.length > 0) {
+      // If sermon has a part number, find the transcript with the same part number
+      if (sermonPartNum !== null) {
+        const partMatch = coreCandidates.find(
+          (c) => extractPartNumber(c.normTitle) === sermonPartNum,
+        );
+        if (partMatch) return partMatch.t.baseSlug || partMatch.t.slug;
+      } else {
+        // Sermon has no part number — match transcript without a part number
+        const noPartMatch = coreCandidates.find(
+          (c) => extractPartNumber(c.normTitle) === null,
+        );
+        if (noPartMatch) return noPartMatch.t.baseSlug || noPartMatch.t.slug;
+        // Fallback: if all transcripts have part numbers, take part 1
+        const part1 = coreCandidates.find(
+          (c) => extractPartNumber(c.normTitle) === 1,
+        );
+        if (part1) return part1.t.baseSlug || part1.t.slug;
+      }
+    }
+  }
+
+  // 3. Substring containment — require part numbers to match when present
   if (normalizedSermon.length >= 10) {
     for (const t of transcripts) {
       const normalizedTranscript = normalizeTitle(t.title);
@@ -203,26 +260,46 @@ function findTranscriptSlug(
         normalizedSermon.includes(normalizedTranscript) ||
         normalizedTranscript.includes(normalizedSermon)
       ) {
-        const finalSlug = t.baseSlug || t.slug;
-        return finalSlug;
+        // Verify part numbers are compatible
+        const tPartNum = extractPartNumber(normalizedTranscript);
+        if (sermonPartNum !== null && tPartNum !== null && sermonPartNum !== tPartNum) {
+          continue; // Part number mismatch — skip
+        }
+        if (sermonPartNum !== null && tPartNum === null) {
+          continue; // Sermon has part number but transcript doesn't — likely different content
+        }
+        return t.baseSlug || t.slug;
       }
     }
   }
 
-  // 3. Word-overlap scoring for fuzzy matching
+  // 4. Word-overlap scoring with part-number awareness
   const sermonWords = normalizedSermon.split(" ").filter((w) => w.length > 2);
   if (sermonWords.length >= 2) {
     let bestMatch: {
       slug: string;
       baseSlug: string;
       score: number;
-      postId: number;
     } | null = null;
+
     for (const t of transcripts) {
-      const transcriptWords = normalizeTitle(t.title)
+      const normalizedTranscript = normalizeTitle(t.title);
+      const transcriptWords = normalizedTranscript
         .split(" ")
         .filter((w) => w.length > 2);
       if (transcriptWords.length === 0) continue;
+
+      // If either has a part number, they must agree
+      const tPartNum = extractPartNumber(normalizedTranscript);
+      if (sermonPartNum !== null && tPartNum !== null && sermonPartNum !== tPartNum) {
+        continue;
+      }
+      if (sermonPartNum !== null && tPartNum === null) {
+        continue;
+      }
+      if (sermonPartNum === null && tPartNum !== null) {
+        continue;
+      }
 
       const matchingWords = sermonWords.filter((w) =>
         transcriptWords.includes(w),
@@ -230,13 +307,12 @@ function findTranscriptSlug(
       const score =
         matchingWords.length /
         Math.max(sermonWords.length, transcriptWords.length);
-      // Require at least 60% word overlap
+
       if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
         bestMatch = {
           slug: t.slug,
           baseSlug: t.baseSlug || t.slug,
           score,
-          postId: t.id,
         };
       }
     }
