@@ -175,10 +175,10 @@ export interface SundaySchoolManual {
  */
 export function normalizeWPLink(link: string): string {
   if (!link) return link;
-  // Replace ikdadmin.nlwc.church with ikorodu.nlec.church
+  // Replace ikdadmin.nlwc.church with ikorodu.nlwc.church
   return link.replace(
     /https?:\/\/ikdadmin\.nlwc\.church/i,
-    "https://ikorodu.nlec.church",
+    "https://ikorodu.nlwc.church",
   );
 }
 
