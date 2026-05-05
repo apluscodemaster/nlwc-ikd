@@ -88,9 +88,10 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
     const allTranscripts: TranscriptStub[] = [];
     let totalFetched = 0;
     let slugCollisionCount = 0;
+    let totalPages = MAX_PAGES; // Will be refined from WP header after first fetch
 
     // Fetch multiple pages to capture older transcripts
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    for (let page = 1; page <= totalPages; page++) {
       // Include categories array to verify we're getting posts from the correct category
       const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
 
@@ -104,6 +105,12 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
             { tag: "Transcripts" },
           );
           break; // Stop pagination if we get an error
+        }
+
+        // Use WP total pages header to avoid requesting beyond available pages
+        const wpTotalPages = res.headers.get("X-WP-TotalPages");
+        if (wpTotalPages) {
+          totalPages = Math.min(parseInt(wpTotalPages, 10) || MAX_PAGES, MAX_PAGES);
         }
 
         const posts: {
