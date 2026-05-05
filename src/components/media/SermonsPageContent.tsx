@@ -98,7 +98,11 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
 
         if (!res.ok) {
-          logWarn("Failed to fetch transcript data", { page, status: res.status }, { tag: "Transcripts" });
+          logWarn(
+            "Failed to fetch transcript data",
+            { page, status: res.status },
+            { tag: "Transcripts" },
+          );
           break; // Stop pagination if we get an error
         }
 
@@ -124,7 +128,11 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
           // Verify category is correct (even though we filtered by it)
           const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
           if (!hasCorrectCategory) {
-            logWarn("Category mismatch detected", { postId: p.id }, { tag: "Transcripts" });
+            logWarn(
+              "Category mismatch detected",
+              { postId: p.id },
+              { tag: "Transcripts" },
+            );
           }
 
           return {
@@ -139,7 +147,9 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         allTranscripts.push(...pageTranscripts);
         totalFetched += posts.length;
       } catch (pageErr) {
-        logError("Failed to fetch transcript page", pageErr, { tag: "Transcripts" });
+        logError("Failed to fetch transcript page", pageErr, {
+          tag: "Transcripts",
+        });
         break;
       }
     }
@@ -199,6 +209,76 @@ function getCoreTitle(normalizedTitle: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+// Common English stop words excluded from word-overlap scoring to prevent
+// false matches between titles that share only generic filler words.
+const STOP_WORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "are",
+  "but",
+  "not",
+  "you",
+  "all",
+  "can",
+  "her",
+  "was",
+  "one",
+  "our",
+  "out",
+  "has",
+  "have",
+  "had",
+  "its",
+  "his",
+  "how",
+  "man",
+  "new",
+  "now",
+  "old",
+  "see",
+  "way",
+  "who",
+  "did",
+  "get",
+  "let",
+  "say",
+  "she",
+  "too",
+  "use",
+  "with",
+  "that",
+  "this",
+  "will",
+  "your",
+  "from",
+  "they",
+  "been",
+  "have",
+  "many",
+  "some",
+  "them",
+  "than",
+  "each",
+  "make",
+  "like",
+  "into",
+  "over",
+  "such",
+  "what",
+  "when",
+  "which",
+  "their",
+  "about",
+  "would",
+  "there",
+  "these",
+  "other",
+  "could",
+  "after",
+  "those",
+]);
 
 function findTranscriptSlug(
   sermonTitle: string,
@@ -262,7 +342,11 @@ function findTranscriptSlug(
       ) {
         // Verify part numbers are compatible
         const tPartNum = extractPartNumber(normalizedTranscript);
-        if (sermonPartNum !== null && tPartNum !== null && sermonPartNum !== tPartNum) {
+        if (
+          sermonPartNum !== null &&
+          tPartNum !== null &&
+          sermonPartNum !== tPartNum
+        ) {
           continue; // Part number mismatch — skip
         }
         if (sermonPartNum !== null && tPartNum === null) {
@@ -274,8 +358,12 @@ function findTranscriptSlug(
   }
 
   // 4. Word-overlap scoring with part-number awareness
-  const sermonWords = normalizedSermon.split(" ").filter((w) => w.length > 2);
-  if (sermonWords.length >= 2) {
+  const sermonWords = new Set(
+    normalizedSermon
+      .split(" ")
+      .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
+  );
+  if (sermonWords.size >= 2) {
     let bestMatch: {
       slug: string;
       baseSlug: string;
@@ -284,14 +372,20 @@ function findTranscriptSlug(
 
     for (const t of transcripts) {
       const normalizedTranscript = normalizeTitle(t.title);
-      const transcriptWords = normalizedTranscript
-        .split(" ")
-        .filter((w) => w.length > 2);
-      if (transcriptWords.length === 0) continue;
+      const transcriptWords = new Set(
+        normalizedTranscript
+          .split(" ")
+          .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
+      );
+      if (transcriptWords.size === 0) continue;
 
       // If either has a part number, they must agree
       const tPartNum = extractPartNumber(normalizedTranscript);
-      if (sermonPartNum !== null && tPartNum !== null && sermonPartNum !== tPartNum) {
+      if (
+        sermonPartNum !== null &&
+        tPartNum !== null &&
+        sermonPartNum !== tPartNum
+      ) {
         continue;
       }
       if (sermonPartNum !== null && tPartNum === null) {
@@ -301,12 +395,12 @@ function findTranscriptSlug(
         continue;
       }
 
-      const matchingWords = sermonWords.filter((w) =>
-        transcriptWords.includes(w),
-      );
+      let matchCount = 0;
+      for (const w of sermonWords) {
+        if (transcriptWords.has(w)) matchCount++;
+      }
       const score =
-        matchingWords.length /
-        Math.max(sermonWords.length, transcriptWords.length);
+        matchCount / Math.max(sermonWords.size, transcriptWords.size);
 
       if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
         bestMatch = {
