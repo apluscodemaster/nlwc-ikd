@@ -15,11 +15,15 @@ export default function ShareButton({
   variant = "default",
 }: ShareButtonProps) {
   const handleShare = () => {
+    // Use the current page URL instead of the WordPress source URL
+    const shareUrl =
+      typeof window !== "undefined" ? window.location.href : url;
+
     if (typeof window !== "undefined" && navigator.share) {
       navigator
         .share({
           title,
-          url,
+          url: shareUrl,
         })
         .catch((error) => {
           // User cancelled or error occurred
@@ -27,7 +31,7 @@ export default function ShareButton({
         });
     } else {
       // Fallback: Copy to clipboard
-      navigator.clipboard.writeText(url).then(() => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
         toast.success("Link copied to clipboard!");
       });
     }
