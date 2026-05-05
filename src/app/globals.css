@@ -244,11 +244,15 @@ mark.search-highlight-active {
 }
 
 /* Style Bible reference tags with app's orange color for clickable indication */
-.rtTag {
-  color: #FF7C18 !important;
+.rtTag,
+.prose .rtTag,
+.prose a.rtTag,
+[data-scripture-content] .rtTag,
+[data-scripture-content] a.rtTag {
+  color: #ff7c18 !important;
   font-weight: 500 !important;
   text-decoration: underline !important;
-  text-decoration-color: #FF7C18 !important;
+  text-decoration-color: #ff7c18 !important;
   cursor: pointer !important;
 }
 
@@ -256,11 +260,23 @@ mark.search-highlight-active {
   opacity: 0.8 !important;
 }
 
-/* Ensure Bible reference links are consistently orange */
+/* Ensure Bible reference links are consistently orange in all contexts */
 .rtTag a,
-a.rtTag {
-  color: #FF7C18 !important;
+a.rtTag,
+.prose .rtTag a,
+.prose a.rtTag,
+[data-scripture-content] .rtTag a,
+[data-scripture-content] a.rtTag {
+  color: #ff7c18 !important;
   text-decoration: underline !important;
-  text-decoration-color: #FF7C18 !important;
+  text-decoration-color: #ff7c18 !important;
 }
 
+/* Scripture references (custom provider fallback) — same orange */
+.scripture-reference {
+  color: #ff7c18 !important;
+  border-bottom-color: rgba(255, 124, 24, 0.5) !important;
+}
+.scripture-reference:hover {
+  border-bottom-color: #ff7c18 !important;
+}
