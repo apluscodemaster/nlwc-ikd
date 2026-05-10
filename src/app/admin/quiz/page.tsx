@@ -724,9 +724,27 @@ export default function AdminQuizPage() {
         return;
       }
 
-      // Confirm import
+      // Check for duplicates by matching question text
+      const existingMap = new Map(
+        questions.map((q) => [q.question.trim().toLowerCase(), q]),
+      );
+
+      const newQuestions = importedQuestions.filter(
+        (q) => !existingMap.has(q.question.trim().toLowerCase()),
+      );
+      const duplicateQuestions = importedQuestions.filter((q) =>
+        existingMap.has(q.question.trim().toLowerCase()),
+      );
+
+      // Build confirmation message
+      const parts: string[] = [];
+      if (newQuestions.length > 0)
+        parts.push(`${newQuestions.length} new question${newQuestions.length !== 1 ? "s" : ""}`);
+      if (duplicateQuestions.length > 0)
+        parts.push(`${duplicateQuestions.length} existing question${duplicateQuestions.length !== 1 ? "s" : ""} to update`);
+
       const confirmed = await showConfirm(
-        `Import ${importedQuestions.length} question${importedQuestions.length !== 1 ? "s" : ""}? This will add them to your quiz database.`,
+        `Found ${parts.join(" and ")}. Proceed?`,
         {
           title: "Confirm Import",
           confirmLabel: "Import",
@@ -736,25 +754,53 @@ export default function AdminQuizPage() {
 
       if (!confirmed) return;
 
-      // Save each question
-      let successCount = 0;
-      for (const q of importedQuestions) {
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      // Add new questions
+      for (const q of newQuestions) {
         try {
           const res = await fetch("/api/quiz/admin/questions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(q),
           });
-          if (res.ok) successCount++;
+          if (res.ok) addedCount++;
         } catch {
           // Continue with next question
         }
       }
 
-      if (successCount > 0) {
-        toast.success(
-          `Imported ${successCount} question${successCount !== 1 ? "s" : ""}`,
-        );
+      // Update existing questions (e.g. fill in missing explain field)
+      for (const q of duplicateQuestions) {
+        try {
+          const existing = existingMap.get(q.question.trim().toLowerCase());
+          if (!existing) continue;
+
+          const res = await fetch("/api/quiz/admin/questions", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: existing.id,
+              options: q.options,
+              correctAnswer: q.correctAnswer,
+              category: q.category,
+              difficulty: q.difficulty,
+              sermon_ref: q.sermon_ref,
+              explain: q.explain,
+            }),
+          });
+          if (res.ok) updatedCount++;
+        } catch {
+          // Continue with next question
+        }
+      }
+
+      if (addedCount > 0 || updatedCount > 0) {
+        const msgs: string[] = [];
+        if (addedCount > 0) msgs.push(`${addedCount} added`);
+        if (updatedCount > 0) msgs.push(`${updatedCount} updated`);
+        toast.success(`Import complete: ${msgs.join(", ")}`);
         fetchQuestions();
       } else {
         toast.error("Failed to import any questions");
