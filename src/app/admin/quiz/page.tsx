@@ -22,10 +22,18 @@ import {
   BrainCircuit,
   Target,
   Clock,
+  Download,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
 import { showConfirm } from "@/components/shared/CustomDialog";
+import {
+  exportQuizAsJSON,
+  exportQuizAsCSV,
+  importQuizFromFile,
+  downloadFile,
+} from "@/lib/quizImportExport";
 
 // ──────────────────────────────────────────────
 // Types
@@ -119,6 +127,7 @@ function QuestionModal({
     "medium",
   );
   const [sermonRef, setSermonRef] = useState("");
+  const [explain, setExplain] = useState("");
 
   useEffect(() => {
     if (question && mode === "edit") {
@@ -128,6 +137,7 @@ function QuestionModal({
       setCategory(question.category);
       setDifficulty(question.difficulty || "medium");
       setSermonRef(question.sermon_ref || "");
+      setExplain(question.explain || "");
     } else {
       setFormQuestion("");
       setOptions(["", "", "", ""]);
@@ -135,6 +145,7 @@ function QuestionModal({
       setCategory("Sunday Message");
       setDifficulty("medium");
       setSermonRef("");
+      setExplain("");
     }
   }, [question, mode]);
 
@@ -165,6 +176,7 @@ function QuestionModal({
       difficulty,
     };
     if (sermonRef.trim()) data.sermon_ref = sermonRef.trim();
+    if (explain.trim()) data.explain = explain.trim();
     if (mode === "edit" && question) data.id = question.id;
 
     onSave(data);
@@ -340,6 +352,26 @@ function QuestionModal({
             />
           </div>
 
+          {/* Explanation (optional) */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Explanation{" "}
+              <span className="text-gray-400 font-normal">
+                (shown after quiz completion)
+              </span>
+            </label>
+            <textarea
+              value={explain}
+              onChange={(e) => setExplain(e.target.value)}
+              rows={4}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none"
+              placeholder="Explain the correct answer and why other options are incorrect. This helps users learn from their mistakes."
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              {explain.length} characters
+            </p>
+          </div>
+
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
             <button
@@ -490,6 +522,16 @@ function AdminQuestionCard({
                   Ref: {question.sermon_ref}
                 </p>
               )}
+              {question.explain && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-[11px] font-semibold text-gray-700 mb-1">
+                    Explanation:
+                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {question.explain}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -524,6 +566,10 @@ export default function AdminQuizPage() {
   );
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Import/Export state
+  const [importingFile, setImportingFile] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<string | null>(null);
 
   // ── Fetch questions ──
   const fetchQuestions = useCallback(async () => {
@@ -633,6 +679,97 @@ export default function AdminQuizPage() {
     }
   };
 
+  // ── Export handlers ──
+  const handleExport = (format: "json" | "csv") => {
+    try {
+      setExportingFormat(format);
+      let content: string;
+      let filename: string;
+      let mimeType: string;
+
+      if (format === "json") {
+        content = exportQuizAsJSON(questions);
+        filename = `quiz-questions-${new Date().toISOString().split("T")[0]}.json`;
+        mimeType = "application/json";
+      } else {
+        content = exportQuizAsCSV(questions);
+        filename = `quiz-questions-${new Date().toISOString().split("T")[0]}.csv`;
+        mimeType = "text/csv";
+      }
+
+      downloadFile(content, filename, mimeType);
+      toast.success(
+        `Exported ${questions.length} questions as ${format.toUpperCase()}`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : `Failed to export as ${format}`,
+      );
+    } finally {
+      setExportingFormat(null);
+    }
+  };
+
+  // ── Import handler ──
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportingFile(true);
+    try {
+      const importedQuestions = await importQuizFromFile(file);
+
+      if (importedQuestions.length === 0) {
+        toast.error("No valid questions found in file");
+        return;
+      }
+
+      // Confirm import
+      const confirmed = await showConfirm(
+        `Import ${importedQuestions.length} question${importedQuestions.length !== 1 ? "s" : ""}? This will add them to your quiz database.`,
+        {
+          title: "Confirm Import",
+          confirmLabel: "Import",
+          cancelLabel: "Cancel",
+        },
+      );
+
+      if (!confirmed) return;
+
+      // Save each question
+      let successCount = 0;
+      for (const q of importedQuestions) {
+        try {
+          const res = await fetch("/api/quiz/admin/questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(q),
+          });
+          if (res.ok) successCount++;
+        } catch {
+          // Continue with next question
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(
+          `Imported ${successCount} question${successCount !== 1 ? "s" : ""}`,
+        );
+        fetchQuestions();
+      } else {
+        toast.error("Failed to import any questions");
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to import questions",
+      );
+    } finally {
+      setImportingFile(false);
+      // Reset file input
+      e.target.value = "";
+    }
+  };
+
   // ── Filtered questions ──
   const filtered = questions.filter((q) => {
     if (filterCategory !== "all" && q.category !== filterCategory) return false;
@@ -674,16 +811,72 @@ export default function AdminQuizPage() {
             Create, edit and manage quiz questions · View player stats
           </p>
         </div>
-        <button
-          onClick={() => {
-            setModalMode("create");
-            setEditingQuestion(null);
-          }}
-          className="h-10 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer self-start"
-        >
-          <Plus className="w-4 h-4" />
-          Add Question
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Export buttons */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => handleExport("json")}
+              disabled={questions.length === 0 || exportingFormat !== null}
+              title="Export questions as JSON"
+              className="h-10 px-3 rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              {exportingFormat === "json" ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              JSON
+            </button>
+            <button
+              onClick={() => handleExport("csv")}
+              disabled={questions.length === 0 || exportingFormat !== null}
+              title="Export questions as CSV"
+              className="h-10 px-3 rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              {exportingFormat === "csv" ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              CSV
+            </button>
+          </div>
+
+          {/* Import button */}
+          <label className="h-10 px-3 rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+            {importingFile ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Importing…
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Import
+              </>
+            )}
+            <input
+              type="file"
+              accept=".json,.csv"
+              onChange={handleImport}
+              disabled={importingFile}
+              className="hidden"
+              title="Import questions from JSON or CSV"
+            />
+          </label>
+
+          {/* Add question button */}
+          <button
+            onClick={() => {
+              setModalMode("create");
+              setEditingQuestion(null);
+            }}
+            className="h-10 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Add Question
+          </button>
+        </div>
       </div>
 
       {/* Quick stats bar */}
