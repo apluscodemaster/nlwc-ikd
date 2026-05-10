@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       category,
       difficulty,
       sermon_ref,
+      explain,
     } = body;
 
     if (!question || !options || correctAnswer === undefined || !category) {
@@ -93,6 +94,7 @@ export async function POST(req: NextRequest) {
 
     if (difficulty) docData.difficulty = difficulty;
     if (sermon_ref) docData.sermon_ref = sermon_ref.trim();
+    if (explain) docData.explain = explain.trim();
 
     const adminDb = getAdminDb();
     const docRef = await adminDb.collection("quiz_questions").add(docData);
