@@ -10,6 +10,8 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { toast } from "sonner";
 import {
   BookOpen,
   Church,
@@ -159,6 +161,12 @@ export default function AdminLayout({
   const logout = async () => {
     await signOut(auth);
   };
+
+  // Session timeout hook
+  useSessionTimeout(() => {
+    logout();
+    toast.error("Session expired due to inactivity (30 minutes)");
+  }, !!user);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";

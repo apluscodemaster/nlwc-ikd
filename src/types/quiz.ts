@@ -32,6 +32,7 @@ export interface QuizQuestion {
   category: QuizCategory;
   difficulty?: "easy" | "medium" | "hard";
   sermon_ref?: string; // optional link to sermon/transcript slug
+  explain?: string; // explanation displayed after quiz completion
 }
 
 // ── Quiz Attempt (saved to Supabase) ──
