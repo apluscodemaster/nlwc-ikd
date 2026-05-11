@@ -53,7 +53,7 @@ const CATEGORIES: {
     value: "Special Meeting",
     label: "Special Meeting",
     icon: <Brain className="w-5 h-5" />,
-    description: "Conferences & special events",
+    description: "Conferences & special meetings",
   },
 ];
 
