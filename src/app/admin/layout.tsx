@@ -11,7 +11,6 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
-import { toast } from "sonner";
 import {
   BookOpen,
   Church,
@@ -28,6 +27,7 @@ import {
   EyeOff,
   MessageCircleHeart,
   BrainCircuit,
+  Timer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -136,6 +136,7 @@ export default function AdminLayout({
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -162,11 +163,15 @@ export default function AdminLayout({
     await signOut(auth);
   };
 
-  // Session timeout hook
+  // Session timeout hook — show overlay instead of immediate logout
   useSessionTimeout(() => {
-    logout();
-    toast.error("Session expired due to inactivity (30 minutes)");
-  }, !!user);
+    setSessionExpired(true);
+  }, !!user && !sessionExpired);
+
+  const handleSessionRelogin = async () => {
+    setSessionExpired(false);
+    await logout();
+  };
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -492,6 +497,47 @@ export default function AdminLayout({
         <main className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
           {children}
         </main>
+
+        {/* ── Session Expired Overlay ── */}
+        <AnimatePresence>
+          {sessionExpired && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden"
+              >
+                <div className="h-1.5 bg-linear-to-r from-amber-400 via-red-400 to-amber-400" />
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-5">
+                    <Timer className="w-8 h-8 text-amber-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    Session Expired
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                    You&apos;ve been inactive for 30 minutes and your session
+                    has expired for security reasons.
+                  </p>
+                  <button
+                    onClick={handleSessionRelogin}
+                    className="w-full h-12 rounded-xl bg-primary cursor-pointer text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Login Again
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AdminAuthContext.Provider>
   );
