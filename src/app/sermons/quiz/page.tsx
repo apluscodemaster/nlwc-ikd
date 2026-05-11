@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import UsernamePrompt from "@/components/quiz/UsernamePrompt";
@@ -8,6 +9,7 @@ import QuizLauncher from "@/components/quiz/QuizLauncher";
 import QuizPlayer from "@/components/quiz/QuizPlayer";
 import QuizResults from "@/components/quiz/QuizResults";
 import Leaderboard from "@/components/quiz/Leaderboard";
+import TimeLimitOverlay from "@/components/quiz/TimeLimitOverlay";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import type {
   QuizCategory,
@@ -16,7 +18,7 @@ import type {
   LeaderboardEntry,
 } from "@/types/quiz";
 
-type Phase = "launch" | "playing" | "results";
+type Phase = "launch" | "overlay" | "playing" | "results";
 
 export default function QuizPage() {
   const { session, loading, needsUsername, createSession } = useQuizSession();
@@ -26,8 +28,12 @@ export default function QuizPage() {
   >([]);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [category, setCategory] = useState<QuizCategory | null>(null);
+  const [questionCount, setQuestionCount] = useState(10);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  // Calculate time limit based on question count (60 seconds per question)
+  const timeLimit = questionCount * 60;
 
   // Fetch leaderboard on mount
   useEffect(() => {
@@ -56,7 +62,9 @@ export default function QuizPage() {
 
         setQuestions(data);
         setCategory(cat);
-        setPhase("playing");
+        setQuestionCount(count);
+        // Show overlay before starting
+        setPhase("overlay");
       } catch (error) {
         console.error("Failed to load questions:", error);
       } finally {
@@ -66,6 +74,10 @@ export default function QuizPage() {
     [],
   );
 
+  const handleContinueFromOverlay = useCallback(() => {
+    setPhase("playing");
+  }, []);
+
   const handleComplete = useCallback((r: QuizResult) => {
     setResult(r);
     setPhase("results");
@@ -73,6 +85,12 @@ export default function QuizPage() {
 
   const handleRetry = useCallback(() => {
     setResult(null);
+    setQuestions([]);
+    setPhase("launch");
+  }, []);
+
+  // Handle returning to launcher from overlay
+  const handleBackFromOverlay = useCallback(() => {
     setQuestions([]);
     setPhase("launch");
   }, []);
@@ -116,11 +134,23 @@ export default function QuizPage() {
                 />
               )}
 
+              {/* Time limit overlay before quiz starts */}
+              <AnimatePresence>
+                {phase === "overlay" && (
+                  <TimeLimitOverlay
+                    questionCount={questionCount}
+                    timeLimit={timeLimit}
+                    onContinue={handleContinueFromOverlay}
+                  />
+                )}
+              </AnimatePresence>
+
               {phase === "playing" && session && (
                 <QuizPlayer
                   questions={questions}
                   sessionId={session.session_id}
                   category={category}
+                  timeLimit={timeLimit}
                   onComplete={handleComplete}
                 />
               )}
