@@ -94,51 +94,43 @@ export async function DELETE(req: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
-    const errors: string[] = [];
 
-    // Delete quiz attempts (stats data)
-    if (target === "stats" || target === "all") {
-      const { error: attErr } = await supabase
-        .from("quiz_attempts")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
+    // Always delete attempts first (foreign key on session_id)
+    const { error: attErr } = await supabase
+      .from("quiz_attempts")
+      .delete()
+      .gte("answered_at", "1970-01-01T00:00:00.000Z");
 
-      if (attErr) errors.push(`quiz_attempts: ${attErr.message}`);
-    }
-
-    // Delete sessions (player data) — also clears stats since attempts reference sessions
-    if (target === "players" || target === "all") {
-      // Delete attempts first if not already deleted (foreign key)
-      if (target === "players") {
-        const { error: attErr } = await supabase
-          .from("quiz_attempts")
-          .delete()
-          .neq("id", "00000000-0000-0000-0000-000000000000");
-
-        if (attErr) errors.push(`quiz_attempts: ${attErr.message}`);
-      }
-
-      const { error: sessErr } = await supabase
-        .from("sessions")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (sessErr) errors.push(`sessions: ${sessErr.message}`);
-    }
-
-    if (errors.length > 0) {
-      console.error("Reset errors:", errors);
+    if (attErr) {
+      console.error("Failed to delete quiz_attempts:", attErr);
       return NextResponse.json(
-        { error: "Partial reset failure", details: errors },
+        { error: `Failed to delete attempts: ${attErr.message}` },
         { status: 500 },
       );
     }
 
+    // Delete sessions (player data)
+    if (target === "players" || target === "all") {
+      const { error: sessErr } = await supabase
+        .from("sessions")
+        .delete()
+        .gte("created_at", "1970-01-01T00:00:00.000Z");
+
+      if (sessErr) {
+        console.error("Failed to delete sessions:", sessErr);
+        return NextResponse.json(
+          { error: `Failed to delete sessions: ${sessErr.message}` },
+          { status: 500 },
+        );
+      }
+    }
+
     return NextResponse.json({ success: true, target });
   } catch (error) {
-    console.error("Reset error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Reset error:", msg);
     return NextResponse.json(
-      { error: "Failed to reset data" },
+      { error: `Failed to reset data: ${msg}` },
       { status: 500 },
     );
   }
