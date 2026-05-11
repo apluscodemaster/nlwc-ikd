@@ -5,12 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QuestionCard from "./QuestionCard";
+import QuizTimer from "./QuizTimer";
 import type { QuizQuestion, QuizResult, QuizCategory } from "@/types/quiz";
 
 interface QuizPlayerProps {
   questions: Omit<QuizQuestion, "correctAnswer">[];
   sessionId: string;
   category: QuizCategory | null;
+  timeLimit?: number; // in seconds
   onComplete: (result: QuizResult) => void;
 }
 
@@ -23,6 +25,7 @@ interface Answer {
 export default function QuizPlayer({
   questions,
   sessionId,
+  timeLimit,
   onComplete,
 }: QuizPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -95,10 +98,49 @@ export default function QuizPlayer({
     }
   }, [selectedAnswer, current, answers, sessionId, onComplete]);
 
+  const handleTimeUp = useCallback(async () => {
+    // Submit whatever answers have been collected so far
+    setSubmitting(true);
+    try {
+      const finalAnswers = selectedAnswer !== null && current ? [
+        ...answers,
+        {
+          question_id: current.id,
+          category: current.category,
+          selected_answer: selectedAnswer,
+        },
+      ] : answers;
+
+      const res = await fetch("/api/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          answers: finalAnswers,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit quiz");
+      }
+
+      const result: QuizResult = await res.json();
+      onComplete(result);
+    } catch (error) {
+      console.error("Submit error:", error);
+      setSubmitting(false);
+    }
+  }, [selectedAnswer, current, answers, sessionId, onComplete]);
+
   if (!current) return null;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Timer - show if timeLimit is provided */}
+      {timeLimit && (
+        <QuizTimer totalSeconds={timeLimit} onTimeUp={handleTimeUp} />
+      )}
+
       <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-xl shadow-gray-100/50">
         <AnimatePresence mode="wait">
           <QuestionCard
