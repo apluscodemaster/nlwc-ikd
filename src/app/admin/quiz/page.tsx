@@ -739,9 +739,13 @@ export default function AdminQuizPage() {
       // Build confirmation message
       const parts: string[] = [];
       if (newQuestions.length > 0)
-        parts.push(`${newQuestions.length} new question${newQuestions.length !== 1 ? "s" : ""}`);
+        parts.push(
+          `${newQuestions.length} new question${newQuestions.length !== 1 ? "s" : ""}`,
+        );
       if (duplicateQuestions.length > 0)
-        parts.push(`${duplicateQuestions.length} existing question${duplicateQuestions.length !== 1 ? "s" : ""} to update`);
+        parts.push(
+          `${duplicateQuestions.length} existing question${duplicateQuestions.length !== 1 ? "s" : ""} to update`,
+        );
 
       const confirmed = await showConfirm(
         `Found ${parts.join(" and ")}. Proceed?`,
