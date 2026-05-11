@@ -1162,7 +1162,8 @@ export default function AdminQuizPage() {
                         toast.success("All stats and player data have been reset");
                         fetchStats();
                       } else {
-                        toast.error("Failed to reset stats");
+                        const err = await res.json().catch(() => null);
+                        toast.error(err?.error || "Failed to reset stats");
                       }
                     } catch {
                       toast.error("Failed to reset stats");
@@ -1220,7 +1221,8 @@ export default function AdminQuizPage() {
                         toast.success("All players and stats have been reset");
                         fetchStats();
                       } else {
-                        toast.error("Failed to remove players");
+                        const err = await res.json().catch(() => null);
+                        toast.error(err?.error || "Failed to remove players");
                       }
                     } catch {
                       toast.error("Failed to remove players");
