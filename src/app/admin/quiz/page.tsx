@@ -1131,6 +1131,49 @@ export default function AdminQuizPage() {
                   </div>
                 )}
               </div>
+
+              {/* Reset Stats */}
+              <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-5 sm:p-6">
+                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                  Reset Stats
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  This will permanently delete all quiz attempt records. Player
+                  accounts will remain but their scores will be cleared.
+                </p>
+                <button
+                  onClick={async () => {
+                    const confirmed = await showConfirm(
+                      "Are you sure you want to reset all quiz stats? This will delete all quiz attempt records and reset scores. This action cannot be undone.",
+                      {
+                        title: "Reset All Stats",
+                        confirmLabel: "Reset Stats",
+                        cancelLabel: "Cancel",
+                      },
+                    );
+                    if (!confirmed) return;
+                    try {
+                      const res = await fetch(
+                        "/api/quiz/admin/stats?target=all",
+                        { method: "DELETE" },
+                      );
+                      if (res.ok) {
+                        toast.success("All stats and player data have been reset");
+                        fetchStats();
+                      } else {
+                        toast.error("Failed to reset stats");
+                      }
+                    } catch {
+                      toast.error("Failed to reset stats");
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100 transition-colors cursor-pointer flex items-center gap-2"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Reset All Stats
+                </button>
+              </div>
             </>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-10">
@@ -1152,11 +1195,42 @@ export default function AdminQuizPage() {
             </div>
           ) : stats && stats.recentSessions.length > 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                   <Users className="w-4 h-4 text-primary" />
                   Recent Players
                 </h3>
+                <button
+                  onClick={async () => {
+                    const confirmed = await showConfirm(
+                      "Are you sure you want to remove all players and their stats? This will delete all player sessions and quiz attempts. This action cannot be undone.",
+                      {
+                        title: "Remove All Players",
+                        confirmLabel: "Remove All",
+                        cancelLabel: "Cancel",
+                      },
+                    );
+                    if (!confirmed) return;
+                    try {
+                      const res = await fetch(
+                        "/api/quiz/admin/stats?target=players",
+                        { method: "DELETE" },
+                      );
+                      if (res.ok) {
+                        toast.success("All players and stats have been reset");
+                        fetchStats();
+                      } else {
+                        toast.error("Failed to remove players");
+                      }
+                    } catch {
+                      toast.error("Failed to remove players");
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Remove All
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
