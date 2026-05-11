@@ -76,37 +76,79 @@ export async function getWeakAreas(sessionId: string): Promise<WeakArea[]> {
   return (data as WeakArea[]).filter((w) => w.fail_rate > 40);
 }
 
-// ── Get recommendations based on weak areas ──
+// ── Get recommendations based on weak areas and specific sermon refs ──
 export async function getRecommendations(
   weakAreas: WeakArea[],
+  sermonRefs: string[] = [],
 ): Promise<Recommendation[]> {
-  if (weakAreas.length === 0) return [];
+  const recommendations: Recommendation[] = [];
 
-  const categories = weakAreas.map((w) => w.category);
+  // 1. Targeted recommendations from sermon_ref on failed questions
+  if (sermonRefs.length > 0) {
+    const uniqueRefs = [...new Set(sermonRefs)];
+    const { data: refContent } = await getSupabase()
+      .from("content_mapping")
+      .select("*")
+      .in("slug", uniqueRefs)
+      .limit(6);
 
-  const { data: content } = await getSupabase()
-    .from("content_mapping")
-    .select("*")
-    .in("category", categories)
-    .order("analyzed_at", { ascending: false })
-    .limit(6);
+    if (refContent && refContent.length > 0) {
+      for (const c of refContent as ContentMapping[]) {
+        recommendations.push({
+          category: c.category as QuizCategory,
+          content: c,
+          reason: `Review this ${c.source_type} — you missed questions from it`,
+          listen_url:
+            c.source_type === "sermon" ? `/sermons/${c.slug}` : undefined,
+          read_url:
+            c.source_type === "transcript"
+              ? `/transcripts/${c.slug}`
+              : undefined,
+        });
+      }
+    }
+  }
 
-  if (!content || content.length === 0) return [];
+  // 2. Category-based fallback for weak areas not already covered
+  if (weakAreas.length > 0) {
+    const coveredSlugs = new Set(recommendations.map((r) => r.content.slug));
+    const categories = weakAreas.map((w) => w.category);
 
-  return (content as ContentMapping[]).map((c) => ({
-    category: c.category,
-    content: c,
-    reason: `You missed ${weakAreas.find((w) => w.category === c.category)?.wrong_count || 0} questions in "${c.category}"`,
-    listen_url: c.source_type === "sermon" ? `/sermons/${c.slug}` : undefined,
-    read_url:
-      c.source_type === "transcript" ? `/transcripts/${c.slug}` : undefined,
-  }));
+    const { data: catContent } = await getSupabase()
+      .from("content_mapping")
+      .select("*")
+      .in("category", categories)
+      .order("analyzed_at", { ascending: false })
+      .limit(6);
+
+    if (catContent && catContent.length > 0) {
+      for (const c of catContent as ContentMapping[]) {
+        if (coveredSlugs.has(c.slug)) continue; // skip duplicates
+        if (recommendations.length >= 6) break;
+
+        recommendations.push({
+          category: c.category as QuizCategory,
+          content: c,
+          reason: `You missed ${weakAreas.find((w) => w.category === c.category)?.wrong_count || 0} questions in "${c.category}"`,
+          listen_url:
+            c.source_type === "sermon" ? `/sermons/${c.slug}` : undefined,
+          read_url:
+            c.source_type === "transcript"
+              ? `/transcripts/${c.slug}`
+              : undefined,
+        });
+      }
+    }
+  }
+
+  return recommendations;
 }
 
 // ── Build quiz result after submission ──
 export async function buildQuizResult(
   sessionId: string,
   attempts: Omit<QuizAttempt, "id" | "answered_at">[],
+  failedSermonRefs: string[] = [],
 ): Promise<QuizResult> {
   await saveQuizAttempts(sessionId, attempts);
 
@@ -123,7 +165,7 @@ export async function buildQuizResult(
   }
 
   const weakAreas = await getWeakAreas(sessionId);
-  const recommendations = await getRecommendations(weakAreas);
+  const recommendations = await getRecommendations(weakAreas, failedSermonRefs);
 
   return {
     total_questions: total,
