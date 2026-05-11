@@ -41,16 +41,23 @@ export async function POST(req: Request) {
 
     // Validate answers server-side against Firebase
     const attempts = [];
+    const failedSermonRefs: string[] = [];
     for (const answer of answers) {
       const question = await fetchQuestionById(answer.question_id);
       if (!question) continue;
 
+      const isCorrect = question.correctAnswer === answer.selected_answer;
       attempts.push({
         session_id,
         question_id: answer.question_id,
         category: question.category,
-        is_correct: question.correctAnswer === answer.selected_answer,
+        is_correct: isCorrect,
       });
+
+      // Collect sermon_ref from wrong answers for targeted recommendations
+      if (!isCorrect && question.sermon_ref) {
+        failedSermonRefs.push(question.sermon_ref);
+      }
     }
 
     if (attempts.length === 0) {
@@ -61,7 +68,11 @@ export async function POST(req: Request) {
     }
 
     // Build result (saves attempts, computes weak areas, gets recommendations)
-    const quizResult = await buildQuizResult(session_id, attempts);
+    const quizResult = await buildQuizResult(
+      session_id,
+      attempts,
+      failedSermonRefs,
+    );
 
     // Atomic score increment via RPC
     const score = quizResult.correct_answers;
