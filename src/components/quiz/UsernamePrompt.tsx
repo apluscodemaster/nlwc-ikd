@@ -31,8 +31,13 @@ export default function UsernamePrompt({ onSubmit }: UsernamePromptProps) {
     setLoading(true);
     try {
       await onSubmit(trimmed);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      const error = err as Error & { code?: string };
+      if (error.code === "USERNAME_EXISTS") {
+        setError("This name is already taken. Please try another name.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
       setLoading(false);
     }
   };
