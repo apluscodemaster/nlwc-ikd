@@ -310,7 +310,7 @@ export async function fetchWPPost(
     });
 
     if (response.ok) break;
-    if (response.status === 404) return null;
+    if (response.status === 404 || response.status === 403) return null;
     if (response.status === 429) {
       lastError = new Error(`Rate limited (attempt ${attempt + 1})`);
       continue;
