@@ -69,8 +69,10 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
               Recommended for You
             </h3>
             <div className="space-y-3">
-              {result.recommendations.map((rec, idx) => {
-                const title = rec.content?.title || rec.title || "Sermon";
+              {result.recommendations
+                .filter((rec) => rec != null)
+                .map((rec, idx) => {
+                const title = rec.content?.title ?? rec.title ?? "Sermon";
                 return (
                   <div
                     key={idx}
