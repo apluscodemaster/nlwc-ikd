@@ -59,11 +59,11 @@ export function useQuizSession() {
   const createSession = useCallback(async (username: string) => {
     const trimmed = username.trim();
 
-    // Check if username already exists
+    // Check if username already exists (case-insensitive)
     const { data: existingSession, error: checkError } = await getSupabase()
       .from("sessions")
       .select("username")
-      .eq("username", trimmed)
+      .ilike("username", trimmed)
       .maybeSingle();
 
     if (checkError && checkError.code !== "PGRST116") {
