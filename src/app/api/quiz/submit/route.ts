@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     // Validate answers server-side against Firebase
     const attempts = [];
-    const failedSermonRefs: string[] = [];
+    const failedSermonRefs: { slug: string; category: string }[] = [];
     for (const answer of answers) {
       const question = await fetchQuestionById(answer.question_id);
       if (!question) continue;
@@ -54,9 +54,9 @@ export async function POST(req: Request) {
         is_correct: isCorrect,
       });
 
-      // Collect sermon_ref from wrong answers for targeted recommendations
+      // Collect sermon_ref + category from wrong answers for targeted recommendations
       if (!isCorrect && question.sermon_ref) {
-        failedSermonRefs.push(question.sermon_ref);
+        failedSermonRefs.push({ slug: question.sermon_ref, category: question.category });
       }
     }
 

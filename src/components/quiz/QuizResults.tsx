@@ -8,6 +8,8 @@ import {
   AlertTriangle,
   RotateCcw,
   BookOpen,
+  Headphones,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { QuizResult, QuizCategory } from "@/types/quiz";
@@ -59,8 +61,56 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
           </div>
         </div>
 
-        {/* Category Breakdown */}
-        {Object.keys(result.by_category).length > 0 && (
+        {/* Recommended Sermons / Transcripts */}
+        {result.recommendations.length > 0 && (
+          <div className="mb-8 text-left">
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" />
+              Recommended for You
+            </h3>
+            <div className="space-y-3">
+              {result.recommendations.map((rec, idx) => {
+                const title = rec.content?.title || rec.title || "Sermon";
+                return (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-primary/5 border border-primary/10"
+                  >
+                    <p className="text-sm font-semibold text-gray-800">
+                      {title}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {rec.category} &middot; {rec.reason}
+                    </p>
+                    <div className="mt-3">
+                      {rec.listen_url ? (
+                        <a
+                          href={rec.listen_url}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors"
+                        >
+                          <Headphones className="w-3.5 h-3.5" />
+                          Listen to Audio Message
+                        </a>
+                      ) : rec.read_url ? (
+                        <a
+                          href={rec.read_url}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Read Transcript
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Category breakdown fallback when no specific recommendations */}
+        {result.recommendations.length === 0 &&
+          Object.keys(result.by_category).length > 0 && (
           <div className="mb-8 text-left">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -81,32 +131,6 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
                     {Math.round(((data.total - data.correct) / data.total) * 100)}% incorrect
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recommendations */}
-        {result.recommendations.length > 0 && (
-          <div className="mb-8 text-left">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              Recommended Content
-            </h3>
-            <div className="space-y-2">
-              {result.recommendations.map((rec, idx) => (
-                <a
-                  key={idx}
-                  href={rec.listen_url || rec.read_url || "#"}
-                  className="block p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors"
-                >
-                  <p className="text-sm font-medium text-gray-800">
-                    {rec.content.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {rec.category} · {rec.reason}
-                  </p>
-                </a>
               ))}
             </div>
           </div>

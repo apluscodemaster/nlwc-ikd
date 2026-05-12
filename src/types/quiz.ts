@@ -80,7 +80,8 @@ export interface WeakArea {
 // ── Recommendation ──
 export interface Recommendation {
   category: QuizCategory;
-  content: ContentMapping;
+  content?: ContentMapping;
+  title?: string;
   reason: string;
   listen_url?: string;
   read_url?: string;
