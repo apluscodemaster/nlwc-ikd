@@ -57,19 +57,50 @@ export function useQuizSession() {
   }
 
   const createSession = useCallback(async (username: string) => {
+    const trimmed = username.trim();
+
+    // Check if username already exists
+    const { data: existingSession, error: checkError } = await getSupabase()
+      .from("sessions")
+      .select("username")
+      .eq("username", trimmed)
+      .maybeSingle();
+
+    if (checkError && checkError.code !== "PGRST116") {
+      throw new Error("Failed to validate username");
+    }
+
+    if (existingSession) {
+      const error = new Error("Username already taken") as Error & {
+        code?: string;
+      };
+      error.code = "USERNAME_EXISTS";
+      throw error;
+    }
+
     const sessionId = crypto.randomUUID();
 
     const { data, error } = await getSupabase()
       .from("sessions")
-      .insert({ session_id: sessionId, username: username.trim() })
+      .insert({ session_id: sessionId, username: trimmed })
       .select()
       .single();
 
-    if (error || !data) throw new Error("Failed to create session");
+    if (error || !data) {
+      if (error?.code === "23505") {
+        // Unique constraint violation
+        const constraintError = new Error(
+          "Username already taken",
+        ) as Error & { code?: string };
+        constraintError.code = "USERNAME_EXISTS";
+        throw constraintError;
+      }
+      throw new Error("Failed to create session");
+    }
 
     localStorage.setItem(
       SESSION_KEY,
-      JSON.stringify({ session_id: sessionId, username: username.trim() }),
+      JSON.stringify({ session_id: sessionId, username: trimmed }),
     );
 
     setSession(data as QuizSession);
