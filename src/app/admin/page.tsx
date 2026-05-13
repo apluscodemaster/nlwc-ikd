@@ -54,7 +54,12 @@ interface SermonFormData {
   thumbnailFile: FileList | null;
 }
 
-type TranscriptType = "sunday-message" | "sunday-school" | "bible-study" | "other-meetings" | "season-of-the-spirit";
+type TranscriptType =
+  | "sunday-message"
+  | "sunday-school"
+  | "bible-study"
+  | "other-meetings"
+  | "season-of-the-spirit";
 
 // Map transcript types to WP category IDs for save operations
 const TRANSCRIPT_TYPE_TO_CATEGORY: Record<TranscriptType, number> = {
@@ -680,8 +685,14 @@ export default function AdminChurchContentPage() {
   );
   const [editUploadingThumbnail, setEditUploadingThumbnail] = useState(false);
   const editThumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [editAudioFileName, setEditAudioFileName] = useState<string | null>(
+    null,
+  );
+  const [editAudioFile, setEditAudioFile] = useState<FileList | null>(null);
+  const editAudioInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [editTranscriptType, setEditTranscriptType] = useState<TranscriptType>("sunday-message");
+  const [editTranscriptType, setEditTranscriptType] =
+    useState<TranscriptType>("sunday-message");
 
   const sermonForm = useForm<SermonFormData>({
     defaultValues: {
@@ -809,6 +820,12 @@ export default function AdminChurchContentPage() {
     setEditThumbnailPreview(item.thumbnail || null);
     setEditUploadedMediaId(null); // Will be set if user uploads a new one
     setEditUploadingThumbnail(false);
+    // Reset audio file for edit
+    setEditAudioFileName(null);
+    setEditAudioFile(null);
+    if (editAudioInputRef.current) {
+      editAudioInputRef.current.value = "";
+    }
     // Pre-populate transcript type from item
     if (item.transcriptType) {
       setEditTranscriptType(item.transcriptType as TranscriptType);
@@ -850,17 +867,78 @@ export default function AdminChurchContentPage() {
     }
   };
 
+  // ── Handle Edit Audio File Selection ──
+  const handleEditAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditAudioFileName(file.name);
+      setEditAudioFile(e.target.files);
+    }
+  };
+
   // ── Save Edit ──
   const handleSaveEdit = async () => {
     if (!editingItem) return;
     setSaving(true);
     try {
+      // Handle audio file upload for sermons if a new file was selected
+      let uploadedAudioMediaId: number | null = null;
+      if (activeTab === "sermon" && editAudioFile && editAudioFile[0]) {
+        try {
+          const formData = new FormData();
+          formData.append("file", editAudioFile[0]);
+          const audioRes = await fetch("/api/wp/upload-media", {
+            method: "POST",
+            body: formData,
+          });
+          const audioData = await audioRes.json();
+          if (audioData.mediaId) {
+            uploadedAudioMediaId = audioData.mediaId;
+            toast.success("Audio file uploaded!");
+          } else {
+            toast.warning(
+              "Audio upload failed, but continuing with other changes...",
+            );
+          }
+        } catch {
+          toast.warning(
+            "Audio upload failed, but continuing with other changes...",
+          );
+        }
+      }
+
+      // Build content with speaker prepended if provided
+      let contentToSave = editContent;
+
+      // Remove existing "Minister:" or "Speaker:" line to avoid duplication
+      // Handle both HTML format (<p><strong>Minister:</strong>...) and plain text format
+      contentToSave = contentToSave.replace(
+        /<p><strong>Minister:<\/strong>.*?<\/p>\n?/gi,
+        "",
+      );
+      contentToSave = contentToSave.replace(
+        /(?:Minister|Speaker):\s*[^\n]*\n?/gi,
+        "",
+      );
+
+      // Prepend new speaker if provided
+      if (editSpeaker) {
+        // For transcripts (HTML content), use HTML format
+        if (activeTab === "transcript") {
+          contentToSave = `<p><strong>Minister:</strong> ${editSpeaker}</p>\n${contentToSave}`;
+        } else {
+          // For other content types (sermons use textarea), use plain text format
+          contentToSave = `Minister: ${editSpeaker}\n${contentToSave}`;
+        }
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: Record<string, any> = {
         id: editingItem.id,
         title: editTitle,
-        content: editContent,
+        content: contentToSave,
         status: editStatus,
+        speaker: editSpeaker, // Include speaker for reference
       };
       // Include date if changed (for sermons)
       if (editDate) {
@@ -870,17 +948,10 @@ export default function AdminChurchContentPage() {
       if (editUploadedMediaId) {
         payload.featuredMediaId = editUploadedMediaId;
       }
-      // Include categories if series was selected (for sermons)
+      // Include categories only for sermons (allow series changes)
+      // For transcripts and manuals, categories are immutable and should not be updated
       if (activeTab === "sermon" && editSeriesId) {
         payload.categories = [Number(editSeriesId)];
-      }
-      // Include categories for transcript edits (map transcript type to WP category)
-      if (activeTab === "transcript") {
-        payload.categories = [TRANSCRIPT_TYPE_TO_CATEGORY[editTranscriptType]];
-      }
-      // Include categories for manual edits
-      if (activeTab === "manual") {
-        payload.categories = [19]; // WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL
       }
 
       const res = await fetch("/api/wp/update", {
@@ -894,6 +965,11 @@ export default function AdminChurchContentPage() {
           description: `Post #${data.postId} saved.`,
         });
         setEditingItem(null);
+        setEditAudioFileName(null);
+        setEditAudioFile(null);
+        if (editAudioInputRef.current) {
+          editAudioInputRef.current.value = "";
+        }
         fetchContent(activeTab, contentPage);
       } else {
         toast.error("Failed to update", {
@@ -1888,14 +1964,28 @@ export default function AdminChurchContentPage() {
                     <div className="relative">
                       <select
                         value={editTranscriptType}
-                        onChange={(e) => setEditTranscriptType(e.target.value as TranscriptType)}
+                        onChange={(e) =>
+                          setEditTranscriptType(
+                            e.target.value as TranscriptType,
+                          )
+                        }
                         className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
                       >
-                        <option value="sunday-message">Sunday Message Transcript</option>
-                        <option value="sunday-school">Sunday School Transcript</option>
-                        <option value="bible-study">Bible Study Transcript</option>
-                        <option value="other-meetings">Other Meetings Transcript</option>
-                        <option value="season-of-the-spirit">Season of the Spirit</option>
+                        <option value="sunday-message">
+                          Sunday Message Transcript
+                        </option>
+                        <option value="sunday-school">
+                          Sunday School Transcript
+                        </option>
+                        <option value="bible-study">
+                          Bible Study Transcript
+                        </option>
+                        <option value="other-meetings">
+                          Other Meetings Transcript
+                        </option>
+                        <option value="season-of-the-spirit">
+                          Season of the Spirit
+                        </option>
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
@@ -2058,6 +2148,63 @@ export default function AdminChurchContentPage() {
                         </div>
                         <p className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">
                           Upload new thumbnail
+                        </p>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Audio File - Sermon only */}
+                {activeTab === "sermon" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Audio File (Update)
+                    </label>
+                    <input
+                      ref={editAudioInputRef}
+                      type="file"
+                      accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac"
+                      onChange={handleEditAudioSelect}
+                      className="hidden"
+                    />
+
+                    {editAudioFileName ? (
+                      <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <FileAudio className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {editAudioFileName}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            New audio file selected
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditAudioFileName(null);
+                            setEditAudioFile(null);
+                            if (editAudioInputRef.current)
+                              editAudioInputRef.current.value = "";
+                          }}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => editAudioInputRef.current?.click()}
+                        className="w-full flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 bg-gray-50/50 hover:bg-primary/5 transition-all cursor-pointer group"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/20 transition-all">
+                          <Upload className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
+                        </div>
+                        <p className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">
+                          Upload new audio file (optional)
                         </p>
                       </button>
                     )}
