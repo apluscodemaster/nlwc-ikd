@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getSundayMessageTranscripts,
-  getSundaySchoolManuals,
-  getSundaySchoolTranscripts,
+  WP_CATEGORIES,
+  fetchWPPosts,
+  transformToTranscript,
+  transformToManual,
+  extractSpeaker,
 } from "@/lib/wordpress";
 import { getAudioSermons } from "@/lib/audioSermons";
 
@@ -38,43 +40,51 @@ export async function GET(request: NextRequest) {
       }
 
       case "transcript": {
-        // Fetch both sunday message and sunday school transcripts
+        // Fetch both sunday message and sunday school transcripts with full content
         const [msgResult, ssResult] = await Promise.all([
-          getSundayMessageTranscripts({
+          fetchWPPosts({
+            categories: [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS],
             page,
             perPage: Math.ceil(perPage / 2),
           }),
-          getSundaySchoolTranscripts({
+          fetchWPPosts({
+            categories: [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS],
             page,
             perPage: Math.floor(perPage / 2),
           }),
         ]);
 
         const allTranscripts = [
-          ...msgResult.transcripts.map((t) => ({
-            id: t.id,
-            title: t.title,
-            date: t.formattedDate,
-            status: "publish",
-            speaker: t.speaker,
-            type: "transcript" as const,
-            transcriptType: t.type,
-            content: t.content,
-            excerpt: t.excerpt,
-            slug: t.slug,
-          })),
-          ...ssResult.transcripts.map((t) => ({
-            id: t.id,
-            title: t.title,
-            date: t.formattedDate,
-            status: "publish",
-            speaker: t.speaker,
-            type: "transcript" as const,
-            transcriptType: t.type,
-            content: t.content,
-            excerpt: t.excerpt,
-            slug: t.slug,
-          })),
+          ...msgResult.posts.map((post) => {
+            const transcript = transformToTranscript(post);
+            return {
+              id: transcript.id,
+              title: transcript.title,
+              date: transcript.formattedDate,
+              status: "publish",
+              speaker: transcript.speaker,
+              type: "transcript" as const,
+              transcriptType: transcript.type,
+              content: transcript.content,
+              excerpt: transcript.excerpt,
+              slug: transcript.slug,
+            };
+          }),
+          ...ssResult.posts.map((post) => {
+            const transcript = transformToTranscript(post);
+            return {
+              id: transcript.id,
+              title: transcript.title,
+              date: transcript.formattedDate,
+              status: "publish",
+              speaker: transcript.speaker,
+              type: "transcript" as const,
+              transcriptType: transcript.type,
+              content: transcript.content,
+              excerpt: transcript.excerpt,
+              slug: transcript.slug,
+            };
+          }),
         ].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
         );
@@ -91,19 +101,28 @@ export async function GET(request: NextRequest) {
       }
 
       case "manual": {
-        const result = await getSundaySchoolManuals({ page, perPage });
+        const result = await fetchWPPosts({
+          categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
+          page,
+          perPage,
+        });
+
         return NextResponse.json({
-          items: result.manuals.map((m) => ({
-            id: m.id,
-            title: m.title,
-            date: m.formattedDate,
-            status: "publish",
-            type: "manual" as const,
-            content: m.content,
-            excerpt: m.excerpt,
-            slug: m.slug,
-            thumbnail: m.thumbnail,
-          })),
+          items: result.posts.map((post) => {
+            const manual = transformToManual(post);
+            return {
+              id: manual.id,
+              title: manual.title,
+              date: manual.formattedDate,
+              status: "publish",
+              speaker: extractSpeaker(post.content.rendered),
+              type: "manual" as const,
+              content: manual.content,
+              excerpt: manual.excerpt,
+              slug: manual.slug,
+              thumbnail: manual.thumbnail,
+            };
+          }),
           pagination: {
             page,
             perPage,

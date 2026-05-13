@@ -456,7 +456,7 @@ const HTML_TAG_STRIP_RE = /<[^>]*>/g;
 /**
  * Extract speaker name from post content (commonly formatted as "Minister: Pastor Name")
  */
-function extractSpeaker(content: string): string | undefined {
+export function extractSpeaker(content: string): string | undefined {
   for (const pattern of SPEAKER_PATTERNS) {
     const match = content.match(pattern);
     if (match && match[1]) {
