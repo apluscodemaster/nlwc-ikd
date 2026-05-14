@@ -124,12 +124,12 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com api.reftagger.com *.reftagger.com *.bibliacdn.com; " +
+              "script-src 'self' 'unsafe-inline' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com api.reftagger.com *.reftagger.com *.bibliacdn.com challenges.cloudflare.com; " +
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com *.cloudinary.com www.gstatic.com api.reftagger.com *.reftagger.com; " +
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
-              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.google-analytics.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church one.com api.reftagger.com *.reftagger.com *.biblia.com *.faithlife.com; " +
-              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io; " +
+              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.google-analytics.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com ikdadmin.nlwc.church one.com api.reftagger.com *.reftagger.com *.biblia.com *.faithlife.com challenges.cloudflare.com; " +
+              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io challenges.cloudflare.com; " +
               "media-src 'self' https: blob:; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
