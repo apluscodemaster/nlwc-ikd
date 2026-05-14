@@ -2,7 +2,6 @@ import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
-// Validation schema for contact form
 const contactSchema = z.object({
   name: z
     .string()
@@ -18,11 +17,28 @@ const contactSchema = z.object({
     .string()
     .min(10, "Message must be at least 10 characters")
     .max(5000, "Message must be under 5000 characters"),
+  turnstileToken: z.string().optional(),
 });
 
+async function verifyTurnstileToken(token: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true;
+
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret, response: token }),
+    },
+  );
+
+  const data = await response.json();
+  return data.success === true;
+}
+
 export async function POST(req: NextRequest) {
-  // Apply rate limiting to prevent spam (100 requests per minute per IP)
-  const rateLimitError = rateLimitMiddleware(req, "public");
+  const rateLimitError = rateLimitMiddleware(req, "strict");
   if (rateLimitError) {
     return rateLimitError;
   }
@@ -30,7 +46,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Validate input with Zod
     const validation = contactSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -45,7 +60,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, subject, message } = validation.data;
+    const { name, email, subject, message, turnstileToken } = validation.data;
+
+    if (process.env.TURNSTILE_SECRET_KEY) {
+      if (!turnstileToken) {
+        return NextResponse.json(
+          { error: "Verification required. Please complete the CAPTCHA." },
+          { status: 400 },
+        );
+      }
+
+      const isValid = await verifyTurnstileToken(turnstileToken);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Verification failed. Please try again." },
+          { status: 400 },
+        );
+      }
+    }
 
     // Log submission (for admin purposes)
     console.log(`📧 Contact form submission from ${name} <${email}>:`, {

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 interface FormErrors {
   name?: string;
@@ -25,6 +26,8 @@ export default function ContactForm() {
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -93,17 +96,22 @@ export default function ContactForm() {
       return;
     }
 
+    if (!turnstileToken) {
+      setStatus("error");
+      setErrorMessage("Please complete the verification check.");
+      return;
+    }
+
     setStatus("loading");
     setErrorMessage("");
 
     try {
-      // Send to API
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, turnstileToken }),
       });
 
       const data = await response.json();
@@ -115,6 +123,8 @@ export default function ContactForm() {
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
       setErrors({});
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
 
       // Auto-dismiss success after 5 seconds
       setTimeout(() => {
@@ -302,6 +312,18 @@ export default function ContactForm() {
             <p className="text-xs text-red-600 font-medium">{errors.message}</p>
           )}
         </div>
+
+        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+          <div className="flex justify-center">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+              onSuccess={setTurnstileToken}
+              onError={() => setTurnstileToken(null)}
+              onExpire={() => setTurnstileToken(null)}
+            />
+          </div>
+        )}
 
         <Button
           type="submit"
