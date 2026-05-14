@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDecodedContact } from "@/components/ObfuscatedContact";
 import {
   Heart,
   Copy,
@@ -226,6 +227,7 @@ function BankCard({
 
 export default function GivePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const email = useDecodedContact("email");
 
   const copyToClipboard = async (text: string, id: string) => {
     try {
@@ -384,7 +386,7 @@ export default function GivePage() {
                     variant="outline"
                     className="rounded-full border-white/20 hover:bg-white/10 text-black hover:text-white h-12 px-6"
                   >
-                    <a href="mailto:ikoroduchurchadmin@nlwc.church">
+                    <a href={email ? `mailto:${email.raw}` : "#"}>
                       Contact Admin
                     </a>
                   </Button>

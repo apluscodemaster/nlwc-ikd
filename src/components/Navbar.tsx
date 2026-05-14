@@ -17,6 +17,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDecodedContact } from "@/components/ObfuscatedContact";
 import {
   Sheet,
   SheetContent,
@@ -128,6 +129,8 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const phone = useDecodedContact("phone");
+  const email = useDecodedContact("email");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -418,7 +421,7 @@ export default function Navbar() {
 
                       <div className="grid grid-cols-2 gap-4 mt-8">
                         <a
-                          href="tel:+2348137436770"
+                          href={phone ? `tel:${phone.raw}` : "#"}
                           className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                           <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
@@ -429,7 +432,7 @@ export default function Navbar() {
                           </span>
                         </a>
                         <a
-                          href="mailto:ikoroduchurchadmin@nlwc.church"
+                          href={email ? `mailto:${email.raw}` : "#"}
                           className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                           <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
