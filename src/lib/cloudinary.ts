@@ -3,7 +3,8 @@
  * Centralizes image quality and optimization settings
  */
 
-const CLOUDINARY_CLOUD_NAME = "dj7rh8h6r";
+const CLOUDINARY_CLOUD_NAME =
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dj7rh8h6r";
 const CLOUDINARY_QUALITY = 75;
 const CLOUDINARY_QUALITY_OPTIMIZED = 80; // For high-visibility hero/feature images
 

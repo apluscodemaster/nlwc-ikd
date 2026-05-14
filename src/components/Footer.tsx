@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
+import ObfuscatedContact from "@/components/ObfuscatedContact";
 
 // Social media links - update these with actual URLs
 const SOCIAL_LINKS = {
@@ -292,21 +293,17 @@ export default function Footer() {
           <ul className="space-y-3 text-sm text-gray-300">
             <li className="flex items-center gap-2">
               <HiOutlineMail color={orange} size={18} />
-              <a
-                href="mailto:ikoroduchurchadmin@nlwc.church"
+              <ObfuscatedContact
+                type="email"
                 className="hover:text-primary transition-colors"
-              >
-                ikoroduchurchadmin@nlwc.church
-              </a>
+              />
             </li>
             <li className="flex items-center gap-2">
               <HiPhone color={orange} size={18} />
-              <a
-                href="tel:+2348137436770"
+              <ObfuscatedContact
+                type="phone"
                 className="hover:text-primary transition-colors"
-              >
-                +234 813 743 6770
-              </a>
+              />
             </li>
           </ul>
         </div>
