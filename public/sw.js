@@ -152,3 +152,16 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+/**
+ * Handle messages from the client/extension
+ * This prevents "A listener indicated an asynchronous response" errors
+ */
+self.addEventListener("message", (event) => {
+  // Log message for debugging
+  if (event.data) {
+    console.debug("Service Worker received message:", event.data);
+  }
+  // Simply acknowledge any message received
+  // Most messages don't require a response, but acknowledging them prevents port close errors
+});
