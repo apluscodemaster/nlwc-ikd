@@ -39,67 +39,7 @@ interface SpecialService {
 }
 
 /** One-off services that should trigger live status & appear in countdown. */
-const SPECIAL_SERVICES: SpecialService[] = [
-  // ── Teenager's Retreat (April 2–5, 2026) ──
-  {
-    year: 2026,
-    month: 3,
-    day: 2,
-    startHour: 18,
-    endHour: 23.5,
-    label: "Teenager's Retreat — Day 1 Evening Session",
-  },
-  {
-    year: 2026,
-    month: 3,
-    day: 3,
-    startHour: 9,
-    endHour: 12,
-    label: "Teenager's Retreat — Day 2 Morning Session",
-  },
-  {
-    year: 2026,
-    month: 3,
-    day: 3,
-    startHour: 18,
-    endHour: 23.5,
-    label: "Teenager's Retreat — Day 2 Evening Session",
-  },
-  {
-    year: 2026,
-    month: 3,
-    day: 4,
-    startHour: 18,
-    endHour: 23.5,
-    label: "Teenager's Retreat Grand Finale",
-  },
-
-  // ── Special Meeting with Pastor Tosin Gabriel (April 9–11, 2026) ──
-  {
-    year: 2026,
-    month: 3,
-    day: 9,
-    startHour: 18,
-    endHour: 23.5,
-    label: "Special Meeting with Pastor Tosin Gabriel — Day 1",
-  },
-  {
-    year: 2026,
-    month: 3,
-    day: 10,
-    startHour: 17,
-    endHour: 23.5,
-    label: "Special Meeting with Pastor Tosin Gabriel — Day 2",
-  },
-  {
-    year: 2026,
-    month: 3,
-    day: 11,
-    startHour: 10,
-    endHour: 23.5,
-    label: "Special Meeting with Pastor Tosin Gabriel — Day 3",
-  },
-];
+const SPECIAL_SERVICES: SpecialService[] = [];
 
 /** Convert fractional hour to total minutes for precise comparison. */
 function toMinutes(now: Date): number {
@@ -245,15 +185,8 @@ const DAY_MEETING_TITLES: Record<number, string> = {
   5: "Bible Study", // Friday
 };
 
-/**
- * Fridays where Bible Study is cancelled.
- * April 3  – Teenager's Retreat
- * April 10 – Special Meeting with Pastor Tosin Gabriel
- */
-const BIBLE_STUDY_SKIP_DATES = [
-  new Date(2026, 3, 3).toDateString(),
-  new Date(2026, 3, 10).toDateString(),
-];
+/** Fridays where Bible Study is cancelled. */
+const BIBLE_STUDY_SKIP_DATES: string[] = [];
 
 /**
  * Returns the meeting title for the streaming page.
