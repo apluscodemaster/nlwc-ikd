@@ -200,7 +200,7 @@ export default function DevotionalViewPage({
                     />
 
                     {/* Floating Expand Tool */}
-                    <div className="absolute top-6 right-6 flex items-center gap-3">
+                    {/* <div className="absolute top-6 right-6 flex items-center gap-3">
                       <a
                         href={devotional.pdfUrl}
                         target="_blank"
@@ -210,7 +210,7 @@ export default function DevotionalViewPage({
                         <ExternalLink className="w-4 h-4" />
                         Focus Mode
                       </a>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </motion.div>
