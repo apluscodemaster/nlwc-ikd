@@ -144,9 +144,12 @@ self.addEventListener("fetch", (event) => {
             return response;
           })
           .catch(() => {
-            // Return a blank response for failed resource requests
-            // (images, stylesheets, etc.)
-            return new Response("", { status: 204 });
+            // Return an appropriate error response for failed requests
+            // Use 503 Service Unavailable instead of 204, which can't have a body
+            return new Response(null, { 
+              status: 503, 
+              statusText: "Service Unavailable" 
+            });
           });
       }),
     );
@@ -155,13 +158,27 @@ self.addEventListener("fetch", (event) => {
 
 /**
  * Handle messages from the client/extension
- * This prevents "A listener indicated an asynchronous response" errors
+ * Ensures no async response promises are left pending
  */
 self.addEventListener("message", (event) => {
-  // Log message for debugging
-  if (event.data) {
-    console.debug("Service Worker received message:", event.data);
+  try {
+    // Log message for debugging
+    if (event.data) {
+      console.debug("Service Worker received message:", event.data);
+    }
+    
+    // Handle MessagePort-based communication (if present)
+    if (event.ports && event.ports.length > 0) {
+      try {
+        event.ports[0].postMessage({ type: "ack", received: true });
+      } catch (err) {
+        console.debug("Could not send port response:", err);
+      }
+    }
+  } catch (err) {
+    console.debug("Error in message handler:", err);
   }
-  // Simply acknowledge any message received
-  // Most messages don't require a response, but acknowledging them prevents port close errors
+  
+  // IMPORTANT: Never return true here - that would indicate async response intent
+  // which could lead to "listener indicated asynchronous response" errors
 });
