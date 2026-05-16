@@ -129,15 +129,15 @@ export default function FellowshipPrompt() {
       (error) => {
         let message = "Unable to get your location.";
         switch (error.code) {
-          case error.PERMISSION_DENIED:
+          case 1: // PERMISSION_DENIED
             message =
               "Location access was denied. You can still browse all our centers on the fellowship page.";
             break;
-          case error.POSITION_UNAVAILABLE:
+          case 2: // POSITION_UNAVAILABLE
             message =
               "Your location is currently unavailable. Please try again later.";
             break;
-          case error.TIMEOUT:
+          case 3: // TIMEOUT
             message = "Location request timed out. Please try again.";
             break;
         }
