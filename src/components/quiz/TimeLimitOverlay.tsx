@@ -21,7 +21,9 @@ export default function TimeLimitOverlay({
 
   // Format time display
   const timeDisplay =
-    minutes > 0 ? `${minutes} minute${minutes !== 1 ? "s" : ""}` : `${seconds} seconds`;
+    minutes > 0
+      ? `${minutes} minute${minutes !== 1 ? "s" : ""}`
+      : `${seconds} seconds`;
 
   return (
     <motion.div
@@ -38,7 +40,7 @@ export default function TimeLimitOverlay({
         className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
       >
         {/* Header with timer icon */}
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 sm:px-8 py-8 text-center relative overflow-hidden">
+        <div className="bg-linear-to-r from-blue-500 to-blue-600 px-6 sm:px-8 py-8 text-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full -ml-12 -mb-12" />
@@ -52,8 +54,12 @@ export default function TimeLimitOverlay({
             <Clock className="w-8 h-8 text-white" />
           </motion.div>
 
-          <h2 className="text-2xl font-bold text-white mb-2">Ready to Start?</h2>
-          <p className="text-blue-100 text-sm">You&apos;re about to begin the quiz</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Ready to Start?
+          </h2>
+          <p className="text-blue-100 text-sm">
+            Test your knowledge and earn points
+          </p>
         </div>
 
         {/* Content */}
@@ -69,12 +75,14 @@ export default function TimeLimitOverlay({
                 <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
                   Questions
                 </p>
-                <p className="text-lg font-bold text-gray-900">{questionCount}</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {questionCount}
+                </p>
               </div>
             </div>
 
             {/* Time limit */}
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 border border-blue-200">
               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
                 <Clock className="w-5 h-5 text-white" />
               </div>
@@ -88,18 +96,29 @@ export default function TimeLimitOverlay({
 
             {/* Time per question info */}
             <div className="text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-              <p className="font-semibold text-amber-900 mb-1">⏱️ Time Per Question</p>
-              <p>You have approximately <span className="font-bold text-amber-900">60 seconds</span> per question. Answer strategically and move at your own pace!</p>
+              <p className="font-semibold text-amber-900 mb-1">
+                ⏱️ Time Per Question
+              </p>
+              <p>
+                You have approximately{" "}
+                <span className="font-bold text-amber-900">60 seconds</span> per
+                question. Answer strategically and move at your own pace!
+              </p>
             </div>
           </div>
 
           {/* Important notes */}
           <div className="mb-8 text-xs text-gray-600 space-y-2">
             <p>
-              ✓ Once you start, the timer will count down and you cannot pause it
+              ✓ Once you start, the timer will count down and you cannot pause
+              it
             </p>
-            <p>✓ You can answer questions at your own pace within the time limit</p>
-            <p>✓ When time is up, your answers will be automatically submitted</p>
+            <p>
+              ✓ You can answer questions at your own pace within the time limit
+            </p>
+            <p>
+              ✓ When time is up, your answers will be automatically submitted
+            </p>
           </div>
 
           {/* CTA */}

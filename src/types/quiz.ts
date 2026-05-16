@@ -87,6 +87,15 @@ export interface Recommendation {
   read_url?: string;
 }
 
+// ── Failed Question with Recommendations ──
+export interface FailedQuestionState {
+  question: QuizQuestion;
+  selectedAnswer: number;
+  correctAnswer: number;
+  recommendations: Recommendation[];
+  explanation?: string;
+}
+
 // ── Quiz Result (returned after submitting a quiz) ──
 export interface QuizResult {
   total_questions: number;
@@ -96,4 +105,8 @@ export interface QuizResult {
     Record<QuizCategory, { correct: number; total: number }>
   >;
   recommendations: Recommendation[];
+  failed_questions?: Array<{
+    question: QuizQuestion;
+    explanation?: string;
+  }>;
 }
