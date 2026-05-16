@@ -158,7 +158,7 @@ const nextConfig: NextConfig = {
           // Permission policy (feature policy)
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=()",
           },
         ],
       },
