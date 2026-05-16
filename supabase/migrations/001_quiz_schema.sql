@@ -89,13 +89,23 @@ CREATE OR REPLACE VIEW leaderboard AS
   ORDER BY total_score DESC
   LIMIT 100;
 
--- 6. RPC: Atomic score increment
+-- 6. RPC: Increment score (called for each correct answer)
 CREATE OR REPLACE FUNCTION increment_quiz_count(sid TEXT, points INT)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   UPDATE sessions
   SET total_score = total_score + points,
-      quizzes_taken = quizzes_taken + 1,
+      last_active = now()
+  WHERE session_id = sid;
+END;
+$$;
+
+-- RPC: Increment quiz count (called once per session start)
+CREATE OR REPLACE FUNCTION increment_quizzes_taken(sid TEXT)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  UPDATE sessions
+  SET quizzes_taken = quizzes_taken + 1,
       last_active = now()
   WHERE session_id = sid;
 END;

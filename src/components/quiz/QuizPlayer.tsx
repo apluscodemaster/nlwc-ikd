@@ -31,7 +31,10 @@ export default function QuizPlayer({
   category,
   onComplete,
 }: QuizPlayerProps) {
-  const [current, setCurrent] = useState<Omit<QuizQuestion, "correctAnswer"> | null>(null);
+  const [current, setCurrent] = useState<Omit<
+    QuizQuestion,
+    "correctAnswer"
+  > | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState<number | undefined>();
@@ -143,8 +146,15 @@ export default function QuizPlayer({
         setRevealed(true);
 
         const recs = await fetchRecommendations(current.sermon_ref);
+
+        // Create complete question object with correctAnswer
+        const fullQuestion: QuizQuestion = {
+          ...current,
+          correctAnswer: correct_answer,
+        };
+
         setFailedQuestionData({
-          question: current,
+          question: fullQuestion,
           selectedAnswer,
           correctAnswer: correct_answer,
           explanation,
@@ -157,7 +167,13 @@ export default function QuizPlayer({
     } finally {
       setSubmitting(false);
     }
-  }, [selectedAnswer, current, sessionId, fetchNextQuestion, fetchRecommendations]);
+  }, [
+    selectedAnswer,
+    current,
+    sessionId,
+    fetchNextQuestion,
+    fetchRecommendations,
+  ]);
 
   const handleContinueAfterFailed = useCallback(async () => {
     setShowFailedOverlay(false);
@@ -232,7 +248,9 @@ export default function QuizPlayer({
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={selectedAnswer === null || submitting || loadingQuestion}
+              disabled={
+                selectedAnswer === null || submitting || loadingQuestion
+              }
               className="h-12 px-8 rounded-full font-bold cursor-pointer"
             >
               {submitting || loadingQuestion ? (

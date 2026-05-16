@@ -127,19 +127,23 @@ export async function getRecommendations(
         if (t.slug) foundSlugs.add(t.slug);
         const matchingSermon = sermonByTitle.get(t.title);
 
-        // Alternate between transcript and audio recommendations
-        const useAudio = matchingSermon && recommendations.length % 2 === 0;
+        // Provide both audio and transcript recommendations when available
+        if (matchingSermon) {
+          // Add audio recommendation first
+          recommendations.push({
+            category: t.category as QuizCategory,
+            content: matchingSermon,
+            reason: "Listen to this sermon — you missed questions from it",
+            listen_url: `/sermons/audio/${matchingSermon.source_id}`,
+          });
+        }
 
+        // Then add transcript recommendation
         recommendations.push({
           category: t.category as QuizCategory,
           content: t,
-          reason: useAudio
-            ? "Listen to this sermon — you missed questions from it"
-            : "Read this transcript — you missed questions from it",
-          listen_url: useAudio
-            ? `/sermons/audio/${matchingSermon.source_id}`
-            : undefined,
-          read_url: !useAudio ? `/transcripts/${t.slug}` : undefined,
+          reason: "Read this transcript — you missed questions from it",
+          read_url: `/transcripts/${t.slug}`,
         });
       }
     }

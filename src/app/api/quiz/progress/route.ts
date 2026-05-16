@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { getWeakAreas, getRecommendations, fetchQuestionById } from "@/lib/quizService";
+import {
+  getWeakAreas,
+  getRecommendations,
+  fetchQuestionById,
+} from "@/lib/quizService";
 import type { QuizResult } from "@/types/quiz";
 
 export async function GET(req: NextRequest) {
@@ -11,7 +15,7 @@ export async function GET(req: NextRequest) {
     if (!session_id) {
       return NextResponse.json(
         { error: "Missing session_id" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,20 +28,21 @@ export async function GET(req: NextRequest) {
     if (attemptsError || !attempts) {
       return NextResponse.json(
         { error: "Failed to fetch attempts" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const correct = attempts.filter((a: any) => a.is_correct).length;
     const total = attempts.length;
 
-    const byCategory: QuizResult["by_category"] = {};
+    const byCategory: Record<string, { correct: number; total: number }> = {};
     for (const a of attempts) {
-      if (!byCategory[a.category]) {
-        byCategory[a.category] = { correct: 0, total: 0 };
+      const category = a.category as string;
+      if (!byCategory[category]) {
+        byCategory[category] = { correct: 0, total: 0 };
       }
-      byCategory[a.category]!.total++;
-      if (a.is_correct) byCategory[a.category]!.correct++;
+      byCategory[category]!.total++;
+      if (a.is_correct) byCategory[category]!.correct++;
     }
 
     // Get weak areas and recommendations
@@ -77,7 +82,7 @@ export async function GET(req: NextRequest) {
     console.error("Get progress error:", error);
     return NextResponse.json(
       { error: "Failed to get progress" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
