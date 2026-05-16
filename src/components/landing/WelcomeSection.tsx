@@ -83,7 +83,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:-rotate-2 transition-transform"
             >
               <Image
-                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247545/nlwc-ikd-assets/yod0s9qidic53wxu5gmt.webp"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1774247545/nlwc-ikd-assets/yod0s9qidic53wxu5gmt.webp"
                 alt="Members of NLWC Ikorodu fellowshipping together"
                 fill
                 className="object-cover"
@@ -95,7 +95,7 @@ export default function WelcomeSection() {
               className="relative h-[200px] sm:h-[250px] rounded-3xl overflow-hidden shadow-xl transform hover:rotate-2 transition-transform"
             >
               <Image
-                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1775202695/community-2_vwupj4.jpg"
+                src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1775202695/community-2_vwupj4.jpg"
                 alt="Congregation gathered for worship at NLWC Ikorodu"
                 fill
                 className="object-cover"
@@ -108,7 +108,7 @@ export default function WelcomeSection() {
             className="relative h-[350px] sm:h-[550px] rounded-3xl overflow-hidden shadow-2xl"
           >
             <Image
-              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247555/nlwc-ikd-assets/nnjinqr23gen813vyqrn.avif"
+              src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1774247555/nlwc-ikd-assets/nnjinqr23gen813vyqrn.avif"
               alt="NLWC Ikorodu leadership during worship service"
               fill
               className="object-cover"
@@ -198,7 +198,10 @@ export default function WelcomeSection() {
                         key={unit.label}
                         className="flex flex-col items-center justify-center w-12 h-14 sm:w-14 sm:h-16 rounded-xl bg-gray-900 text-white"
                       >
-                        <span suppressHydrationWarning className="text-lg sm:text-xl font-bold leading-none tabular-nums">
+                        <span
+                          suppressHydrationWarning
+                          className="text-lg sm:text-xl font-bold leading-none tabular-nums"
+                        >
                           {unit.value.toString().padStart(2, "0")}
                         </span>
                         <span className="text-[9px] font-bold text-white/50 uppercase mt-0.5">
