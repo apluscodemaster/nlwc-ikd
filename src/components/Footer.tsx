@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import {
-  FaYoutube,
-  FaFacebookF,
-  FaInstagram,
-  FaTwitter,
-  FaWhatsapp,
-} from "react-icons/fa";
-import { HiOutlineMail, HiPhone, HiChevronRight } from "react-icons/hi";
+  Youtube,
+  Facebook,
+  Instagram,
+  Twitter,
+  MessageCircle,
+  Mail,
+  Phone,
+  ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -99,7 +101,7 @@ export default function Footer() {
                   href="/about"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   About
                 </Link>
               </li>
@@ -108,7 +110,7 @@ export default function Footer() {
                   href="/sermons"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Audio Messages
                 </Link>
               </li>
@@ -117,7 +119,7 @@ export default function Footer() {
                   href="/fellowship"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   House Fellowships
                 </Link>
               </li>
@@ -128,7 +130,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Blog
                 </Link>
               </li>
@@ -137,7 +139,7 @@ export default function Footer() {
                   href="/gallery"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Church Gallery
                 </Link>
               </li>
@@ -146,7 +148,7 @@ export default function Footer() {
                   href="/contact"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Contact Us
                 </Link>
               </li>
@@ -162,7 +164,7 @@ export default function Footer() {
                   href="/devotionals"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Daily Devotionals
                 </Link>
               </li>
@@ -171,7 +173,7 @@ export default function Footer() {
                   href="/listen-live"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Listen live
                 </Link>
               </li>
@@ -180,7 +182,7 @@ export default function Footer() {
                   href="/live"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Watch live
                 </Link>
               </li>
@@ -189,7 +191,7 @@ export default function Footer() {
                   href="/manuals"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Sunday School Manuals
                 </Link>
               </li>
@@ -198,7 +200,7 @@ export default function Footer() {
                   href="/transcripts"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Message Transcripts
                 </Link>
               </li>
@@ -207,7 +209,7 @@ export default function Footer() {
                   href="/salvation"
                   className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                 >
-                  <HiChevronRight color={orange} />
+                  <ChevronRight color={orange} />
                   Become Born-Again
                 </Link>
               </li>
@@ -250,7 +252,7 @@ export default function Footer() {
               className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
               aria-label="YouTube"
             >
-              <FaYoutube size={18} />
+              <Youtube size={18} />
             </a>
             <a
               href={SOCIAL_LINKS.facebook}
@@ -259,7 +261,7 @@ export default function Footer() {
               className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
               aria-label="Facebook"
             >
-              <FaFacebookF size={16} />
+              <Facebook size={16} />
             </a>
             <a
               href={SOCIAL_LINKS.instagram}
@@ -268,7 +270,7 @@ export default function Footer() {
               className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
               aria-label="Instagram"
             >
-              <FaInstagram size={18} />
+              <Instagram size={18} />
             </a>
             <a
               href={SOCIAL_LINKS.twitter}
@@ -277,7 +279,7 @@ export default function Footer() {
               className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
               aria-label="Twitter"
             >
-              <FaTwitter size={16} />
+              <Twitter size={16} />
             </a>
             <a
               href={SOCIAL_LINKS.whatsapp}
@@ -286,20 +288,20 @@ export default function Footer() {
               className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
               aria-label="WhatsApp"
             >
-              <FaWhatsapp size={18} />
+              <MessageCircle size={18} />
             </a>
           </div>
 
           <ul className="space-y-3 text-sm text-gray-300">
             <li className="flex items-center gap-2">
-              <HiOutlineMail color={orange} size={18} />
+              <Mail color={orange} size={18} />
               <ObfuscatedContact
                 type="email"
                 className="hover:text-primary transition-colors"
               />
             </li>
             <li className="flex items-center gap-2">
-              <HiPhone color={orange} size={18} />
+              <Phone color={orange} size={18} />
               <ObfuscatedContact
                 type="phone"
                 className="hover:text-primary transition-colors"
