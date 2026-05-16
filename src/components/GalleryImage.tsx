@@ -58,12 +58,13 @@ const GalleryImage: React.FC<Props> = ({
   }
 
   // Both Google Drive (/d/) and Google Photos (/pw/) use lh3.googleusercontent.com
-  // and support the same size-parameter system (=wN-hN-no, =s0, etc.)
+  // and support the same size-parameter system (=wN, =s0, etc.)
   const isGoogleusercontent = baseUrl.includes("lh3.googleusercontent.com");
 
-  // Use a flexible image URL: prefer high-res
+  // Use responsive width only, let image maintain natural aspect ratio
+  // This works for both portrait and landscape images
   const displaySrc = isGoogleusercontent
-    ? `${baseUrl}=w${width}-h${height}-no`
+    ? `${baseUrl}=w1200`  // Responsive width, natural aspect ratio
     : baseUrl;
   const downloadSrc = isGoogleusercontent ? `${baseUrl}=s0` : baseUrl;
 
@@ -106,8 +107,8 @@ const GalleryImage: React.FC<Props> = ({
                   alt={alt || "Gallery image"}
                   width={width}
                   height={height}
-                  className="w-full block object-cover opacity-0 transition-all duration-1000 group-hover:scale-110"
-                  style={{ aspectRatio: `${width}/${height}` }}
+                  className="w-full block object-contain opacity-0 transition-all duration-1000 group-hover:scale-110"
+                  style={{ aspectRatio: initialWidth && initialHeight ? `${initialWidth}/${initialHeight}` : "auto" }}
                   unoptimized
                   onLoadingComplete={(img) => img.classList.remove("opacity-0")}
                 />
