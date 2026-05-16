@@ -11,6 +11,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import TranscriptOverlay from "./TranscriptOverlay";
 import {
   Search,
   Loader2,
@@ -110,7 +111,10 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         // Use WP total pages header to avoid requesting beyond available pages
         const wpTotalPages = res.headers.get("X-WP-TotalPages");
         if (wpTotalPages) {
-          totalPages = Math.min(parseInt(wpTotalPages, 10) || MAX_PAGES, MAX_PAGES);
+          totalPages = Math.min(
+            parseInt(wpTotalPages, 10) || MAX_PAGES,
+            MAX_PAGES,
+          );
         }
 
         const posts: {
@@ -608,6 +612,18 @@ export default function SermonsPageContent() {
     null,
   );
 
+  // Transcript overlay state
+  const [transcriptOverlay, setTranscriptOverlay] = useState<{
+    isOpen: boolean;
+    slug: string;
+    title: string;
+    speaker?: string;
+  }>({
+    isOpen: false,
+    slug: "",
+    title: "",
+  });
+
   // Cleanup old progress on mount
   useEffect(() => {
     cleanupOldProgress();
@@ -988,6 +1004,21 @@ export default function SermonsPageContent() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* Transcript Overlay */}
+      <TranscriptOverlay
+        isOpen={transcriptOverlay.isOpen}
+        slug={transcriptOverlay.slug}
+        title={transcriptOverlay.title}
+        speaker={transcriptOverlay.speaker}
+        onClose={() =>
+          setTranscriptOverlay({
+            isOpen: false,
+            slug: "",
+            title: "",
+          })
+        }
+      />
+
       {/* Hidden Audio */}
       <audio
         ref={audioRef}
@@ -1365,6 +1396,14 @@ export default function SermonsPageContent() {
                     onPlay={() => handlePlay(sermon)}
                     onPause={togglePlay}
                     transcriptSlugs={transcriptSlugs}
+                    onTranscriptClick={(slug, title, speaker) =>
+                      setTranscriptOverlay({
+                        isOpen: true,
+                        slug,
+                        title,
+                        speaker,
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -1908,6 +1947,7 @@ function SermonCard({
   onPlay,
   onPause,
   transcriptSlugs,
+  onTranscriptClick,
 }: {
   sermon: AudioSermon;
   index: number;
@@ -1917,6 +1957,7 @@ function SermonCard({
   onPlay: () => void;
   onPause: () => void;
   transcriptSlugs: TranscriptStub[];
+  onTranscriptClick: (slug: string, title: string, speaker?: string) => void;
 }) {
   const matchedSlug = useMemo(
     () => findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id),
@@ -2074,18 +2115,30 @@ function SermonCard({
             )}
           </button>
 
-          {/* Transcript Link — links to matched transcript or /transcripts */}
-          <Link
-            href={transcriptHref}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-gray-500 hover:text-primary hover:bg-primary/5 transition-all"
-            title={matchedSlug ? "Read Transcript" : "View All Transcripts"}
-            id={`transcript-sermon-${sermon.id}`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">
-              {matchedSlug ? "Transcript" : "Transcripts"}
-            </span>
-          </Link>
+          {/* Transcript Link — overlay for matched transcript, or navigate for transcripts page */}
+          {matchedSlug ? (
+            <button
+              onClick={() =>
+                onTranscriptClick(matchedSlug, sermon.title, sermon.speaker)
+              }
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-gray-500 hover:text-primary hover:bg-primary/5 transition-all"
+              title="Read Transcript"
+              id={`transcript-sermon-${sermon.id}`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Transcript</span>
+            </button>
+          ) : (
+            <Link
+              href={transcriptHref}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-gray-500 hover:text-primary hover:bg-primary/5 transition-all"
+              title="View All Transcripts"
+              id={`transcript-sermon-${sermon.id}`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Transcripts</span>
+            </Link>
+          )}
 
           {/* Share link */}
           <Link
