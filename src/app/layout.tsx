@@ -156,10 +156,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      {/* Google tag (gtag.js) */}
+      {/* Google tag (gtag.js) - deferred to lazyOnload for better page performance */}
       <Script
-        async
         src="https://www.googletagmanager.com/gtag/js?id=G-1LPF0GLP9V"
+        strategy="lazyOnload"
       />
       <Script
         id="gtag-init"
@@ -225,49 +225,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="lazyOnload"
         />
 
-        {/* JSON-LD: Church Structured Data */}
-        <Script
-          id="church-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Church",
-              name: "The New & Living Way Church, Ikorodu",
-              alternateName: "NLWC Ikorodu",
-              url: "https://ikorodu.nlwc.church",
-              logo: "https://ikorodu.nlwc.church/nlwcikd-logo-512x512.png",
-              image: "https://ikorodu.nlwc.church/og-image.png",
-              description:
-                "A Word of Righteousness community in Ikorodu, Lagos, Nigeria. Dedicated to faith, hope, love, and the gospel of Jesus Christ.",
-              address: {
-                "@type": "PostalAddress",
-                streetAddress: "Ikorodu",
-                addressLocality: "Ikorodu",
-                addressRegion: "Lagos",
-                addressCountry: "NG",
-              },
-              geo: {
-                "@type": "GeoCoordinates",
-                latitude: 6.6194,
-                longitude: 3.5106,
-              },
-              telephone: "+2347066644051",
-              email: "ikoroduchurchadmin@nlwc.church",
-              openingHours: [
-                "Su 08:00-20:00",
-                "We 17:00-20:00",
-                "Fr 17:00-22:00",
-              ],
-              sameAs: ["", "https://nlwc.church"],
-              parentOrganization: {
-                "@type": "Organization",
-                name: "New & Living Way Church",
-                url: "https://nlwc.church",
-              },
-            }),
-          }}
-        />
+        {/* Note: Schema.org JSON-LD moved to head section to avoid duplication */}
       </body>
     </html>
   );

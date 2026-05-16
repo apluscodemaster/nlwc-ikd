@@ -42,22 +42,8 @@ const GalleryImage: React.FC<Props> = ({
       return;
     }
 
-    // Skip probing for unresolved Google Photos share links (they'll 403)
-    if (src.includes("photos.app.goo.gl") || src.includes("photos.google.com/share")) {
-      setImgDims({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
-      return;
-    }
-
-    const img = new window.Image();
-    const probeSrc = toGoogleImageURL(src);
-    img.src = probeSrc;
-    img.onload = () =>
-      setImgDims({
-        width: img.naturalWidth || DEFAULT_WIDTH,
-        height: img.naturalHeight || DEFAULT_HEIGHT,
-      });
-    img.onerror = () =>
-      setImgDims({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+    // Skip dimension probing - use defaults instead
+    // This removes ~20+ unnecessary HTTP requests per gallery page load
   }, [src, initialWidth, initialHeight]);
 
   const width = imgDims?.width || DEFAULT_WIDTH;
@@ -75,7 +61,9 @@ const GalleryImage: React.FC<Props> = ({
   const isGoogleusercontent = baseUrl.includes("lh3.googleusercontent.com");
 
   // Use a flexible image URL: prefer high-res
-  const displaySrc = isGoogleusercontent ? `${baseUrl}=w${width}-h${height}-no` : baseUrl;
+  const displaySrc = isGoogleusercontent
+    ? `${baseUrl}=w${width}-h${height}-no`
+    : baseUrl;
   const downloadSrc = isGoogleusercontent ? `${baseUrl}=s0` : baseUrl;
 
   const handleDownload = async (e: React.MouseEvent) => {
@@ -158,7 +146,8 @@ const GalleryImage: React.FC<Props> = ({
         <VisuallyHidden>
           <DialogTitle>{alt || "Gallery Image Preview"}</DialogTitle>
           <DialogDescription>
-            High resolution preview of the gallery image. Use the download button to save the full resolution version.
+            High resolution preview of the gallery image. Use the download
+            button to save the full resolution version.
           </DialogDescription>
         </VisuallyHidden>
         <div className="relative w-full h-[95vh] flex items-center justify-center p-4">

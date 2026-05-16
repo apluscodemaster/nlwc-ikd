@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const WHATSAPP_LINK = "https://wa.me/2348137436770";
 const WHATSAPP_LOGO =
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774367620/whatsapp-logo_n3l5rr.png";
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_200/v1774367620/whatsapp-logo_n3l5rr.png";
 const SHOW_DELAY_MS = 5000;
 
 export default function WhatsAppButton() {
