@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     if (!session_id || !answer) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!question) {
       return NextResponse.json(
         { error: "Question not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -57,13 +57,13 @@ export async function POST(req: NextRequest) {
       },
       {
         headers: { "Cache-Control": "no-store" },
-      }
+      },
     );
   } catch (error) {
     console.error("Save answer error:", error);
     return NextResponse.json(
       { error: "Failed to save answer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
