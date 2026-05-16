@@ -47,9 +47,9 @@ export async function GET(req: NextRequest) {
 
     // Get weak areas and recommendations
     const weakAreas = await getWeakAreas(session_id);
-    const recommendations = await getRecommendations(weakAreas);
 
-    // Get failed questions with explanations
+    // Collect sermon_refs and failed question data in a single pass
+    const failedSermonRefs: { slug: string; category: string }[] = [];
     const failedQuestions: Array<{
       question: any;
       explanation?: string;
@@ -62,9 +62,17 @@ export async function GET(req: NextRequest) {
             question,
             explanation: question.explain,
           });
+          if (question.sermon_ref) {
+            failedSermonRefs.push({
+              slug: question.sermon_ref,
+              category: question.category,
+            });
+          }
         }
       }
     }
+
+    const recommendations = await getRecommendations(weakAreas, failedSermonRefs);
 
     const result: QuizResult = {
       total_questions: total,

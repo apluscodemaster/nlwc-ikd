@@ -84,8 +84,8 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
                       <p className="text-xs text-muted-foreground mt-1">
                         {rec.category} &middot; {rec.reason}
                       </p>
-                      <div className="mt-3">
-                        {rec.listen_url ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {rec.listen_url && (
                           <a
                             href={rec.listen_url}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors"
@@ -93,7 +93,8 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
                             <Headphones className="w-3.5 h-3.5" />
                             Listen to Audio Message
                           </a>
-                        ) : rec.read_url ? (
+                        )}
+                        {rec.read_url && (
                           <a
                             href={rec.read_url}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
@@ -101,7 +102,7 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
                             <FileText className="w-3.5 h-3.5" />
                             Read Transcript
                           </a>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                   );
