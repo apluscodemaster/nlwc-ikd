@@ -72,40 +72,40 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
               {result.recommendations
                 .filter((rec) => rec != null)
                 .map((rec, idx) => {
-                const title = rec.content?.title ?? rec.title ?? "Sermon";
-                return (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl bg-primary/5 border border-primary/10"
-                  >
-                    <p className="text-sm font-semibold text-gray-800">
-                      {title}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {rec.category} &middot; {rec.reason}
-                    </p>
-                    <div className="mt-3">
-                      {rec.listen_url ? (
-                        <a
-                          href={rec.listen_url}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors"
-                        >
-                          <Headphones className="w-3.5 h-3.5" />
-                          Listen to Audio Message
-                        </a>
-                      ) : rec.read_url ? (
-                        <a
-                          href={rec.read_url}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          Read Transcript
-                        </a>
-                      ) : null}
+                  const title = rec.content?.title ?? rec.title ?? "Sermon";
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-primary/5 border border-primary/10"
+                    >
+                      <p className="text-sm font-semibold text-gray-800">
+                        {title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {rec.category} &middot; {rec.reason}
+                      </p>
+                      <div className="mt-3">
+                        {rec.listen_url ? (
+                          <a
+                            href={rec.listen_url}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors"
+                          >
+                            <Headphones className="w-3.5 h-3.5" />
+                            Listen to Audio Message
+                          </a>
+                        ) : rec.read_url ? (
+                          <a
+                            href={rec.read_url}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            Read Transcript
+                          </a>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </div>
         )}
@@ -113,26 +113,72 @@ export default function QuizResults({ result, onRetry }: QuizResultsProps) {
         {/* Category breakdown fallback when no specific recommendations */}
         {result.recommendations.length === 0 &&
           Object.keys(result.by_category).length > 0 && (
+            <div className="mb-8 text-left">
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                Areas to Improve
+              </h3>
+              <div className="space-y-2">
+                {(
+                  Object.entries(result.by_category) as [
+                    QuizCategory,
+                    { correct: number; total: number },
+                  ][]
+                )
+                  .filter(
+                    ([, data]) =>
+                      data.total > 0 && data.correct / data.total < 0.6,
+                  )
+                  .map(([category, data]) => (
+                    <div
+                      key={category}
+                      className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100"
+                    >
+                      <span className="text-sm font-medium text-gray-800">
+                        {category}
+                      </span>
+                      <span className="text-xs font-bold text-amber-600">
+                        {Math.round(
+                          ((data.total - data.correct) / data.total) * 100,
+                        )}
+                        % incorrect
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+        {/* Failed Questions with Explanations */}
+        {result.failed_questions && result.failed_questions.length > 0 && (
           <div className="mb-8 text-left">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              Areas to Improve
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              Questions You Missed
             </h3>
-            <div className="space-y-2">
-              {(Object.entries(result.by_category) as [QuizCategory, { correct: number; total: number }][])
-                .filter(([, data]) => data.total > 0 && data.correct / data.total < 0.6)
-                .map(([category, data]) => (
-                <div
-                  key={category}
-                  className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100"
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {result.failed_questions.map((failed, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="p-4 rounded-xl bg-red-50 border border-red-200"
                 >
-                  <span className="text-sm font-medium text-gray-800">
-                    {category}
-                  </span>
-                  <span className="text-xs font-bold text-amber-600">
-                    {Math.round(((data.total - data.correct) / data.total) * 100)}% incorrect
-                  </span>
-                </div>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">
+                    {failed.question.question}
+                  </p>
+                  {failed.explanation && (
+                    <div className="text-xs text-gray-700 bg-white rounded-lg p-3 mb-3 italic border-l-2 border-blue-500">
+                      <span className="font-semibold text-blue-600">Why: </span>
+                      {failed.explanation}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-600">
+                    <span className="font-semibold">Category:</span>{" "}
+                    {failed.question.category}
+                  </p>
+                </motion.div>
               ))}
             </div>
           </div>

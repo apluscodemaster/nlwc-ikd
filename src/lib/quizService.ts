@@ -109,7 +109,9 @@ export async function getRecommendations(
 
     if (transcriptContent && transcriptContent.length > 0) {
       // Also try to find matching sermon entries by title for audio links
-      const titles = (transcriptContent as ContentMapping[]).map((t) => t.title);
+      const titles = (transcriptContent as ContentMapping[]).map(
+        (t) => t.title,
+      );
       const { data: sermonContent } = await getSupabase()
         .from("content_mapping")
         .select("*")
@@ -217,6 +219,23 @@ export async function buildQuizResult(
     if (a.is_correct) byCategory[a.category]!.correct++;
   }
 
+  // Get failed questions with explanations
+  const failedQuestions: Array<{
+    question: QuizQuestion;
+    explanation?: string;
+  }> = [];
+  for (const attempt of attempts) {
+    if (!attempt.is_correct) {
+      const question = await fetchQuestionById(attempt.question_id);
+      if (question) {
+        failedQuestions.push({
+          question,
+          explanation: question.explain,
+        });
+      }
+    }
+  }
+
   const weakAreas = await getWeakAreas(sessionId);
   const recommendations = await getRecommendations(weakAreas, failedSermonRefs);
 
@@ -226,5 +245,6 @@ export async function buildQuizResult(
     score_percent: total > 0 ? Math.round((correct / total) * 100) : 0,
     by_category: byCategory,
     recommendations,
+    failed_questions: failedQuestions,
   };
 }

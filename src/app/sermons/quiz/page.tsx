@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import UsernamePrompt from "@/components/quiz/UsernamePrompt";
@@ -9,31 +8,22 @@ import QuizLauncher from "@/components/quiz/QuizLauncher";
 import QuizPlayer from "@/components/quiz/QuizPlayer";
 import QuizResults from "@/components/quiz/QuizResults";
 import Leaderboard from "@/components/quiz/Leaderboard";
-import TimeLimitOverlay from "@/components/quiz/TimeLimitOverlay";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import type {
   QuizCategory,
-  QuizQuestion,
   QuizResult,
   LeaderboardEntry,
 } from "@/types/quiz";
 
-type Phase = "launch" | "overlay" | "playing" | "results";
+type Phase = "launch" | "playing" | "results";
 
 export default function QuizPage() {
   const { session, loading, needsUsername, createSession } = useQuizSession();
   const [phase, setPhase] = useState<Phase>("launch");
-  const [questions, setQuestions] = useState<
-    Omit<QuizQuestion, "correctAnswer">[]
-  >([]);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [category, setCategory] = useState<QuizCategory | null>(null);
-  const [questionCount, setQuestionCount] = useState(10);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-
-  // Calculate time limit based on question count (60 seconds per question)
-  const timeLimit = questionCount * 60;
 
   // Fetch leaderboard on mount
   useEffect(() => {
@@ -45,43 +35,17 @@ export default function QuizPage() {
       .catch(() => {});
   }, [result]); // re-fetch after results
 
-  const handleStart = useCallback(
-    async (cat: QuizCategory | null, count: number) => {
-      setFetchingQuestions(true);
-      try {
-        const params = new URLSearchParams({ count: String(count) });
-        if (cat) params.set("category", cat);
-
-        const res = await fetch(`/api/quiz/questions?${params}`);
-        if (!res.ok) throw new Error("Failed to fetch questions");
-
-        const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error("No questions available");
-        }
-
-        // Shuffle questions using Fisher-Yates
-        for (let i = data.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [data[i], data[j]] = [data[j], data[i]];
-        }
-
-        setQuestions(data);
-        setCategory(cat);
-        setQuestionCount(count);
-        // Show overlay before starting
-        setPhase("overlay");
-      } catch (error) {
-        console.error("Failed to load questions:", error);
-      } finally {
-        setFetchingQuestions(false);
-      }
-    },
-    [],
-  );
-
-  const handleContinueFromOverlay = useCallback(() => {
-    setPhase("playing");
+  const handleStart = useCallback(async (cat: QuizCategory | null) => {
+    setFetchingQuestions(true);
+    try {
+      setCategory(cat);
+      // Start quiz directly - questions will be fetched progressively
+      setPhase("playing");
+    } catch (error) {
+      console.error("Failed to start quiz:", error);
+    } finally {
+      setFetchingQuestions(false);
+    }
   }, []);
 
   const handleComplete = useCallback((r: QuizResult) => {
@@ -91,13 +55,7 @@ export default function QuizPage() {
 
   const handleRetry = useCallback(() => {
     setResult(null);
-    setQuestions([]);
-    setPhase("launch");
-  }, []);
-
-  // Handle returning to launcher from overlay
-  const handleBackFromOverlay = useCallback(() => {
-    setQuestions([]);
+    setCategory(null);
     setPhase("launch");
   }, []);
 
@@ -140,23 +98,10 @@ export default function QuizPage() {
                 />
               )}
 
-              {/* Time limit overlay before quiz starts */}
-              <AnimatePresence>
-                {phase === "overlay" && (
-                  <TimeLimitOverlay
-                    questionCount={questionCount}
-                    timeLimit={timeLimit}
-                    onContinue={handleContinueFromOverlay}
-                  />
-                )}
-              </AnimatePresence>
-
               {phase === "playing" && session && (
                 <QuizPlayer
-                  questions={questions}
                   sessionId={session.session_id}
                   category={category}
-                  timeLimit={timeLimit}
                   onComplete={handleComplete}
                 />
               )}
