@@ -89,9 +89,9 @@ export function useQuizSession() {
     if (error || !data) {
       if (error?.code === "23505") {
         // Unique constraint violation
-        const constraintError = new Error(
-          "Username already taken",
-        ) as Error & { code?: string };
+        const constraintError = new Error("Username already taken") as Error & {
+          code?: string;
+        };
         constraintError.code = "USERNAME_EXISTS";
         throw constraintError;
       }
@@ -102,6 +102,13 @@ export function useQuizSession() {
       SESSION_KEY,
       JSON.stringify({ session_id: sessionId, username: trimmed }),
     );
+
+    // Increment quizzes_taken once for this new session
+    try {
+      await getSupabase().rpc("increment_quizzes_taken", { sid: sessionId });
+    } catch (error) {
+      console.error("Failed to increment quizzes_taken:", error);
+    }
 
     setSession(data as QuizSession);
     setNeedsUsername(false);

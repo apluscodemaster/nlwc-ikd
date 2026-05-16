@@ -9,11 +9,7 @@ import QuizPlayer from "@/components/quiz/QuizPlayer";
 import QuizResults from "@/components/quiz/QuizResults";
 import Leaderboard from "@/components/quiz/Leaderboard";
 import { useQuizSession } from "@/hooks/useQuizSession";
-import type {
-  QuizCategory,
-  QuizResult,
-  LeaderboardEntry,
-} from "@/types/quiz";
+import type { QuizCategory, QuizResult, LeaderboardEntry } from "@/types/quiz";
 
 type Phase = "launch" | "playing" | "results";
 
