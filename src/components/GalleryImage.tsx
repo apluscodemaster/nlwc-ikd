@@ -44,6 +44,7 @@ const GalleryImage: React.FC<Props> = ({
 
     // Skip dimension probing - use defaults instead
     // This removes ~20+ unnecessary HTTP requests per gallery page load
+    setImgDims({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
   }, [src, initialWidth, initialHeight]);
 
   const width = imgDims?.width || DEFAULT_WIDTH;
