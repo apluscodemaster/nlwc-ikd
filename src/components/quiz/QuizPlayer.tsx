@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,10 @@ export default function QuizPlayer({
   const [correct, setCorrect] = useState(0);
   const [total, setTotal] = useState(0);
   const [showFailedOverlay, setShowFailedOverlay] = useState(false);
+  const [noMoreQuestions, setNoMoreQuestions] = useState(false);
+  const [answeredQuestionIds, setAnsweredQuestionIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [failedQuestionData, setFailedQuestionData] = useState<{
     question: QuizQuestion;
     selectedAnswer: number;
@@ -51,19 +55,36 @@ export default function QuizPlayer({
     recommendations: Recommendation[];
   } | null>(null);
 
+  // Use a ref to access the latest answeredQuestionIds inside fetchNextQuestion
+  // without including it in the dependency array (which would cause re-renders)
+  const answeredIdsRef = useRef(answeredQuestionIds);
+  answeredIdsRef.current = answeredQuestionIds;
+
+  const initializedRef = useRef(false);
+
   // Fetch a new question
   const fetchNextQuestion = useCallback(async () => {
     setLoadingQuestion(true);
+    setNoMoreQuestions(false);
     try {
       const params = new URLSearchParams({ count: "1" });
       if (category) params.set("category", category);
+
+      // Exclude already-answered questions (read from ref to avoid dependency)
+      const currentAnsweredIds = answeredIdsRef.current;
+      if (currentAnsweredIds.size > 0) {
+        params.set("exclude", Array.from(currentAnsweredIds).join(","));
+      }
 
       const res = await fetch(`/api/quiz/questions?${params}`);
       if (!res.ok) throw new Error("Failed to fetch question");
 
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {
-        throw new Error("No questions available");
+        console.warn("No more questions available in question bank");
+        setNoMoreQuestions(true);
+        setCurrent(null);
+        return;
       }
 
       setCurrent(data[0]);
@@ -72,14 +93,19 @@ export default function QuizPlayer({
       setRevealed(false);
     } catch (error) {
       console.error("Failed to load question:", error);
+      setNoMoreQuestions(true);
+      setCurrent(null);
     } finally {
       setLoadingQuestion(false);
     }
   }, [category]);
 
-  // Load first question on mount
+  // Load first question on mount only
   useEffect(() => {
-    fetchNextQuestion();
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      fetchNextQuestion();
+    }
   }, [fetchNextQuestion]);
 
   const handleSelect = useCallback((index: number) => {
@@ -132,16 +158,19 @@ export default function QuizPlayer({
 
       const { is_correct, correct_answer, explanation } = await saveRes.json();
 
-      setTotal((prev) => prev + 1);
-
       if (is_correct) {
         // Correct answer - increment and move to next question
         setCorrect((prev) => prev + 1);
+        setTotal((prev) => prev + 1);
+        // Track this question as answered
+        setAnsweredQuestionIds((prev) => new Set([...prev, current.id]));
         setRevealed(false);
         setSelectedAnswer(null);
         await fetchNextQuestion();
       } else {
-        // Wrong answer - show failed overlay
+        // Wrong answer - still track as answered and show failed overlay
+        setTotal((prev) => prev + 1);
+        setAnsweredQuestionIds((prev) => new Set([...prev, current.id]));
         setCorrectAnswer(correct_answer);
         setRevealed(true);
 
@@ -203,6 +232,33 @@ export default function QuizPlayer({
       <div className="max-w-2xl mx-auto">
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-xl shadow-gray-100/50 flex justify-center py-20">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (noMoreQuestions && !current) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <QuizProgressBar correct={correct} total={total} current={total} />
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-gray-100 shadow-xl shadow-gray-100/50">
+          <div className="text-center space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">
+              No More Questions Available
+            </h3>
+            <p className="text-gray-600">
+              You&apos;ve answered all available questions in this category.
+            </p>
+            <div className="pt-4">
+              <Button
+                onClick={handleFinishQuiz}
+                disabled={submitting}
+                className="h-12 px-8 rounded-full font-bold cursor-pointer"
+              >
+                View Results
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
