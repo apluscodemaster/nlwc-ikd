@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import type { QuizCategory } from "@/types/quiz";
 
 interface QuizLauncherProps {
-  onStart: (category: QuizCategory | null, count: number) => void;
+  onStart: (category: QuizCategory | null) => void;
   loading?: boolean;
 }
 
@@ -57,11 +57,8 @@ const CATEGORIES: {
   },
 ];
 
-const COUNTS = [5, 10, 15, 20];
-
 export default function QuizLauncher({ onStart, loading }: QuizLauncherProps) {
   const [selected, setSelected] = useState<QuizCategory | null>(null);
-  const [count, setCount] = useState(10);
 
   return (
     <motion.div
@@ -83,7 +80,7 @@ export default function QuizLauncher({ onStart, loading }: QuizLauncherProps) {
         </div>
 
         {/* Category Selection */}
-        <div className="mb-6">
+        <div className="mb-8">
           <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 block">
             Choose Category
           </label>
@@ -121,31 +118,9 @@ export default function QuizLauncher({ onStart, loading }: QuizLauncherProps) {
           </div>
         </div>
 
-        {/* Question Count */}
-        <div className="mb-8">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 block">
-            Number of Questions
-          </label>
-          <div className="flex gap-2">
-            {COUNTS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCount(c)}
-                className={`flex-1 h-10 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                  count === c
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Start */}
         <Button
-          onClick={() => onStart(selected, count)}
+          onClick={() => onStart(selected)}
           disabled={loading}
           className="w-full h-12 rounded-full font-bold cursor-pointer"
         >

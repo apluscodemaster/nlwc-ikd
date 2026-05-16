@@ -36,18 +36,21 @@ export default function QuestionCard({
       {/* Progress */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-bold text-primary uppercase tracking-widest">
-          Question {questionNumber} of {totalQuestions}
+          Question {questionNumber}
+          {totalQuestions > 0 && ` of ${totalQuestions}`}
         </span>
-        <div className="h-2 flex-1 mx-4 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={{ width: 0 }}
-            animate={{
-              width: `${(questionNumber / totalQuestions) * 100}%`,
-            }}
-            transition={{ duration: 0.4 }}
-          />
-        </div>
+        {totalQuestions > 0 && (
+          <div className="h-2 flex-1 mx-4 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              initial={{ width: 0 }}
+              animate={{
+                width: `${(questionNumber / totalQuestions) * 100}%`,
+              }}
+              transition={{ duration: 0.4 }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Question */}
