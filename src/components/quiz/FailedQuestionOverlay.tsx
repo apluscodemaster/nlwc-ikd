@@ -132,7 +132,7 @@ export default function FailedQuestionOverlay({
                       <div className="flex gap-2">
                         {hasAudio && (
                           <Link
-                            href={rec.listen_url}
+                            href={rec.listen_url || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors active:scale-[0.97]"
@@ -143,7 +143,7 @@ export default function FailedQuestionOverlay({
                         )}
                         {hasTranscript && (
                           <Link
-                            href={rec.read_url}
+                            href={rec.read_url || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors active:scale-[0.97]"
