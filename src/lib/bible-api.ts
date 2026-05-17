@@ -208,13 +208,25 @@ export function parseScriptureReference(
 ): ParsedReference | null {
   // Pattern to match references like:
   // "John 3:16", "Rom. 8:28-30", "1 Cor. 13:1-3", "(Matt. 5:1)", "Psalm 23:1-6"
-  const pattern = /\(?(\d?\s?[A-Za-z]+\.?)\s*(\d+):(\d+)(?:-(\d+))?\)?/i;
+  // Improved to handle:
+  // - Multi-digit numbers for books (1-3 John, etc)
+  // - Multiple spaces
+  // - Optional periods in book names
+  const pattern =
+    /\(?\s*(\d{1,3}?\s+)?([A-Za-z]+\.?)\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\s*\)?/i;
 
   const match = reference.match(pattern);
   if (!match) return null;
 
-  const [original, book, chapter, verseStart, verseEnd] = match;
-  const normalizedBook = normalizeBookName(book);
+  const [original, bookPrefix, bookSuffix, chapter, verseStart, verseEnd] =
+    match;
+
+  // Combine prefix and suffix to get full book name
+  const fullBookName = bookPrefix
+    ? `${bookPrefix.trim()} ${bookSuffix}`
+    : bookSuffix;
+
+  const normalizedBook = normalizeBookName(fullBookName);
 
   // Format for bible-api.com: "John 3:16" or "John 3:16-18"
   let apiReference = `${normalizedBook} ${chapter}:${verseStart}`;
@@ -233,7 +245,7 @@ export function parseScriptureReference(
 }
 
 /**
- * Fetch verse text from Bible API
+ * Fetch verse text from Bible API with fallback formatting attempts
  */
 export async function fetchBibleVerse(
   reference: string,
@@ -242,24 +254,25 @@ export async function fetchBibleVerse(
     const parsed = parseScriptureReference(reference);
     if (!parsed) return null;
 
-    const response = await fetch(
-      `${BIBLE_API_BASE}/${encodeURIComponent(parsed.apiReference)}`,
-      {
-        next: { revalidate: 86400 }, // Cache for 24 hours
-      },
-    );
+    // Try the primary format
+    let data = await tryFetchVerse(parsed.apiReference);
 
-    if (!response.ok) {
-      console.error(`Failed to fetch verse: ${response.statusText}`);
+    // If primary format fails, try alternative formats
+    if (!data) {
+      // Try with full book name and verse only
+      const alternativeRef = `${parsed.book} ${parsed.chapter}:${parsed.verseStart}`;
+      data = await tryFetchVerse(alternativeRef);
+    }
+
+    if (!data) {
+      console.warn(`Bible API could not find verse: "${parsed.apiReference}"`);
       return null;
     }
 
-    const data = await response.json();
-
     return {
       reference: data.reference,
-      text: data.text?.trim() || "",
-      translation: "WEB", // World English Bible
+      text: data.text.trim(),
+      translation: data.translation_name || "WEB", // World English Bible
       verses: data.verses || [],
     };
   } catch (error) {
@@ -269,11 +282,45 @@ export async function fetchBibleVerse(
 }
 
 /**
+ * Helper to try fetching a single verse format
+ */
+async function tryFetchVerse(reference: string): Promise<any> {
+  try {
+    const response = await fetch(
+      `${BIBLE_API_BASE}/${encodeURIComponent(reference)}`,
+      {
+        next: { revalidate: 86400 }, // Cache for 24 hours
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Check if API returned an error or incomplete data
+    if (data.error || !data.reference || !data.text) {
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Error trying verse format "${reference}":`, error);
+    return null;
+  }
+}
+
+/**
  * Find all scripture references in a text
  */
 export function findScriptureReferences(text: string): string[] {
-  // Comprehensive regex to find scripture references
-  const pattern = /\(?\d?\s?[A-Za-z]+\.?\s+\d+:\d+(?:-\d+)?\)?/gi;
+  // Comprehensive regex to find scripture references with improved pattern:
+  // - Multi-digit book numbers (1-3 John, etc)
+  // - Multiple spaces
+  // - Optional periods in book names
+  const pattern =
+    /\(?\s*(\d{1,3}?\s+)?([A-Za-z]+\.?)\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\s*\)?/gi;
 
   const matches = text.match(pattern);
   if (!matches) return [];
