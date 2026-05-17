@@ -46,7 +46,9 @@ export default function SermonsPage() {
               <BrainCircuit className="w-6 h-6 text-primary" />
               Test Your Knowledge
             </h2>
-            <p className="text-gray-600 mt-1">Take a quiz based on our recent audio messages and test your spiritual growth.</p>
+            <p className="text-gray-600 mt-1">
+              Take a quiz based on our recent audio messages.
+            </p>
           </div>
           <Link
             href="/sermons/quiz"

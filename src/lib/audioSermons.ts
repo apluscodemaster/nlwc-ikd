@@ -168,7 +168,9 @@ async function fetchFromWpApi(
       pagination: result.pagination,
     };
   } catch (error) {
-    logWarn("API endpoint unavailable, fallback mode activated", error, { tag: "AudioSermons" });
+    logWarn("API endpoint unavailable, fallback mode activated", error, {
+      tag: "AudioSermons",
+    });
     return null;
   }
 }
@@ -201,7 +203,11 @@ async function fetchDetailFromWpApi(
         lastError = new Error(`API returned ${response.status}`);
         // Retry on server errors
         if (attempt < maxRetries) {
-          logDebug("Retrying API request", { attempt: attempt + 1, maxRetries: maxRetries + 1 }, { tag: "AudioSermons" });
+          logDebug(
+            "Retrying API request",
+            { attempt: attempt + 1, maxRetries: maxRetries + 1 },
+            { tag: "AudioSermons" },
+          );
           // Brief delay before retry
           await new Promise((resolve) => setTimeout(resolve, 100));
           continue;
@@ -224,14 +230,26 @@ async function fetchDetailFromWpApi(
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries) {
-        logDebug("API request retry", { attempt: attempt + 1, maxRetries: maxRetries + 1, error: lastError?.message }, { tag: "AudioSermons" });
+        logDebug(
+          "API request retry",
+          {
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1,
+            error: lastError?.message,
+          },
+          { tag: "AudioSermons" },
+        );
         // Brief delay before retry
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
   }
 
-  logWarn("API requests exhausted", { error: lastError?.message }, { tag: "AudioSermons" });
+  logWarn(
+    "API requests exhausted",
+    { error: lastError?.message },
+    { tag: "AudioSermons" },
+  );
   return null;
 }
 
@@ -426,7 +444,11 @@ async function fetchDetailFromScraping(
       series: detail.series,
     };
   } catch (error) {
-    logDebug("Scrape fallback activated", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
+    logDebug(
+      "Scrape fallback activated",
+      { error: error instanceof Error ? error.message : String(error) },
+      { tag: "AudioSermons" },
+    );
     return null;
   }
 }
@@ -465,7 +487,22 @@ export async function getAudioSermons(
   if (apiResult) return apiResult;
 
   // Fall back to scraping (no filter support)
-  return fetchFromScraping(filters.page || 1, filters.perPage || 12);
+  try {
+    return await fetchFromScraping(filters.page || 1, filters.perPage || 12);
+  } catch (error) {
+    logWarn("Both WP API and scraping failed", error, { tag: "AudioSermons" });
+
+    // Return empty response rather than throwing
+    return {
+      data: [],
+      pagination: {
+        page: filters.page || 1,
+        perPage: filters.perPage || 12,
+        totalPages: 0,
+        total: 0,
+      },
+    };
+  }
 }
 
 /**
@@ -492,7 +529,11 @@ async function searchRecentSermons(
 
     logDebug("Sermon not in recent list", {}, { tag: "AudioSermons" });
   } catch (error) {
-    logDebug("Recent sermons search completed", { error: error instanceof Error ? error.message : String(error) }, { tag: "AudioSermons" });
+    logDebug(
+      "Recent sermons search completed",
+      { error: error instanceof Error ? error.message : String(error) },
+      { tag: "AudioSermons" },
+    );
   }
 
   return null;
