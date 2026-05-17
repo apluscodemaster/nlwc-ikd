@@ -72,7 +72,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const recommendations = await getRecommendations(weakAreas, failedSermonRefs);
+    const recommendations = await getRecommendations(
+      weakAreas,
+      failedSermonRefs,
+    );
 
     const result: QuizResult = {
       total_questions: total,

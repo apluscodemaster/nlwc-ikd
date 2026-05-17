@@ -25,6 +25,7 @@ import {
   FastForward,
   RotateCcw,
   Repeat2,
+  BrainCircuit,
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 import {
@@ -360,25 +361,37 @@ export default function AudioPlayerClient({
             className="inline-flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            All Messages
+            <span className="hidden sm:inline">All Messages</span>
+            <span className="sm:hidden">Back</span>
           </Link>
 
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-sm font-medium transition-all"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-green-400" />
-                <span className="text-green-400">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                Share
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/sermons/quiz"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white hover:scale-105 hover:shadow-lg hover:shadow-primary/20 text-sm font-bold transition-all"
+            >
+              <BrainCircuit className="w-4 h-4" />
+              <span className="hidden sm:inline">Take Quiz</span>
+              <span className="sm:hidden">Quiz</span>
+            </Link>
+
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-sm font-medium transition-all"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span className="text-green-400 hidden sm:inline">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
