@@ -176,7 +176,7 @@ export async function getRecommendations(
 
         // Fallback: link to sermons page with search query if no direct match
         if (!audioUrl) {
-          audioUrl = `/sermons?search=${encodeURIComponent(title)}`;
+          audioUrl = `/sermons?q=${encodeURIComponent(title)}`;
         }
 
         // Combined recommendation with both audio and transcript links
