@@ -12,31 +12,21 @@ export async function GET(req: NextRequest) {
       ? excludeParam.split(",").filter(Boolean)
       : [];
 
-    // When there are exclusions, fetch more questions to account for filtering
-    const fetchCount =
-      excludeIds.length > 0
-        ? Math.min(count + excludeIds.length + 5, 25)
-        : count;
-
+    // Fetch questions with exclusions handled at the service layer
     const questions = await fetchQuizQuestions(
       category || undefined,
-      fetchCount,
+      count,
+      excludeIds,
     );
 
-    // Filter out already-answered questions
-    const filtered = questions.filter((q) => !excludeIds.includes(q.id));
-
-    // Return only the requested count
-    const result = filtered.slice(0, count);
-
-    if (result.length === 0) {
+    if (questions.length === 0) {
       console.warn(
         `No questions available for category=${category}, count=${count}, excludeIds=${excludeIds.length}`,
       );
     }
 
     // Strip correctAnswer before sending to client
-    const safe = result.map(({ correctAnswer: _, ...rest }) => rest);
+    const safe = questions.map(({ correctAnswer: _, ...rest }) => rest);
 
     return NextResponse.json(safe, {
       headers: { "Cache-Control": "no-store" },
