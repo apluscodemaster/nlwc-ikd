@@ -77,16 +77,17 @@ export async function getWeakAreas(sessionId: string): Promise<WeakArea[]> {
 }
 
 // ── Get recommendations based on weak areas and specific sermon refs ──
-// sermon_ref on questions is always a transcript slug.
-// Transcript URL: /transcripts/{slug}
-// Sermon audio URL: /sermons/audio/{source_id} (matched via title in content_mapping)
+// sermon_ref on questions can be:
+//   - A transcript slug (e.g. "the-power-of-faith") → links to /transcripts/{slug}
+//   - A numeric audio sermon ID (e.g. "1234") → links to /sermons/audio/{id}
+// The function always tries to provide both audio and transcript links.
 export async function getRecommendations(
   weakAreas: WeakArea[],
   sermonRefs: { slug: string; category: string }[] = [],
 ): Promise<Recommendation[]> {
   const recommendations: Recommendation[] = [];
 
-  // 1. Targeted recommendations from sermon_ref (transcript slug) on failed questions
+  // 1. Targeted recommendations from sermon_ref on failed questions
   if (sermonRefs.length > 0) {
     // Deduplicate by slug
     const seen = new Set<string>();
@@ -95,108 +96,141 @@ export async function getRecommendations(
       seen.add(r.slug);
       return true;
     });
-    const slugs = uniqueRefs.map((r) => r.slug);
 
-    // Look up transcript entries by slug
-    const { data: transcriptContent } = await getSupabase()
-      .from("content_mapping")
-      .select("*")
-      .eq("source_type", "transcript")
-      .in("slug", slugs)
-      .limit(6);
+    for (const ref of uniqueRefs) {
+      if (recommendations.length >= 6) break;
 
-    const foundSlugs = new Set<string>();
+      const isNumericId = /^\d+$/.test(ref.slug);
 
-    if (transcriptContent && transcriptContent.length > 0) {
-      // Also try to find matching sermon entries by title for audio links
-      const titles = (transcriptContent as ContentMapping[]).map(
-        (t) => t.title,
-      );
-      const { data: sermonContent } = await getSupabase()
-        .from("content_mapping")
-        .select("*")
-        .eq("source_type", "sermon")
-        .in("title", titles)
-        .limit(6);
+      if (isNumericId) {
+        // sermon_ref is a numeric audio sermon ID — link directly
+        const audioId = parseInt(ref.slug, 10);
+        const title = `Audio Message #${audioId}`;
 
-      const sermonByTitle = new Map(
-        (sermonContent || []).map((s: ContentMapping) => [s.title, s]),
-      );
+        // Try to get the actual title from WP
+        let resolvedTitle = title;
+        try {
+          const { getAudioSermonDetail } = await import("@/lib/audioSermons");
+          const sermon = await getAudioSermonDetail(audioId);
+          if (sermon && sermon.title) {
+            resolvedTitle = sermon.title;
+          }
+        } catch {
+          // Use fallback title
+        }
 
-      for (const t of transcriptContent as ContentMapping[]) {
-        if (t.slug) foundSlugs.add(t.slug);
-        const matchingSermon = sermonByTitle.get(t.title);
+        recommendations.push({
+          category: ref.category as QuizCategory,
+          title: resolvedTitle,
+          reason: "Listen to this sermon — you missed questions from it",
+          listen_url: `/sermons/audio/${audioId}`,
+        });
+      } else {
+        // sermon_ref is a transcript slug — generate transcript link
+        // and try to find matching audio
+        const title = ref.slug
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
 
-        // Provide both audio and transcript recommendations when available
-        if (matchingSermon) {
-          // Add audio recommendation first
+        // Try to find matching audio sermon by searching WP API
+        let audioId: number | null = null;
+        let audioTitle: string | null = null;
+        try {
+          const { getAudioSermons } = await import("@/lib/audioSermons");
+          const searchResult = await getAudioSermons({
+            search: title,
+            perPage: 5,
+            page: 1,
+          });
+          if (searchResult.data.length > 0) {
+            // Try fuzzy match first
+            const match = searchResult.data.find((s) => {
+              const sermonTitle = s.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, "");
+              const refTitle = title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, "");
+              return (
+                sermonTitle.includes(refTitle) ||
+                refTitle.includes(sermonTitle) ||
+                sermonTitle === refTitle
+              );
+            });
+            // Use fuzzy match, or fall back to first search result
+            const foundSermon = match || searchResult.data[0];
+            audioId = foundSermon.id;
+            audioTitle = foundSermon.title; // Use the actual audio title from search result
+            
+            console.debug(
+              `[Quiz Recommendations] Found audio match for "${title}": ${audioTitle} (ID: ${audioId})`,
+            );
+          }
+        } catch (error) {
+          // Audio search failed silently — transcript link still works
+          console.warn("Audio sermon search failed for:", ref.slug, error);
+        }
+
+        // Add audio recommendation if found
+        if (audioId && audioTitle) {
           recommendations.push({
-            category: t.category as QuizCategory,
-            content: matchingSermon,
+            category: ref.category as QuizCategory,
+            title: audioTitle,
             reason: "Listen to this sermon — you missed questions from it",
-            listen_url: `/sermons/audio/${matchingSermon.source_id}`,
+            listen_url: `/sermons/audio/${audioId}`,
           });
         }
 
-        // Then add transcript recommendation
+        // Always add transcript recommendation
         recommendations.push({
-          category: t.category as QuizCategory,
-          content: t,
+          category: ref.category as QuizCategory,
+          title,
           reason: "Read this transcript — you missed questions from it",
-          read_url: `/transcripts/${t.slug}`,
+          read_url: `/transcripts/${ref.slug}`,
         });
       }
-    }
-
-    // Fallback: direct transcript link for refs not found in content_mapping
-    for (const ref of uniqueRefs) {
-      if (foundSlugs.has(ref.slug)) continue;
-      if (recommendations.length >= 6) break;
-
-      const title = ref.slug
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-
-      recommendations.push({
-        category: ref.category as QuizCategory,
-        title,
-        reason: "Read this transcript — you missed questions from it",
-        read_url: `/transcripts/${ref.slug}`,
-      });
     }
   }
 
-  // 2. Category-based fallback for weak areas not already covered
-  if (weakAreas.length > 0) {
-    const coveredSlugs = new Set(recommendations.map((r) => r.content?.slug));
+  // 2. Category-based fallback: use content_mapping if available
+  if (weakAreas.length > 0 && recommendations.length < 6) {
+    const coveredSlugs = new Set(
+      recommendations
+        .filter((r) => r.read_url)
+        .map((r) => r.read_url!.replace("/transcripts/", "")),
+    );
     const categories = weakAreas.map((w) => w.category);
 
-    const { data: catContent } = await getSupabase()
-      .from("content_mapping")
-      .select("*")
-      .in("category", categories)
-      .order("analyzed_at", { ascending: false })
-      .limit(6);
+    try {
+      const { data: catContent } = await getSupabase()
+        .from("content_mapping")
+        .select("*")
+        .in("category", categories)
+        .order("analyzed_at", { ascending: false })
+        .limit(6);
 
-    if (catContent && catContent.length > 0) {
-      for (const c of catContent as ContentMapping[]) {
-        if (coveredSlugs.has(c.slug)) continue;
-        if (recommendations.length >= 6) break;
+      if (catContent && catContent.length > 0) {
+        for (const c of catContent as ContentMapping[]) {
+          if (c.slug && coveredSlugs.has(c.slug)) continue;
+          if (recommendations.length >= 6) break;
 
-        recommendations.push({
-          category: c.category as QuizCategory,
-          content: c,
-          reason: `You missed ${weakAreas.find((w) => w.category === c.category)?.wrong_count || 0} questions in "${c.category}"`,
-          listen_url:
-            c.source_type === "sermon"
-              ? `/sermons/audio/${c.source_id}`
-              : undefined,
-          read_url:
-            c.source_type === "transcript"
-              ? `/transcripts/${c.slug}`
-              : undefined,
-        });
+          recommendations.push({
+            category: c.category as QuizCategory,
+            content: c,
+            reason: `You missed ${weakAreas.find((w) => w.category === c.category)?.wrong_count || 0} questions in "${c.category}"`,
+            listen_url:
+              c.source_type === "sermon"
+                ? `/sermons/audio/${c.source_id}`
+                : undefined,
+            read_url:
+              c.source_type === "transcript"
+                ? `/transcripts/${c.slug}`
+                : undefined,
+          });
+        }
       }
+    } catch {
+      // content_mapping query failed — skip category fallback
     }
   }
 
