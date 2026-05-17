@@ -147,57 +147,75 @@ class NLWC_Sermons_API {
         $order      = strtoupper($request->get_param('order')) === 'ASC' ? 'ASC' : 'DESC';
         $offset     = ($page - 1) * $per_page;
 
-        // Build WHERE + JOINs
+        // Build WHERE + JOINs (separate value arrays to match SQL placeholder order)
         $where  = array('1=1');
         $joins  = array();
-        $values = array();
+        $where_values = array();
+        $join_values  = array();
 
-        // Search by title or speaker name (keyword-based: each word must match)
+        // Relevance scoring for keyword search
+        $search_active = false;
+        $relevance_select = '';
+        $relevance_values = array();
+
+        // Search by title or speaker name (keyword-based with relevance scoring)
+        // Uses OR so partial keyword matches still return results,
+        // with relevance ordering to surface the best matches first.
         if (!empty($search)) {
             $words = array_filter(preg_split('/\s+/', trim($search)));
             if (count($words) > 0) {
+                $search_active = true;
                 $word_conditions = array();
+                $relevance_cases = array();
                 foreach ($words as $word) {
                     $like = '%' . $wpdb->esc_like($word) . '%';
                     $word_conditions[] = "(m.title LIKE %s OR m.speaker LIKE %s)";
-                    $values[] = $like;
-                    $values[] = $like;
+                    $where_values[] = $like;
+                    $where_values[] = $like;
+                    // Score: +1 for each keyword found in title or speaker
+                    $relevance_cases[] = "(CASE WHEN m.title LIKE %s OR m.speaker LIKE %s THEN 1 ELSE 0 END)";
+                    $relevance_values[] = $like;
+                    $relevance_values[] = $like;
                 }
-                $where[] = '(' . implode(' AND ', $word_conditions) . ')';
+                // OR: any keyword can match; relevance ordering ensures best results first
+                $where[] = '(' . implode(' OR ', $word_conditions) . ')';
+                $relevance_select = ', (' . implode(' + ', $relevance_cases) . ') AS search_relevance';
             }
         }
 
         // Filter by series (via junction table)
         if ($series_id > 0) {
             $joins[]  = "INNER JOIN {$t['series_matches']} AS sm ON m.message_id = sm.message_id AND sm.series_id = %d";
-            $values[] = $series_id;
+            $join_values[] = $series_id;
         }
 
         // Filter by speaker (via junction table)
         if ($speaker_id > 0) {
             $joins[]  = "INNER JOIN {$t['speaker_matches']} AS msm ON m.message_id = msm.message_id AND msm.speaker_id = %d";
-            $values[] = $speaker_id;
+            $join_values[] = $speaker_id;
         }
 
         // Filter by topic (via junction table)
         if ($topic_id > 0) {
             $joins[]  = "INNER JOIN {$t['topic_matches']} AS mtm ON m.message_id = mtm.message_id AND mtm.topic_id = %d";
-            $values[] = $topic_id;
+            $join_values[] = $topic_id;
         }
 
         // Filter by year
         if ($year > 0) {
             $where[]  = "YEAR(m.date) = %d";
-            $values[] = $year;
+            $where_values[] = $year;
         }
 
         $join_sql  = implode(' ', $joins);
         $where_sql = implode(' AND ', $where);
 
         // ---- Count total ----
+        // Values must follow SQL placeholder order: JOIN conditions first, then WHERE conditions
         $count_query = "SELECT COUNT(DISTINCT m.message_id) FROM {$t['messages']} AS m {$join_sql} WHERE {$where_sql}";
-        if (!empty($values)) {
-            $count_query = $wpdb->prepare($count_query, $values);
+        $count_values = array_merge($join_values, $where_values);
+        if (!empty($count_values)) {
+            $count_query = $wpdb->prepare($count_query, $count_values);
         }
         $total = (int) $wpdb->get_var($count_query);
 
@@ -210,6 +228,11 @@ class NLWC_Sermons_API {
 
         // ---- Fetch rows ----
         // Left join series via primary_series column for the "main" series
+        // When searching, sort by relevance (keyword match count) first
+        $order_clause = $search_active
+            ? "ORDER BY search_relevance DESC, m.date {$order}, m.message_id {$order}"
+            : "ORDER BY m.date {$order}, m.message_id {$order}";
+
         $data_query = "
             SELECT DISTINCT
                 m.message_id,
@@ -227,15 +250,19 @@ class NLWC_Sermons_API {
                 m.focus_scripture,
                 s.s_title       AS series_title,
                 s.thumbnail_url AS series_thumbnail
+                {$relevance_select}
             FROM {$t['messages']} AS m
             LEFT JOIN {$t['series']} AS s ON m.primary_series = s.series_id
             {$join_sql}
             WHERE {$where_sql}
-            ORDER BY m.date {$order}, m.message_id {$order}
+            {$order_clause}
             LIMIT %d OFFSET %d
         ";
 
-        $query_values = array_merge($values, array($per_page, $offset));
+        // Values order must match SQL placeholder order: SELECT (relevance) → JOIN → WHERE → LIMIT/OFFSET
+        $query_values = $search_active
+            ? array_merge($relevance_values, $join_values, $where_values, array($per_page, $offset))
+            : array_merge($join_values, $where_values, array($per_page, $offset));
         $results = $wpdb->get_results($wpdb->prepare($data_query, $query_values), ARRAY_A);
 
         if ($wpdb->last_error) {
