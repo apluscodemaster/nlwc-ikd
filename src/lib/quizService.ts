@@ -141,13 +141,50 @@ export async function getRecommendations(
           .replace(/-/g, " ")
           .replace(/\b\w/g, (c) => c.toUpperCase());
 
+        // Build a simplified search query: drop common stop words and
+        // limit to key content words so the WP API can match flexibly
+        const STOP_WORDS = new Set([
+          "a",
+          "an",
+          "the",
+          "of",
+          "in",
+          "on",
+          "at",
+          "to",
+          "for",
+          "and",
+          "or",
+          "but",
+          "is",
+          "are",
+          "was",
+          "were",
+          "be",
+          "by",
+          "with",
+          "from",
+          "as",
+          "its",
+          "it",
+          "that",
+          "this",
+          "not",
+          "no",
+        ]);
+        const searchQuery = title
+          .split(/\s+/)
+          .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
+          .slice(0, 6)
+          .join(" ");
+
         // Try to find matching audio sermon by searching WP API
         let audioUrl: string | null = null;
         let audioTitle: string = title;
         try {
           const { getAudioSermons } = await import("@/lib/audioSermons");
           const searchResult = await getAudioSermons({
-            search: title,
+            search: searchQuery,
             perPage: 5,
             page: 1,
           });
@@ -176,7 +213,7 @@ export async function getRecommendations(
 
         // Fallback: link to sermons page with search query if no direct match
         if (!audioUrl) {
-          audioUrl = `/sermons?q=${encodeURIComponent(title)}`;
+          audioUrl = `/sermons?q=${encodeURIComponent(searchQuery)}`;
         }
 
         // Combined recommendation with both audio and transcript links
