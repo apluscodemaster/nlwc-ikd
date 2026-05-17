@@ -27,10 +27,7 @@ export async function GET(request: NextRequest) {
 
   // Validate pagination parameters
   if (page < 1) {
-    return NextResponse.json(
-      { error: "Page must be >= 1" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Page must be >= 1" }, { status: 400 });
   }
 
   // Enforce max page size to prevent performance issues
@@ -49,7 +46,10 @@ export async function GET(request: NextRequest) {
 
       // Add cache headers for successful responses
       const response = NextResponse.json(sermon);
-      response.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
+      response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=3600, stale-while-revalidate=600",
+      );
       return response;
     }
 
@@ -70,9 +70,24 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Audio sermons API error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Audio sermons API error:", {
+      message: errorMessage,
+      page,
+      perPage,
+      search,
+      seriesId,
+      speakerId,
+      topicId,
+      order,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch audio sermons" },
+      {
+        error: "Failed to fetch audio sermons",
+        details:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
+      },
       { status: 500 },
     );
   }
