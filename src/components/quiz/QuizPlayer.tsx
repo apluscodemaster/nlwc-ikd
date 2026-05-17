@@ -44,9 +44,6 @@ export default function QuizPlayer({
   const [total, setTotal] = useState(0);
   const [showFailedOverlay, setShowFailedOverlay] = useState(false);
   const [noMoreQuestions, setNoMoreQuestions] = useState(false);
-  const [answeredQuestionIds, setAnsweredQuestionIds] = useState<Set<string>>(
-    new Set(),
-  );
   const [failedQuestionData, setFailedQuestionData] = useState<{
     question: QuizQuestion;
     selectedAnswer: number;
@@ -55,14 +52,13 @@ export default function QuizPlayer({
     recommendations: Recommendation[];
   } | null>(null);
 
-  // Use a ref to access the latest answeredQuestionIds inside fetchNextQuestion
-  // without including it in the dependency array (which would cause re-renders)
-  const answeredIdsRef = useRef(answeredQuestionIds);
-  answeredIdsRef.current = answeredQuestionIds;
+  // Mutable ref is the SINGLE SOURCE OF TRUTH for answered IDs.
+  // Updated synchronously before fetching next question to prevent repeats.
+  const answeredIdsRef = useRef<Set<string>>(new Set());
 
   const initializedRef = useRef(false);
 
-  // Fetch a new question
+  // Fetch a new question — excludes all IDs currently in the ref
   const fetchNextQuestion = useCallback(async () => {
     setLoadingQuestion(true);
     setNoMoreQuestions(false);
@@ -70,10 +66,9 @@ export default function QuizPlayer({
       const params = new URLSearchParams({ count: "1" });
       if (category) params.set("category", category);
 
-      // Exclude already-answered questions (read from ref to avoid dependency)
-      const currentAnsweredIds = answeredIdsRef.current;
-      if (currentAnsweredIds.size > 0) {
-        params.set("exclude", Array.from(currentAnsweredIds).join(","));
+      // Read the ref directly — always has the latest answered IDs
+      if (answeredIdsRef.current.size > 0) {
+        params.set("exclude", Array.from(answeredIdsRef.current).join(","));
       }
 
       const res = await fetch(`/api/quiz/questions?${params}`);
@@ -114,13 +109,13 @@ export default function QuizPlayer({
 
   // Fetch recommendations for a failed question
   const fetchRecommendations = useCallback(
-    async (sermonRef?: string): Promise<Recommendation[]> => {
+    async (sermonRef?: string, questionCategory?: string): Promise<Recommendation[]> => {
       try {
         const params = new URLSearchParams();
         if (sermonRef) {
           params.set("sermon_ref", sermonRef);
         }
-        params.set("category", current?.category || "");
+        params.set("category", questionCategory || current?.category || "");
 
         const res = await fetch(
           `/api/quiz/recommendations?${params.toString()}`,
@@ -158,23 +153,24 @@ export default function QuizPlayer({
 
       const { is_correct, correct_answer, explanation } = await saveRes.json();
 
+      // ALWAYS mark the current question as answered in the ref SYNCHRONOUSLY
+      // before fetching the next question — prevents repeats
+      answeredIdsRef.current = new Set([...answeredIdsRef.current, current.id]);
+
       if (is_correct) {
         // Correct answer - increment and move to next question
         setCorrect((prev) => prev + 1);
         setTotal((prev) => prev + 1);
-        // Track this question as answered
-        setAnsweredQuestionIds((prev) => new Set([...prev, current.id]));
         setRevealed(false);
         setSelectedAnswer(null);
         await fetchNextQuestion();
       } else {
-        // Wrong answer - still track as answered and show failed overlay
+        // Wrong answer - show failed overlay
         setTotal((prev) => prev + 1);
-        setAnsweredQuestionIds((prev) => new Set([...prev, current.id]));
         setCorrectAnswer(correct_answer);
         setRevealed(true);
 
-        const recs = await fetchRecommendations(current.sermon_ref);
+        const recs = await fetchRecommendations(current.sermon_ref, current.category);
 
         // Create complete question object with correctAnswer
         const fullQuestion: QuizQuestion = {
