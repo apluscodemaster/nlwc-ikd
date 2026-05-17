@@ -152,12 +152,19 @@ class NLWC_Sermons_API {
         $joins  = array();
         $values = array();
 
-        // Search by title or speaker name
+        // Search by title or speaker name (keyword-based: each word must match)
         if (!empty($search)) {
-            $like = '%' . $wpdb->esc_like($search) . '%';
-            $where[]  = "(m.title LIKE %s OR m.speaker LIKE %s)";
-            $values[] = $like;
-            $values[] = $like;
+            $words = array_filter(preg_split('/\s+/', trim($search)));
+            if (count($words) > 0) {
+                $word_conditions = array();
+                foreach ($words as $word) {
+                    $like = '%' . $wpdb->esc_like($word) . '%';
+                    $word_conditions[] = "(m.title LIKE %s OR m.speaker LIKE %s)";
+                    $values[] = $like;
+                    $values[] = $like;
+                }
+                $where[] = '(' . implode(' AND ', $word_conditions) . ')';
+            }
         }
 
         // Filter by series (via junction table)
