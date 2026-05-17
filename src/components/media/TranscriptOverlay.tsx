@@ -104,10 +104,10 @@ export default function TranscriptOverlay({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-4 sm:inset-8 z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed inset-4 sm:inset-8 z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-4xl mx-auto"
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 p-6 sm:p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-start justify-between gap-4 p-6 sm:p-8 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white shrink-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-2">
                   Transcript
@@ -131,7 +131,7 @@ export default function TranscriptOverlay({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8">
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 relative">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -150,9 +150,9 @@ export default function TranscriptOverlay({
                   </Link>
                 </div>
               ) : transcript ? (
-                <article className="max-w-4xl prose prose-sm sm:prose prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-primary hover:prose-a:text-primary/80 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5">
+                <div className="w-full">
                   <TranscriptContent content={transcript.content} />
-                </article>
+                </div>
               ) : null}
             </div>
 
