@@ -149,14 +149,14 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
         } else {
           setTooltip((prev) => ({
             ...prev,
-            error: "Could not load verse",
+            error: "Scripture reference not found in database",
             isLoading: false,
           }));
         }
       } catch {
         setTooltip((prev) => ({
           ...prev,
-          error: "Failed to load verse",
+          error: "Unable to load scripture",
           isLoading: false,
         }));
       }
@@ -201,7 +201,11 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
 
         textNodes.forEach((textNode) => {
           const text = textNode.textContent || "";
-          const pattern = /(\(?\d?\s?[A-Za-z]+\.?\s+\d+:\d+(?:-\d+)?\)?)/gi;
+          // Improved regex to catch more scripture reference formats:
+          // - Multi-digit book numbers (1-3 John, etc)
+          // - Multiple spaces
+          // - Optional periods in book names
+          const pattern = /\(?\s*(\d{1,3}?\s+)?([A-Za-z]+\.?)\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\s*\)?/gi;
           const matches = [...text.matchAll(pattern)];
 
           if (matches.length === 0) return;

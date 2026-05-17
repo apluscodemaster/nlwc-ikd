@@ -15,6 +15,7 @@ import type {
 export async function fetchQuizQuestions(
   category?: QuizCategory,
   count: number = 10,
+  excludeIds: string[] = [],
 ): Promise<QuizQuestion[]> {
   const adminDb = getAdminDb();
   let q: admin.firestore.Query = adminDb.collection("quiz_questions");
@@ -22,17 +23,25 @@ export async function fetchQuizQuestions(
   if (category) {
     q = q.where("category", "==", category);
   }
-  q = q.limit(count);
+
+  // Fetch enough questions to guarantee results after filtering out excluded IDs.
+  // Firestore doesn't support "NOT IN" with more than 10 items efficiently,
+  // so we fetch all available (up to 100) and filter in-memory.
+  const fetchLimit = excludeIds.length > 0 ? 100 : count;
+  q = q.limit(fetchLimit);
 
   const snapshot = await q.get();
 
-  const questions: QuizQuestion[] = snapshot.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as Omit<QuizQuestion, "id">),
-  }));
+  const excludeSet = new Set(excludeIds);
+  const questions: QuizQuestion[] = snapshot.docs
+    .filter((d) => !excludeSet.has(d.id))
+    .map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<QuizQuestion, "id">),
+    }));
 
-  // Shuffle
-  return questions.sort(() => Math.random() - 0.5);
+  // Shuffle and return only the requested count
+  return questions.sort(() => Math.random() - 0.5).slice(0, count);
 }
 
 // ── Fetch a single question (for server-side answer verification) ──
@@ -133,8 +142,8 @@ export async function getRecommendations(
           .replace(/\b\w/g, (c) => c.toUpperCase());
 
         // Try to find matching audio sermon by searching WP API
-        let audioId: number | null = null;
-        let audioTitle: string | null = null;
+        let audioUrl: string | null = null;
+        let audioTitle: string = title;
         try {
           const { getAudioSermons } = await import("@/lib/audioSermons");
           const searchResult = await getAudioSermons({
@@ -157,27 +166,26 @@ export async function getRecommendations(
             });
             // Use fuzzy match, or fall back to first search result
             const foundSermon = match || searchResult.data[0];
-            audioId = foundSermon.id;
-            audioTitle = foundSermon.title; // Use the actual audio title from search result
-
-            console.debug(
-              `[Quiz Recommendations] Found audio match for "${title}": ${audioTitle} (ID: ${audioId})`,
-            );
+            audioUrl = `/sermons/audio/${foundSermon.id}`;
+            audioTitle = foundSermon.title || title;
           }
         } catch (error) {
-          // Audio search failed silently — transcript link still works
+          // Audio search failed — we'll use fallback URL below
           console.warn("Audio sermon search failed for:", ref.slug, error);
         }
 
-        // Add audio recommendation if found
-        if (audioId && audioTitle) {
-          recommendations.push({
-            category: ref.category as QuizCategory,
-            title: audioTitle,
-            reason: "Listen to this sermon — you missed questions from it",
-            listen_url: `/sermons/audio/${audioId}`,
-          });
+        // Fallback: link to sermons page with search query if no direct match
+        if (!audioUrl) {
+          audioUrl = `/sermons?search=${encodeURIComponent(title)}`;
         }
+
+        // Always add audio recommendation (direct link or search fallback)
+        recommendations.push({
+          category: ref.category as QuizCategory,
+          title: audioTitle,
+          reason: "Listen to this sermon — you missed questions from it",
+          listen_url: audioUrl,
+        });
 
         // Always add transcript recommendation
         recommendations.push({
