@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -9,6 +9,7 @@ import {
   FileText,
   ArrowRight,
   ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function FailedQuestionOverlay({
 }: FailedQuestionOverlayProps) {
   const userAnswerText = question.options[selectedAnswer];
   const correctAnswerText = question.options[correctAnswer];
+  const [recommendationClicked, setRecommendationClicked] = useState(false);
 
   return (
     <motion.div
@@ -58,8 +60,9 @@ export default function FailedQuestionOverlay({
             </div>
           </div>
           <p className="text-white/90 text-sm">
-            Don&apos;t worry! Study the recommended resources and come back to
-            try again.
+            {recommendationClicked
+              ? "✓ Great! Now you're ready to try again."
+              : "Review a recommended resource before continuing →"}
           </p>
         </div>
 
@@ -106,9 +109,21 @@ export default function FailedQuestionOverlay({
           {/* Recommended Resources */}
           {recommendations.length > 0 && (
             <div>
-              <p className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">
-                Study These Resources
-              </p>
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-sm font-bold text-gray-900 uppercase tracking-widest">
+                  Study These Resources
+                </p>
+                {recommendationClicked && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="flex items-center gap-1 text-xs font-bold text-emerald-600"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Done!
+                  </motion.div>
+                )}
+              </div>
               <div className="space-y-3">
                 {recommendations.map((rec, idx) => {
                   const title = rec.content?.title ?? rec.title ?? "Resource";
@@ -118,9 +133,16 @@ export default function FailedQuestionOverlay({
                   if (!hasAudio && !hasTranscript) return null;
 
                   return (
-                    <div
+                    <motion.div
                       key={idx}
-                      className="p-4 rounded-2xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        recommendationClicked
+                          ? "bg-emerald-50/50 border-emerald-200"
+                          : "bg-primary/5 border-primary/20 hover:bg-primary/10"
+                      }`}
                     >
                       <p className="font-semibold text-gray-900 text-sm mb-2">
                         {title}
@@ -135,6 +157,7 @@ export default function FailedQuestionOverlay({
                             href={rec.listen_url || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => setRecommendationClicked(true)}
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors active:scale-[0.97]"
                           >
                             <Headphones className="w-3.5 h-3.5" />
@@ -146,6 +169,7 @@ export default function FailedQuestionOverlay({
                             href={rec.read_url || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => setRecommendationClicked(true)}
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors active:scale-[0.97]"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -153,7 +177,7 @@ export default function FailedQuestionOverlay({
                           </Link>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -161,14 +185,25 @@ export default function FailedQuestionOverlay({
           )}
 
           {/* Continue Button */}
-          <div className="flex gap-3 pt-4">
+          <motion.div className="flex gap-3 pt-4">
             <Button
               onClick={onContinue}
-              className="flex-1 h-12 rounded-full font-bold cursor-pointer"
+              disabled={!recommendationClicked}
+              className={`flex-1 h-12 rounded-full font-bold cursor-pointer transition-all ${
+                recommendationClicked
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
-              Back to Quiz <ArrowRight className="w-4 h-4 ml-2" />
+              {recommendationClicked ? (
+                <>
+                  Back to Quiz <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              ) : (
+                "👆 Click a resource first"
+              )}
             </Button>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </motion.div>
