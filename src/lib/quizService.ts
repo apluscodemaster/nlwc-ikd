@@ -179,19 +179,12 @@ export async function getRecommendations(
           audioUrl = `/sermons?search=${encodeURIComponent(title)}`;
         }
 
-        // Always add audio recommendation (direct link or search fallback)
+        // Combined recommendation with both audio and transcript links
         recommendations.push({
           category: ref.category as QuizCategory,
           title: audioTitle,
-          reason: "Listen to this sermon — you missed questions from it",
+          reason: "You missed questions from this sermon — listen or read",
           listen_url: audioUrl,
-        });
-
-        // Always add transcript recommendation
-        recommendations.push({
-          category: ref.category as QuizCategory,
-          title,
-          reason: "Read this transcript — you missed questions from it",
           read_url: `/transcripts/${ref.slug}`,
         });
       }
