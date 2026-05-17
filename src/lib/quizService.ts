@@ -148,9 +148,7 @@ export async function getRecommendations(
               const sermonTitle = s.title
                 .toLowerCase()
                 .replace(/[^a-z0-9\s]/g, "");
-              const refTitle = title
-                .toLowerCase()
-                .replace(/[^a-z0-9\s]/g, "");
+              const refTitle = title.toLowerCase().replace(/[^a-z0-9\s]/g, "");
               return (
                 sermonTitle.includes(refTitle) ||
                 refTitle.includes(sermonTitle) ||
@@ -161,7 +159,7 @@ export async function getRecommendations(
             const foundSermon = match || searchResult.data[0];
             audioId = foundSermon.id;
             audioTitle = foundSermon.title; // Use the actual audio title from search result
-            
+
             console.debug(
               `[Quiz Recommendations] Found audio match for "${title}": ${audioTitle} (ID: ${audioId})`,
             );
