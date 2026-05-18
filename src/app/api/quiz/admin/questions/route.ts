@@ -31,14 +31,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const {
-      question,
-      options,
-      correctAnswer,
-      category,
-      sermon_ref,
-      explain,
-    } = body;
+    const { question, options, correctAnswer, category, sermon_ref, explain } =
+      body;
 
     if (!question || !options || correctAnswer === undefined || !category) {
       return NextResponse.json(
@@ -50,9 +44,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
+    if (!Array.isArray(options) || options.length < 2 || options.length > 4) {
       return NextResponse.json(
-        { error: "Options must be an array of 2-6 items" },
+        { error: "Options must be an array of 2-4 items" },
         { status: 400 },
       );
     }
@@ -125,10 +119,10 @@ export async function PUT(req: NextRequest) {
       if (
         !Array.isArray(updates.options) ||
         updates.options.length < 2 ||
-        updates.options.length > 6
+        updates.options.length > 4
       ) {
         return NextResponse.json(
-          { error: "Options must be an array of 2-6 items" },
+          { error: "Options must be an array of 2-4 items" },
           { status: 400 },
         );
       }
