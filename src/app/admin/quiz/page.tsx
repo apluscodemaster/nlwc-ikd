@@ -723,6 +723,9 @@ export default function AdminQuizPage() {
       let updatedCount = 0;
 
       // Add new questions
+      let failedCount = 0;
+      const failedErrors: string[] = [];
+
       for (const q of newQuestions) {
         try {
           const payload: Record<string, unknown> = {
@@ -739,9 +742,19 @@ export default function AdminQuizPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          if (res.ok) addedCount++;
+          if (res.ok) {
+            addedCount++;
+          } else {
+            failedCount++;
+            const errData = await res.json().catch(() => null);
+            const reason = errData?.error || `HTTP ${res.status}`;
+            if (failedErrors.length < 3) {
+              const preview = q.question.slice(0, 40);
+              failedErrors.push(`"${preview}..." — ${reason}`);
+            }
+          }
         } catch {
-          // Continue with next question
+          failedCount++;
         }
       }
 
@@ -757,15 +770,19 @@ export default function AdminQuizPage() {
             body: JSON.stringify({
               id: existing.id,
               options: q.options,
-              correctAnswer: q.correctAnswer,
+              correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
               category: q.category,
               sermon_ref: q.sermon_ref,
               explain: q.explain,
             }),
           });
-          if (res.ok) updatedCount++;
+          if (res.ok) {
+            updatedCount++;
+          } else {
+            failedCount++;
+          }
         } catch {
-          // Continue with next question
+          failedCount++;
         }
       }
 
@@ -775,8 +792,20 @@ export default function AdminQuizPage() {
         if (updatedCount > 0) msgs.push(`${updatedCount} updated`);
         toast.success(`Import complete: ${msgs.join(", ")}`);
         fetchQuestions();
-      } else {
-        toast.error("Failed to import any questions");
+      }
+
+      if (failedCount > 0) {
+        const detail = failedErrors.length > 0
+          ? `\n\n${failedErrors.join("\n")}${failedCount > 3 ? `\n...and ${failedCount - 3} more` : ""}`
+          : "";
+        toast.error(
+          `${failedCount} question${failedCount !== 1 ? "s" : ""} failed to import. Please check your file format (required: Question, Options, Category, Correct Answer).${detail}\n\nIf the issue persists, contact the developer for support.`,
+          { duration: 10000 },
+        );
+      }
+
+      if (addedCount === 0 && updatedCount === 0 && failedCount === 0) {
+        toast.error("No questions were processed from the file");
       }
     } catch (err) {
       toast.error(
