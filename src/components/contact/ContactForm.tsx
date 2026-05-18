@@ -120,6 +120,21 @@ export default function ContactForm() {
         throw new Error(data.error || "Failed to send message");
       }
 
+      // Open WhatsApp with pre-filled message
+      const whatsappNumber = "2348137436770";
+      const text = [
+        `📩 *Contact Form Submission*`,
+        ``,
+        `*Name:* ${formData.name}`,
+        `*Email:* ${formData.email}`,
+        `*Subject:* ${formData.subject}`,
+        ``,
+        `*Message:*`,
+        formData.message,
+      ].join("\n");
+      const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
       setErrors({});
@@ -154,7 +169,7 @@ export default function ContactForm() {
           Message Sent!
         </h3>
         <p className="text-base sm:text-lg text-gray-600 mb-8 max-w-sm">
-          Thank you for reaching out. We will get back to you as soon as possible.
+          Thank you for reaching out. Your information has been received and acknowledged. We will get back to you as soon as possible.
         </p>
       </motion.div>
     );
