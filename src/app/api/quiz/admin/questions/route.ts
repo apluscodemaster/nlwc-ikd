@@ -62,10 +62,10 @@ function validateQuestion(body: Record<string, unknown>): {
     .filter(Boolean)
     .slice(0, 4);
 
-  if (filteredOptions.length < 2 || filteredOptions.length > 4) {
+  if (filteredOptions.length !== 4) {
     return {
       valid: false,
-      error: `Options must have 2-4 non-empty items (got ${filteredOptions.length})`,
+      error: `Options must have exactly 4 non-empty items (got ${filteredOptions.length})`,
     };
   }
 
@@ -123,9 +123,14 @@ function validateQuestion(body: Record<string, unknown>): {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("[Quiz Import] POST body keys:", Object.keys(body), "| has questions array:", Array.isArray(body.questions));
 
     // ── Bulk mode: { questions: [...] } ──
     if (body.questions && Array.isArray(body.questions)) {
+      console.log("[Quiz Import] Bulk mode — received", body.questions.length, "questions");
+      if (body.questions.length > 0) {
+        console.log("[Quiz Import] First question sample:", JSON.stringify(body.questions[0], null, 2));
+      }
       const adminDb = getAdminDb();
       const results: {
         added: number;
@@ -222,9 +227,9 @@ export async function PUT(req: NextRequest) {
         .map((o: string) => (typeof o === "string" ? o.trim() : ""))
         .filter(Boolean)
         .slice(0, 4);
-      if (updates.options.length < 2 || updates.options.length > 4) {
+      if (updates.options.length !== 4) {
         return NextResponse.json(
-          { error: "Options must have 2-4 non-empty items" },
+          { error: "Options must have exactly 4 non-empty items" },
           { status: 400 },
         );
       }
