@@ -17,6 +17,7 @@ import type { QuizCategory } from "@/types/quiz";
 interface QuizLauncherProps {
   onStart: (category: QuizCategory | null) => void;
   loading?: boolean;
+  username?: string;
 }
 
 const CATEGORIES: {
@@ -57,7 +58,7 @@ const CATEGORIES: {
   },
 ];
 
-export default function QuizLauncher({ onStart, loading }: QuizLauncherProps) {
+export default function QuizLauncher({ onStart, loading, username }: QuizLauncherProps) {
   const [selected, setSelected] = useState<QuizCategory | null>(null);
 
   return (
@@ -74,6 +75,11 @@ export default function QuizLauncher({ onStart, loading }: QuizLauncherProps) {
           <h2 className="text-xl font-bold text-gray-900 mb-1">
             Church Knowledge Quiz
           </h2>
+          {username && (
+            <p className="text-base font-semibold text-primary mb-1">
+              Welcome, {username}
+            </p>
+          )}
           <p className="text-sm text-muted-foreground">
             Test what you&rsquo;ve learned from services and messages
           </p>
