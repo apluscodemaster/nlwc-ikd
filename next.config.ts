@@ -129,7 +129,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
               "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.google-analytics.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com lh3.googleusercontent.com ikdadmin.nlwc.church one.com api.reftagger.com *.reftagger.com *.biblia.com *.faithlife.com challenges.cloudflare.com *.s3.us-east-2.amazonaws.com; " +
-              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io challenges.cloudflare.com; " +
+              "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io challenges.cloudflare.com *.firebaseapp.com; " +
               "media-src 'self' https: blob:; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
