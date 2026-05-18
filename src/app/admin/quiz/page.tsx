@@ -152,8 +152,8 @@ function QuestionModal({
       toast.error("Question text is required");
       return;
     }
-    if (trimmedOpts.length < 2) {
-      toast.error("At least 2 options are required");
+    if (trimmedOpts.length !== 4) {
+      toast.error("Exactly 4 options are required");
       return;
     }
     if (correctAnswer >= trimmedOpts.length) {
@@ -172,17 +172,6 @@ function QuestionModal({
     if (mode === "edit" && question) data.id = question.id;
 
     onSave(data);
-  };
-
-  const addOption = () => {
-    if (options.length < 4) setOptions([...options, ""]);
-  };
-
-  const removeOption = (idx: number) => {
-    if (options.length <= 2) return;
-    const updated = options.filter((_, i) => i !== idx);
-    setOptions(updated);
-    if (correctAnswer >= updated.length) setCorrectAnswer(0);
   };
 
   if (!mode) return null;
@@ -286,27 +275,9 @@ function QuestionModal({
                     className="flex-1 h-10 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                   />
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(idx)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
-            {options.length < 4 && (
-              <button
-                type="button"
-                onClick={addOption}
-                className="mt-2 text-xs text-primary hover:text-primary/80 font-semibold cursor-pointer"
-              >
-                + Add another option
-              </button>
-            )}
           </div>
 
           {/* Sermon reference (optional) */}
@@ -727,6 +698,7 @@ export default function AdminQuizPage() {
         try {
           const bulkPayload = newQuestions.map((q) => {
             const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
+            while (cleanOptions.length < 4) cleanOptions.push("");
             const payload: Record<string, unknown> = {
               question: q.question,
               options: cleanOptions,
@@ -775,6 +747,7 @@ export default function AdminQuizPage() {
           if (!existing) continue;
 
           const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
+          while (cleanOptions.length < 4) cleanOptions.push("");
           const res = await fetch("/api/quiz/admin/questions", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
