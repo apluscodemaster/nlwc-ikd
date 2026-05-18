@@ -327,7 +327,7 @@ export default function ContactForm() {
 
         <Button
           type="submit"
-          disabled={status === "loading" || Object.keys(errors).length > 0}
+          disabled={status === "loading" || Object.values(errors).some(Boolean)}
           size="lg"
           className="w-full h-12 sm:h-14 md:h-16 rounded-full text-sm sm:text-base md:text-lg font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
