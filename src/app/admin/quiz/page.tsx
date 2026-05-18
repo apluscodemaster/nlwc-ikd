@@ -66,8 +66,6 @@ const CATEGORIES: QuizCategory[] = [
   "Special Meeting",
 ];
 
-
-
 // ──────────────────────────────────────────────
 // Stat Card
 // ──────────────────────────────────────────────
@@ -177,7 +175,7 @@ function QuestionModal({
   };
 
   const addOption = () => {
-    if (options.length < 6) setOptions([...options, ""]);
+    if (options.length < 4) setOptions([...options, ""]);
   };
 
   const removeOption = (idx: number) => {
@@ -300,7 +298,7 @@ function QuestionModal({
                 </div>
               ))}
             </div>
-            {options.length < 6 && (
+            {options.length < 4 && (
               <button
                 type="button"
                 onClick={addOption}
@@ -721,56 +719,72 @@ export default function AdminQuizPage() {
 
       let addedCount = 0;
       let updatedCount = 0;
-
-      // Add new questions
       let failedCount = 0;
       const failedErrors: string[] = [];
 
-      for (const q of newQuestions) {
+      // ── Bulk-add new questions in a single request ──
+      if (newQuestions.length > 0) {
         try {
-          const payload: Record<string, unknown> = {
-            question: q.question,
-            options: q.options,
-            correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
-            category: q.category,
-          };
-          if (q.sermon_ref) payload.sermon_ref = q.sermon_ref;
-          if (q.explain) payload.explain = q.explain;
+          const bulkPayload = newQuestions.map((q) => {
+            const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
+            const payload: Record<string, unknown> = {
+              question: q.question,
+              options: cleanOptions,
+              correctAnswer: Math.min(
+                isNaN(q.correctAnswer) ? 0 : q.correctAnswer,
+                Math.max(cleanOptions.length - 1, 0),
+              ),
+              category: q.category,
+            };
+            if (q.sermon_ref) payload.sermon_ref = q.sermon_ref;
+            if (q.explain) payload.explain = q.explain;
+            return payload;
+          });
 
           const res = await fetch("/api/quiz/admin/questions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ questions: bulkPayload }),
           });
-          if (res.ok) {
-            addedCount++;
-          } else {
-            failedCount++;
-            const errData = await res.json().catch(() => null);
-            const reason = errData?.error || `HTTP ${res.status}`;
-            if (failedErrors.length < 3) {
-              const preview = q.question.slice(0, 40);
-              failedErrors.push(`"${preview}..." — ${reason}`);
+
+          const result = await res.json();
+
+          if (result.added !== undefined) {
+            addedCount = result.added;
+            failedCount += result.failed || 0;
+            if (result.errors?.length > 0) {
+              for (const err of result.errors.slice(0, 3)) {
+                failedErrors.push(`"${err.question}…" — ${err.error}`);
+              }
             }
+          } else if (!res.ok) {
+            // Fallback: entire request failed
+            failedCount += newQuestions.length;
+            failedErrors.push(result.error || `HTTP ${res.status}`);
           }
         } catch {
-          failedCount++;
+          failedCount += newQuestions.length;
+          failedErrors.push("Network error during bulk import");
         }
       }
 
-      // Update existing questions (e.g. fill in missing explain field)
+      // ── Update existing questions individually (need existing IDs) ──
       for (const q of duplicateQuestions) {
         try {
           const existing = existingMap.get(q.question.trim().toLowerCase());
           if (!existing) continue;
 
+          const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
           const res = await fetch("/api/quiz/admin/questions", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               id: existing.id,
-              options: q.options,
-              correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
+              options: cleanOptions,
+              correctAnswer: Math.min(
+                isNaN(q.correctAnswer) ? 0 : q.correctAnswer,
+                Math.max(cleanOptions.length - 1, 0),
+              ),
               category: q.category,
               sermon_ref: q.sermon_ref,
               explain: q.explain,
@@ -795,9 +809,10 @@ export default function AdminQuizPage() {
       }
 
       if (failedCount > 0) {
-        const detail = failedErrors.length > 0
-          ? `\n\n${failedErrors.join("\n")}${failedCount > 3 ? `\n...and ${failedCount - 3} more` : ""}`
-          : "";
+        const detail =
+          failedErrors.length > 0
+            ? `\n\n${failedErrors.join("\n")}${failedCount > 3 ? `\n...and ${failedCount - 3} more` : ""}`
+            : "";
         toast.error(
           `${failedCount} question${failedCount !== 1 ? "s" : ""} failed to import. Please check your file format (required: Question, Options, Category, Correct Answer).${detail}\n\nIf the issue persists, contact the developer for support.`,
           { duration: 10000 },
@@ -1157,7 +1172,9 @@ export default function AdminQuizPage() {
                         { method: "DELETE" },
                       );
                       if (res.ok) {
-                        toast.success("All stats and player data have been reset");
+                        toast.success(
+                          "All stats and player data have been reset",
+                        );
                         fetchStats();
                       } else {
                         const err = await res.json().catch(() => null);
