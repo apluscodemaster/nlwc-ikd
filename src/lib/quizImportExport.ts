@@ -143,7 +143,8 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
       question: values[questionIdx]?.trim() || "",
       options,
       correctAnswer: parseInt(values[correctAnswerIdx] || "0", 10),
-      category: (values[categoryIdx]?.trim() as QuizCategory) || "Sunday Message",
+      category:
+        (values[categoryIdx]?.trim() as QuizCategory) || "Sunday Message",
       sermon_ref: values[sermonRefIdx]?.trim(),
       explain: values[explanationIdx]?.trim(),
     });
