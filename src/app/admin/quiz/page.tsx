@@ -66,8 +66,6 @@ const CATEGORIES: QuizCategory[] = [
   "Special Meeting",
 ];
 
-
-
 // ──────────────────────────────────────────────
 // Stat Card
 // ──────────────────────────────────────────────
@@ -154,8 +152,8 @@ function QuestionModal({
       toast.error("Question text is required");
       return;
     }
-    if (trimmedOpts.length < 2) {
-      toast.error("At least 2 options are required");
+    if (trimmedOpts.length !== 4) {
+      toast.error("Exactly 4 options are required");
       return;
     }
     if (correctAnswer >= trimmedOpts.length) {
@@ -174,17 +172,6 @@ function QuestionModal({
     if (mode === "edit" && question) data.id = question.id;
 
     onSave(data);
-  };
-
-  const addOption = () => {
-    if (options.length < 6) setOptions([...options, ""]);
-  };
-
-  const removeOption = (idx: number) => {
-    if (options.length <= 2) return;
-    const updated = options.filter((_, i) => i !== idx);
-    setOptions(updated);
-    if (correctAnswer >= updated.length) setCorrectAnswer(0);
   };
 
   if (!mode) return null;
@@ -288,27 +275,9 @@ function QuestionModal({
                     className="flex-1 h-10 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                   />
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(idx)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
-            {options.length < 6 && (
-              <button
-                type="button"
-                onClick={addOption}
-                className="mt-2 text-xs text-primary hover:text-primary/80 font-semibold cursor-pointer"
-              >
-                + Add another option
-              </button>
-            )}
           </div>
 
           {/* Sermon reference (optional) */}
@@ -721,6 +690,8 @@ export default function AdminQuizPage() {
 
       let addedCount = 0;
       let updatedCount = 0;
+      let failedCount = 0;
+      const failedErrors: string[] = [];
 
       // Add new questions
       for (const q of newQuestions) {
@@ -730,9 +701,20 @@ export default function AdminQuizPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(q),
           });
-          if (res.ok) addedCount++;
-        } catch {
-          // Continue with next question
+          if (res.ok) {
+            addedCount++;
+          } else {
+            failedCount++;
+            const errData = await res.json().catch(() => null);
+            failedErrors.push(
+              `"${q.question.slice(0, 30)}…" — ${errData?.error || `HTTP ${res.status}`}`,
+            );
+          }
+        } catch (err) {
+          failedCount++;
+          failedErrors.push(
+            `"${q.question.slice(0, 30)}…" — ${err instanceof Error ? err.message : "Network error"}`,
+          );
         }
       }
 
@@ -754,9 +736,20 @@ export default function AdminQuizPage() {
               explain: q.explain,
             }),
           });
-          if (res.ok) updatedCount++;
-        } catch {
-          // Continue with next question
+          if (res.ok) {
+            updatedCount++;
+          } else {
+            failedCount++;
+            const errData = await res.json().catch(() => null);
+            failedErrors.push(
+              `"${q.question.slice(0, 30)}…" — ${errData?.error || `HTTP ${res.status}`}`,
+            );
+          }
+        } catch (err) {
+          failedCount++;
+          failedErrors.push(
+            `"${q.question.slice(0, 30)}…" — ${err instanceof Error ? err.message : "Network error"}`,
+          );
         }
       }
 
@@ -766,12 +759,29 @@ export default function AdminQuizPage() {
         if (updatedCount > 0) msgs.push(`${updatedCount} updated`);
         toast.success(`Import complete: ${msgs.join(", ")}`);
         fetchQuestions();
-      } else {
-        toast.error("Failed to import any questions");
+      }
+
+      if (failedCount > 0) {
+        const detail =
+          failedErrors.length > 0
+            ? `\n\n${failedErrors.join("\n")}${failedCount > 3 ? `\n...and ${failedCount - 3} more` : ""}`
+            : "";
+        toast.error(
+          `${failedCount} question${failedCount !== 1 ? "s" : ""} failed to import.${detail}`,
+          { duration: 10000 },
+        );
+      }
+
+      if (addedCount === 0 && updatedCount === 0 && failedCount === 0) {
+        toast.error(
+          "No questions were processed from the file. Ensure it contains valid data in the expected format.",
+          { duration: 8000 },
+        );
       }
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to import questions",
+        { duration: 8000 },
       );
     } finally {
       setImportingFile(false);
@@ -1119,7 +1129,9 @@ export default function AdminQuizPage() {
                         { method: "DELETE" },
                       );
                       if (res.ok) {
-                        toast.success("All stats and player data have been reset");
+                        toast.success(
+                          "All stats and player data have been reset",
+                        );
                         fetchStats();
                       } else {
                         const err = await res.json().catch(() => null);
