@@ -23,8 +23,8 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
   ];
 
   const rows = questions.map((q) => {
-    const options = [...q.options];
-    // Pad to exactly 4 options to enforce the 4-item rule
+    const options = q.options.map((_, idx) => q.options[idx] || "");
+    // Pad to 4 options
     while (options.length < 4) options.push("");
 
     return [
@@ -83,8 +83,8 @@ function importQuizFromJSON(jsonStr: string): QuizQuestion[] {
   }
 
   return data.map((q) => {
-    if (!q.question || !Array.isArray(q.options) || q.options.length !== 4) {
-      throw new Error("Invalid question format. Each question must have exactly 4 options.");
+    if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
+      throw new Error("Invalid question format");
     }
     // Strip ID to let Firebase auto-generate on import
     return {
@@ -100,9 +100,7 @@ function importQuizFromJSON(jsonStr: string): QuizQuestion[] {
 }
 
 function importQuizFromCSV(csvStr: string): QuizQuestion[] {
-  // Strip BOM (common in Excel-exported CSVs)
-  const clean = csvStr.replace(/^\uFEFF/, "").trim();
-  const lines = clean.split("\n");
+  const lines = csvStr.trim().split("\n");
   if (lines.length < 2) {
     throw new Error("CSV must have header and at least one row");
   }
@@ -110,30 +108,17 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
   const questionIdx = headers.indexOf("question");
   const categoryIdx = headers.indexOf("category");
-  // Support both "correct answer (index)" and "correct answer"
-  let correctAnswerIdx = headers.indexOf("correct answer (index)");
-  if (correctAnswerIdx === -1)
-    correctAnswerIdx = headers.indexOf("correct answer");
+  const correctAnswerIdx = headers.indexOf("correct answer (index)");
   const sermonRefIdx = headers.indexOf("sermon ref");
   const explanationIdx = headers.indexOf("explanation");
 
   if (questionIdx === -1 || categoryIdx === -1 || correctAnswerIdx === -1) {
     throw new Error(
-      "CSV must have 'Question', 'Category', and 'Correct Answer (Index)' (or 'Correct Answer') columns",
+      "CSV must have 'Question', 'Category', and 'Correct Answer (Index)' columns",
     );
   }
 
   const questions: QuizQuestion[] = [];
-
-  // Dynamically find Option columns if they exist, otherwise fallback to columns 2,3,4,5
-  const optIndices = [
-    headers.indexOf("option 1"),
-    headers.indexOf("option 2"),
-    headers.indexOf("option 3"),
-    headers.indexOf("option 4"),
-  ];
-
-  const hasOptHeaders = optIndices.some((idx) => idx !== -1);
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -142,64 +127,22 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
     // Simple CSV parser that handles quoted values
     const values = parseCSVLine(line);
 
-    let options: string[] = [];
-    if (hasOptHeaders) {
-      for (const idx of optIndices) {
-        if (idx !== -1 && idx < values.length && values[idx]?.trim()) {
-          options.push(values[idx].trim());
-        } else {
-          options.push(""); // Keep empty space to maintain array length
-        }
-      }
-    } else {
-      // Fallback: assume options are in columns 2, 3, 4, 5
-      for (let j = 2; j <= 5; j++) {
-        if (j < values.length && values[j]?.trim()) {
-          options.push(values[j].trim());
-        } else {
-          options.push("");
-        }
+    const options: string[] = [];
+    for (let j = 2; j <= 5; j++) {
+      if (j < values.length && values[j]?.trim()) {
+        options.push(values[j].trim());
       }
     }
 
-    // Filter out empties and pad to exactly 4 items
-    options = options.filter(Boolean);
-    while (options.length < 4) {
-      options.push("");
+    if (options.length < 2) {
+      throw new Error(`Row ${i + 1}: At least 2 options required`);
     }
-
-    if (options.filter(Boolean).length !== 4) {
-      throw new Error(`Row ${i + 1}: Exactly 4 non-empty options required`);
-    }
-
-    // Parse correctAnswer — support 0-based index, 1-based index, or letter (A/B/C/D)
-    const rawAnswer = (values[correctAnswerIdx] || "").trim();
-    let correctAnswer: number;
-
-    if (/^[A-Fa-f]$/i.test(rawAnswer)) {
-      // Letter-based: A=0, B=1, C=2, etc.
-      correctAnswer = rawAnswer.toUpperCase().charCodeAt(0) - 65;
-    } else {
-      const parsed = parseInt(rawAnswer, 10);
-      if (isNaN(parsed)) {
-        correctAnswer = 0;
-      } else if (parsed >= 1 && parsed <= options.length && parsed > options.length - 1) {
-        // Looks like 1-based (value equals option count) — convert to 0-based
-        correctAnswer = parsed - 1;
-      } else {
-        correctAnswer = parsed;
-      }
-    }
-
-    // Clamp to valid range
-    if (correctAnswer < 0) correctAnswer = 0;
-    if (correctAnswer >= options.length) correctAnswer = options.length - 1;
 
     questions.push({
       id: "", // Empty ID for auto-generation on import
       question: values[questionIdx]?.trim() || "",
       options,
-      correctAnswer,
+      correctAnswer: parseInt(values[correctAnswerIdx] || "0", 10),
       category: (values[categoryIdx]?.trim() as QuizCategory) || "Sunday Message",
       sermon_ref: values[sermonRefIdx]?.trim(),
       explain: values[explanationIdx]?.trim(),
