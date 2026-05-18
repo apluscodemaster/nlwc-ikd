@@ -46,6 +46,7 @@ import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
 import { logWarn, logError } from "@/lib/devLog";
+import { normalizeSearchQuery } from "@/lib/utils";
 
 // Transcript slug lookup
 // Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
@@ -556,9 +557,11 @@ export default function SermonsPageContent() {
   const router = useRouter();
 
   // Initialise filter state from URL query params
-  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [search, setSearch] = useState(
+    normalizeSearchQuery(searchParams.get("q") || ""),
+  );
   const [debouncedSearch, setDebouncedSearch] = useState(
-    searchParams.get("q") || "",
+    normalizeSearchQuery(searchParams.get("q") || ""),
   );
   const [selectedSeries, setSelectedSeries] = useState<number | undefined>(
     searchParams.get("series") ? Number(searchParams.get("series")) : undefined,
@@ -1146,7 +1149,7 @@ export default function SermonsPageContent() {
               type="text"
               placeholder="Search messages by title or speaker..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setSearch(normalizeSearchQuery(e.target.value))}
               className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-xl sm:rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm placeholder:text-gray-400 text-sm sm:text-base"
               id="sermon-search"
             />

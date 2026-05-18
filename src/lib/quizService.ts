@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getSupabase } from "@/lib/supabase";
+import { normalizeSearchQuery } from "@/lib/utils";
 import type {
   QuizQuestion,
   QuizAttempt,
@@ -211,9 +212,11 @@ export async function getRecommendations(
           console.warn("Audio sermon search failed for:", ref.slug, error);
         }
 
-        // Fallback: link to sermons page with search query if no direct match
+        // Fallback: link to sermons page with normalized title if no direct match
+        // Normalize punctuation (commas, colons, etc.) to ensure better search matching
         if (!audioUrl) {
-          audioUrl = `/sermons?q=${encodeURIComponent(searchQuery)}`;
+          const normalizedTitle = normalizeSearchQuery(title);
+          audioUrl = `/sermons?q=${encodeURIComponent(normalizedTitle)}`;
         }
 
         // Combined recommendation with both audio and transcript links
