@@ -725,10 +725,19 @@ export default function AdminQuizPage() {
       // Add new questions
       for (const q of newQuestions) {
         try {
+          const payload: Record<string, unknown> = {
+            question: q.question,
+            options: q.options,
+            correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
+            category: q.category,
+          };
+          if (q.sermon_ref) payload.sermon_ref = q.sermon_ref;
+          if (q.explain) payload.explain = q.explain;
+
           const res = await fetch("/api/quiz/admin/questions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(q),
+            body: JSON.stringify(payload),
           });
           if (res.ok) addedCount++;
         } catch {
