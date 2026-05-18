@@ -693,71 +693,44 @@ export default function AdminQuizPage() {
       let failedCount = 0;
       const failedErrors: string[] = [];
 
-      // ── Bulk-add new questions in a single request ──
-      if (newQuestions.length > 0) {
+      // Add new questions
+      for (const q of newQuestions) {
         try {
-          const bulkPayload = newQuestions.map((q) => {
-            const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
-            while (cleanOptions.length < 4) cleanOptions.push("");
-            const payload: Record<string, unknown> = {
-              question: q.question,
-              options: cleanOptions,
-              correctAnswer: Math.min(
-                isNaN(q.correctAnswer) ? 0 : q.correctAnswer,
-                Math.max(cleanOptions.length - 1, 0),
-              ),
-              category: q.category,
-            };
-            if (q.sermon_ref) payload.sermon_ref = q.sermon_ref;
-            if (q.explain) payload.explain = q.explain;
-            return payload;
-          });
-
           const res = await fetch("/api/quiz/admin/questions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ questions: bulkPayload }),
+            body: JSON.stringify(q),
           });
-
-          const result = await res.json();
-
-          if (result.added !== undefined) {
-            addedCount = result.added;
-            failedCount += result.failed || 0;
-            if (result.errors?.length > 0) {
-              for (const err of result.errors.slice(0, 3)) {
-                failedErrors.push(`"${err.question}…" — ${err.error}`);
-              }
-            }
-          } else if (!res.ok) {
-            // Fallback: entire request failed
-            failedCount += newQuestions.length;
-            failedErrors.push(result.error || `HTTP ${res.status}`);
+          if (res.ok) {
+            addedCount++;
+          } else {
+            failedCount++;
+            const errData = await res.json().catch(() => null);
+            failedErrors.push(
+              `"${q.question.slice(0, 30)}…" — ${errData?.error || `HTTP ${res.status}`}`,
+            );
           }
-        } catch {
-          failedCount += newQuestions.length;
-          failedErrors.push("Network error during bulk import");
+        } catch (err) {
+          failedCount++;
+          failedErrors.push(
+            `"${q.question.slice(0, 30)}…" — ${err instanceof Error ? err.message : "Network error"}`,
+          );
         }
       }
 
-      // ── Update existing questions individually (need existing IDs) ──
+      // Update existing questions (e.g. fill in missing explain field)
       for (const q of duplicateQuestions) {
         try {
           const existing = existingMap.get(q.question.trim().toLowerCase());
           if (!existing) continue;
 
-          const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
-          while (cleanOptions.length < 4) cleanOptions.push("");
           const res = await fetch("/api/quiz/admin/questions", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               id: existing.id,
-              options: cleanOptions,
-              correctAnswer: Math.min(
-                isNaN(q.correctAnswer) ? 0 : q.correctAnswer,
-                Math.max(cleanOptions.length - 1, 0),
-              ),
+              options: q.options,
+              correctAnswer: q.correctAnswer,
               category: q.category,
               sermon_ref: q.sermon_ref,
               explain: q.explain,
@@ -767,9 +740,16 @@ export default function AdminQuizPage() {
             updatedCount++;
           } else {
             failedCount++;
+            const errData = await res.json().catch(() => null);
+            failedErrors.push(
+              `"${q.question.slice(0, 30)}…" — ${errData?.error || `HTTP ${res.status}`}`,
+            );
           }
-        } catch {
+        } catch (err) {
           failedCount++;
+          failedErrors.push(
+            `"${q.question.slice(0, 30)}…" — ${err instanceof Error ? err.message : "Network error"}`,
+          );
         }
       }
 
@@ -787,17 +767,21 @@ export default function AdminQuizPage() {
             ? `\n\n${failedErrors.join("\n")}${failedCount > 3 ? `\n...and ${failedCount - 3} more` : ""}`
             : "";
         toast.error(
-          `${failedCount} question${failedCount !== 1 ? "s" : ""} failed to import. Please check your file format (required: Question, Options, Category, Correct Answer).${detail}\n\nIf the issue persists, contact the developer for support.`,
+          `${failedCount} question${failedCount !== 1 ? "s" : ""} failed to import.${detail}`,
           { duration: 10000 },
         );
       }
 
       if (addedCount === 0 && updatedCount === 0 && failedCount === 0) {
-        toast.error("No questions were processed from the file");
+        toast.error(
+          "No questions were processed from the file. Ensure it contains valid data in the expected format.",
+          { duration: 8000 },
+        );
       }
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to import questions",
+        { duration: 8000 },
       );
     } finally {
       setImportingFile(false);
