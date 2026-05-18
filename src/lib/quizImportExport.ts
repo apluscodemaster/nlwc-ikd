@@ -23,8 +23,8 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
   ];
 
   const rows = questions.map((q) => {
-    const options = q.options.map((_, idx) => q.options[idx] || "");
-    // Pad to 4 options
+    const options = [...q.options];
+    // Pad to exactly 4 options to enforce the 4-item rule
     while (options.length < 4) options.push("");
 
     return [
@@ -83,8 +83,8 @@ function importQuizFromJSON(jsonStr: string): QuizQuestion[] {
   }
 
   return data.map((q) => {
-    if (!q.question || !Array.isArray(q.options) || q.options.length < 2) {
-      throw new Error("Invalid question format");
+    if (!q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+      throw new Error("Invalid question format. Each question must have exactly 4 options.");
     }
     // Strip ID to let Firebase auto-generate on import
     return {
@@ -123,7 +123,15 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
     );
   }
 
-  const questions: QuizQuestion[] = [];
+  // Dynamically find Option columns if they exist, otherwise fallback to columns 2,3,4,5
+  const optIndices = [
+    headers.indexOf("option 1"),
+    headers.indexOf("option 2"),
+    headers.indexOf("option 3"),
+    headers.indexOf("option 4"),
+  ];
+
+  const hasOptHeaders = optIndices.some((idx) => idx !== -1);
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -132,15 +140,34 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
     // Simple CSV parser that handles quoted values
     const values = parseCSVLine(line);
 
-    const options: string[] = [];
-    for (let j = 2; j <= 5; j++) {
-      if (j < values.length && values[j]?.trim()) {
-        options.push(values[j].trim());
+    let options: string[] = [];
+    if (hasOptHeaders) {
+      for (const idx of optIndices) {
+        if (idx !== -1 && idx < values.length && values[idx]?.trim()) {
+          options.push(values[idx].trim());
+        } else {
+          options.push(""); // Keep empty space to maintain array length
+        }
+      }
+    } else {
+      // Fallback: assume options are in columns 2, 3, 4, 5
+      for (let j = 2; j <= 5; j++) {
+        if (j < values.length && values[j]?.trim()) {
+          options.push(values[j].trim());
+        } else {
+          options.push("");
+        }
       }
     }
 
-    if (options.length < 2) {
-      throw new Error(`Row ${i + 1}: At least 2 options required`);
+    // Filter out empties and pad to exactly 4 items
+    options = options.filter(Boolean);
+    while (options.length < 4) {
+      options.push("");
+    }
+
+    if (options.filter(Boolean).length !== 4) {
+      throw new Error(`Row ${i + 1}: Exactly 4 non-empty options required`);
     }
 
     // Parse correctAnswer — support 0-based index, 1-based index, or letter (A/B/C/D)
