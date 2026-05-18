@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAudioSermons, getAudioSermonDetail } from "@/lib/audioSermons";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { normalizeSearchQuery } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   // Apply rate limiting to public endpoint
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   let perPage = parseInt(searchParams.get("per_page") || "12");
   const messageId = searchParams.get("message_id");
-  const search = searchParams.get("search") || undefined;
+  let search = searchParams.get("search") || undefined;
   const seriesId = searchParams.get("series_id")
     ? parseInt(searchParams.get("series_id")!)
     : undefined;
@@ -24,6 +25,11 @@ export async function GET(request: NextRequest) {
     ? parseInt(searchParams.get("topic_id")!)
     : undefined;
   const order = (searchParams.get("order") as "ASC" | "DESC") || "DESC";
+
+  // Normalize search query to handle punctuation variations
+  if (search) {
+    search = normalizeSearchQuery(search);
+  }
 
   // Validate pagination parameters
   if (page < 1) {
