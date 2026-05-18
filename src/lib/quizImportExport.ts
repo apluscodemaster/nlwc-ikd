@@ -1,4 +1,4 @@
-import type { QuizQuestion } from "@/types/quiz";
+import type { QuizCategory, QuizQuestion } from "@/types/quiz";
 
 // ── Export ──
 
@@ -20,7 +20,6 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
     "Option 6",
     "Correct Answer (Index)",
     "Category",
-    "Difficulty",
     "Sermon Ref",
     "Explanation",
   ];
@@ -41,7 +40,6 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
       `"${(options[5] || "").replace(/"/g, '""')}"`,
       q.correctAnswer,
       q.category,
-      q.difficulty || "medium",
       q.sermon_ref || "",
       `"${(q.explain || "").replace(/"/g, '""')}"`,
     ];
@@ -99,7 +97,6 @@ function importQuizFromJSON(jsonStr: string): QuizQuestion[] {
       options: q.options,
       correctAnswer: q.correctAnswer ?? 0,
       category: q.category || "Sunday Message",
-      difficulty: q.difficulty || "medium",
       sermon_ref: q.sermon_ref,
       explain: q.explain,
     };
@@ -115,7 +112,6 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
   const questionIdx = headers.indexOf("question");
   const categoryIdx = headers.indexOf("category");
-  const difficultyIdx = headers.indexOf("difficulty");
   const correctAnswerIdx = headers.indexOf("correct answer (index)");
   const sermonRefIdx = headers.indexOf("sermon ref");
   const explanationIdx = headers.indexOf("explanation");
@@ -151,8 +147,7 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
       question: values[questionIdx]?.trim() || "",
       options,
       correctAnswer: parseInt(values[correctAnswerIdx] || "0", 10),
-      category: (values[categoryIdx]?.trim() as any) || "Sunday Message",
-      difficulty: (values[difficultyIdx]?.trim() || "medium") as any,
+      category: (values[categoryIdx]?.trim() as QuizCategory) || "Sunday Message",
       sermon_ref: values[sermonRefIdx]?.trim(),
       explain: values[explanationIdx]?.trim(),
     });

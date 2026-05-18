@@ -66,7 +66,7 @@ const CATEGORIES: QuizCategory[] = [
   "Special Meeting",
 ];
 
-const DIFFICULTIES = ["easy", "medium", "hard"] as const;
+
 
 // ──────────────────────────────────────────────
 // Stat Card
@@ -123,9 +123,6 @@ function QuestionModal({
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState(0);
   const [category, setCategory] = useState<QuizCategory>("Sunday Message");
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
-    "medium",
-  );
   const [sermonRef, setSermonRef] = useState("");
   const [explain, setExplain] = useState("");
 
@@ -135,7 +132,6 @@ function QuestionModal({
       setOptions([...question.options]);
       setCorrectAnswer(question.correctAnswer);
       setCategory(question.category);
-      setDifficulty(question.difficulty || "medium");
       setSermonRef(question.sermon_ref || "");
       setExplain(question.explain || "");
     } else {
@@ -143,7 +139,6 @@ function QuestionModal({
       setOptions(["", "", "", ""]);
       setCorrectAnswer(0);
       setCategory("Sunday Message");
-      setDifficulty("medium");
       setSermonRef("");
       setExplain("");
     }
@@ -173,7 +168,6 @@ function QuestionModal({
       options: trimmedOpts,
       correctAnswer,
       category,
-      difficulty,
     };
     if (sermonRef.trim()) data.sermon_ref = sermonRef.trim();
     if (explain.trim()) data.explain = explain.trim();
@@ -239,42 +233,22 @@ function QuestionModal({
             />
           </div>
 
-          {/* Category + Difficulty */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Category *
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as QuizCategory)}
-                className="w-full h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Difficulty
-              </label>
-              <select
-                value={difficulty}
-                onChange={(e) =>
-                  setDifficulty(e.target.value as "easy" | "medium" | "hard")
-                }
-                className="w-full h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d.charAt(0).toUpperCase() + d.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Category *
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as QuizCategory)}
+              className="w-full h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Options */}
@@ -421,12 +395,6 @@ function AdminQuestionCard({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const difficultyColor = {
-    easy: "bg-green-50 text-green-700",
-    medium: "bg-amber-50 text-amber-700",
-    hard: "bg-red-50 text-red-700",
-  };
-
   return (
     <motion.div
       layout
@@ -439,13 +407,6 @@ function AdminQuestionCard({
             <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wide">
               {question.category}
             </span>
-            {question.difficulty && (
-              <span
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${difficultyColor[question.difficulty]}`}
-              >
-                {question.difficulty}
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -789,7 +750,6 @@ export default function AdminQuizPage() {
               options: q.options,
               correctAnswer: q.correctAnswer,
               category: q.category,
-              difficulty: q.difficulty,
               sermon_ref: q.sermon_ref,
               explain: q.explain,
             }),
