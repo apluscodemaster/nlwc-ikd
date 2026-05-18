@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, subject, message, turnstileToken } = validation.data;
+    const { turnstileToken } = validation.data;
 
     if (process.env.TURNSTILE_SECRET_KEY) {
       if (!turnstileToken) {
@@ -79,20 +79,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Log submission (for admin purposes)
-    console.log(`📧 Contact form submission from ${name} <${email}>:`, {
-      subject,
-      messageLength: message.length,
-    });
-
-    // TODO: Send email via Nodemailer, SendGrid, Resend, etc.
-    // Example:
-    // await sendContactEmail({ name, email, subject, message });
-
     return NextResponse.json(
       {
         success: true,
-        message: "Thank you for your message. We will get back to you soon.",
+        message:
+          "Thank you for your message. Your information has been received and acknowledged. We will get back to you soon.",
       },
       { status: 200 },
     );
