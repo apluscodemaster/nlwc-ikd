@@ -50,17 +50,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
+    if (!Array.isArray(options)) {
       return NextResponse.json(
-        { error: "Options must be an array of 2-6 items" },
+        { error: "Options must be an array" },
         { status: 400 },
       );
     }
 
+    // Filter out empty options
+    const filteredOptions = options
+      .map((o: string) => (typeof o === "string" ? o.trim() : ""))
+      .filter(Boolean);
+
+    if (filteredOptions.length < 2 || filteredOptions.length > 6) {
+      return NextResponse.json(
+        { error: "Options must be an array of 2-6 non-empty items" },
+        { status: 400 },
+      );
+    }
+
+    const parsedCorrectAnswer =
+      typeof correctAnswer === "string"
+        ? parseInt(correctAnswer, 10)
+        : correctAnswer;
+
     if (
-      typeof correctAnswer !== "number" ||
-      correctAnswer < 0 ||
-      correctAnswer >= options.length
+      typeof parsedCorrectAnswer !== "number" ||
+      isNaN(parsedCorrectAnswer) ||
+      parsedCorrectAnswer < 0 ||
+      parsedCorrectAnswer >= filteredOptions.length
     ) {
       return NextResponse.json(
         { error: "correctAnswer must be a valid index into options" },
@@ -74,7 +92,10 @@ export async function POST(req: NextRequest) {
       "Bible Study",
       "Special Meeting",
     ];
-    if (!validCategories.includes(category)) {
+    const matchedCategory = validCategories.find(
+      (c) => c.toLowerCase() === category.trim().toLowerCase(),
+    );
+    if (!matchedCategory) {
       return NextResponse.json(
         {
           error: `Invalid category. Must be one of: ${validCategories.join(", ")}`,
@@ -85,9 +106,9 @@ export async function POST(req: NextRequest) {
 
     const docData: Record<string, unknown> = {
       question: question.trim(),
-      options: options.map((o: string) => o.trim()),
-      correctAnswer,
-      category,
+      options: filteredOptions,
+      correctAnswer: parsedCorrectAnswer,
+      category: matchedCategory,
       created_at: new Date().toISOString(),
     };
 
