@@ -16,8 +16,6 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
     "Option 2",
     "Option 3",
     "Option 4",
-    "Option 5",
-    "Option 6",
     "Correct Answer (Index)",
     "Category",
     "Sermon Ref",
@@ -26,8 +24,8 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
 
   const rows = questions.map((q) => {
     const options = q.options.map((_, idx) => q.options[idx] || "");
-    // Pad to 6 options
-    while (options.length < 6) options.push("");
+    // Pad to 4 options
+    while (options.length < 4) options.push("");
 
     return [
       q.id,
@@ -36,8 +34,6 @@ export function exportQuizAsCSV(questions: QuizQuestion[]): string {
       `"${(options[1] || "").replace(/"/g, '""')}"`,
       `"${(options[2] || "").replace(/"/g, '""')}"`,
       `"${(options[3] || "").replace(/"/g, '""')}"`,
-      `"${(options[4] || "").replace(/"/g, '""')}"`,
-      `"${(options[5] || "").replace(/"/g, '""')}"`,
       q.correctAnswer,
       q.category,
       q.sermon_ref || "",
@@ -104,7 +100,9 @@ function importQuizFromJSON(jsonStr: string): QuizQuestion[] {
 }
 
 function importQuizFromCSV(csvStr: string): QuizQuestion[] {
-  const lines = csvStr.trim().split("\n");
+  // Strip BOM (common in Excel-exported CSVs)
+  const clean = csvStr.replace(/^\uFEFF/, "").trim();
+  const lines = clean.split("\n");
   if (lines.length < 2) {
     throw new Error("CSV must have header and at least one row");
   }
@@ -112,13 +110,16 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
   const questionIdx = headers.indexOf("question");
   const categoryIdx = headers.indexOf("category");
-  const correctAnswerIdx = headers.indexOf("correct answer (index)");
+  // Support both "correct answer (index)" and "correct answer"
+  let correctAnswerIdx = headers.indexOf("correct answer (index)");
+  if (correctAnswerIdx === -1)
+    correctAnswerIdx = headers.indexOf("correct answer");
   const sermonRefIdx = headers.indexOf("sermon ref");
   const explanationIdx = headers.indexOf("explanation");
 
   if (questionIdx === -1 || categoryIdx === -1 || correctAnswerIdx === -1) {
     throw new Error(
-      "CSV must have 'Question', 'Category', and 'Correct Answer (Index)' columns",
+      "CSV must have 'Question', 'Category', and 'Correct Answer (Index)' (or 'Correct Answer') columns",
     );
   }
 
@@ -132,7 +133,7 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
     const values = parseCSVLine(line);
 
     const options: string[] = [];
-    for (let j = 2; j <= 7; j++) {
+    for (let j = 2; j <= 5; j++) {
       if (j < values.length && values[j]?.trim()) {
         options.push(values[j].trim());
       }
@@ -142,11 +143,34 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
       throw new Error(`Row ${i + 1}: At least 2 options required`);
     }
 
+    // Parse correctAnswer — support 0-based index, 1-based index, or letter (A/B/C/D)
+    const rawAnswer = (values[correctAnswerIdx] || "").trim();
+    let correctAnswer: number;
+
+    if (/^[A-Fa-f]$/i.test(rawAnswer)) {
+      // Letter-based: A=0, B=1, C=2, etc.
+      correctAnswer = rawAnswer.toUpperCase().charCodeAt(0) - 65;
+    } else {
+      const parsed = parseInt(rawAnswer, 10);
+      if (isNaN(parsed)) {
+        correctAnswer = 0;
+      } else if (parsed >= 1 && parsed <= options.length && parsed > options.length - 1) {
+        // Looks like 1-based (value equals option count) — convert to 0-based
+        correctAnswer = parsed - 1;
+      } else {
+        correctAnswer = parsed;
+      }
+    }
+
+    // Clamp to valid range
+    if (correctAnswer < 0) correctAnswer = 0;
+    if (correctAnswer >= options.length) correctAnswer = options.length - 1;
+
     questions.push({
       id: "", // Empty ID for auto-generation on import
       question: values[questionIdx]?.trim() || "",
       options,
-      correctAnswer: parseInt(values[correctAnswerIdx] || "0", 10),
+      correctAnswer,
       category: (values[categoryIdx]?.trim() as QuizCategory) || "Sunday Message",
       sermon_ref: values[sermonRefIdx]?.trim(),
       explain: values[explanationIdx]?.trim(),
