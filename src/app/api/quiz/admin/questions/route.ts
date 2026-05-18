@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
       options,
       correctAnswer,
       category,
-      difficulty,
       sermon_ref,
       explain,
     } = body;
@@ -92,7 +91,6 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
-    if (difficulty) docData.difficulty = difficulty;
     if (sermon_ref) docData.sermon_ref = sermon_ref.trim();
     if (explain) docData.explain = explain.trim();
 

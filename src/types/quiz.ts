@@ -30,7 +30,6 @@ export interface QuizQuestion {
   options: string[];
   correctAnswer: number; // index into options[]
   category: QuizCategory;
-  difficulty?: "easy" | "medium" | "hard";
   sermon_ref?: string; // optional link to sermon/transcript slug
   explain?: string; // explanation displayed after quiz completion
 }
