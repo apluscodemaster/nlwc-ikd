@@ -123,6 +123,8 @@ function importQuizFromCSV(csvStr: string): QuizQuestion[] {
     );
   }
 
+  const questions: QuizQuestion[] = [];
+
   // Dynamically find Option columns if they exist, otherwise fallback to columns 2,3,4,5
   const optIndices = [
     headers.indexOf("option 1"),
