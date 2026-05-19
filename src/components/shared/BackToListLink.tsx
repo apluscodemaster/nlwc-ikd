@@ -32,7 +32,10 @@ export default function BackToListLink({
     let url = fallbackHref;
     if (typeof sessionStorage !== "undefined") {
       const stored = sessionStorage.getItem(`${STORAGE_KEY}:${storageKey}`);
-      if (stored) {
+      //   if (stored) {
+      //     url = stored;
+      //   }
+      if (stored && stored.startsWith("/")) {
         url = stored;
       }
     }
