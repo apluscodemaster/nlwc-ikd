@@ -1,9 +1,12 @@
 /**
  * Service schedule definitions and helper utilities.
  *
- * Each entry describes a recurring weekly service with the day-of-week
- * (0 = Sunday, 3 = Wednesday …), start / end hours, and a human-readable
- * label used in the countdown display.
+ * Data flow:
+ * 1. Hardcoded FALLBACK schedules are used by default (zero-latency).
+ * 2. `loadScheduleFromApi()` fetches Firestore-backed data via /api/schedule.
+ * 3. Once loaded, all helper functions use the dynamic data.
+ * 4. Components call `loadScheduleFromApi()` once on mount; the module
+ *    caches the result so subsequent calls are free.
  */
 
 export interface ScheduledService {
@@ -17,42 +20,125 @@ export interface ScheduledService {
   label: string;
 }
 
-/** All recurring services that are streamed live. */
-export const LIVE_SERVICES: ScheduledService[] = [
+/** Hardcoded fallback — used until Firestore data is loaded. */
+const FALLBACK_RECURRING: ScheduledService[] = [
   { dayOfWeek: 0, startHour: 8, endHour: 15, label: "Sunday Service" },
   { dayOfWeek: 3, startHour: 18, endHour: 21, label: "Prayer Meeting" },
   { dayOfWeek: 5, startHour: 18, endHour: 22, label: "Bible Study" },
 ];
 
+/** Exported for backward compatibility — points to the active list. */
+export let LIVE_SERVICES: ScheduledService[] = [...FALLBACK_RECURRING];
+
 /* ------------------------------------------------------------------ */
-/*  SPECIAL ONE-OFF SERVICES (e.g. retreats, conferences)              */
+/*  SPECIAL ONE-OFF SERVICES                                           */
 /* ------------------------------------------------------------------ */
 
-interface SpecialService {
-  /** Exact calendar date (only year/month/day matter) */
+interface SpecialServiceEntry {
+  /** YYYY-MM-DD date string */
+  date: string;
+  startHour: number;
+  endHour: number;
+  label: string;
+}
+
+/** Parsed from SpecialServiceEntry for internal use. */
+interface ParsedSpecial {
   year: number;
-  month: number; // 0-indexed (0 = Jan, 3 = Apr)
+  month: number;
   day: number;
   startHour: number;
   endHour: number;
   label: string;
 }
 
-/** One-off services that should trigger live status & appear in countdown. */
-const SPECIAL_SERVICES: SpecialService[] = [];
+let specialServices: ParsedSpecial[] = [];
 
-/** Convert fractional hour to total minutes for precise comparison. */
+/* ------------------------------------------------------------------ */
+/*  DYNAMIC LOADING                                                    */
+/* ------------------------------------------------------------------ */
+
+let loaded = false;
+let loadPromise: Promise<void> | null = null;
+
+function parseSpecialDate(entry: SpecialServiceEntry): ParsedSpecial {
+  const [y, m, d] = entry.date.split("-").map(Number);
+  return {
+    year: y,
+    month: m - 1, // JS months are 0-indexed
+    day: d,
+    startHour: entry.startHour,
+    endHour: entry.endHour,
+    label: entry.label,
+  };
+}
+
+/**
+ * Fetch schedule data from the API and cache it in module scope.
+ * Safe to call multiple times — only the first call fetches.
+ */
+export async function loadScheduleFromApi(): Promise<void> {
+  if (loaded) return;
+  if (loadPromise) return loadPromise;
+
+  loadPromise = (async () => {
+    try {
+      const res = await fetch("/api/schedule", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Only override if we got valid data
+      const recurring: ScheduledService[] = (data.recurring || [])
+        .filter((r: { active?: boolean }) => r.active !== false)
+        .map(
+          (r: {
+            dayOfWeek: number;
+            startHour: number;
+            endHour: number;
+            label: string;
+          }) => ({
+            dayOfWeek: r.dayOfWeek,
+            startHour: r.startHour,
+            endHour: r.endHour,
+            label: r.label,
+          }),
+        );
+
+      if (recurring.length > 0) {
+        LIVE_SERVICES = recurring;
+      }
+
+      specialServices = (data.special || [])
+        .filter((s: { active?: boolean }) => s.active !== false)
+        .map((s: SpecialServiceEntry) => parseSpecialDate(s));
+
+      loaded = true;
+    } catch (err) {
+      console.warn(
+        "[liveSchedule] Failed to load from API, using fallbacks:",
+        err,
+      );
+      loaded = true; // Don't retry on failure — use fallbacks
+    }
+  })();
+
+  return loadPromise;
+}
+
+/* ------------------------------------------------------------------ */
+/*  HELPER FUNCTIONS (unchanged API, now use dynamic data)             */
+/* ------------------------------------------------------------------ */
+
 function toMinutes(now: Date): number {
   return now.getHours() * 60 + now.getMinutes();
 }
 
-/** Check if a special service is live right now. */
 function isSpecialServiceLive(now: Date): boolean {
   const y = now.getFullYear();
   const m = now.getMonth();
   const d = now.getDate();
   const nowMins = toMinutes(now);
-  return SPECIAL_SERVICES.some(
+  return specialServices.some(
     (s) =>
       s.year === y &&
       s.month === m &&
@@ -62,13 +148,12 @@ function isSpecialServiceLive(now: Date): boolean {
   );
 }
 
-/** Get the label of the special service that is currently live. */
 function getSpecialServiceLabel(now: Date): string | null {
   const y = now.getFullYear();
   const m = now.getMonth();
   const d = now.getDate();
   const nowMins = toMinutes(now);
-  const match = SPECIAL_SERVICES.find(
+  const match = specialServices.find(
     (s) =>
       s.year === y &&
       s.month === m &&
@@ -83,7 +168,6 @@ function getSpecialServiceLabel(now: Date): string | null {
 
 /** Returns `true` when the current time falls inside any live window. */
 export function isCurrentlyLive(now = new Date()): boolean {
-  // Check special one-off services first
   if (isSpecialServiceLive(now)) return true;
 
   const day = now.getDay();
@@ -106,22 +190,19 @@ export interface NextServiceInfo {
 
 /**
  * Find the closest upcoming service start time.
- *
  * If we are currently in a live window the function still returns the
  * *next* service (i.e. "what comes after the one running now").
  */
-
 export function getNextService(now = new Date()): NextServiceInfo {
   const day = now.getDay();
   const hour = now.getHours();
   const minute = now.getMinutes();
   const currentMinutes = hour * 60 + minute;
 
-  // Build candidate dates for every service within the next 7 days
   let best: { date: Date; label: string } | null = null;
 
   // --- Check special one-off services ---
-  for (const sp of SPECIAL_SERVICES) {
+  for (const sp of specialServices) {
     const spDate = new Date(sp.year, sp.month, sp.day, sp.startHour, 0, 0, 0);
     if (spDate.getTime() > now.getTime()) {
       if (!best || spDate.getTime() < best.date.getTime()) {
@@ -150,7 +231,6 @@ export function getNextService(now = new Date()): NextServiceInfo {
     }
   }
 
-  // Fallback — should never happen if LIVE_SERVICES is non-empty
   if (!best) {
     const fallback = new Date(now);
     fallback.setDate(fallback.getDate() + 7);
@@ -166,9 +246,6 @@ export function getNextService(now = new Date()): NextServiceInfo {
 
 /* ------------------------------------------------------------------ */
 
-/**
- * Format a date as e.g. "Sunday, 02 March"
- */
 function formatServiceDate(date: Date): string {
   const dayName = date.toLocaleDateString("en-GB", { weekday: "long" });
   const day = date.getDate().toString().padStart(2, "0");
@@ -178,27 +255,15 @@ function formatServiceDate(date: Date): string {
 
 /* ------------------------------------------------------------------ */
 
-/** Map of day-of-week to the meeting title shown on the streaming page. */
-const DAY_MEETING_TITLES: Record<number, string> = {
-  0: "Sunday Worship Experience", // Sunday
-  3: "Prayer Meeting", // Wednesday
-  5: "Bible Study", // Friday
-};
-
-/** Fridays where Bible Study is cancelled. */
-const BIBLE_STUDY_SKIP_DATES: string[] = [];
-
 /**
  * Returns the meeting title for the streaming page.
  *
  * Priority:
  * 1. If a special service is currently live → its label.
  * 2. Otherwise, find the most recent past event (special OR regular weekly)
- *    and show its label.  This makes the title "stick" until a newer
- *    event starts.
+ *    and show its label.
  */
 export function getCurrentMeetingTitle(now = new Date()): string {
-  // 1. Special service currently live takes top priority
   const specialLabel = getSpecialServiceLabel(now);
   if (specialLabel) return specialLabel;
 
@@ -206,55 +271,43 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   const hour = now.getHours();
   const minute = now.getMinutes();
 
-  // ── 2a. Find the most recent past SPECIAL service ──
-  let mostRecentSpecial: { time: number; label: string } | null = null;
+  // Build a map from recurring services for meeting titles
+  const dayTitles: Record<number, string> = {};
+  for (const svc of LIVE_SERVICES) {
+    dayTitles[svc.dayOfWeek] = svc.label;
+  }
 
-  for (const sp of SPECIAL_SERVICES) {
-    // Build the end-time for this special service
+  // ── Find the most recent past SPECIAL service ──
+  let mostRecentSpecial: { time: number; label: string } | null = null;
+  for (const sp of specialServices) {
     const spEnd = new Date(sp.year, sp.month, sp.day, sp.endHour, 0, 0, 0);
     if (spEnd.getTime() <= now.getTime()) {
-      // This special service has already ended
       if (!mostRecentSpecial || spEnd.getTime() > mostRecentSpecial.time) {
         mostRecentSpecial = { time: spEnd.getTime(), label: sp.label };
       }
     }
   }
 
-  // ── 2b. Find the most recent past REGULAR weekly meeting ──
+  // ── Find the most recent past REGULAR weekly meeting ──
   let mostRecentRegular: { time: number; label: string } | null = null;
-
-  // Check regular meeting days (look back up to 7 days)
   for (let offset = 0; offset <= 7; offset++) {
     const checkDay = (day - offset + 7) % 7;
+    if (!dayTitles[checkDay]) continue;
 
-    // Is this a regular meeting day?
-    if (!DAY_MEETING_TITLES[checkDay]) continue;
-
-    // Skip cancelled Bible Study Fridays
-    if (checkDay === 5) {
-      const checkDate = new Date(now);
-      checkDate.setDate(checkDate.getDate() - offset);
-      if (BIBLE_STUDY_SKIP_DATES.includes(checkDate.toDateString())) continue;
-    }
-
-    // For today (offset 0), only count it if the service has started
     if (offset === 0) {
-      // Find the matching LIVE_SERVICES entry for this day to get startHour
       const svc = LIVE_SERVICES.find((s) => s.dayOfWeek === checkDay);
       if (svc) {
         const startMinutes = svc.startHour * 60;
         const currentMinutes = hour * 60 + minute;
-        if (currentMinutes < startMinutes) continue; // hasn't started yet today
-        // Build end time for today's regular service
+        if (currentMinutes < startMinutes) continue;
         const regEnd = new Date(now);
         regEnd.setHours(svc.endHour, 0, 0, 0);
         mostRecentRegular = {
-          time: Math.min(regEnd.getTime(), now.getTime()), // cap at now if still live
-          label: DAY_MEETING_TITLES[checkDay],
+          time: Math.min(regEnd.getTime(), now.getTime()),
+          label: dayTitles[checkDay],
         };
       }
     } else {
-      // Past day — use the end time of that day's service
       const svc = LIVE_SERVICES.find((s) => s.dayOfWeek === checkDay);
       const endHour = svc?.endHour ?? 21;
       const pastDate = new Date(now);
@@ -262,15 +315,13 @@ export function getCurrentMeetingTitle(now = new Date()): string {
       pastDate.setHours(endHour, 0, 0, 0);
       mostRecentRegular = {
         time: pastDate.getTime(),
-        label: DAY_MEETING_TITLES[checkDay],
+        label: dayTitles[checkDay],
       };
     }
 
-    // We found the most recent regular meeting — stop looking
     if (mostRecentRegular) break;
   }
 
-  // ── 3. Return whichever ended more recently ──
   if (mostRecentSpecial && mostRecentRegular) {
     return mostRecentSpecial.time >= mostRecentRegular.time
       ? mostRecentSpecial.label
@@ -279,6 +330,5 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   if (mostRecentSpecial) return mostRecentSpecial.label;
   if (mostRecentRegular) return mostRecentRegular.label;
 
-  // Fallback (should never reach)
   return "Worship Experience";
 }
