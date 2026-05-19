@@ -19,6 +19,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import Link from "next/link";
+import BackToListLink from "@/components/shared/BackToListLink";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -106,13 +107,14 @@ export default async function ManualPage({ params, searchParams }: Props) {
         <SectionContainer className="py-10 md:py-16 relative z-10">
           <div className="max-w-4xl mx-auto">
             {/* Back Button */}
-            <Link
-              href="/manuals"
+            <BackToListLink
+              fallbackHref="/manuals"
+              storageKey="manuals"
               className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors mb-8 group"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Manuals
-            </Link>
+            </BackToListLink>
 
             {/* Type Badge + Read Time */}
             <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -216,13 +218,14 @@ export default async function ManualPage({ params, searchParams }: Props) {
 
           {/* Back to All Manuals */}
           <div className="flex justify-center mt-8">
-            <Link
-              href="/manuals"
+            <BackToListLink
+              fallbackHref="/manuals"
+              storageKey="manuals"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all active:scale-95"
             >
               <BookMarked className="w-4 h-4" />
               All Manuals
-            </Link>
+            </BackToListLink>
           </div>
         </div>
       </SectionContainer>

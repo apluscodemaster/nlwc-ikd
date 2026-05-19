@@ -54,14 +54,14 @@ export default function ContactPage() {
             >
               <Link
                 href="/testimonies#share"
-                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full bg-primary text-white font-bold text-[9px] xs:text-[11px] sm:text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full bg-primary text-white font-bold text-[13px] xs:text-xs sm:text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <PenLine className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 group-hover:rotate-[-8deg] transition-transform shrink-0" />
                 Share Testimony
               </Link>
               <Link
                 href="/testimonies#view"
-                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full border-2 border-primary text-primary font-bold text-[9px] xs:text-[11px] sm:text-sm hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                className="group flex-1 h-12 sm:h-14 flex items-center justify-center gap-1.5 xs:gap-2 px-2 xs:px-4 sm:px-6 rounded-full border-2 border-primary text-primary font-bold text-[13px] xs:text-xs sm:text-sm hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <BookOpen className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 group-hover:rotate-[5deg] transition-transform shrink-0" />
                 View Testimonies
