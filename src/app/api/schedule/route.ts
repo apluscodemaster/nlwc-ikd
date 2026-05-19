@@ -56,10 +56,141 @@ const DEFAULT_RECURRING = [
   },
 ];
 
+// ── Compute default special events based on current date ──
+function getDefaultSpecialEvents() {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  function getSecondSaturday(year: number, month: number): Date {
+    const firstDay = new Date(year, month, 1);
+    const daysUntilSat = (6 - firstDay.getDay() + 7) % 7;
+    const firstSat = new Date(year, month, 1 + daysUntilSat);
+    const secondSat = new Date(firstSat);
+    secondSat.setDate(firstSat.getDate() + 7);
+    secondSat.setHours(12, 0, 0, 0);
+    return secondSat;
+  }
+
+  const events: Array<{
+    date: string;
+    startHour: number;
+    endHour: number;
+    label: string;
+    description: string;
+    imageUrl: string;
+    location: string;
+    category: string;
+    icon: string;
+    recurrenceLabel: string;
+    active: boolean;
+  }> = [];
+
+  // Sithrah — 2nd Saturday of current or next month
+  let sithrahDate = getSecondSaturday(now.getFullYear(), now.getMonth());
+  if (sithrahDate <= now) {
+    const nm = now.getMonth() + 1;
+    const yr = nm > 11 ? now.getFullYear() + 1 : now.getFullYear();
+    sithrahDate = getSecondSaturday(yr, nm % 12);
+  }
+
+  events.push({
+    date: fmt(sithrahDate),
+    startHour: 12,
+    endHour: 18,
+    label: "Sithrah",
+    description:
+      "A special monthly time of prayer and spiritual refreshing before the Lord.",
+    imageUrl: "",
+    location: "Church Auditorium, Ikorodu",
+    category: "Special",
+    icon: "🕊️",
+    recurrenceLabel: "Every 2nd Saturday",
+    active: true,
+  });
+
+  // Sithrah Preparatory Prayer — Thursday before Sithrah
+  const sithrahThu = new Date(sithrahDate);
+  sithrahThu.setDate(sithrahDate.getDate() - 2);
+  sithrahThu.setHours(18, 0, 0, 0);
+  if (sithrahThu > now) {
+    events.push({
+      date: fmt(sithrahThu),
+      startHour: 18,
+      endHour: 21,
+      label: "Sithrah Preparatory Prayer",
+      description:
+        "Prayer meeting in preparation for the upcoming Sithrah Saturday.",
+      imageUrl: "",
+      location: "Online",
+      category: "Prayer",
+      icon: "🔥",
+      recurrenceLabel: "Thursday before Sithrah",
+      active: true,
+    });
+  }
+
+  // Sithrah Preparatory Prayer — Friday before Sithrah
+  const sithrahFri = new Date(sithrahDate);
+  sithrahFri.setDate(sithrahDate.getDate() - 1);
+  sithrahFri.setHours(18, 0, 0, 0);
+  if (sithrahFri > now) {
+    events.push({
+      date: fmt(sithrahFri),
+      startHour: 18,
+      endHour: 21,
+      label: "Sithrah Preparatory Prayer",
+      description:
+        "Continuing prayer meeting in preparation for the upcoming Sithrah Saturday.",
+      imageUrl: "",
+      location: "Online",
+      category: "Prayer",
+      icon: "🔥",
+      recurrenceLabel: "Friday before Sithrah",
+      active: true,
+    });
+  }
+
+  // Season of the Spirit — Feb Sundays + 1st Sunday of March (if upcoming)
+  const year = now.getFullYear();
+  const febSundays: Date[] = [];
+  const d = new Date(year, 1, 1);
+  while (d.getMonth() === 1) {
+    if (d.getDay() === 0) febSundays.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  const marchFirst = new Date(year, 2, 1);
+  while (marchFirst.getDay() !== 0)
+    marchFirst.setDate(marchFirst.getDate() + 1);
+  const sosDates = [...febSundays, marchFirst];
+  const futureSos = sosDates.filter((s) => s > now);
+
+  for (const sosDate of futureSos) {
+    sosDate.setHours(8, 0, 0, 0);
+    events.push({
+      date: fmt(sosDate),
+      startHour: 8,
+      endHour: 15,
+      label: "Season of the Spirit",
+      description:
+        "Annual conference — a special season of the outpouring of the Holy Spirit.",
+      imageUrl: "",
+      location: "Church Auditorium, Ikorodu",
+      category: "Conference",
+      icon: "✨",
+      recurrenceLabel: `${futureSos.length} Sunday${futureSos.length > 1 ? "s" : ""} remaining`,
+      active: true,
+    });
+  }
+
+  return events;
+}
+
 // ── GET: Fetch all schedules (public) — auto-seeds defaults if empty ──
 export async function GET() {
   try {
-    const [fetchedRecurring, special] = await Promise.all([
+    const [fetchedRecurring, fetchedSpecial] = await Promise.all([
       getRecurringServices(),
       getSpecialServices(),
     ]);
@@ -71,6 +202,18 @@ export async function GET() {
         DEFAULT_RECURRING.map((svc) => createRecurringService(svc)),
       );
       recurring = seeded;
+    }
+
+    // Auto-seed default special events if Firestore is empty
+    let special = fetchedSpecial;
+    if (special.length === 0) {
+      const defaults = getDefaultSpecialEvents();
+      if (defaults.length > 0) {
+        const seeded = await Promise.all(
+          defaults.map((evt) => createSpecialService(evt)),
+        );
+        special = seeded;
+      }
     }
 
     return NextResponse.json(
