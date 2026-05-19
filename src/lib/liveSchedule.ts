@@ -83,7 +83,7 @@ export async function loadScheduleFromApi(): Promise<void> {
 
   loadPromise = (async () => {
     try {
-      const res = await fetch("/api/schedule", { cache: "no-store" });
+      const res = await fetch("/api/schedule");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
