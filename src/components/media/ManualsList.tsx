@@ -55,10 +55,10 @@ export default function ManualsList({
   const [selectedSeries, setSelectedSeries] = useState(initialSeries);
   const [showFilters, setShowFilters] = useState(!!initialSeries);
 
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    isFirstRender.current = false;
-  }, []);
+  // Track previous values to detect real user-driven changes (not initial mount)
+  const prevDebouncedSearch = useRef(debouncedSearch);
+  const prevSelectedSeries = useRef(selectedSeries);
+  const hasMounted = useRef(false);
 
   // Fetch available themes/series
   const { data: themes = [] } = useQuery({
@@ -71,17 +71,28 @@ export default function ManualsList({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      if (!isFirstRender.current) {
-        setPage(1);
-      }
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Reset page when series filter changes
+  // Reset page when search actually changes (not on mount)
   useEffect(() => {
-    if (!isFirstRender.current) {
-      setPage(1);
+    if (prevDebouncedSearch.current !== debouncedSearch) {
+      // Only reset page if this is a real change, not initial mount
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevDebouncedSearch.current = debouncedSearch;
+    }
+  }, [debouncedSearch]);
+
+  // Reset page when series filter actually changes (not on mount)
+  useEffect(() => {
+    if (prevSelectedSeries.current !== selectedSeries) {
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevSelectedSeries.current = selectedSeries;
     }
   }, [selectedSeries]);
 
@@ -105,7 +116,10 @@ export default function ManualsList({
     // Always store for back navigation from detail pages
     storeListUrl("manuals", targetPath);
 
-    if (isFirstRender.current) return;
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
 
     const currentUrlPage = searchParams.get("page") || "";
     const currentUrlQ = searchParams.get("q") || "";
