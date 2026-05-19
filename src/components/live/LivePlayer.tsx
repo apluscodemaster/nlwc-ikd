@@ -3,7 +3,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
-import { isCurrentlyLive, getCurrentMeetingTitle } from "@/lib/liveSchedule";
+import {
+  isCurrentlyLive,
+  getCurrentMeetingTitle,
+  loadScheduleFromApi,
+} from "@/lib/liveSchedule";
 import {
   subscribeToChatMessages,
   sendChatMessage,
@@ -50,13 +54,13 @@ export default function LivePlayer() {
   const [meetingTitle, setMeetingTitle] = useState("Worship Experience");
   const shareRef = useRef<HTMLDivElement>(null);
 
-  // Check live status every 30 seconds
+  // Load dynamic schedule then check live status every 30 seconds
   useEffect(() => {
     const check = () => {
       setIsLive(isCurrentlyLive());
       setMeetingTitle(getCurrentMeetingTitle());
     };
-    check();
+    loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
   }, []);
