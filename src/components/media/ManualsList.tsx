@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { storeListUrl } from "@/components/shared/BackToListLink";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
@@ -54,10 +55,10 @@ export default function ManualsList({
   const [selectedSeries, setSelectedSeries] = useState(initialSeries);
   const [showFilters, setShowFilters] = useState(!!initialSeries);
 
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    isFirstRender.current = false;
-  }, []);
+  // Track previous values to detect real user-driven changes (not initial mount)
+  const prevDebouncedSearch = useRef(debouncedSearch);
+  const prevSelectedSeries = useRef(selectedSeries);
+  const hasMounted = useRef(false);
 
   // Fetch available themes/series
   const { data: themes = [] } = useQuery({
@@ -70,42 +71,54 @@ export default function ManualsList({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      if (!isFirstRender.current) {
-        setPage(1);
-      }
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Reset page when series filter changes
+  // Reset page when search actually changes (not on mount)
   useEffect(() => {
-    if (!isFirstRender.current) {
-      setPage(1);
+    if (prevDebouncedSearch.current !== debouncedSearch) {
+      // Only reset page if this is a real change, not initial mount
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevDebouncedSearch.current = debouncedSearch;
+    }
+  }, [debouncedSearch]);
+
+  // Reset page when series filter actually changes (not on mount)
+  useEffect(() => {
+    if (prevSelectedSeries.current !== selectedSeries) {
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevSelectedSeries.current = selectedSeries;
     }
   }, [selectedSeries]);
 
-  // Sync to URL
+  // Sync to URL & store for back-button navigation
   useEffect(() => {
-    if (isFirstRender.current) return;
-
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     if (page > 1) {
       params.set("page", page.toString());
-    } else {
-      params.delete("page");
     }
-
     if (debouncedSearch) {
       params.set("q", debouncedSearch);
-    } else {
-      params.delete("q");
     }
-
     if (selectedSeries) {
       params.set("series", selectedSeries);
-    } else {
-      params.delete("series");
+    }
+
+    const query = params.toString();
+    const targetPath = query ? `${pathname}?${query}` : pathname;
+
+    // Always store for back navigation from detail pages
+    storeListUrl("manuals", targetPath);
+
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
     }
 
     const currentUrlPage = searchParams.get("page") || "";
@@ -120,10 +133,7 @@ export default function ManualsList({
       currentUrlQ !== newUrlQ ||
       currentUrlSeries !== newUrlSeries
     ) {
-      const query = params.toString();
-      router.push(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
+      router.push(targetPath, { scroll: false });
     }
   }, [page, debouncedSearch, selectedSeries, pathname, router, searchParams]);
 

@@ -1,17 +1,18 @@
-# NLWC Ikorodu Gallery
+# NLWC Ikorodu
 
-A modern, fast, and beautiful web application for New and Living Way Church, Ikorodu. Built with Next.js 16, this app serves as a digital hub for church media, resources, and content.
+A modern, fast, and beautiful web application for New and Living Way Church, Ikorodu. Built with Next.js 16 (App Router + Turbopack), this app serves as a digital hub for church media, resources, community engagement, and content management.
 
 ## 🎯 Project Status
 
-| Phase | Status | Items |
-|-------|--------|-------|
-| **Phase 1** - Critical Security | ✅ Complete | Authentication, Rate Limiting, CSP Headers, Input Validation, Webhook Security |
-| **Phase 2** - High Priority UX | ✅ Complete | Error Boundaries, Form Validation, Loading States, Success/Error Messages |
-| **Phase 3** - Performance | ⏳ Pending | Image Optimization, Lazy Loading, Cache Optimization, Code Splitting |
-| **Phase 4** - Polish | ⏳ Pending | Accessibility, Keyboard Navigation, SEO Metadata, SSL Configuration |
+| Phase                            | Status      | Items                                                                          |
+| -------------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| **Phase 1** - Critical Security  | ✅ Complete | Authentication, Rate Limiting, CSP Headers, Input Validation, Webhook Security |
+| **Phase 2** - High Priority UX   | ✅ Complete | Error Boundaries, Form Validation, Loading States, Success/Error Messages      |
+| **Phase 3** - Performance        | ✅ Complete | Image Optimization, Lazy Loading, Cache Optimization, Code Splitting, ISR      |
+| **Phase 4** - Polish             | ✅ Complete | Accessibility, Keyboard Navigation, SEO Metadata, PWA/Offline Support          |
+| **Phase 5** - Community Features | ✅ Complete | Bible Quiz, Testimonies, Live Chat, Google Translate, WhatsApp Integration     |
 
-**Last Updated:** April 29, 2026
+**Last Updated:** May 19, 2026
 
 ## ✨ Features
 
@@ -19,66 +20,211 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 
 - Auto-scrolling media gallery from Google Sheets
 - Beautiful grid layouts with smooth animations
+- Masonry grid and tabbed gallery views
 - Responsive design for all devices
 
-### 📖 WordPress Integration (NEW!)
+### 📖 WordPress Integration
 
-- **Sunday Message Transcripts**: Read full written transcripts of sermons
-- **Sunday School Manuals**: Access study materials and teaching resources
-- Real-time sync with WordPress backend
-- Advanced search and pagination
-- Beautiful card-based UI
+- **Sunday Message Transcripts**: 140+ full written transcripts with search, pagination, and adjacent navigation
+- **Sunday School Manuals**: 111+ study materials with series filtering and theme-based organization
+- Real-time sync with WordPress backend via headless CMS
+- Advanced search with 300ms debounce and URL-synced filters
+- Beautiful card-based UI with reading progress bars
+- Back-to-list navigation preserving pagination state via `sessionStorage`
 
-### 🎵 Live Streaming
+### 🧠 Bible Knowledge Quiz
 
-- Live audio streaming integration
-- Real-time event updates
+- Timed multiple-choice quiz with configurable question count
+- Username-based session tracking
+- Real-time scoring with leaderboard (powered by Supabase)
+- Admin dashboard for question management (CRUD)
+- CSV/JSON import/export for bulk question management
+- Failed question review with correct answers overlay
+- Scripture-based recommendations after each session
+
+### 🙏 Testimonies
+
+- Public testimony submission form
+- Admin moderation and approval workflow
+- Display of approved testimonies with pagination
+- Firebase Firestore backend for testimony storage
+
+### 🎵 Live Streaming & Audio
+
+- Live audio streaming integration with schedule countdown
+- Audio sermon browser with search, filters, and pagination
+- Resume-from-where-you-left-off prompt (media progress tracking via `localStorage`)
+- Mobile-optimized full-screen audio player
 
 ### 📬 Contact & Newsletter
 
-- Contact form with Google Sheets backend
+- Contact form with Zod validation and Google Sheets backend
 - Newsletter subscription
+- Obfuscated contact info to prevent scraping
+
+### 🌐 Accessibility & Internationalization
+
+- Google Translate widget for multilingual access
+- Service Worker with offline fallback page
+- Online/offline status detection
+- WhatsApp floating button for instant communication
+- Scroll-to-top button
 
 ### 🎨 Modern UI/UX
 
-- Glassmorphism effects
+- Glassmorphism effects and gradient hero headers
 - Smooth animations with Framer Motion
-- Dark mode support
-- Fully responsive design
+- Dark mode support via `next-themes`
+- Fully responsive design (mobile-first)
+- Custom dialog system and toast notifications (Sonner)
+- Reading progress bar on long-form content
+- Scripture tooltips via RefTagger integration
 
 ## 🚀 Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 16 (App Router + Turbopack)
+- **Language**: TypeScript 5.9
+- **Styling**: Tailwind CSS 4 + `tailwindcss-animate`
 - **Animations**: Framer Motion
-- **Data Fetching**: React Query
-- **Backend**: WordPress REST API + Google Sheets API
-- **Icons**: Lucide React
-- **UI Components**: Custom components + shadcn/ui
+- **Data Fetching**: React Query (TanStack Query v5) + SWR
+- **Backend / CMS**: WordPress REST API (headless) + Google Sheets API
+- **Database**: Supabase (quiz sessions, leaderboard) + Firebase Firestore (quiz questions, testimonies)
+- **Auth**: Firebase Admin SDK (admin endpoints) + Bearer token auth
+- **Forms**: React Hook Form + Zod validation
+- **Email**: Nodemailer (SMTP via One.com)
+- **UI Components**: Radix UI primitives + shadcn/ui + Lucide React icons
+- **Bot Protection**: Cloudflare Turnstile
+- **Media**: Cloudinary (image hosting) + Unsplash API
+- **PWA**: Service Worker with offline fallback
 
 ## 📂 Project Structure
 
 ```
 src/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   │   ├── transcripts/   # WordPress transcripts API
-│   │   ├── manuals/       # WordPress manuals API
-│   │   └── sheet/         # Google Sheets API
-│   ├── transcripts/       # Transcripts pages
-│   └── ...                # Other pages
-├── components/            # React components
-│   ├── media/            # Media-related components
-│   ├── shared/           # Shared/utility components
-│   └── landing/          # Landing page components
-├── lib/                  # Utilities and helpers
-│   ├── wordpress.ts      # WordPress API client
-│   ├── sheets.ts         # Google Sheets client
-│   └── utils.ts          # Utility functions
-├── hooks/                # Custom React hooks
-│   └── useWordPress.ts   # WordPress data hooks
-└── data/                 # Static data and types
+├── app/                        # Next.js App Router pages
+│   ├── layout.tsx              # Root layout (Navbar, Footer, Providers)
+│   ├── page.tsx                # Home / Landing page
+│   ├── error.tsx               # Error boundary
+│   ├── global-error.tsx        # Global error boundary
+│   ├── not-found.tsx           # 404 page
+│   ├── robots.ts               # SEO robots.txt
+│   ├── sitemap.ts              # Dynamic sitemap
+│   ├── about/                  # Church story, leadership, beliefs
+│   ├── admin/                  # Admin dashboard (protected)
+│   │   ├── page.tsx            # Admin home
+│   │   ├── quiz/               # Quiz question management
+│   │   ├── devotionals/        # Devotional uploads
+│   │   └── testimonies/        # Testimony moderation
+│   ├── api/                    # API routes
+│   │   ├── audio-sermons/      # Audio sermon proxy
+│   │   ├── autoscroll-gallery/ # Gallery images from Sheets
+│   │   ├── contact/            # Contact form handler
+│   │   ├── devotionals/        # Devotional CRUD
+│   │   ├── events/             # Events data
+│   │   ├── live-chat/          # Live chat messages
+│   │   ├── manuals/            # WordPress manuals proxy + themes
+│   │   ├── newsletter/         # Newsletter subscription
+│   │   ├── quiz/               # Quiz engine (session, questions, leaderboard)
+│   │   ├── revalidate/         # ISR on-demand revalidation webhook
+│   │   ├── sermons/            # WordPress sermons proxy
+│   │   ├── sheet/              # Google Sheets proxy
+│   │   ├── testimonies/        # Testimony submission
+│   │   ├── transcripts/        # WordPress transcripts proxy
+│   │   ├── video-messages/     # Video content
+│   │   ├── video-stream/       # Live video stream info
+│   │   └── wp/                 # WordPress publish/upload (admin)
+│   ├── contact/                # Contact page
+│   ├── devotionals/            # Daily devotionals archive
+│   ├── fellowship/             # House fellowship directory
+│   ├── gallery/                # Photo gallery
+│   ├── give/                   # Donations / giving
+│   ├── listen-live/            # Live audio streaming
+│   ├── live/                   # Live video streaming
+│   ├── manuals/                # Sunday School manuals list + [slug] detail
+│   ├── media/                  # Media center hub
+│   ├── offline/                # Offline fallback page
+│   ├── salvation/              # Gospel / salvation info
+│   ├── sermons/                # Audio sermons browser
+│   ├── testimonies/            # Public testimonies page
+│   ├── transcripts/            # Sermon transcripts list + [slug] detail
+│   ├── video-messages/         # Video messages browser
+│   └── welcome/                # New visitor welcome page
+├── components/
+│   ├── Navbar.tsx              # Main navigation bar
+│   ├── Footer.tsx              # Site footer
+│   ├── Hero.tsx                # Landing hero section
+│   ├── Providers.tsx           # React Query + Theme providers
+│   ├── GoogleTranslate.tsx     # Google Translate widget
+│   ├── ServiceWorkerProvider.tsx # SW registration
+│   ├── OfflineDetector.tsx     # Online/offline status banner
+│   ├── WhatsAppButton.tsx      # Floating WhatsApp CTA
+│   ├── ScrollToTop.tsx         # Scroll-to-top button
+│   ├── AutoScrollGallery.tsx   # Auto-scrolling image carousel
+│   ├── TabGallery.tsx          # Tabbed gallery viewer
+│   ├── MasonryGrid.tsx         # Masonry image grid
+│   ├── about/                  # About page sections
+│   ├── contact/                # Contact form components
+│   ├── devotionals/            # Devotional display components
+│   ├── landing/                # Landing page sections
+│   ├── live/                   # Live streaming components
+│   ├── media/                  # Media list/card components
+│   │   ├── ManualsList.tsx     # Paginated manuals with search/filter
+│   │   ├── TranscriptsList.tsx # Paginated transcripts with search/filter
+│   │   ├── AudioSermonsList.tsx # Audio sermon browser
+│   │   ├── SermonsList.tsx     # Sermons list
+│   │   └── VideoMessagesContent.tsx
+│   ├── providers/              # Context providers
+│   ├── quiz/                   # Quiz UI components
+│   │   ├── QuizLauncher.tsx    # Quiz setup (username, question count)
+│   │   ├── QuizPlayer.tsx      # Active quiz session
+│   │   ├── QuizResults.tsx     # Score and review screen
+│   │   ├── Leaderboard.tsx     # Top scores display
+│   │   └── ...                 # Timer, progress bar, overlays
+│   ├── shared/                 # Reusable components
+│   │   ├── BackToListLink.tsx  # Pagination-preserving back navigation
+│   │   ├── PageHeader.tsx      # Gradient page headers
+│   │   ├── TranscriptContent.tsx # Rich text renderer
+│   │   ├── ReadingProgressBar.tsx # Scroll progress indicator
+│   │   ├── ShareButton.tsx     # Web Share API button
+│   │   ├── SearchHighlightBanner.tsx
+│   │   ├── ScriptureTooltip.tsx # Bible verse tooltips
+│   │   └── ...
+│   └── ui/                     # shadcn/ui primitives
+├── data/                       # Static data (centers, events, services, team)
+├── hooks/
+│   ├── useWordPress.ts         # React Query hooks for WP content
+│   ├── useAudioSermons.ts      # Audio sermon data hooks
+│   ├── useQuizSession.ts       # Quiz session state management
+│   ├── useOnlineStatus.ts      # Online/offline detection
+│   ├── useSessionTimeout.ts    # Admin session timeout
+│   └── useEvents.ts            # Events data hook
+├── lib/
+│   ├── wordpress.ts            # WordPress API client (transcripts, manuals, adjacent nav)
+│   ├── firebase.ts             # Firebase client config
+│   ├── firebase-admin.ts       # Firebase Admin SDK
+│   ├── supabase.ts             # Supabase client config
+│   ├── quizService.ts          # Quiz CRUD (Firestore)
+│   ├── quizImportExport.ts     # CSV/JSON import/export for quiz questions
+│   ├── testimonyService.ts     # Testimony CRUD (Firestore)
+│   ├── liveChatService.ts      # Live chat messaging
+│   ├── audioSermons.ts         # Audio sermon fetching
+│   ├── googleSheets.ts         # Google Sheets API client
+│   ├── cloudinary.ts           # Cloudinary image helpers
+│   ├── auth.ts                 # Server-side auth helpers
+│   ├── authClient.ts           # Client-side auth helpers
+│   ├── rateLimit.ts            # IP-based rate limiting
+│   ├── devotionals.ts          # Devotional content helpers
+│   ├── mediaProgress.ts        # Resume playback tracking
+│   ├── liveSchedule.ts         # Service schedule logic
+│   ├── bible-api.ts            # Bible verse lookup
+│   └── utils.ts                # General utilities (cn, formatting)
+├── services/
+│   └── wp-service.ts           # WordPress service layer
+├── types/
+│   ├── quiz.ts                 # Quiz type definitions
+│   ├── wp-types.ts             # WordPress content types
+│   └── youtube.d.ts            # YouTube player types
+└── utils/                      # Additional utilities
 ```
 
 ## 📄 Pages & Content Layout
@@ -108,6 +254,13 @@ Comprehensive church information including:
 
 ### 🎵 Media Center Pages
 
+#### Media Hub (`/media`)
+
+Central hub linking to all media content types:
+
+- Quick-access cards to Sermons, Transcripts, Manuals, Devotionals, and Video Messages
+- Unified entry point for all church media
+
 #### Audio Messages (`/sermons`)
 
 Browse and listen to sermon recordings:
@@ -118,26 +271,32 @@ Browse and listen to sermon recordings:
 - Pagination for browsing large sermon libraries
 - Metadata display (date, speaker, duration)
 
-#### Message Transcripts (`/transcripts`)
+#### Message Transcripts (`/transcripts` → `/transcripts/[slug]`)
 
 Read full written transcripts of sermons:
 
 - **140+ Sunday Message Transcripts** from WordPress
-- Search functionality for finding specific messages
-- Pagination (9 transcripts per page by default)
-- Share buttons for social media
-- Clean, readable typography optimized for reading
-- Tagged sermon titles with dates
+- Search functionality with 300ms debounce
+- Category filter pills (Sunday Messages, Bible Study, Other Meetings, etc.)
+- Pagination (9 transcripts per page) with URL-synced state
+- Individual transcript pages with rich content rendering
+- Previous/Next transcript navigation
+- Back-to-list button preserving pagination state
+- Share buttons (Web Share API)
+- Search highlight banner with keyword highlighting
+- Clean, readable typography optimized for long-form reading
 
-#### Sunday School Manuals (`/manuals`)
+#### Sunday School Manuals (`/manuals` → `/manuals/[slug]`)
 
 Access to study materials and teaching resources:
 
 - **111+ Teaching Manuals** synced from WordPress
-- Browse by category or search by topic
-- Card-based layout with clear thumbnails
-- Download links to full manual documents
-- Organize materials by teaching subject
+- Browse by series/theme filter or search by topic
+- Card-based layout with auto-generated thumbnails
+- Individual manual pages with reading progress bar and estimated read time
+- Previous/Next manual navigation
+- Back-to-list button preserving pagination state
+- Share functionality
 
 #### Daily Devotionals (`/devotionals`)
 
@@ -192,6 +351,35 @@ Real-time audio streaming platform:
 
 Video streaming for worship services (when available)
 
+### 🙏 Testimonies Page (`/testimonies`)
+
+Community testimony sharing platform:
+
+- **Submit Testimonies** — Public form for members to share their stories
+- **Admin Moderation** — Testimonies require approval before display (`/admin/testimonies`)
+- **Approved Display** — Published testimonies shown in a card layout
+- Firebase Firestore backend for storage
+
+### 🧠 Bible Quiz (`/admin/quiz`)
+
+Interactive quiz system for Bible knowledge:
+
+- **Quiz Launcher** — Choose question count and enter username
+- **Timed Questions** — Multiple-choice with countdown timer
+- **Live Scoring** — Points based on speed and accuracy
+- **Leaderboard** — Top scores tracked in Supabase
+- **Failed Question Review** — See correct answers after session
+- **Scripture Recommendations** — Bible passages suggested based on weak areas
+- **Admin Panel** (`/admin/quiz`) — Add, edit, delete questions; CSV/JSON bulk import/export
+
+### 👋 Welcome Page (`/welcome`)
+
+New visitor landing page with church information and next steps
+
+### 📴 Offline Page (`/offline`)
+
+Offline fallback rendered by the Service Worker when the user has no connectivity
+
 ### 📬 Contact Page (`/contact`)
 
 Church communication hub:
@@ -226,12 +414,12 @@ Spiritual guidance page:
 
 ### 📱 Admin Dashboard (`/admin`)
 
-Management interface (restricted access):
+Management interface (restricted access via Bearer token auth):
 
-- Content management tools
-- Media uploads and organization
-- Event management
-- Newsletter management
+- **Quiz Management** (`/admin/quiz`) — CRUD for quiz questions, CSV/JSON import/export, bulk operations
+- **Devotional Management** (`/admin/devotionals`) — Upload, edit, and delete daily devotionals
+- **Testimony Moderation** (`/admin/testimonies`) — Approve or reject submitted testimonies
+- Session timeout with automatic logout
 
 ### 🚫 404 Page
 
@@ -250,7 +438,7 @@ Custom not-found page with helpful navigation back to main content
 
 ```bash
 git clone <repository-url>
-cd nlwc-gallery
+cd nlwc-ikd
 ```
 
 2. Install dependencies:
@@ -266,7 +454,7 @@ npm install
 # 🔐 Admin API Authentication
 ADMIN_API_KEY=your_secure_api_key_here
 
-# 🔗 Webhook Security (moved from query params to Authorization header)
+# 🔗 Webhook Security (Authorization header)
 WEBHOOK_SECRET=your_webhook_secret_here
 
 # 📊 Google Sheets API
@@ -285,7 +473,7 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# 🔥 Firebase Config
+# 🔥 Firebase Config (Client)
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -293,29 +481,29 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-# 📧 Church Email (SMTP)
-CHURCH_EMAIL_ADDRESS=your_email@church.com
-CHURCH_EMAIL_PASSWORD=your_email_password
-SMTP_HOST=send.one.com
-SMTP_PORT=465
+# 🔥 Firebase Admin Config (Server)
+FIREBASE_ADMIN_PROJECT_ID=your_project_id
+FIREBASE_ADMIN_CLIENT_EMAIL=your_admin_email
+FIREBASE_ADMIN_PRIVATE_KEY=your_admin_private_key
 
 # 🗄️ Supabase Config
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
-# 🔥 Firebase Admin Config
-FIREBASE_ADMIN_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_CLIENT_EMAIL=your_admin_email
-FIREBASE_ADMIN_PRIVATE_KEY=your_admin_private_key
+# 📧 Church Email (SMTP)
+CHURCH_EMAIL_ADDRESS=your_email@church.com
+CHURCH_EMAIL_PASSWORD=your_email_password
+SMTP_HOST=send.one.com
+SMTP_PORT=465
 ```
 
 **Security Notes:**
+
 - Generate `ADMIN_API_KEY` with: `openssl rand -base64 32`
 - Never commit `.env.local` to git (already in `.gitignore`)
 - In production (Vercel), add these via Project Settings → Environment Variables
-- For development, `NODE_ENV=development` allows self-signed SSL certs
 
-4. Run the development server:
+4. Run the development server (uses Turbopack for fast refresh):
 
 ```bash
 npm run dev
@@ -323,41 +511,66 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Available Scripts
+
+| Command         | Description                         |
+| --------------- | ----------------------------------- |
+| `npm run dev`   | Start dev server with Turbopack HMR |
+| `npm run build` | Production build with Turbopack     |
+| `npm start`     | Serve production build              |
+| `npm run lint`  | Run ESLint                          |
+
 ## � Security Implementation
 
-The app has been hardened with comprehensive security measures (Phase 1 & 2 Complete):
+The app has been hardened with comprehensive security measures:
 
-- **Authentication**: Bearer token authentication on all admin endpoints
+- **Authentication**: Bearer token authentication on all admin API endpoints
 - **Rate Limiting**: IP-based rate limiting (100 req/min public, 1000 req/min authenticated, 10 req/min sensitive)
-- **Input Validation**: Zod schema validation on all forms
-- **Content Security Policy**: XSS protection with strict CSP headers
-- **Error Handling**: Graceful error boundaries with user-friendly messages
+- **Input Validation**: Zod schema validation on all forms and API inputs
+- **Content Security Policy**: Strict CSP headers with allowlisted domains for scripts, frames, and connections
+- **Error Handling**: Graceful error boundaries with user-friendly messages at both route and global levels
+- **Bot Protection**: Cloudflare Turnstile on public-facing forms
 - **TLS/SSL**: Strict certificate validation in production
+- **Contact Obfuscation**: Email and phone numbers rendered client-side to prevent scraping
 
 For detailed security status, see **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)**.
 
 ## 📝 WordPress Integration
 
-The app integrates with WordPress at `https://ikorodu.nlwc.church` as a headless CMS with the following capabilities:
+The app integrates with WordPress at `https://ikdadmin.nlwc.church` as a headless CMS:
 
-- **140+ Sunday Message Transcripts** with search and pagination
-- **111+ Sunday School Manuals** with category organization
-- **Real-time sync** with on-demand ISR revalidation
-- **Advanced search** with 300ms debounce
-- **Cached responses** for optimal performance
+- **140+ Sunday Message Transcripts** with search, category filtering, and pagination
+- **111+ Sunday School Manuals** with series/theme filtering
+- **Adjacent navigation** — Previous/Next links on each detail page
+- **ISR revalidation** — Pages cached for 5 minutes, revalidated on demand via webhook
+- **Smart caching** — React Query client-side + Next.js server-side
+- **URL-synced state** — Page, search, and filter state persisted in URL query params
+- **Back navigation** — `BackToListLink` component preserves pagination via `sessionStorage`
 
 ### Quick Start with WordPress Content
 
 ```typescript
-// Fetch transcripts with pagination
+// Fetch transcripts with pagination and search
 import { useTranscripts } from "@/hooks/useWordPress";
+const { data, isLoading } = useTranscripts(
+  page,
+  perPage,
+  searchQuery,
+  categoryId,
+);
 
-const { data, isLoading } = useTranscripts(page, perPage, searchQuery);
+// Fetch manuals with search
+import { useManuals } from "@/hooks/useWordPress";
+const { data, isLoading } = useManuals(page, perPage, searchQuery);
 
-// Get a single transcript
-import { getTranscriptBySlug } from "@/lib/wordpress";
-
+// Get a single transcript by slug (server-side)
+import { getTranscriptBySlug, getAdjacentTranscripts } from "@/lib/wordpress";
 const transcript = await getTranscriptBySlug("sermon-slug");
+const adjacent = await getAdjacentTranscripts(transcript.date, transcript.slug);
+
+// Get a single manual by slug (server-side)
+import { getManualBySlug, getAdjacentManuals } from "@/lib/wordpress";
+const manual = await getManualBySlug("manual-slug");
 ```
 
 ## 🏗️ Building for Production
@@ -369,18 +582,20 @@ npm start
 
 The build process:
 
-- Compiles TypeScript
-- Optimizes assets
-- Pre-renders static pages
-- Generates first 20 transcript pages (SSG)
+- Compiles TypeScript with Turbopack
+- Optimizes assets and code-splits routes
+- Pre-renders static pages (SSG)
+- Generates first 5 transcript and manual pages (rest via ISR on demand)
+- Produces a standalone deployable output
 
-## ⚠️ Breaking API Changes (Phase 1 & 2)
+## ⚠️ API Authentication
 
 If you're using the protected API endpoints, update your code:
 
 ### Admin Endpoints Now Require Authentication
 
 **Before:**
+
 ```javascript
 const response = await fetch("/api/wp/publish", {
   method: "POST",
@@ -389,6 +604,7 @@ const response = await fetch("/api/wp/publish", {
 ```
 
 **After:**
+
 ```javascript
 const response = await fetch("/api/wp/publish", {
   method: "POST",
@@ -401,6 +617,7 @@ const response = await fetch("/api/wp/publish", {
 ```
 
 **Affected Endpoints:**
+
 - `/api/wp/publish`
 - `/api/wp/upload-media`
 - `/api/devotionals/upload`
@@ -409,69 +626,151 @@ const response = await fetch("/api/wp/publish", {
 ### Revalidation Endpoint (Secret in Header, Not URL)
 
 **Before:**
+
 ```javascript
-fetch("/api/revalidate?path=/page&secret=WEBHOOK_SECRET")
+fetch("/api/revalidate?path=/page&secret=WEBHOOK_SECRET");
 ```
 
 **After:**
+
 ```javascript
 fetch("/api/revalidate?path=/page", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.WEBHOOK_SECRET}`,
   },
-})
+});
 ```
 
 ## 🗺️ Site Navigation Reference
 
-Here's a quick reference to access the main sections of the website:
-
-| Section        | URL               | Purpose                                           |
-| -------------- | ----------------- | ------------------------------------------------- |
-| Home           | `/`               | Landing page with overview of all content         |
-| About          | `/about`          | Church story, leadership, beliefs, events         |
-| Gallery        | `/gallery`        | Photo archive from church events                  |
-| Sermons        | `/sermons`        | Audio recordings of messages                      |
-| Transcripts    | `/transcripts`    | Written text of sermons (140+ available)          |
-| Manuals        | `/manuals`        | Sunday School teaching materials (111+ available) |
-| Devotionals    | `/devotionals`    | Daily spiritual devotional content                |
-| Video Messages | `/video-messages` | Video teachings and sermons                       |
-| Listen Live    | `/listen-live`    | Live audio streaming of services                  |
-| Fellowship     | `/fellowship`     | House fellowship center locations                 |
-| Contact        | `/contact`        | Contact form and church location                  |
-| Give           | `/give`           | Donation and tithing platform                     |
-| Salvation      | `/salvation`      | Gospel message and spiritual guidance             |
+| Section           | URL                  | Purpose                                           |
+| ----------------- | -------------------- | ------------------------------------------------- |
+| Home              | `/`                  | Landing page with overview of all content         |
+| About             | `/about`             | Church story, leadership, beliefs, events         |
+| Gallery           | `/gallery`           | Photo archive from church events                  |
+| Media Hub         | `/media`             | Central entry point for all media content         |
+| Sermons           | `/sermons`           | Audio recordings of messages                      |
+| Transcripts       | `/transcripts`       | Written text of sermons (140+ available)          |
+| Manuals           | `/manuals`           | Sunday School teaching materials (111+ available) |
+| Devotionals       | `/devotionals`       | Daily spiritual devotional content                |
+| Video Messages    | `/video-messages`    | Video teachings and sermons                       |
+| Listen Live       | `/listen-live`       | Live audio streaming of services                  |
+| Live Video        | `/live`              | Live video streaming of services                  |
+| Testimonies       | `/testimonies`       | Community testimony submissions                   |
+| Fellowship        | `/fellowship`        | House fellowship center locations                 |
+| Contact           | `/contact`           | Contact form and church location                  |
+| Give              | `/give`              | Donation and tithing platform                     |
+| Salvation         | `/salvation`         | Gospel message and spiritual guidance             |
+| Welcome           | `/welcome`           | New visitor landing page                          |
+| Admin             | `/admin`             | Protected admin dashboard                         |
+| Admin Quiz        | `/admin/quiz`        | Quiz question management                          |
+| Admin Devotionals | `/admin/devotionals` | Devotional content management                     |
+| Admin Testimonies | `/admin/testimonies` | Testimony moderation                              |
 
 ## 🎯 Key Features Breakdown
 
 ### WordPress Content Management
 
-- **140+ Sunday Message Transcripts** automatically synced
-- **111+ Sunday School Manuals** available
-- **Smart caching** with 5-minute revalidation
-- **Search functionality** with 300ms debounce
-- **Pagination controls** for easy navigation
+- **140+ Sunday Message Transcripts** with category filtering
+- **111+ Sunday School Manuals** with series/theme filtering
+- **Smart caching** with 5-minute ISR revalidation
+- **Search functionality** with 300ms debounce and URL sync
+- **Pagination controls** with state preserved across navigation
+- **Adjacent navigation** (Previous/Next) on detail pages
 - **Share buttons** with Web Share API support
+- **Reading progress bar** and estimated read time
+
+### Quiz System
+
+- **Timed quiz sessions** with configurable question count
+- **Multiple-choice questions** stored in Firebase Firestore
+- **Leaderboard** powered by Supabase with top scores
+- **CSV/JSON import/export** for bulk question management
+- **Failed question review** with correct answer display
+- **Scripture recommendations** based on quiz performance
 
 ### Performance Optimizations
 
+- **Turbopack** for fast development and production builds
 - **Server-Side Rendering** for SEO
 - **Static Site Generation** for popular content
-- **Incremental Static Regeneration** (ISR)
-- **React Query caching** for client-side speed
-- **Image optimization** with Next.js Image
-- **Code splitting** for faster loads
+- **Incremental Static Regeneration** (5-min revalidation + on-demand webhook)
+- **React Query caching** for client-side data
+- **Image optimization** with Next.js Image + Cloudinary
+- **Code splitting** per route
+- **Service Worker** for offline support and asset caching
 
 ### Developer Experience
 
-- **TypeScript** for type safety
+- **TypeScript 5.9** for strict type safety
 - **ESLint** for code quality
-- **Hot reload** for fast development
-- **Component-driven** architecture
-- **Comprehensive documentation**
+- **Turbopack HMR** for instant development feedback
+- **Component-driven** architecture with Radix UI primitives
+- **Comprehensive project documentation**
 
-## 📚 Documentation
+## � Application Flow
+
+### Content Delivery Pipeline
+
+```
+WordPress (ikdadmin.nlwc.church)
+  ↓ REST API
+Next.js API Routes (/api/transcripts, /api/manuals, /api/sermons)
+  ↓ Server-side fetch + cache
+React Query (client-side cache, staleTime-based refetch)
+  ↓
+List Components (ManualsList, TranscriptsList, AudioSermonsList)
+  ↓ Click item
+Detail Page (Server Component with ISR, 5-min revalidation)
+  ↓ Back button
+List Page (pagination restored via sessionStorage)
+```
+
+### Quiz Flow
+
+```
+QuizLauncher (username + question count)
+  ↓ Create session (Supabase)
+QuizPlayer (fetch random questions from Firestore)
+  ↓ Answer each question
+Save answers (Supabase) → Check correct (Firestore)
+  ↓ All questions answered or time expires
+QuizResults (score, failed questions review, scripture recommendations)
+  ↓ Submit score
+Leaderboard (Supabase, top scores by username)
+```
+
+### Admin Flow
+
+```
+Admin Login (Bearer token via ADMIN_API_KEY)
+  ↓
+/admin → Dashboard with links to quiz, devotionals, testimonies
+  ↓
+/admin/quiz → Add/Edit/Delete questions, Import CSV/JSON, Export
+/admin/devotionals → Upload/Delete devotional content
+/admin/testimonies → Approve/Reject submitted testimonies
+```
+
+### Data Flow Summary
+
+| Data            | Source                 | Storage                          | Cache                  |
+| --------------- | ---------------------- | -------------------------------- | ---------------------- |
+| Transcripts     | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
+| Manuals         | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
+| Quiz Questions  | Firebase Firestore     | `quiz_questions` collection      | None (real-time)       |
+| Quiz Sessions   | Supabase               | `quiz_sessions`, `quiz_attempts` | None                   |
+| Leaderboard     | Supabase               | `quiz_sessions` (aggregated)     | React Query            |
+| Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
+| Gallery Images  | Google Sheets          | Spreadsheet rows                 | API route cache        |
+| Audio Sermons   | External audio host    | None                             | React Query            |
+| Devotionals     | Cloudinary + metadata  | Cloud storage                    | ISR                    |
+| Contact Form    | Google Sheets          | Spreadsheet rows                 | None                   |
+| Media Progress  | Browser `localStorage` | Per-device                       | None                   |
+| List Pagination | URL query params       | `sessionStorage` (for back nav)  | None                   |
+
+## �📚 Documentation
 
 - **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)** - Security audit and implementation status
 - **[IMPLEMENTATION_PROGRESS.md](./IMPLEMENTATION_PROGRESS.md)** - Phase 1 & 2 implementation details
