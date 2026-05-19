@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import SectionLabel from "@/components/shared/SectionLabel";
 import {
   Calendar,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getUpcomingEvents, generateGoogleCalendarUrl } from "@/data/events";
 import type { ChurchEvent } from "@/data/events";
+import type { RecurringService, SpecialService } from "@/lib/scheduleService";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -110,6 +111,111 @@ const CATEGORY_COLORS: Record<
     border: "border-cyan-500/30",
   },
 };
+
+const DAY_NAMES_FULL = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function getNextWeekday(dayOfWeek: number, hour: number): Date {
+  const now = new Date();
+  const result = new Date(now);
+  const currentDay = now.getDay();
+  let daysUntil = dayOfWeek - currentDay;
+  if (daysUntil < 0) daysUntil += 7;
+  if (daysUntil === 0) {
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    if (now > endOfDay) daysUntil = 7;
+  }
+  result.setDate(result.getDate() + daysUntil);
+  result.setHours(hour, 0, 0, 0);
+  return result;
+}
+
+function formatHourTo12(h: number): string {
+  if (h === 0 || h === 24) return "12:00 AM";
+  if (h === 12) return "12:00 PM";
+  if (h < 12) return `${h}:00 AM`;
+  return `${h - 12}:00 PM`;
+}
+
+function apiToChurchEvents(data: {
+  recurring: RecurringService[];
+  special: SpecialService[];
+}): ChurchEvent[] {
+  const events: ChurchEvent[] = [];
+  const now = new Date();
+
+  for (const svc of data.recurring) {
+    if (!svc.active) continue;
+    const nextDate = getNextWeekday(svc.dayOfWeek, svc.startHour);
+    events.push({
+      id: svc.id || svc.label,
+      title: svc.label,
+      description: svc.description || "",
+      date: nextDate,
+      time: formatHourTo12(svc.startHour),
+      location: svc.location || "Church Auditorium, Ikorodu",
+      category: svc.category || "Worship",
+      recurrence:
+        svc.recurrenceLabel || `Every ${DAY_NAMES_FULL[svc.dayOfWeek]}`,
+      icon: svc.icon || "⛪",
+    });
+  }
+
+  for (const evt of data.special) {
+    if (!evt.active) continue;
+    const eventDate = new Date(evt.date + "T00:00:00");
+    eventDate.setHours(evt.startHour, 0, 0, 0);
+    if (eventDate < now) continue;
+    events.push({
+      id: evt.id || evt.label,
+      title: evt.label,
+      description: evt.description || "",
+      date: eventDate,
+      time: formatHourTo12(evt.startHour),
+      location: evt.location || "Church Auditorium, Ikorodu",
+      category: evt.category || "Special",
+      recurrence: evt.recurrenceLabel || "Special Event",
+      icon: evt.icon || "📅",
+    });
+  }
+
+  events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return events;
+}
+
+// Module-level cache so we fetch at most once per page session
+let cachedEvents: ChurchEvent[] | null = null;
+let cachePromise: Promise<ChurchEvent[]> | null = null;
+
+function fetchScheduleOnce(): Promise<ChurchEvent[]> {
+  if (cachedEvents) return Promise.resolve(cachedEvents);
+  if (cachePromise) return cachePromise;
+
+  cachePromise = fetch("/api/schedule")
+    .then((res) => {
+      if (!res.ok) throw new Error("API error");
+      return res.json();
+    })
+    .then((data) => {
+      const converted = apiToChurchEvents(data);
+      cachedEvents = converted.length > 0 ? converted : null;
+      return cachedEvents || getUpcomingEvents();
+    })
+    .catch(() => {
+      cachePromise = null; // allow retry on error
+      return getUpcomingEvents();
+    });
+
+  return cachePromise;
+}
 
 function EventCard({ event }: { event: ChurchEvent }) {
   const colors = CATEGORY_COLORS[event.category] || CATEGORY_COLORS.Worship;
@@ -209,7 +315,17 @@ function EventCard({ event }: { event: ChurchEvent }) {
 }
 
 export default function UpcomingEvents() {
-  const events = useMemo(() => getUpcomingEvents().slice(0, 6), []);
+  const [events, setEvents] = useState<ChurchEvent[]>(() =>
+    getUpcomingEvents().slice(0, 6),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchScheduleOnce().then((result) => {
+      if (!cancelled) setEvents(result.slice(0, 6));
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <section className="bg-gray-900 py-12 sm:py-32 relative overflow-hidden">
