@@ -17,6 +17,7 @@ import {
   RepeatIcon,
   CalendarPlus,
   BarChart3,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { showConfirm } from "@/components/shared/CustomDialog";
@@ -34,6 +35,15 @@ const DAY_NAMES = [
   "Thursday",
   "Friday",
   "Saturday",
+];
+
+const CATEGORIES = [
+  "Worship",
+  "Prayer",
+  "Study",
+  "Special",
+  "Conference",
+  "Youth",
 ];
 
 type ActiveTab = "recurring" | "special";
@@ -107,6 +117,10 @@ function RecurringModal({
   const [endHour, setEndHour] = useState(12);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [location, setLocation] = useState("Church Auditorium, Ikorodu");
+  const [category, setCategory] = useState("Worship");
+  const [icon, setIcon] = useState("⛪");
+  const [recurrenceLabel, setRecurrenceLabel] = useState("");
   const [active, setActive] = useState(true);
 
   useEffect(() => {
@@ -117,6 +131,10 @@ function RecurringModal({
       setEndHour(service.endHour);
       setDescription(service.description || "");
       setImageUrl(service.imageUrl || "");
+      setLocation(service.location || "Church Auditorium, Ikorodu");
+      setCategory(service.category || "Worship");
+      setIcon(service.icon || "⛪");
+      setRecurrenceLabel(service.recurrenceLabel || "");
       setActive(service.active);
     } else {
       setLabel("");
@@ -125,6 +143,10 @@ function RecurringModal({
       setEndHour(12);
       setDescription("");
       setImageUrl("");
+      setLocation("Church Auditorium, Ikorodu");
+      setCategory("Worship");
+      setIcon("⛪");
+      setRecurrenceLabel("");
       setActive(true);
     }
   }, [service, mode]);
@@ -148,6 +170,10 @@ function RecurringModal({
       endHour,
       description: description.trim(),
       imageUrl: imageUrl.trim(),
+      location: location.trim(),
+      category,
+      icon: icon.trim(),
+      recurrenceLabel: recurrenceLabel.trim() || `Every ${DAY_NAMES[dayOfWeek]}`,
       active,
     });
   };
@@ -268,6 +294,69 @@ function RecurringModal({
             />
           </div>
 
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Church Auditorium, Ikorodu"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Category + Icon */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Icon <span className="text-gray-400">(emoji)</span>
+              </label>
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="e.g. ⛪ 🙏 📖"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Recurrence Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence Label{" "}
+              <span className="text-gray-400">
+                (auto-filled if empty)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={recurrenceLabel}
+              onChange={(e) => setRecurrenceLabel(e.target.value)}
+              placeholder={`e.g. Every ${DAY_NAMES[dayOfWeek]}`}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
           {/* Image URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -357,6 +446,10 @@ function SpecialModal({
   const [endHour, setEndHour] = useState(12);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [location, setLocation] = useState("Church Auditorium, Ikorodu");
+  const [category, setCategory] = useState("Special");
+  const [icon, setIcon] = useState("📅");
+  const [recurrenceLabel, setRecurrenceLabel] = useState("");
   const [active, setActive] = useState(true);
 
   useEffect(() => {
@@ -367,6 +460,10 @@ function SpecialModal({
       setEndHour(service.endHour);
       setDescription(service.description || "");
       setImageUrl(service.imageUrl || "");
+      setLocation(service.location || "Church Auditorium, Ikorodu");
+      setCategory(service.category || "Special");
+      setIcon(service.icon || "📅");
+      setRecurrenceLabel(service.recurrenceLabel || "");
       setActive(service.active);
     } else {
       setLabel("");
@@ -375,6 +472,10 @@ function SpecialModal({
       setEndHour(12);
       setDescription("");
       setImageUrl("");
+      setLocation("Church Auditorium, Ikorodu");
+      setCategory("Special");
+      setIcon("📅");
+      setRecurrenceLabel("");
       setActive(true);
     }
   }, [service, mode]);
@@ -402,6 +503,10 @@ function SpecialModal({
       endHour,
       description: description.trim(),
       imageUrl: imageUrl.trim(),
+      location: location.trim(),
+      category,
+      icon: icon.trim(),
+      recurrenceLabel: recurrenceLabel.trim() || "Special Event",
       active,
     });
   };
@@ -513,6 +618,69 @@ function SpecialModal({
               placeholder="Brief description of the event"
               rows={2}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none resize-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location <span className="text-gray-400">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Church Auditorium, Ikorodu"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Category + Icon */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category <span className="text-gray-400">(optional)</span>
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Icon <span className="text-gray-400">(emoji)</span>
+              </label>
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="e.g. 📅 🕊️ ✨"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Recurrence Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence Label{" "}
+              <span className="text-gray-400">
+                (optional — defaults to &quot;Special Event&quot;)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={recurrenceLabel}
+              onChange={(e) => setRecurrenceLabel(e.target.value)}
+              placeholder="e.g. Every 2nd Saturday, One-time event"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
             />
           </div>
 
@@ -903,14 +1071,19 @@ export default function ScheduleAdminPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-3 sm:p-5">
                       <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-lg">
+                          {svc.icon || <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-bold text-gray-900 text-sm">
                               {svc.label}
                             </h3>
+                            {svc.category && (
+                              <span className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                                {svc.category}
+                              </span>
+                            )}
                             {!svc.active && (
                               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full border border-gray-300">
                                 Inactive
@@ -928,6 +1101,12 @@ export default function ScheduleAdminPage() {
                             {formatHour(svc.startHour)} &ndash;{" "}
                             {formatHour(svc.endHour)}
                           </p>
+                          {svc.location && (
+                            <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              {svc.location}
+                            </p>
+                          )}
                           {svc.description && (
                             <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 line-clamp-1">
                               {svc.description}
@@ -1023,14 +1202,19 @@ export default function ScheduleAdminPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-3 sm:p-5">
                       <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 text-lg">
+                          {evt.icon || <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-bold text-gray-900 text-sm">
                               {evt.label}
                             </h3>
+                            {evt.category && (
+                              <span className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+                                {evt.category}
+                              </span>
+                            )}
                             {!evt.active && (
                               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full border border-gray-300">
                                 Inactive
@@ -1047,6 +1231,12 @@ export default function ScheduleAdminPage() {
                             {evt.date} &middot; {formatHour(evt.startHour)}{" "}
                             &ndash; {formatHour(evt.endHour)}
                           </p>
+                          {evt.location && (
+                            <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              {evt.location}
+                            </p>
+                          )}
                           {evt.description && (
                             <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 line-clamp-1">
                               {evt.description}

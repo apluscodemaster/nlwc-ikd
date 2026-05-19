@@ -16,9 +16,14 @@ const DEFAULT_RECURRING = [
     dayOfWeek: 0,
     startHour: 8,
     endHour: 15,
-    label: "Sunday Service",
-    description: "",
+    label: "Sunday Worship Service",
+    description:
+      "Join us for an uplifting morning of worship and life-transforming teaching.",
     imageUrl: "",
+    location: "Church Auditorium, Ikorodu",
+    category: "Worship",
+    icon: "⛪",
+    recurrenceLabel: "Every Sunday",
     active: true,
   },
   {
@@ -26,8 +31,13 @@ const DEFAULT_RECURRING = [
     startHour: 18,
     endHour: 21,
     label: "Prayer Meeting",
-    description: "",
+    description:
+      "A powerful time of corporate intercession and supplication before the throne of grace.",
     imageUrl: "",
+    location: "Church Auditorium, Ikorodu",
+    category: "Prayer",
+    icon: "🙏",
+    recurrenceLabel: "Every Wednesday",
     active: true,
   },
   {
@@ -35,8 +45,13 @@ const DEFAULT_RECURRING = [
     startHour: 18,
     endHour: 22,
     label: "Bible Study",
-    description: "",
+    description:
+      "A deep dive into God's word to build your faith and strengthen your walk with Christ.",
     imageUrl: "",
+    location: "Church Auditorium, Ikorodu",
+    category: "Study",
+    icon: "📖",
+    recurrenceLabel: "Every Friday",
     active: true,
   },
 ];
@@ -58,7 +73,14 @@ export async function GET() {
       recurring = seeded;
     }
 
-    return NextResponse.json({ recurring, special });
+    return NextResponse.json(
+      { recurring, special },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to fetch schedules:", error);
     return NextResponse.json(
@@ -123,6 +145,10 @@ export async function POST(req: NextRequest) {
         label: data.label,
         description: data.description || "",
         imageUrl: data.imageUrl || "",
+        location: data.location || "",
+        category: data.category || "",
+        icon: data.icon || "",
+        recurrenceLabel: data.recurrenceLabel || "",
         active: data.active !== false,
       });
       return NextResponse.json(result, { status: 201 });
@@ -142,6 +168,10 @@ export async function POST(req: NextRequest) {
         label: data.label,
         description: data.description || "",
         imageUrl: data.imageUrl || "",
+        location: data.location || "",
+        category: data.category || "",
+        icon: data.icon || "",
+        recurrenceLabel: data.recurrenceLabel || "",
         active: data.active !== false,
       });
       return NextResponse.json(result, { status: 201 });
