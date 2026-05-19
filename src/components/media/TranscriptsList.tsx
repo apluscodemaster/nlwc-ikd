@@ -42,21 +42,38 @@ export default function TranscriptsList({
   const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    isFirstRender.current = false;
-  }, []);
+  // Track previous values to detect real user-driven changes (not initial mount)
+  const prevDebouncedSearch = useRef(debouncedSearch);
+  const prevSelectedCategory = useRef(selectedCategory);
+  const hasMounted = useRef(false);
 
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      if (!isFirstRender.current) {
-        setPage(1); // Reset to first page on new search
-      }
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Reset page when search actually changes (not on mount)
+  useEffect(() => {
+    if (prevDebouncedSearch.current !== debouncedSearch) {
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevDebouncedSearch.current = debouncedSearch;
+    }
+  }, [debouncedSearch]);
+
+  // Reset page when category filter actually changes (not on mount)
+  useEffect(() => {
+    if (prevSelectedCategory.current !== selectedCategory) {
+      if (hasMounted.current) {
+        setPage(1);
+      }
+      prevSelectedCategory.current = selectedCategory;
+    }
+  }, [selectedCategory]);
 
   // Sync to URL & store for back-button navigation
   useEffect(() => {
@@ -78,7 +95,10 @@ export default function TranscriptsList({
     // Always store for back navigation from detail pages
     storeListUrl("transcripts", targetPath);
 
-    if (isFirstRender.current) return;
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
 
     const currentUrlPage = searchParams.get("page") || "";
     const currentUrlQ = searchParams.get("q") || "";
