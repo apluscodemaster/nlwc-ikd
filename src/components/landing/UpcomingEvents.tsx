@@ -324,7 +324,9 @@ export default function UpcomingEvents() {
     fetchScheduleOnce().then((result) => {
       if (!cancelled) setEvents(result.slice(0, 6));
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
