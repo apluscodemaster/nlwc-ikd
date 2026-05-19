@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { storeListUrl } from "@/components/shared/BackToListLink";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
@@ -84,29 +85,27 @@ export default function ManualsList({
     }
   }, [selectedSeries]);
 
-  // Sync to URL
+  // Sync to URL & store for back-button navigation
   useEffect(() => {
-    if (isFirstRender.current) return;
-
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     if (page > 1) {
       params.set("page", page.toString());
-    } else {
-      params.delete("page");
     }
-
     if (debouncedSearch) {
       params.set("q", debouncedSearch);
-    } else {
-      params.delete("q");
     }
-
     if (selectedSeries) {
       params.set("series", selectedSeries);
-    } else {
-      params.delete("series");
     }
+
+    const query = params.toString();
+    const targetPath = query ? `${pathname}?${query}` : pathname;
+
+    // Always store for back navigation from detail pages
+    storeListUrl("manuals", targetPath);
+
+    if (isFirstRender.current) return;
 
     const currentUrlPage = searchParams.get("page") || "";
     const currentUrlQ = searchParams.get("q") || "";
@@ -120,10 +119,7 @@ export default function ManualsList({
       currentUrlQ !== newUrlQ ||
       currentUrlSeries !== newUrlSeries
     ) {
-      const query = params.toString();
-      router.push(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
+      router.push(targetPath, { scroll: false });
     }
   }, [page, debouncedSearch, selectedSeries, pathname, router, searchParams]);
 

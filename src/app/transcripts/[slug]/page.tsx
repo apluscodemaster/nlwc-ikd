@@ -11,6 +11,7 @@ import TranscriptContent from "@/components/shared/TranscriptContent";
 import SearchHighlightBanner from "@/components/shared/SearchHighlightBanner";
 import { Calendar, User, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
+import BackToListLink from "@/components/shared/BackToListLink";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -79,13 +80,14 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
         <SectionContainer className="py-8 md:py-12">
           <div className="max-w-4xl mx-auto">
             {/* Back Button */}
-            <Link
-              href="/transcripts"
+            <BackToListLink
+              fallbackHref="/transcripts"
+              storageKey="transcripts"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Transcripts
-            </Link>
+            </BackToListLink>
 
             {/* Type Badge */}
             <div className="flex items-center gap-3 mb-4">
@@ -222,13 +224,14 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
 
           {/* Back to All Transcripts */}
           <div className="flex justify-center mt-8">
-            <Link
-              href="/transcripts"
+            <BackToListLink
+              fallbackHref="/transcripts"
+              storageKey="transcripts"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all active:scale-95"
             >
               <ArrowLeft className="w-4 h-4" />
               All Transcripts
-            </Link>
+            </BackToListLink>
           </div>
         </div>
       </SectionContainer>
