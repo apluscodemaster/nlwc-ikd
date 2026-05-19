@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import {
   isCurrentlyLive,
   getNextService,
+  loadScheduleFromApi,
   type NextServiceInfo,
 } from "@/lib/liveSchedule";
 
@@ -28,6 +29,9 @@ export default function ServiceCountdown() {
   const [nextService, setNextService] = useState<NextServiceInfo | null>(null);
 
   useEffect(() => {
+    // Load dynamic schedule data on mount
+    loadScheduleFromApi();
+
     const calculateTimeLeft = () => {
       const now = new Date();
 

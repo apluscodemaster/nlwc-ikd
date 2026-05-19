@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Radio, Activity, Maximize2, Minimize2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { isCurrentlyLive } from "@/lib/liveSchedule";
+import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 
 const WAYSTREAM_EMBED_URL =
   process.env.NEXT_PUBLIC_WAYSTREAM_EMBED_URL ||
@@ -14,10 +14,10 @@ export default function AudioLivePlayer() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
-  // Check live status every 30 seconds
+  // Load dynamic schedule then check live status every 30 seconds
   useEffect(() => {
     const check = () => setIsLive(isCurrentlyLive());
-    check();
+    loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
   }, []);

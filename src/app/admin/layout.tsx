@@ -13,6 +13,7 @@ import { auth } from "@/lib/firebase";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import {
   BookOpen,
+  Calendar,
   Church,
   Menu,
   X,
@@ -71,6 +72,12 @@ const NAV_ITEMS = [
     href: "/admin/quiz",
     icon: BrainCircuit,
     description: "Manage Quiz Questions & Stats",
+  },
+  {
+    label: "Schedule",
+    href: "/admin/schedule",
+    icon: Calendar,
+    description: "Manage Live Service Schedule",
   },
 ];
 
