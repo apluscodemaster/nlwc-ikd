@@ -758,6 +758,71 @@ export async function getAdjacentManuals(
 }
 
 /**
+ * Get adjacent transcripts (previous and next) by date across all transcript categories
+ */
+export async function getAdjacentTranscripts(
+  currentDate: string,
+  currentSlug: string,
+): Promise<{
+  previous: { title: string; slug: string } | null;
+  next: { title: string; slug: string } | null;
+}> {
+  const transcriptCategoryIds = [
+    WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+    WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+    WP_CATEGORIES.OTHER_MEETINGS,
+    WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
+  ];
+
+  try {
+    const [{ posts: olderPosts }, { posts: newerPosts }] = await Promise.all([
+      fetchWPPosts({
+        categories: transcriptCategoryIds,
+        perPage: 2,
+        page: 1,
+        orderBy: "date",
+        order: "desc",
+        before: currentDate,
+        embed: false,
+      }),
+      fetchWPPosts({
+        categories: transcriptCategoryIds,
+        perPage: 2,
+        page: 1,
+        orderBy: "date",
+        order: "asc",
+        after: currentDate,
+        embed: false,
+      }),
+    ]);
+
+    const prevPost = olderPosts.find((p) => p.slug !== currentSlug) || null;
+    const nextPost = newerPosts.find((p) => p.slug !== currentSlug) || null;
+
+    return {
+      previous: prevPost
+        ? {
+            title: sanitizeWPText(prevPost.title.rendered),
+            slug: prevPost.slug,
+          }
+        : null,
+      next: nextPost
+        ? {
+            title: sanitizeWPText(nextPost.title.rendered),
+            slug: nextPost.slug,
+          }
+        : null,
+    };
+  } catch (error) {
+    logError("Failed to fetch adjacent transcripts", error, {
+      tag: "WordPress",
+    });
+    return { previous: null, next: null };
+  }
+}
+
+/**
  * Get Sunday School Transcripts
  */
 export async function getSundaySchoolTranscripts(

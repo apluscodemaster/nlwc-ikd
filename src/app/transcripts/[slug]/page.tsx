@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import {
   getTranscriptBySlug,
   getSundayMessageTranscripts,
+  getAdjacentTranscripts,
 } from "@/lib/wordpress";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ShareButton from "@/components/shared/ShareButton";
 import TranscriptContent from "@/components/shared/TranscriptContent";
 import SearchHighlightBanner from "@/components/shared/SearchHighlightBanner";
-import { Calendar, User, ArrowLeft, BookOpen } from "lucide-react";
+import { Calendar, User, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -58,6 +59,10 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
   if (!transcript) {
     notFound();
   }
+
+  // Fetch adjacent transcripts for navigation
+  const adjacent = await getAdjacentTranscripts(transcript.date, transcript.slug);
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Search Highlight Banner */}
@@ -166,24 +171,65 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
         </article>
       </SectionContainer>
 
-      {/* Related Navigation */}
+      {/* Adjacent Navigation */}
       <SectionContainer className="pb-16 pt-0">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Link
-            href="/transcripts"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            All Transcripts
-          </Link>
-          {/* <a
-            href={transcript.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
-          >
-            View on Website
-          </a> */}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Previous Transcript */}
+            {adjacent.previous ? (
+              <Link
+                href={`/transcripts/${adjacent.previous.slug}`}
+                className="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <ArrowLeft className="w-5 h-5 text-primary group-hover:-translate-x-0.5 transition-transform" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">
+                    Previous
+                  </p>
+                  <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
+                    {adjacent.previous.title}
+                  </p>
+                </div>
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            {/* Next Transcript */}
+            {adjacent.next ? (
+              <Link
+                href={`/transcripts/${adjacent.next.slug}`}
+                className="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all sm:flex-row-reverse sm:text-right"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-0.5 transition-transform" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">
+                    Next
+                  </p>
+                  <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
+                    {adjacent.next.title}
+                  </p>
+                </div>
+              </Link>
+            ) : (
+              <div />
+            )}
+          </div>
+
+          {/* Back to All Transcripts */}
+          <div className="flex justify-center mt-8">
+            <Link
+              href="/transcripts"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              All Transcripts
+            </Link>
+          </div>
         </div>
       </SectionContainer>
     </main>
