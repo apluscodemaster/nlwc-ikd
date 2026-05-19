@@ -44,12 +44,13 @@ const DEFAULT_RECURRING = [
 // ── GET: Fetch all schedules (public) — auto-seeds defaults if empty ──
 export async function GET() {
   try {
-    let [recurring, special] = await Promise.all([
+    const [fetchedRecurring, special] = await Promise.all([
       getRecurringServices(),
       getSpecialServices(),
     ]);
 
     // Auto-seed default recurring services if Firestore is empty
+    let recurring = fetchedRecurring;
     if (recurring.length === 0) {
       const seeded = await Promise.all(
         DEFAULT_RECURRING.map((svc) => createRecurringService(svc)),
