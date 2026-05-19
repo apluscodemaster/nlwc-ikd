@@ -16,6 +16,14 @@ export interface RecurringService {
   description?: string;
   /** Cloudinary public ID or full URL for a banner/poster image */
   imageUrl?: string;
+  /** Event venue, e.g. "Church Auditorium, Ikorodu" */
+  location?: string;
+  /** Display category: Worship, Prayer, Study, Special, Conference, Youth */
+  category?: string;
+  /** Emoji icon for the event card, e.g. "⛪" */
+  icon?: string;
+  /** Human-readable recurrence text, e.g. "Every Sunday" */
+  recurrenceLabel?: string;
   /** Whether this service is currently active in the schedule */
   active: boolean;
   /** ISO timestamp */
@@ -38,6 +46,14 @@ export interface SpecialService {
   description?: string;
   /** Cloudinary public ID or full URL for a banner/poster image */
   imageUrl?: string;
+  /** Event venue */
+  location?: string;
+  /** Display category: Worship, Prayer, Study, Special, Conference, Youth */
+  category?: string;
+  /** Emoji icon for the event card */
+  icon?: string;
+  /** Human-readable recurrence text, e.g. "One-time event" */
+  recurrenceLabel?: string;
   /** Whether this service is active */
   active: boolean;
   /** ISO timestamp */
