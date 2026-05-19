@@ -917,10 +917,9 @@ export default function ScheduleAdminPage() {
                               </span>
                             )}
                             {svc.imageUrl && (
-                              <ImageIcon
-                                className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400"
-                                title="Has image"
-                              />
+                              <span title="Has image">
+                                <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
+                              </span>
                             )}
                           </div>
                           <p className="text-[11px] sm:text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
@@ -1038,10 +1037,9 @@ export default function ScheduleAdminPage() {
                               </span>
                             )}
                             {evt.imageUrl && (
-                              <ImageIcon
-                                className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400"
-                                title="Has image"
-                              />
+                              <span title="Has image">
+                                <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
+                              </span>
                             )}
                           </div>
                           <p className="text-[11px] sm:text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
