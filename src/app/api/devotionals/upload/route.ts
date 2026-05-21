@@ -9,7 +9,7 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 export async function POST(request: NextRequest) {
   // Verify authentication
-  const authError = requireAuth(request);
+  const authError = await requireAuth(request);
   if (authError) {
     return authError;
   }
