@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
-import { revalidatePath } from "next/cache";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -9,27 +8,144 @@ const WP_USER = process.env.WP_APPLICATION_USER || "admin";
 const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
 
 /**
- * PUT /api/wp/update
- *
- * Updates existing content by ID. Routes to the correct backend:
- * - type="sermon" → Series Engine via nlwc/v1/sermons/{id} (SE message IDs)
- * - type="transcript"|"manual" (default) → WordPress via wp/v2/posts/{id}
- *
- * Accepts: { id, type?, title, content, status, featuredMediaId?, date?,
- *            categories?, speaker?, audioUrl? }
+ * Safely bust Next.js route cache without crashing under Turbopack / dev.
  */
-export async function PUT(request: NextRequest) {
-  // ── Auth guard ────────────────────────────────────────────────────────────
-  const authError = await requireAuth(request);
-  if (authError) {
-    return authError;
+async function safeRevalidate(paths: string[]) {
+  try {
+    const { revalidatePath } = await import("next/cache");
+    for (const p of paths) {
+      try {
+        revalidatePath(p);
+      } catch {
+        /* non-fatal */
+      }
+    }
+  } catch {
+    /* next/cache unavailable in this runtime context */
+  }
+}
+
+/**
+ * Update a standard WordPress post (transcripts / manuals).
+ * Uses the WP REST API: PUT /wp-json/wp/v2/posts/<id>
+ */
+async function updateWPPost(
+  id: number,
+  updateBody: Record<string, unknown>,
+): Promise<{
+  ok: boolean;
+  status: number;
+  data?: { id: number; link: string };
+  error?: string;
+}> {
+  const token = Buffer.from(`${WP_USER}:${WP_APP_PASSWORD}`).toString("base64");
+
+  let res: Response;
+  try {
+    res = await fetch(`${WP_URL}/wp-json/wp/v2/posts/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${token}`,
+      },
+      body: JSON.stringify(updateBody),
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      status: 502,
+      error: "Network error reaching WordPress",
+    };
   }
 
-  // ── Rate limiting ─────────────────────────────────────────────────────────
-  const rateLimitError = rateLimitMiddleware(request, "authenticated");
-  if (rateLimitError) {
-    return rateLimitError;
+  if (!res.ok) {
+    let errorDetail = `WordPress returned ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData?.message) errorDetail = errData.message;
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, status: res.status, error: errorDetail };
   }
+
+  const data = (await res.json()) as { id: number; link: string };
+  return { ok: true, status: 200, data };
+}
+
+/**
+ * Update a Series Engine audio sermon.
+ * Uses the custom NLWC REST API: PUT /wp-json/nlwc/v1/sermons/<id>
+ * Requires the PUT route added to nlwc-sermons-api.php (v1.3.0+).
+ */
+async function updateSESermon(
+  id: number,
+  updateBody: Record<string, unknown>,
+): Promise<{
+  ok: boolean;
+  status: number;
+  data?: { id: number; link: string };
+  error?: string;
+}> {
+  const token = Buffer.from(`${WP_USER}:${WP_APP_PASSWORD}`).toString("base64");
+
+  let res: Response;
+  try {
+    res = await fetch(`${WP_URL}/wp-json/nlwc/v1/sermons/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        // WP Application Password auth — same credentials used for wp/v2 routes
+        Authorization: `Basic ${token}`,
+      },
+      body: JSON.stringify(updateBody),
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      status: 502,
+      error: "Network error reaching WordPress",
+    };
+  }
+
+  if (res.status === 404) {
+    return {
+      ok: false,
+      status: 501,
+      error:
+        "The Series Engine PUT endpoint is not registered. " +
+        "Ensure nlwc-sermons-api.php v1.3.0+ is deployed to wp-content/mu-plugins/.",
+    };
+  }
+
+  if (!res.ok) {
+    let errorDetail = `NLWC API returned ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData?.message) errorDetail = errData.message;
+      else if (errData?.error) errorDetail = errData.error;
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, status: res.status, error: errorDetail };
+  }
+
+  const data = (await res.json()) as { id: number; success?: boolean };
+  return { ok: true, status: 200, data: { id: data.id, link: "" } };
+}
+
+// =============================================================================
+// PUT /api/wp/update
+// =============================================================================
+
+export async function PUT(request: NextRequest) {
+  // ── 1. Auth — MUST be awaited; requireAuth is async in auth.ts ──────────
+  const authError = await requireAuth(request);
+  if (authError) return authError;
+
+  // ── 2. Rate limiting ──────────────────────────────────────────────────────
+  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  if (rateLimitError) return rateLimitError;
 
   if (!WP_APP_PASSWORD) {
     return NextResponse.json(
@@ -38,205 +154,100 @@ export async function PUT(request: NextRequest) {
     );
   }
 
+  let body: Record<string, unknown>;
   try {
-    const body = await request.json();
-    const { id, type } = body;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!id) {
+  const {
+    id,
+    type, // "sermon" | "transcript" | "manual" — sent by admin/page.tsx
+    title,
+    content,
+    status,
+    featuredMediaId,
+    date,
+    categories,
+    speaker,
+    seriesId,
+  } = body as {
+    id?: number;
+    type?: string;
+    title?: string;
+    content?: string;
+    status?: string;
+    featuredMediaId?: number;
+    date?: string;
+    categories?: (number | string)[];
+    speaker?: string;
+    seriesId?: number;
+    [key: string]: unknown;
+  };
+
+  if (!id) {
+    return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
+  }
+
+  // ── Route to correct backend by content type ──────────────────────────────
+  if (type === "sermon") {
+    // Sermons live in Series Engine DB tables — use /nlwc/v1/sermons/<id>
+    const seBody: Record<string, unknown> = {};
+    if (title) seBody.title = title;
+    if (speaker) seBody.speaker = speaker;
+    if (date) seBody.date = date;
+    if (seriesId) seBody.series_id = seriesId;
+    if (content) seBody.description = content;
+    if (featuredMediaId) seBody.thumbnail_id = featuredMediaId;
+
+    const result = await updateSESermon(id, seBody);
+
+    if (!result.ok) {
       return NextResponse.json(
-        { error: "Post ID is required" },
-        { status: 400 },
+        { error: result.error },
+        { status: result.status },
       );
     }
 
-    const token = Buffer.from(`${WP_USER}:${WP_APP_PASSWORD}`).toString(
-      "base64",
-    );
-
-    // ── Sermon updates → Series Engine custom endpoint ──────────────────────
-    if (type === "sermon") {
-      return handleSermonUpdate(id, body, token);
-    }
-
-    // ── Transcript / Manual updates → wp/v2/posts ───────────────────────────
-    return handleWPPostUpdate(id, body, token);
-  } catch (error) {
-    console.error("Update post failed:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: `Failed to update post: ${errorMessage}` },
-      { status: 500 },
-    );
-  }
-}
-
-// ── Sermon update via Series Engine nlwc/v1/sermons/{id} ──────────────────────
-async function handleSermonUpdate(
-  id: number | string,
-  body: Record<string, unknown>,
-  token: string,
-) {
-  const { title, content, date, speaker, audioUrl, categories } = body as {
-    title?: string;
-    content?: string;
-    date?: string;
-    speaker?: string;
-    audioUrl?: string;
-    categories?: (string | number)[];
-  };
-
-  // Map admin form fields → SE message columns
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const seBody: Record<string, any> = {};
-  if (title) seBody.title = title;
-  if (content) seBody.description = content;
-  if (date) seBody.date = date;
-  if (speaker) seBody.speaker = speaker;
-  if (audioUrl) seBody.audio_url = audioUrl;
-  if (Array.isArray(categories) && categories.length > 0) {
-    seBody.series_id =
-      typeof categories[0] === "string"
-        ? parseInt(categories[0], 10)
-        : categories[0];
+    await safeRevalidate(["/sermons", "/admin"]);
+    return NextResponse.json({ success: true, postId: result.data!.id });
   }
 
-  if (Object.keys(seBody).length === 0) {
-    return NextResponse.json(
-      { error: "At least one field to update is required" },
-      { status: 400 },
-    );
-  }
-
-  const response = await fetch(
-    `${WP_URL}/wp-json/nlwc/v1/sermons/${id}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${token}`,
-      },
-      body: JSON.stringify(seBody),
-    },
-  );
-
-  if (!response.ok) {
-    let errorDetail = `Series Engine returned ${response.status}`;
-    try {
-      const errorData = await response.json();
-      errorDetail = errorData.error || errorData.message || errorDetail;
-    } catch {
-      errorDetail = response.statusText || errorDetail;
-    }
-    console.error(`Series Engine API error: ${errorDetail}`, {
-      status: response.status,
-      id,
-    });
-    return NextResponse.json(
-      { error: errorDetail },
-      { status: response.status },
-    );
-  }
-
-  const data = (await response.json()) as { success: boolean; id: number };
-
-  try {
-    revalidatePath("/sermons");
-    revalidatePath("/admin");
-  } catch {
-    // safe to ignore
-  }
-
-  return NextResponse.json({
-    success: true,
-    postId: data.id,
-  });
-}
-
-// ── WP post update via wp/v2/posts/{id} ───────────────────────────────────────
-async function handleWPPostUpdate(
-  id: number | string,
-  body: Record<string, unknown>,
-  token: string,
-) {
-  const { title, content, status, featuredMediaId, date, categories } =
-    body as {
-      title?: string;
-      content?: string;
-      status?: string;
-      featuredMediaId?: number | string;
-      date?: string;
-      categories?: (string | number)[];
-    };
-
-  if (!title && !content && !status && !featuredMediaId && !date && !categories) {
-    return NextResponse.json(
-      { error: "At least one field to update is required" },
-      { status: 400 },
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateBody: Record<string, any> = {};
-  if (title !== undefined && title) updateBody.title = title;
-  if (content !== undefined && content) updateBody.content = content;
-  if (status !== undefined) updateBody.status = status;
+  // Transcripts and manuals — standard WP posts via /wp/v2/posts/<id>
+  const wpBody: Record<string, unknown> = {};
+  if (title) wpBody.title = title;
+  if (content) wpBody.content = content;
+  if (status !== undefined) wpBody.status = status;
   if (featuredMediaId !== undefined)
-    updateBody.featured_media = Number(featuredMediaId);
-  if (date !== undefined) updateBody.date = date;
+    wpBody.featured_media = Number(featuredMediaId);
+  if (date !== undefined) wpBody.date = date;
   if (Array.isArray(categories) && categories.length > 0) {
-    updateBody.categories = categories.map((c) =>
+    wpBody.categories = categories.map((c) =>
       typeof c === "string" ? parseInt(c, 10) : c,
     );
   }
 
-  const response = await fetch(`${WP_URL}/wp-json/wp/v2/posts/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${token}`,
-    },
-    body: JSON.stringify(updateBody),
-  });
-
-  if (!response.ok) {
-    let errorDetail = `WordPress returned ${response.status}`;
-    try {
-      const errorData = await response.json();
-      if (errorData.message) {
-        errorDetail = errorData.message;
-      } else if (errorData.code) {
-        errorDetail = `${errorData.code}: ${errorData.message || "Unknown error"}`;
-      }
-    } catch {
-      errorDetail = response.statusText || errorDetail;
-    }
-    console.error(`WordPress API error: ${errorDetail}`, {
-      status: response.status,
-      id,
-    });
+  if (Object.keys(wpBody).length === 0) {
     return NextResponse.json(
-      { error: errorDetail },
-      { status: response.status },
+      { error: "At least one field to update is required" },
+      { status: 400 },
     );
   }
 
-  const data = (await response.json()) as { id: number; link: string };
+  const result = await updateWPPost(id, wpBody);
 
-  try {
-    revalidatePath("/sermons");
-    revalidatePath("/transcripts");
-    revalidatePath("/manuals");
-    revalidatePath("/admin");
-    revalidatePath(`/sermons/${(body as { slug?: string }).slug ?? ""}`);
-    revalidatePath(`/transcripts/${(body as { slug?: string }).slug ?? ""}`);
-    revalidatePath(`/manuals/${(body as { slug?: string }).slug ?? ""}`);
-  } catch {
-    // safe to ignore
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
+    );
   }
 
+  await safeRevalidate(["/transcripts", "/manuals", "/sermons", "/admin"]);
   return NextResponse.json({
     success: true,
-    postId: data.id,
-    postUrl: data.link,
+    postId: result.data!.id,
+    postUrl: result.data!.link,
   });
 }
