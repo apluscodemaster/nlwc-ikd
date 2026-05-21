@@ -874,6 +874,7 @@ export default function AdminChurchContentPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: Record<string, any> = {
         id: editingItem.id,
+        type: activeTab,
         title: editTitle,
         content: contentToSave,
         status: editStatus,
