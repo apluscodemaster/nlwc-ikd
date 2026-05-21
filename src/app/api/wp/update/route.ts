@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { revalidatePath } from "next/cache";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -13,6 +16,18 @@ const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
  * Note: speaker is optional and can be included in the payload for reference (it's embedded in content)
  */
 export async function PUT(request: NextRequest) {
+  // ── Auth guard (was missing — added) ──────────────────────────────────────
+  const authError = requireAuth(request);
+  if (authError) {
+    return authError;
+  }
+
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
   if (!WP_APP_PASSWORD) {
     return NextResponse.json(
       { error: "WP_APPLICATION_PASSWORD is not configured" },
@@ -85,7 +100,6 @@ export async function PUT(request: NextRequest) {
           errorDetail = `${errorData.code}: ${errorData.message || "Unknown error"}`;
         }
       } catch {
-        // If response is not JSON, use the statusText
         errorDetail = response.statusText || errorDetail;
       }
       console.error(`WordPress API error: ${errorDetail}`, {
@@ -99,6 +113,20 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = (await response.json()) as { id: number; link: string };
+
+    // ── Bust Next.js cache so the frontend and admin list see the update ──
+    try {
+      revalidatePath("/sermons");
+      revalidatePath("/transcripts");
+      revalidatePath("/manuals");
+      revalidatePath("/admin");
+      revalidatePath(`/sermons/${body.slug ?? ""}`);
+      revalidatePath(`/transcripts/${body.slug ?? ""}`);
+      revalidatePath(`/manuals/${body.slug ?? ""}`);
+    } catch {
+      // revalidatePath can throw outside of a request context — safe to ignore
+    }
+
     return NextResponse.json({
       success: true,
       postId: data.id,
