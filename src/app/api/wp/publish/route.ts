@@ -19,7 +19,7 @@ import { revalidatePath } from "next/cache";
  */
 export async function POST(request: NextRequest) {
   // ── Auth guard ────────────────────────────────────────────────────────────
-  const authError = requireAuth(request);
+  const authError = await requireAuth(request);
   if (authError) {
     return authError;
   }

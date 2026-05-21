@@ -18,7 +18,7 @@ const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
  */
 export async function POST(request: NextRequest) {
   // Verify authentication
-  const authError = requireAuth(request);
+  const authError = await requireAuth(request);
   if (authError) {
     return authError;
   }
