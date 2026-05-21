@@ -38,6 +38,7 @@ import {
   Quote,
 } from "lucide-react";
 import { showPrompt } from "@/components/shared/CustomDialog";
+import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentType = "sermon" | "transcript" | "manual";
@@ -63,11 +64,11 @@ type TranscriptType =
 
 // Map transcript types to WP category IDs for save operations
 const TRANSCRIPT_TYPE_TO_CATEGORY: Record<TranscriptType, number> = {
-  "sunday-message": 20, // WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS
-  "sunday-school": 31, // WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS
-  "bible-study": 33, // WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS
-  "other-meetings": 21, // WP_CATEGORIES.OTHER_MEETINGS
-  "season-of-the-spirit": 22, // WP_CATEGORIES.SEASON_OF_THE_SPIRIT
+  "sunday-message": 20,
+  "sunday-school": 31,
+  "bible-study": 33,
+  "other-meetings": 21,
+  "season-of-the-spirit": 22,
 };
 
 // Map WP category IDs back to transcript type slugs
@@ -175,7 +176,6 @@ function RichTextEditor({
     }
   };
 
-  // Save and restore selection for operations that lose focus
   const saveSelection = (): Range | null => {
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0) return sel.getRangeAt(0).cloneRange();
@@ -191,21 +191,18 @@ function RichTextEditor({
     }
   };
 
-  // Basic formatting — still works via execCommand (bold, italic, underline)
   const execBasicCommand = (command: string) => {
     editorRef.current?.focus();
     document.execCommand(command, false);
     handleInput();
   };
 
-  // Wrap selection in a block element (h2, blockquote, p)
   const formatBlock = (tag: string) => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
     editorRef.current.focus();
 
     const range = sel.getRangeAt(0);
-    // Find the closest block-level parent within the editor
     let block = range.startContainer as Node;
     while (
       block &&
@@ -216,7 +213,6 @@ function RichTextEditor({
     }
 
     if (block && block !== editorRef.current && block instanceof HTMLElement) {
-      // If already this tag, unwrap to <p>
       if (block.tagName.toLowerCase() === tag.toLowerCase()) {
         const p = document.createElement("p");
         p.innerHTML = block.innerHTML;
@@ -227,12 +223,10 @@ function RichTextEditor({
         block.replaceWith(newEl);
       }
     } else {
-      // Wrap selected text in the block element
       const newEl = document.createElement(tag);
       try {
         range.surroundContents(newEl);
       } catch {
-        // If surroundContents fails (crosses DOM boundaries), wrap as HTML
         const content = range.extractContents();
         newEl.appendChild(content);
         range.insertNode(newEl);
@@ -241,7 +235,6 @@ function RichTextEditor({
     handleInput();
   };
 
-  // Insert list (ul or ol)
   const insertList = (ordered: boolean) => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
@@ -249,7 +242,6 @@ function RichTextEditor({
 
     const range = sel.getRangeAt(0);
 
-    // Find the block-level parent
     let block = range.startContainer as Node;
     while (
       block &&
@@ -261,10 +253,8 @@ function RichTextEditor({
 
     const listTag = ordered ? "OL" : "UL";
 
-    // If we're already in a list, remove it
     if (block instanceof HTMLElement) {
       if (block.tagName === "UL" || block.tagName === "OL") {
-        // Unwrap: replace list with paragraphs
         const items = block.querySelectorAll("li");
         const frag = document.createDocumentFragment();
         items.forEach((li) => {
@@ -278,17 +268,14 @@ function RichTextEditor({
       }
     }
 
-    // Create a new list with the current content
     const list = document.createElement(listTag);
     const li = document.createElement("li");
 
     if (block && block !== editorRef.current && block instanceof HTMLElement) {
-      // Convert the current block to a list item
       li.innerHTML = block.innerHTML || "List item";
       list.appendChild(li);
       block.replaceWith(list);
     } else {
-      // Wrap selected text
       const selectedText = range.toString() || "List item";
       li.textContent = selectedText;
       list.appendChild(li);
@@ -296,7 +283,6 @@ function RichTextEditor({
       range.insertNode(list);
     }
 
-    // Place cursor inside the li
     const newRange = document.createRange();
     newRange.selectNodeContents(li);
     newRange.collapse(false);
@@ -306,7 +292,6 @@ function RichTextEditor({
     handleInput();
   };
 
-  // Set text alignment
   const setAlignment = (align: "left" | "center" | "right" | "justify") => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
@@ -328,7 +313,6 @@ function RichTextEditor({
     handleInput();
   };
 
-  // Insert a hyperlink
   const insertLink = async () => {
     const savedRange = saveSelection();
     const url = await showPrompt("Enter the URL for the link:", {
@@ -361,7 +345,6 @@ function RichTextEditor({
     range.deleteContents();
     range.insertNode(anchor);
 
-    // Place cursor after the link
     const newRange = document.createRange();
     newRange.setStartAfter(anchor);
     newRange.collapse(true);
@@ -372,38 +355,18 @@ function RichTextEditor({
   };
 
   const toolbarButtons = [
-    {
-      icon: Bold,
-      action: () => execBasicCommand("bold"),
-      title: "Bold",
-    },
-    {
-      icon: Italic,
-      action: () => execBasicCommand("italic"),
-      title: "Italic",
-    },
+    { icon: Bold, action: () => execBasicCommand("bold"), title: "Bold" },
+    { icon: Italic, action: () => execBasicCommand("italic"), title: "Italic" },
     {
       icon: UnderlineIcon,
       action: () => execBasicCommand("underline"),
       title: "Underline",
     },
     { icon: null, action: null, title: "divider" },
-    {
-      icon: Heading2,
-      action: () => formatBlock("h2"),
-      title: "Heading",
-    },
-    {
-      icon: Quote,
-      action: () => formatBlock("blockquote"),
-      title: "Quote",
-    },
+    { icon: Heading2, action: () => formatBlock("h2"), title: "Heading" },
+    { icon: Quote, action: () => formatBlock("blockquote"), title: "Quote" },
     { icon: null, action: null, title: "divider" },
-    {
-      icon: List,
-      action: () => insertList(false),
-      title: "Bullet List",
-    },
+    { icon: List, action: () => insertList(false), title: "Bullet List" },
     {
       icon: ListOrdered,
       action: () => insertList(true),
@@ -426,14 +389,9 @@ function RichTextEditor({
       title: "Justify",
     },
     { icon: null, action: null, title: "divider" },
-    {
-      icon: LinkIcon,
-      action: () => insertLink(),
-      title: "Insert Link",
-    },
+    { icon: LinkIcon, action: () => insertLink(), title: "Insert Link" },
   ];
 
-  // Handle Enter key inside lists to create new list items
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
       const sel = window.getSelection();
@@ -445,7 +403,6 @@ function RichTextEditor({
 
       if (li) {
         e.preventDefault();
-        // If the li is empty, break out of the list
         if (!li.textContent?.trim()) {
           const list = li.closest("ul, ol");
           if (list) {
@@ -453,9 +410,7 @@ function RichTextEditor({
             p.innerHTML = "<br>";
             list.after(p);
             li.remove();
-            // If list is now empty, remove it
             if (list.children.length === 0) list.remove();
-            // Place cursor in the new paragraph
             const range = document.createRange();
             range.selectNodeContents(p);
             range.collapse(true);
@@ -466,7 +421,6 @@ function RichTextEditor({
           return;
         }
 
-        // Create a new list item
         const newLi = document.createElement("li");
         newLi.innerHTML = "<br>";
         li.after(newLi);
@@ -479,7 +433,6 @@ function RichTextEditor({
       }
     }
 
-    // Tab key for indentation in lists
     if (e.key === "Tab") {
       const sel = window.getSelection();
       if (!sel) return;
@@ -488,7 +441,6 @@ function RichTextEditor({
         sel.anchorNode?.parentElement?.closest?.("li");
       if (li) {
         e.preventDefault();
-        // Simple indent: just add some padding
         const current = parseInt(li.style.marginLeft || "0");
         li.style.marginLeft = `${current + (e.shiftKey ? -20 : 20)}px`;
         handleInput();
@@ -498,7 +450,6 @@ function RichTextEditor({
 
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 px-3 py-2 border-b border-gray-100 bg-gray-50/80">
         {toolbarButtons.map((btn, i) => {
           if (btn.title === "divider") {
@@ -513,7 +464,6 @@ function RichTextEditor({
               type="button"
               title={btn.title}
               onMouseDown={(e) => {
-                // Prevent the button click from stealing focus/selection
                 e.preventDefault();
               }}
               onClick={() => btn.action?.()}
@@ -525,7 +475,6 @@ function RichTextEditor({
         })}
       </div>
 
-      {/* Editable area */}
       <div
         ref={editorRef}
         contentEditable
@@ -555,7 +504,6 @@ function ContentListItem({
 }) {
   return (
     <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all group">
-      {/* Thumbnail / Icon */}
       {type === "sermon" && item.thumbnail ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -583,7 +531,6 @@ function ContentListItem({
         </div>
       )}
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <h4 className="text-[13px] sm:text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
           {item.title}
@@ -617,7 +564,6 @@ function ContentListItem({
         )}
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {onEdit && (
           <button
@@ -655,21 +601,17 @@ export default function AdminChurchContentPage() {
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
 
-  // Existing content state
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentPage, setContentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Speakers state
   const [speakers, setSpeakers] = useState<SpeakerItem[]>([]);
   const [loadingSpeakers, setLoadingSpeakers] = useState(false);
 
-  // Series state
   const [seriesList, setSeriesList] = useState<SeriesItem[]>([]);
   const [loadingSeries, setLoadingSeries] = useState(false);
 
-  // Edit state
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -721,7 +663,10 @@ export default function AdminChurchContentPage() {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const currentTab = TABS.find((t) => t.id === activeTab)!;
 
-  // ── Fetch existing content ──
+  // ── Fetch existing content ──────────────────────────────────────────────────
+  // This route is read-only and doesn't require auth headers (it's public data
+  // fetched from WP). The content is only rendered inside the auth-gated admin
+  // layout so it is already protected at the page level.
   const fetchContent = useCallback(async (type: ContentType, page: number) => {
     setLoadingContent(true);
     try {
@@ -740,15 +685,13 @@ export default function AdminChurchContentPage() {
     }
   }, []);
 
-  // ── Fetch speakers for dropdown ──
+  // ── Fetch speakers for dropdown ─────────────────────────────────────────────
   const fetchSpeakers = useCallback(async () => {
     setLoadingSpeakers(true);
     try {
       const res = await fetch("/api/wp/speakers");
       const data = await res.json();
-      if (data.speakers) {
-        setSpeakers(data.speakers);
-      }
+      if (data.speakers) setSpeakers(data.speakers);
     } catch {
       console.error("Failed to load speakers");
     } finally {
@@ -756,15 +699,13 @@ export default function AdminChurchContentPage() {
     }
   }, []);
 
-  // ── Fetch series for dropdown ──
+  // ── Fetch series for dropdown ───────────────────────────────────────────────
   const fetchSeries = useCallback(async () => {
     setLoadingSeries(true);
     try {
       const res = await fetch("/api/wp/speakers?type=series");
       const data = await res.json();
-      if (data.series) {
-        setSeriesList(data.series);
-      }
+      if (data.series) setSeriesList(data.series);
     } catch {
       console.error("Failed to load series");
     } finally {
@@ -781,7 +722,7 @@ export default function AdminChurchContentPage() {
     fetchSeries();
   }, [fetchSpeakers, fetchSeries]);
 
-  // ── Handle tab switch ──
+  // ── Handle tab switch ───────────────────────────────────────────────────────
   const handleTabSwitch = (tab: ContentType) => {
     setActiveTab(tab);
     setViewMode("list");
@@ -794,7 +735,7 @@ export default function AdminChurchContentPage() {
     setUploadedMediaId(null);
   };
 
-  // ── Handle Audio file selection ──
+  // ── Audio file selection ────────────────────────────────────────────────────
   const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -803,30 +744,24 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Handle Edit Click ──
+  // ── Edit item ───────────────────────────────────────────────────────────────
   const handleEditItem = (item: ContentItem) => {
     setEditingItem(item);
     setEditTitle(item.title);
     setEditContent(item.content || item.excerpt || "");
     setEditStatus(item.status as "draft" | "publish");
-    // Pre-populate sermon-specific fields
     setEditDate(
       item.date ? new Date(item.date).toISOString().split("T")[0] : "",
     );
     setEditSpeaker(item.speaker || "");
-    // Try to find matching series ID from the series list
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
     setEditThumbnailPreview(item.thumbnail || null);
-    setEditUploadedMediaId(null); // Will be set if user uploads a new one
+    setEditUploadedMediaId(null);
     setEditUploadingThumbnail(false);
-    // Reset audio file for edit
     setEditAudioFileName(null);
     setEditAudioFile(null);
-    if (editAudioInputRef.current) {
-      editAudioInputRef.current.value = "";
-    }
-    // Pre-populate transcript type from item
+    if (editAudioInputRef.current) editAudioInputRef.current.value = "";
     if (item.transcriptType) {
       setEditTranscriptType(item.transcriptType as TranscriptType);
     } else {
@@ -834,23 +769,26 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Handle Edit Thumbnail Upload ──
+  // ── Edit thumbnail upload ───────────────────────────────────────────────────
   const handleEditThumbnailSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Preview
+
     const reader = new FileReader();
     reader.onload = () => setEditThumbnailPreview(reader.result as string);
     reader.readAsDataURL(file);
-    // Upload
+
     setEditUploadingThumbnail(true);
     try {
+      // ── Auth header added ─────────────────────────────────────────────────
+      const authHeader = await getAuthorizationHeader();
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/wp/upload-media", {
         method: "POST",
+        headers: { Authorization: authHeader },
         body: formData,
       });
       const data = await res.json();
@@ -867,7 +805,7 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Handle Edit Audio File Selection ──
+  // ── Edit audio file selection ───────────────────────────────────────────────
   const handleEditAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -876,12 +814,17 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Save Edit ──
+  // ── Save edit ───────────────────────────────────────────────────────────────
+  // FIX: getAuthorizationHeader() called and Authorization header sent on every
+  // mutating fetch (audio upload, PUT to /api/wp/update).
   const handleSaveEdit = async () => {
     if (!editingItem) return;
     setSaving(true);
     try {
-      // Handle audio file upload for sermons if a new file was selected
+      // Get Firebase ID token once and reuse for all requests in this handler
+      const authHeader = await getAuthorizationHeader();
+
+      // Upload new audio if selected
       let uploadedAudioMediaId: number | null = null;
       if (activeTab === "sermon" && editAudioFile && editAudioFile[0]) {
         try {
@@ -889,6 +832,7 @@ export default function AdminChurchContentPage() {
           formData.append("file", editAudioFile[0]);
           const audioRes = await fetch("/api/wp/upload-media", {
             method: "POST",
+            headers: { Authorization: authHeader }, // ← auth header added
             body: formData,
           });
           const audioData = await audioRes.json();
@@ -910,8 +854,6 @@ export default function AdminChurchContentPage() {
       // Build content with speaker prepended if provided
       let contentToSave = editContent;
 
-      // Remove existing "Minister:" or "Speaker:" line to avoid duplication
-      // Handle both HTML format (<p><strong>Minister:</strong>...) and plain text format
       contentToSave = contentToSave.replace(
         /<p><strong>Minister:<\/strong>.*?<\/p>\n?/gi,
         "",
@@ -921,13 +863,10 @@ export default function AdminChurchContentPage() {
         "",
       );
 
-      // Prepend new speaker if provided
       if (editSpeaker) {
-        // For transcripts (HTML content), use HTML format
         if (activeTab === "transcript") {
           contentToSave = `<p><strong>Minister:</strong> ${editSpeaker}</p>\n${contentToSave}`;
         } else {
-          // For other content types (sermons use textarea), use plain text format
           contentToSave = `Minister: ${editSpeaker}\n${contentToSave}`;
         }
       }
@@ -938,25 +877,20 @@ export default function AdminChurchContentPage() {
         title: editTitle,
         content: contentToSave,
         status: editStatus,
-        speaker: editSpeaker, // Include speaker for reference
+        speaker: editSpeaker,
       };
-      // Include date if changed (for sermons)
-      if (editDate) {
-        payload.date = new Date(editDate).toISOString();
-      }
-      // Include featured media if a new thumbnail was uploaded
-      if (editUploadedMediaId) {
-        payload.featuredMediaId = editUploadedMediaId;
-      }
-      // Include categories only for sermons (allow series changes)
-      // For transcripts and manuals, categories are immutable and should not be updated
+      if (editDate) payload.date = new Date(editDate).toISOString();
+      if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
       if (activeTab === "sermon" && editSeriesId) {
         payload.categories = [Number(editSeriesId)];
       }
 
       const res = await fetch("/api/wp/update", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader, // ← auth header added
+        },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -967,44 +901,44 @@ export default function AdminChurchContentPage() {
         setEditingItem(null);
         setEditAudioFileName(null);
         setEditAudioFile(null);
-        if (editAudioInputRef.current) {
-          editAudioInputRef.current.value = "";
-        }
+        if (editAudioInputRef.current) editAudioInputRef.current.value = "";
+        // Refresh the admin list so the updated post is immediately visible
         fetchContent(activeTab, contentPage);
       } else {
         toast.error("Failed to update", {
           description: data.error || "Unknown error",
         });
       }
-    } catch {
-      toast.error("Save failed", {
-        description: "Could not reach the server.",
-      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not reach the server.";
+      toast.error("Save failed", { description: message });
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Handle Thumbnail image selection & upload ──
+  // ── Thumbnail selection & upload (create form) ──────────────────────────────
   const handleThumbnailSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show local preview
     setThumbnailFileName(file.name);
     const reader = new FileReader();
     reader.onload = () => setThumbnailPreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // Upload to WordPress Media Library
     setUploadingThumbnail(true);
     try {
+      // ── Auth header added ─────────────────────────────────────────────────
+      const authHeader = await getAuthorizationHeader();
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/wp/upload-media", {
         method: "POST",
+        headers: { Authorization: authHeader },
         body: formData,
       });
       const data = await res.json();
@@ -1027,10 +961,10 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Sermon submit (with audio) ──
+  // ── Sermon submit ───────────────────────────────────────────────────────────
+  // FIX: Authorization header added to the POST request.
   const onSermonSubmit = async (data: SermonFormData) => {
     setPublishing(true);
-
     try {
       const contentParts = [];
       if (data.speaker)
@@ -1039,9 +973,15 @@ export default function AdminChurchContentPage() {
       if (!contentParts.length)
         contentParts.push(`<p>Audio sermon uploaded via admin dashboard.</p>`);
 
+      // ── Auth header added ─────────────────────────────────────────────────
+      const authHeader = await getAuthorizationHeader();
+
       const res = await fetch("/api/wp/publish", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
         body: JSON.stringify({
           type: "sermon",
           title: data.title,
@@ -1084,7 +1024,8 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Text content submit (transcripts & manuals) ──
+  // ── Text content submit (transcripts & manuals) ─────────────────────────────
+  // FIX: Authorization header added to the POST request.
   const onTextSubmit = async (data: TextFormData) => {
     setPublishing(true);
 
@@ -1102,9 +1043,15 @@ export default function AdminChurchContentPage() {
     }
 
     try {
+      // ── Auth header added ─────────────────────────────────────────────────
+      const authHeader = await getAuthorizationHeader();
+
       const res = await fetch("/api/wp/publish", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -1203,7 +1150,6 @@ export default function AdminChurchContentPage() {
             transition={{ duration: 0.2 }}
           >
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden">
-              {/* Card header */}
               <div className={`h-1.5 bg-gradient-to-r ${currentTab.color}`} />
               <div className="p-5 sm:p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -1232,7 +1178,6 @@ export default function AdminChurchContentPage() {
                 </button>
               </div>
 
-              {/* Content list */}
               <div className="p-4 sm:p-6">
                 {loadingContent ? (
                   <div className="flex flex-col items-center justify-center py-16 text-gray-400">
@@ -1262,7 +1207,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex flex-wrap items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-100">
                     <button
@@ -1288,7 +1232,6 @@ export default function AdminChurchContentPage() {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
                 <p className="text-xs text-gray-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1307,7 +1250,6 @@ export default function AdminChurchContentPage() {
             transition={{ duration: 0.2 }}
           >
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden">
-              {/* Card header */}
               <div className={`h-1.5 bg-gradient-to-r ${currentTab.color}`} />
               <div className="p-6 sm:p-8 border-b border-gray-50">
                 <div className="flex items-center gap-3">
@@ -1327,13 +1269,12 @@ export default function AdminChurchContentPage() {
                 </div>
               </div>
 
-              {/* ─────── SERMON FORM (Audio Upload) ─────── */}
+              {/* ─────── SERMON FORM ─────── */}
               {activeTab === "sermon" && (
                 <form
                   onSubmit={sermonForm.handleSubmit(onSermonSubmit)}
                   className="p-6 sm:p-8 space-y-6"
                 >
-                  {/* Title */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Sermon Title <span className="text-red-400">*</span>
@@ -1353,7 +1294,6 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Speaker Dropdown */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
@@ -1378,7 +1318,6 @@ export default function AdminChurchContentPage() {
                     </div>
                   </div>
 
-                  {/* Series Dropdown */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Series / Category
@@ -1403,7 +1342,6 @@ export default function AdminChurchContentPage() {
                     </div>
                   </div>
 
-                  {/* Description */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Description
@@ -1416,7 +1354,6 @@ export default function AdminChurchContentPage() {
                     />
                   </div>
 
-                  {/* Sermon Date */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Sermon Date
@@ -1431,7 +1368,7 @@ export default function AdminChurchContentPage() {
                     </div>
                   </div>
 
-                  {/* Thumbnail Image Upload */}
+                  {/* Thumbnail */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Message Thumbnail
@@ -1443,17 +1380,14 @@ export default function AdminChurchContentPage() {
                       onChange={handleThumbnailSelect}
                       className="hidden"
                     />
-
                     {thumbnailPreview ? (
                       <div className="relative rounded-xl border-2 border-primary/20 bg-primary/5 overflow-hidden">
-                        {/* Preview image */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={thumbnailPreview}
                           alt="Thumbnail preview"
                           className="w-full h-48 object-cover"
                         />
-                        {/* Upload status overlay */}
                         <div className="absolute inset-0 flex items-end">
                           <div className="w-full bg-gradient-to-t from-black/70 to-transparent p-4">
                             <div className="flex items-center justify-between">
@@ -1519,7 +1453,7 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Audio File Upload */}
+                  {/* Audio */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Audio File <span className="text-red-400">*</span>
@@ -1531,7 +1465,6 @@ export default function AdminChurchContentPage() {
                       onChange={handleAudioSelect}
                       className="hidden"
                     />
-
                     {audioFileName ? (
                       <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
                         <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -1596,7 +1529,6 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       disabled={publishing}
@@ -1618,13 +1550,12 @@ export default function AdminChurchContentPage() {
                 </form>
               )}
 
-              {/* ─────── TRANSCRIPT FORM (Rich Text) ─────── */}
+              {/* ─────── TRANSCRIPT FORM ─────── */}
               {activeTab === "transcript" && (
                 <form
                   onSubmit={textForm.handleSubmit(onTextSubmit)}
                   className="p-6 sm:p-8 space-y-6"
                 >
-                  {/* Title */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Title <span className="text-red-400">*</span>
@@ -1644,7 +1575,6 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Transcript Type */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Transcript Type <span className="text-red-400">*</span>
@@ -1674,7 +1604,6 @@ export default function AdminChurchContentPage() {
                     </div>
                   </div>
 
-                  {/* Speaker Dropdown */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
@@ -1699,7 +1628,6 @@ export default function AdminChurchContentPage() {
                     </div>
                   </div>
 
-                  {/* Rich Text Content */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Content <span className="text-red-400">*</span>
@@ -1724,7 +1652,6 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Status & Submit */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                       <span className="text-sm font-medium text-gray-600">
@@ -1741,7 +1668,6 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       disabled={publishing}
@@ -1763,13 +1689,12 @@ export default function AdminChurchContentPage() {
                 </form>
               )}
 
-              {/* ─────── MANUAL FORM (Rich Text) ─────── */}
+              {/* ─────── MANUAL FORM ─────── */}
               {activeTab === "manual" && (
                 <form
                   onSubmit={textForm.handleSubmit(onTextSubmit)}
                   className="p-6 sm:p-8 space-y-6"
                 >
-                  {/* Title */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Title <span className="text-red-400">*</span>
@@ -1789,7 +1714,6 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Rich Text Content */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Content <span className="text-red-400">*</span>
@@ -1814,7 +1738,6 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Status & Submit */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                       <span className="text-sm font-medium text-gray-600">
@@ -1831,7 +1754,6 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       disabled={publishing}
@@ -1853,7 +1775,6 @@ export default function AdminChurchContentPage() {
                 </form>
               )}
 
-              {/* Footer */}
               <div className="px-6 sm:px-8 py-4 bg-gray-50/50 border-t border-gray-100">
                 <p className="text-xs text-gray-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1870,7 +1791,6 @@ export default function AdminChurchContentPage() {
       <AnimatePresence>
         {editingItem && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
@@ -1878,14 +1798,12 @@ export default function AdminChurchContentPage() {
               className="fixed inset-0 bg-black z-50"
               onClick={() => setEditingItem(null)}
             />
-            {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:max-h-[85vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
             >
-              {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -1913,9 +1831,7 @@ export default function AdminChurchContentPage() {
                 </button>
               </div>
 
-              {/* Modal Body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                {/* Title */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Title
@@ -1927,7 +1843,6 @@ export default function AdminChurchContentPage() {
                   />
                 </div>
 
-                {/* Speaker Dropdown - Sermon and Transcript */}
                 {(activeTab === "sermon" || activeTab === "transcript") && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1955,7 +1870,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Transcript Type Dropdown - Transcript only */}
                 {activeTab === "transcript" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1992,7 +1906,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Series Dropdown - Sermon only */}
                 {activeTab === "sermon" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2020,7 +1933,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Content / Description */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     {activeTab === "sermon" ? "Description" : "Content"}
@@ -2042,7 +1954,6 @@ export default function AdminChurchContentPage() {
                   )}
                 </div>
 
-                {/* Sermon Date - Sermon only */}
                 {activeTab === "sermon" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2060,7 +1971,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Thumbnail - Sermon only */}
                 {activeTab === "sermon" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2073,7 +1983,6 @@ export default function AdminChurchContentPage() {
                       onChange={handleEditThumbnailSelect}
                       className="hidden"
                     />
-
                     {editThumbnailPreview ? (
                       <div className="relative rounded-xl border-2 border-primary/20 bg-primary/5 overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2154,7 +2063,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Audio File - Sermon only */}
                 {activeTab === "sermon" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2167,7 +2075,6 @@ export default function AdminChurchContentPage() {
                       onChange={handleEditAudioSelect}
                       className="hidden"
                     />
-
                     {editAudioFileName ? (
                       <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -2211,7 +2118,6 @@ export default function AdminChurchContentPage() {
                   </div>
                 )}
 
-                {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
@@ -2232,7 +2138,6 @@ export default function AdminChurchContentPage() {
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                 <button
                   onClick={() => setEditingItem(null)}
