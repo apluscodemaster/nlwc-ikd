@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Sermon } from "@/data/sermons";
+import { Sermon } from "@/hooks/useWordPress";
 
 export function useSermons() {
   return useQuery<Sermon[]>({
