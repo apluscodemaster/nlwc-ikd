@@ -7,12 +7,28 @@ import { Button } from "@/components/ui/button";
 import QuestionCard from "./QuestionCard";
 import QuizProgressBar from "./QuizProgressBar";
 import FailedQuestionOverlay from "./FailedQuestionOverlay";
+import ReviewExplanationOverlay from "./ReviewExplanationOverlay";
+import PostAnswerChip from "./PostAnswerChip";
+import MasteryReviewScreen from "./MasteryReviewScreen";
+import StreakBadge from "./StreakBadge";
+import MasteryProgressBar from "./MasteryProgressBar";
 import type {
   QuizQuestion,
   QuizResult,
   QuizCategory,
   Recommendation,
+  AnsweredQuestion,
+  QuizAnalyticsEvent,
 } from "@/types/quiz";
+import {
+  loadMasteryState,
+  saveMasteryState,
+  recordCorrectReview,
+  computeMasteryPercent,
+  type MasteryState,
+} from "@/lib/quizMastery";
+
+const MASTERY_BATCH_SIZE = 5;
 
 interface QuizPlayerProps {
   sessionId: string;
@@ -24,6 +40,18 @@ interface Answer {
   question_id: string;
   category: string;
   selected_answer: number;
+}
+
+/** Fire-and-forget analytics event (non-blocking) */
+function trackEvent(event: QuizAnalyticsEvent) {
+  try {
+    if (typeof window !== "undefined" && "gtag" in window) {
+      const gtag = (window as unknown as Record<string, Function>).gtag;
+      gtag("event", event.type, event);
+    }
+  } catch {
+    // analytics should never block quiz flow
+  }
 }
 
 export default function QuizPlayer({
@@ -51,6 +79,15 @@ export default function QuizPlayer({
     explanation?: string;
     recommendations: Recommendation[];
   } | null>(null);
+
+  // ── New mastery/streak/chip state ──
+  const [showPostAnswerChip, setShowPostAnswerChip] = useState(false);
+  const [chipQuestionData, setChipQuestionData] = useState<AnsweredQuestion | null>(null);
+  const [showReviewOverlay, setShowReviewOverlay] = useState(false);
+  const [showMasteryReview, setShowMasteryReview] = useState(false);
+  const [batchQuestions, setBatchQuestions] = useState<AnsweredQuestion[]>([]);
+  const [masteryState, setMasteryState] = useState<MasteryState>(loadMasteryState);
+  const questionStartTimeRef = useRef<number>(Date.now());
 
   // Mutable ref is the SINGLE SOURCE OF TRUTH for answered IDs.
   // Updated synchronously before fetching next question to prevent repeats.
@@ -86,6 +123,7 @@ export default function QuizPlayer({
       setSelectedAnswer(null);
       setCorrectAnswer(undefined);
       setRevealed(false);
+      questionStartTimeRef.current = Date.now();
     } catch (error) {
       console.error("Failed to load question:", error);
       setNoMoreQuestions(true);
@@ -134,6 +172,8 @@ export default function QuizPlayer({
     if (selectedAnswer === null || !current) return;
 
     setSubmitting(true);
+    const timeToAnswer = Date.now() - questionStartTimeRef.current;
+
     try {
       // Save answer immediately to the server
       const saveRes = await fetch("/api/quiz/save-answer", {
@@ -157,26 +197,65 @@ export default function QuizPlayer({
       // before fetching the next question — prevents repeats
       answeredIdsRef.current = new Set([...answeredIdsRef.current, current.id]);
 
+      // Build full question for batch tracking
+      const fullQuestion: QuizQuestion = {
+        ...current,
+        correctAnswer: correct_answer,
+      };
+
+      // Fetch recommendations (used for both correct and incorrect)
+      const recs = await fetchRecommendations(current.sermon_ref, current.category);
+
+      const answeredRecord: AnsweredQuestion = {
+        question: fullQuestion,
+        selectedAnswer,
+        correctAnswer: correct_answer,
+        is_correct,
+        explanation,
+        time_to_answer_ms: timeToAnswer,
+        recommendations: recs,
+      };
+
+      // Add to batch for mastery review tracking
+      const newBatch = [...batchQuestions, answeredRecord];
+      setBatchQuestions(newBatch);
+
       if (is_correct) {
-        // Correct answer - increment and move to next question
+        // Correct answer - increment and prepare chip
         setCorrect((prev) => prev + 1);
         setTotal((prev) => prev + 1);
         setRevealed(false);
         setSelectedAnswer(null);
+
+        // Check if we should show mastery review (every MASTERY_BATCH_SIZE questions)
+        if (newBatch.length >= MASTERY_BATCH_SIZE) {
+          const correctInBatch = newBatch.filter((q) => q.is_correct);
+          if (correctInBatch.length > 0) {
+            setShowMasteryReview(true);
+            return; // Don't advance yet — mastery review screen will handle it
+          }
+          setBatchQuestions([]);
+        }
+
+        // Smart nudge detection
+        const isSlow = timeToAnswer > 8000;
+        if (isSlow) {
+          trackEvent({
+            type: "smart_nudge_shown",
+            question_id: current.id,
+            time_to_answer_ms: timeToAnswer,
+          });
+        }
+
+        // Show chip and fetch next question in parallel
+        setChipQuestionData(answeredRecord);
+        setShowPostAnswerChip(true);
         await fetchNextQuestion();
       } else {
-        // Wrong answer - show failed overlay
+        // Wrong answer - show failed overlay (UNCHANGED)
         setTotal((prev) => prev + 1);
         setCorrectAnswer(correct_answer);
         setRevealed(true);
-
-        const recs = await fetchRecommendations(current.sermon_ref, current.category);
-
-        // Create complete question object with correctAnswer
-        const fullQuestion: QuizQuestion = {
-          ...current,
-          correctAnswer: correct_answer,
-        };
 
         setFailedQuestionData({
           question: fullQuestion,
@@ -198,6 +277,7 @@ export default function QuizPlayer({
     sessionId,
     fetchNextQuestion,
     fetchRecommendations,
+    batchQuestions,
   ]);
 
   const handleContinueAfterFailed = useCallback(async () => {
@@ -205,8 +285,86 @@ export default function QuizPlayer({
     setFailedQuestionData(null);
     setSelectedAnswer(null);
     setCorrectAnswer(undefined);
+
+    // Check if batch is full after failed question
+    if (batchQuestions.length >= MASTERY_BATCH_SIZE) {
+      const correctInBatch = batchQuestions.filter((q) => q.is_correct);
+      if (correctInBatch.length > 0) {
+        setShowMasteryReview(true);
+        return;
+      }
+      setBatchQuestions([]);
+    }
+
     await fetchNextQuestion();
-  }, [fetchNextQuestion]);
+  }, [fetchNextQuestion, batchQuestions]);
+
+  // ── Chip tap: open review overlay ──
+  const handleChipTap = useCallback(() => {
+    if (!chipQuestionData) return;
+    setShowPostAnswerChip(false);
+    setShowReviewOverlay(true);
+    trackEvent({
+      type: "review_started",
+      question_id: chipQuestionData.question.id,
+      source: "post_answer_chip",
+    });
+  }, [chipQuestionData]);
+
+  const handleChipDismiss = useCallback(() => {
+    setShowPostAnswerChip(false);
+  }, []);
+
+  // ── Review overlay audio played ──
+  const handleReviewAudioPlayed = useCallback(
+    (questionId?: string) => {
+      const qId = questionId || chipQuestionData?.question.id;
+      if (!qId) return;
+      const updated = recordCorrectReview(masteryState, qId);
+      setMasteryState(updated);
+    },
+    [chipQuestionData, masteryState],
+  );
+
+  const handleReviewOverlayClose = useCallback(() => {
+    setShowReviewOverlay(false);
+    setChipQuestionData(null);
+  }, []);
+
+  // ── Mastery review screen complete ──
+  const handleMasteryReviewComplete = useCallback(
+    async (numReviewed: number, numSkipped: number) => {
+      trackEvent({
+        type: "mastery_review_completed",
+        num_reviewed: numReviewed,
+        num_skipped: numSkipped,
+      });
+      setShowMasteryReview(false);
+      setBatchQuestions([]);
+      await fetchNextQuestion();
+    },
+    [fetchNextQuestion],
+  );
+
+  // ── Mastery review audio played ──
+  const handleMasteryAudioPlayed = useCallback(
+    (questionId: string) => {
+      const updated = recordCorrectReview(masteryState, questionId);
+      setMasteryState(updated);
+      trackEvent({
+        type: "review_started",
+        question_id: questionId,
+        source: "mastery_review",
+      });
+    },
+    [masteryState],
+  );
+
+  // Compute mastery %
+  const masteryPercent = computeMasteryPercent(
+    masteryState.num_correct_reviews,
+    correct,
+  );
 
   const handleFinishQuiz = useCallback(async () => {
     setSubmitting(true);
@@ -262,9 +420,28 @@ export default function QuizPlayer({
 
   if (!current) return null;
 
+  // ── Mastery Review Screen (after every MASTERY_BATCH_SIZE questions) ──
+  if (showMasteryReview) {
+    const correctInBatch = batchQuestions.filter((q) => q.is_correct);
+    return (
+      <MasteryReviewScreen
+        correctQuestions={correctInBatch}
+        batchSize={MASTERY_BATCH_SIZE}
+        onComplete={handleMasteryReviewComplete}
+        onAudioPlayed={handleMasteryAudioPlayed}
+      />
+    );
+  }
+
   return (
     <>
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Streak Badge & Mastery Progress */}
+        <div className="space-y-3">
+          <StreakBadge streak={masteryState.review_streak} />
+          {correct > 0 && <MasteryProgressBar masteryPercent={masteryPercent} />}
+        </div>
+
         {/* Progress Bar */}
         <QuizProgressBar correct={correct} total={total} current={total + 1} />
 
@@ -327,6 +504,32 @@ export default function QuizPlayer({
             explanation={failedQuestionData.explanation}
             recommendations={failedQuestionData.recommendations}
             onContinue={handleContinueAfterFailed}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Post-answer chip for correct answers */}
+      <AnimatePresence>
+        {showPostAnswerChip && chipQuestionData && (
+          <PostAnswerChip
+            isSlow={chipQuestionData.time_to_answer_ms > 8000}
+            onTap={handleChipTap}
+            onDismiss={handleChipDismiss}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Review overlay for correct-answer deep-dive */}
+      <AnimatePresence>
+        {showReviewOverlay && chipQuestionData && (
+          <ReviewExplanationOverlay
+            question={chipQuestionData.question}
+            explanation={chipQuestionData.explanation}
+            recommendations={chipQuestionData.recommendations}
+            onClose={handleReviewOverlayClose}
+            onAudioPlayed={() =>
+              handleReviewAudioPlayed(chipQuestionData.question.id)
+            }
           />
         )}
       </AnimatePresence>
