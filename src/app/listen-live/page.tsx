@@ -33,6 +33,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
+import {
+  isCurrentlyLive,
+  loadScheduleFromApi,
+} from "@/lib/liveSchedule";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
@@ -47,6 +51,15 @@ function formatTime(time: number): string {
 }
 
 export default function ListenLivePage() {
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsLive(isCurrentlyLive());
+    loadScheduleFromApi().then(check);
+    const interval = setInterval(check, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const { sermons, isLoading, error, fetchSermonDetail } = useAudioSermons({
     page: 1,
     perPage: 3,
@@ -263,13 +276,15 @@ export default function ListenLivePage() {
             </div>
 
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Link
-                href="/welcome"
-                className="inline-flex items-center justify-center h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold shadow-lg shadow-orange-500/20 hover:scale-105 transition-transform text-sm sm:text-base gap-2 group"
-              >
-                <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                First Timer?
-              </Link>
+              {isLive && (
+                <Link
+                  href="/welcome"
+                  className="inline-flex items-center justify-center h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold shadow-lg shadow-orange-500/20 hover:scale-105 transition-transform text-sm sm:text-base gap-2 group"
+                >
+                  <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                  First Timer?
+                </Link>
+              )}
               {/* <button className="h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm sm:text-base">
                 Set Reminder
               </button> */}
@@ -668,7 +683,7 @@ export default function ListenLivePage() {
       )}
 
       {/* First Time Streaming User Popup */}
-      <FirstTimeStreamingForm />
+      <FirstTimeStreamingForm isLive={isLive} />
     </main>
   );
 }
