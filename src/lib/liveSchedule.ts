@@ -177,6 +177,42 @@ export function isCurrentlyLive(now = new Date()): boolean {
   );
 }
 
+/**
+ * Returns the start timestamp (Unix ms) of the currently-live service,
+ * or `null` if no service is live right now.
+ */
+export function getCurrentServiceStartTime(now = new Date()): number | null {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const nowMins = toMinutes(now);
+
+  // Check special services first
+  const special = specialServices.find(
+    (s) =>
+      s.year === y &&
+      s.month === m &&
+      s.day === d &&
+      nowMins >= s.startHour * 60 &&
+      nowMins < s.endHour * 60,
+  );
+  if (special) {
+    return new Date(y, m, d, special.startHour, 0, 0, 0).getTime();
+  }
+
+  // Check recurring services
+  const day = now.getDay();
+  const hour = now.getHours();
+  const recurring = LIVE_SERVICES.find(
+    (s) => s.dayOfWeek === day && hour >= s.startHour && hour < s.endHour,
+  );
+  if (recurring) {
+    return new Date(y, m, d, recurring.startHour, 0, 0, 0).getTime();
+  }
+
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 
 export interface NextServiceInfo {

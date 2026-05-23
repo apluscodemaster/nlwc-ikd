@@ -368,8 +368,8 @@ function LiveChat() {
           >
             <div className="px-5 py-3 bg-primary/5 border-b border-primary/10 text-xs text-muted-foreground leading-relaxed space-y-2">
               <p>
-                💬 Messages are visible to all visitors and automatically
-                cleared after 24 hours. Be respectful and stay blessed!
+                💬 Messages are visible to all visitors during the current
+                service. Chat history resets at the start of each meeting.
               </p>
               {!isServiceHours && (
                 <p className="text-orange-600 font-medium">
