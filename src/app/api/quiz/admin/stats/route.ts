@@ -85,7 +85,44 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
     const target = searchParams.get("target"); // "stats" | "players" | "all"
+    const sessionId = searchParams.get("session_id"); // single player delete
 
+    // ── Single player delete ──
+    if (sessionId) {
+      const supabase = getSupabaseAdmin();
+
+      // Delete attempts first (foreign key)
+      const { error: attErr } = await supabase
+        .from("quiz_attempts")
+        .delete()
+        .eq("session_id", sessionId);
+
+      if (attErr) {
+        console.error("Failed to delete player attempts:", attErr);
+        return NextResponse.json(
+          { error: `Failed to delete attempts: ${attErr.message}` },
+          { status: 500 },
+        );
+      }
+
+      // Delete session
+      const { error: sessErr } = await supabase
+        .from("sessions")
+        .delete()
+        .eq("session_id", sessionId);
+
+      if (sessErr) {
+        console.error("Failed to delete player session:", sessErr);
+        return NextResponse.json(
+          { error: `Failed to delete session: ${sessErr.message}` },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json({ success: true, deleted: sessionId });
+    }
+
+    // ── Bulk delete ──
     if (!target || !["stats", "players", "all"].includes(target)) {
       return NextResponse.json(
         { error: "Invalid target. Must be 'stats', 'players', or 'all'" },
