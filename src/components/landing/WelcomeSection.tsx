@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import SectionLabel from "@/components/shared/SectionLabel";
-import { ArrowRight, Radio } from "lucide-react";
+import { Radio } from "lucide-react";
 import Image from "next/image";
 import { motion, Variants } from "framer-motion";
-import { getUpcomingEvents } from "@/data/events";
+import {
+  isCurrentlyLive,
+  getNextService,
+  loadScheduleFromApi,
+  type NextServiceInfo,
+} from "@/lib/liveSchedule";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -37,34 +42,48 @@ const imageVariants: Variants = {
   },
 };
 
-function useCountdown(targetDate: Date) {
-  const [now, setNow] = useState(() => new Date());
+function useNextServiceCountdown() {
+  const [isLive, setIsLive] = useState(false);
+  const [nextService, setNextService] = useState<NextServiceInfo | null>(null);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    loadScheduleFromApi();
+
+    const tick = () => {
+      const now = new Date();
+
+      if (isCurrentlyLive(now)) {
+        setIsLive(true);
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setNextService(null);
+        return;
+      }
+
+      setIsLive(false);
+      const next = getNextService(now);
+      setNextService(next);
+
+      const diff = Math.max(0, next.date.getTime() - now.getTime());
+      setCountdown({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Service is "live" from its start time until midnight the same day
-  const midnight = new Date(targetDate);
-  midnight.setHours(23, 59, 59, 999);
-
-  const isLive = now >= targetDate && now <= midnight;
-
-  const diff = isLive ? 0 : Math.max(0, targetDate.getTime() - now.getTime());
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  const seconds = Math.floor((diff / 1000) % 60);
-
-  return { days, hours, minutes, seconds, isLive };
+  return { isLive, nextService, ...countdown };
 }
 
 export default function WelcomeSection() {
-  const nextEvent = useMemo(() => getUpcomingEvents()[0], []);
-  const { days, hours, minutes, seconds, isLive } = useCountdown(
-    nextEvent?.date ?? new Date(),
-  );
+  const { isLive, nextService, days, hours, minutes, seconds } =
+    useNextServiceCountdown();
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">
@@ -171,7 +190,7 @@ export default function WelcomeSection() {
           </motion.div> */}
 
           {/* Next Service Countdown */}
-          {nextEvent && (
+          {(nextService || isLive) && (
             <motion.div
               variants={itemVariants}
               className="pt-8 border-t border-gray-100"
@@ -182,7 +201,7 @@ export default function WelcomeSection() {
                     {isLive ? "🔴 Now Live" : "Next Up"}
                   </p>
                   <p className="text-sm sm:text-base font-bold text-gray-900">
-                    {nextEvent.icon} {nextEvent.title}
+                    {nextService?.label ?? "Service"}
                   </p>
                 </div>
 
