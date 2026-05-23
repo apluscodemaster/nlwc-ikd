@@ -497,6 +497,9 @@ export default function AdminQuizPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Player management state
+  const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
+
   // Import/Export state
   const [importingFile, setImportingFile] = useState(false);
   const [exportingFormat, setExportingFormat] = useState<string | null>(null);
@@ -1222,6 +1225,9 @@ export default function AdminQuizPage() {
                       <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Last Active
                       </th>
+                      <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -1272,6 +1278,52 @@ export default function AdminQuizPage() {
                               },
                             )}
                           </span>
+                        </td>
+                        <td className="text-center px-3 py-3">
+                          <button
+                            disabled={deletingPlayerId === s.session_id}
+                            onClick={async () => {
+                              const confirmed = await showConfirm(
+                                `Remove player "${s.username}" and all their quiz data? This cannot be undone.`,
+                                {
+                                  title: "Remove Player",
+                                  confirmLabel: "Remove",
+                                  cancelLabel: "Cancel",
+                                },
+                              );
+                              if (!confirmed) return;
+                              setDeletingPlayerId(s.session_id);
+                              try {
+                                const res = await fetch(
+                                  `/api/quiz/admin/stats?session_id=${encodeURIComponent(s.session_id)}`,
+                                  { method: "DELETE" },
+                                );
+                                if (res.ok) {
+                                  toast.success(`Removed ${s.username}`);
+                                  fetchStats();
+                                } else {
+                                  const err = await res
+                                    .json()
+                                    .catch(() => null);
+                                  toast.error(
+                                    err?.error || "Failed to remove player",
+                                  );
+                                }
+                              } catch {
+                                toast.error("Failed to remove player");
+                              } finally {
+                                setDeletingPlayerId(null);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={`Remove ${s.username}`}
+                          >
+                            {deletingPlayerId === s.session_id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </td>
                       </tr>
                     ))}
