@@ -47,7 +47,12 @@ function useNextServiceCountdown() {
   const [isLive, setIsLive] = useState(false);
   const [liveTitle, setLiveTitle] = useState("");
   const [nextService, setNextService] = useState<NextServiceInfo | null>(null);
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   useEffect(() => {
     loadScheduleFromApi();
@@ -205,7 +210,7 @@ export default function WelcomeSection() {
                     {isLive ? "🔴 Now Live" : "Next Up"}
                   </p>
                   <p className="text-sm sm:text-base font-bold text-gray-900">
-                    {isLive ? liveTitle : nextService?.label ?? "Service"}
+                    {isLive ? liveTitle : (nextService?.label ?? "Service")}
                   </p>
                 </div>
 
@@ -250,7 +255,10 @@ export default function WelcomeSection() {
                     size="sm"
                     className="rounded-full px-5 h-10 border-primary/30 text-primary hover:bg-primary hover:text-white font-bold transition-all"
                   >
-                    <Link href="/listen-live" className="flex items-center gap-2">
+                    <Link
+                      href="/listen-live"
+                      className="flex items-center gap-2"
+                    >
                       <Radio className="w-4 h-4" />
                       Join Live
                     </Link>
