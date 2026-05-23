@@ -8,10 +8,18 @@ import { Button } from "@/components/ui/button";
 const STORAGE_KEY = "nlwc-ikd-first-time-streamer";
 const POPUP_DELAY_MS = 15_000; // 15 seconds
 
-export default function FirstTimeStreamingForm() {
+interface FirstTimeStreamingFormProps {
+  /** Only show the popup when a service is currently live */
+  isLive?: boolean;
+}
+
+export default function FirstTimeStreamingForm({ isLive = false }: FirstTimeStreamingFormProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Only show during service hours
+    if (!isLive) return;
+
     // Don't show if user has already submitted
     if (typeof window === "undefined") return;
     const hasSubmitted = localStorage.getItem(STORAGE_KEY);
@@ -22,7 +30,7 @@ export default function FirstTimeStreamingForm() {
     }, POPUP_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLive]);
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
