@@ -109,3 +109,32 @@ export interface QuizResult {
     explanation?: string;
   }>;
 }
+
+// ── Answered question record (used for per-question tracking in QuizPlayer) ──
+export interface AnsweredQuestion {
+  question: QuizQuestion;
+  selectedAnswer: number;
+  correctAnswer: number;
+  is_correct: boolean;
+  explanation?: string;
+  time_to_answer_ms: number;
+  recommendations: Recommendation[];
+}
+
+// ── Analytics event types ──
+export type QuizAnalyticsEvent =
+  | {
+      type: "review_started";
+      question_id: string;
+      source: "post_answer_chip" | "mastery_review";
+    }
+  | {
+      type: "smart_nudge_shown";
+      question_id: string;
+      time_to_answer_ms: number;
+    }
+  | {
+      type: "mastery_review_completed";
+      num_reviewed: number;
+      num_skipped: number;
+    };
