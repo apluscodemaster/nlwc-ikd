@@ -82,11 +82,13 @@ export default function QuizPlayer({
 
   // ── New mastery/streak/chip state ──
   const [showPostAnswerChip, setShowPostAnswerChip] = useState(false);
-  const [chipQuestionData, setChipQuestionData] = useState<AnsweredQuestion | null>(null);
+  const [chipQuestionData, setChipQuestionData] =
+    useState<AnsweredQuestion | null>(null);
   const [showReviewOverlay, setShowReviewOverlay] = useState(false);
   const [showMasteryReview, setShowMasteryReview] = useState(false);
   const [batchQuestions, setBatchQuestions] = useState<AnsweredQuestion[]>([]);
-  const [masteryState, setMasteryState] = useState<MasteryState>(loadMasteryState);
+  const [masteryState, setMasteryState] =
+    useState<MasteryState>(loadMasteryState);
   const questionStartTimeRef = useRef<number>(Date.now());
 
   // Mutable ref is the SINGLE SOURCE OF TRUTH for answered IDs.
@@ -147,7 +149,10 @@ export default function QuizPlayer({
 
   // Fetch recommendations for a failed question
   const fetchRecommendations = useCallback(
-    async (sermonRef?: string, questionCategory?: string): Promise<Recommendation[]> => {
+    async (
+      sermonRef?: string,
+      questionCategory?: string,
+    ): Promise<Recommendation[]> => {
       try {
         const params = new URLSearchParams();
         if (sermonRef) {
@@ -204,7 +209,10 @@ export default function QuizPlayer({
       };
 
       // Fetch recommendations (used for both correct and incorrect)
-      const recs = await fetchRecommendations(current.sermon_ref, current.category);
+      const recs = await fetchRecommendations(
+        current.sermon_ref,
+        current.category,
+      );
 
       const answeredRecord: AnsweredQuestion = {
         question: fullQuestion,
@@ -439,7 +447,9 @@ export default function QuizPlayer({
         {/* Streak Badge & Mastery Progress */}
         <div className="space-y-3">
           <StreakBadge streak={masteryState.review_streak} />
-          {correct > 0 && <MasteryProgressBar masteryPercent={masteryPercent} />}
+          {correct > 0 && (
+            <MasteryProgressBar masteryPercent={masteryPercent} />
+          )}
         </div>
 
         {/* Progress Bar */}
