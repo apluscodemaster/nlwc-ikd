@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -31,6 +31,11 @@ export default function ReviewExplanationOverlay({
 }: ReviewExplanationOverlayProps) {
   const [audioClicked, setAudioClicked] = useState(false);
   const correctAnswerText = question.options[question.correctAnswer];
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const handleAudioClick = () => {
     setAudioClicked(true);
