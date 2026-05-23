@@ -5,7 +5,9 @@
  * All users share the same collection, so messages are globally visible
  * across all serverless instances and browser tabs in real time.
  *
- * Messages older than 24 hours are automatically pruned on read.
+ * Messages are scoped to the current service window: only messages sent
+ * since the current meeting started are shown. If no service is live,
+ * no messages are displayed.
  */
 
 import {
@@ -18,6 +20,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getCurrentServiceStartTime } from "./liveSchedule";
 
 export interface ChatMessage {
   id: string;
@@ -61,16 +64,23 @@ function getColorForName(name: string): string {
 /**
  * Subscribe to live chat messages in real time.
  * Returns an unsubscribe function.
- * Only fetches messages from the last 24 hours.
+ * Only fetches messages from the current service window.
+ * If no service is live, returns an empty list.
  */
 export function subscribeToChatMessages(
   onMessages: (messages: ChatMessage[]) => void,
 ): () => void {
-  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const serviceStart = getCurrentServiceStartTime();
+
+  // No service is live — return empty and provide a no-op unsubscribe
+  if (serviceStart === null) {
+    onMessages([]);
+    return () => {};
+  }
 
   const q = query(
     collection(db, CHAT_COLLECTION),
-    where("timestamp", ">", twentyFourHoursAgo),
+    where("timestamp", ">=", serviceStart),
     orderBy("timestamp", "asc"),
     limit(MAX_MESSAGES),
   );
