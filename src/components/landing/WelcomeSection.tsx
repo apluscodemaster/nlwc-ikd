@@ -243,17 +243,19 @@ export default function WelcomeSection() {
                   </div>
                 )}
 
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full px-5 h-10 border-primary/30 text-primary hover:bg-primary hover:text-white font-bold transition-all"
-                >
-                  <Link href="/listen-live" className="flex items-center gap-2">
-                    <Radio className="w-4 h-4" />
-                    Join Live
-                  </Link>
-                </Button>
+                {isLive && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full px-5 h-10 border-primary/30 text-primary hover:bg-primary hover:text-white font-bold transition-all"
+                  >
+                    <Link href="/listen-live" className="flex items-center gap-2">
+                      <Radio className="w-4 h-4" />
+                      Join Live
+                    </Link>
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
