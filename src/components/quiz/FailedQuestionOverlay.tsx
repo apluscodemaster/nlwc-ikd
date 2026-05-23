@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -35,6 +35,11 @@ export default function FailedQuestionOverlay({
   const userAnswerText = question.options[selectedAnswer];
   const correctAnswerText = question.options[correctAnswer];
   const [recommendationClicked, setRecommendationClicked] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   return (
     <motion.div
