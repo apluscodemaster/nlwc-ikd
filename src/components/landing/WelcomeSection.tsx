@@ -10,6 +10,7 @@ import { motion, Variants } from "framer-motion";
 import {
   isCurrentlyLive,
   getNextService,
+  getCurrentMeetingTitle,
   loadScheduleFromApi,
   type NextServiceInfo,
 } from "@/lib/liveSchedule";
@@ -44,6 +45,7 @@ const imageVariants: Variants = {
 
 function useNextServiceCountdown() {
   const [isLive, setIsLive] = useState(false);
+  const [liveTitle, setLiveTitle] = useState("");
   const [nextService, setNextService] = useState<NextServiceInfo | null>(null);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -55,12 +57,14 @@ function useNextServiceCountdown() {
 
       if (isCurrentlyLive(now)) {
         setIsLive(true);
+        setLiveTitle(getCurrentMeetingTitle(now));
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setNextService(null);
         return;
       }
 
       setIsLive(false);
+      setLiveTitle("");
       const next = getNextService(now);
       setNextService(next);
 
@@ -78,11 +82,11 @@ function useNextServiceCountdown() {
     return () => clearInterval(timer);
   }, []);
 
-  return { isLive, nextService, ...countdown };
+  return { isLive, liveTitle, nextService, ...countdown };
 }
 
 export default function WelcomeSection() {
-  const { isLive, nextService, days, hours, minutes, seconds } =
+  const { isLive, liveTitle, nextService, days, hours, minutes, seconds } =
     useNextServiceCountdown();
 
   return (
@@ -201,7 +205,7 @@ export default function WelcomeSection() {
                     {isLive ? "🔴 Now Live" : "Next Up"}
                   </p>
                   <p className="text-sm sm:text-base font-bold text-gray-900">
-                    {nextService?.label ?? "Service"}
+                    {isLive ? liveTitle : nextService?.label ?? "Service"}
                   </p>
                 </div>
 
