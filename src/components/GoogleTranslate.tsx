@@ -106,44 +106,41 @@ export default function GoogleTranslate() {
     document.body.appendChild(script);
   }, []);
 
-  const selectLanguage = useCallback(
-    async (code: string) => {
-      if (code === "en") {
-        // Clear cookies on all possible domain variants and reload
-        const host = window.location.hostname;
-        const expiry = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        document.cookie = `googtrans=;path=/;${expiry}`;
-        document.cookie = `googtrans=;path=/;domain=${host};${expiry}`;
-        document.cookie = `googtrans=;path=/;domain=.${host};${expiry}`;
-        setCurrentLang("en");
-        setOpen(false);
-        window.location.reload();
-        return;
-      }
+  const selectLanguage = useCallback(async (code: string) => {
+    if (code === "en") {
+      // Clear cookies on all possible domain variants and reload
+      const host = window.location.hostname;
+      const expiry = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = `googtrans=;path=/;${expiry}`;
+      document.cookie = `googtrans=;path=/;domain=${host};${expiry}`;
+      document.cookie = `googtrans=;path=/;domain=.${host};${expiry}`;
+      setCurrentLang("en");
+      setOpen(false);
+      window.location.reload();
+      return;
+    }
 
-      // Find the <select> Google Translate injected
-      const combo =
-        (document.querySelector(".goog-te-combo") as HTMLSelectElement) ??
-        (await waitForCombo(10));
+    // Find the <select> Google Translate injected
+    const combo =
+      (document.querySelector(".goog-te-combo") as HTMLSelectElement) ??
+      (await waitForCombo(10));
 
-      if (combo) {
-        combo.value = code;
-        combo.dispatchEvent(new Event("change"));
-        setCurrentLang(code);
-        setOpen(false);
-      } else {
-        // Absolute fallback: set cookie and hard-reload
-        const host = window.location.hostname;
-        document.cookie = `googtrans=/en/${code};path=/`;
-        document.cookie = `googtrans=/en/${code};path=/;domain=${host}`;
-        document.cookie = `googtrans=/en/${code};path=/;domain=.${host}`;
-        setCurrentLang(code);
-        setOpen(false);
-        window.location.reload();
-      }
-    },
-    [],
-  );
+    if (combo) {
+      combo.value = code;
+      combo.dispatchEvent(new Event("change"));
+      setCurrentLang(code);
+      setOpen(false);
+    } else {
+      // Absolute fallback: set cookie and hard-reload
+      const host = window.location.hostname;
+      document.cookie = `googtrans=/en/${code};path=/`;
+      document.cookie = `googtrans=/en/${code};path=/;domain=${host}`;
+      document.cookie = `googtrans=/en/${code};path=/;domain=.${host}`;
+      setCurrentLang(code);
+      setOpen(false);
+      window.location.reload();
+    }
+  }, []);
 
   const activeLang = LANGUAGES.find((l) => l.code === currentLang);
 
@@ -176,19 +173,16 @@ export default function GoogleTranslate() {
       <button
         onClick={() => setOpen(!open)}
         aria-label="Translate page"
-        className="notranslate fixed bottom-28 sm:bottom-24 right-4 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border border-gray-200 shadow-lg shadow-black/10 flex items-center justify-center text-gray-600 hover:text-primary hover:border-primary/30 hover:shadow-primary/10 transition-all active:scale-95 cursor-pointer"
+        className="notranslate fixed bottom-28 sm:bottom-24 right-2 sm:right-6 z-40 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white/80 sm:bg-white border border-gray-200 shadow-md shadow-black/10 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 hover:shadow-primary/10 transition-all active:scale-95 cursor-pointer"
       >
-        <Languages className="w-5 h-5" />
+        <Languages className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
 
       {/* Language selector panel */}
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-          />
-          <div className="notranslate fixed bottom-30 sm:bottom-26 right-4 sm:right-6 z-50 w-56 bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/15 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="notranslate fixed bottom-30 sm:bottom-26 right-2 sm:right-6 z-50 w-56 bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/15 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
               <div className="flex items-center gap-2">
