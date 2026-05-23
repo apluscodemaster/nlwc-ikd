@@ -13,7 +13,9 @@ interface FirstTimeStreamingFormProps {
   isLive?: boolean;
 }
 
-export default function FirstTimeStreamingForm({ isLive = false }: FirstTimeStreamingFormProps) {
+export default function FirstTimeStreamingForm({
+  isLive = false,
+}: FirstTimeStreamingFormProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -95,102 +97,102 @@ export default function FirstTimeStreamingForm({ isLive = false }: FirstTimeStre
             </button>
 
             <div className="p-6 sm:p-8">
-                {/* Header */}
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700 text-xs font-bold uppercase tracking-widest mb-4">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    First Time Here?
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-                    Welcome to Our
-                    <span className="text-primary"> Live Stream!</span>
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                    We&apos;d love to know you better. Please share your details
-                    so we can stay connected.
-                  </p>
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700 text-xs font-bold uppercase tracking-widest mb-4">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  First Time Here?
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                  Welcome to Our
+                  <span className="text-primary"> Live Stream!</span>
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                  We&apos;d love to know you better. Please share your details
+                  so we can stay connected.
+                </p>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="first-time-name"
+                    className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
+                  >
+                    <User className="w-3.5 h-3.5 text-primary" />
+                    Full Name
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    type="text"
+                    id="first-time-name"
+                    placeholder="e.g. John Abiodun"
+                    className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
+                  />
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Name */}
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="first-time-name"
-                      className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
-                    >
-                      <User className="w-3.5 h-3.5 text-primary" />
-                      Full Name
-                    </label>
-                    <input
-                      name="name"
-                      required
-                      type="text"
-                      id="first-time-name"
-                      placeholder="e.g. John Abiodun"
-                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
-                    />
-                  </div>
-
-                  {/* Phone Number */}
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="first-time-phone"
-                      className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
-                    >
-                      <Phone className="w-3.5 h-3.5 text-primary" />
-                      Phone Number
-                    </label>
-                    <input
-                      name="phone"
-                      required
-                      type="tel"
-                      id="first-time-phone"
-                      placeholder="e.g. 08012345678"
-                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
-                    />
-                  </div>
-
-                  {/* Location */}
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="first-time-location"
-                      className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-primary" />
-                      Location
-                    </label>
-                    <input
-                      name="location"
-                      required
-                      type="text"
-                      id="first-time-location"
-                      placeholder="e.g. Lagos, Nigeria"
-                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full h-12 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all mt-2"
+                {/* Phone Number */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="first-time-phone"
+                    className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
                   >
-                    <span className="flex items-center gap-2">
-                      Connect with Us <Send className="w-4 h-4" />
-                    </span>
-                  </Button>
+                    <Phone className="w-3.5 h-3.5 text-primary" />
+                    Phone Number
+                  </label>
+                  <input
+                    name="phone"
+                    required
+                    type="tel"
+                    id="first-time-phone"
+                    placeholder="e.g. 08012345678"
+                    className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
+                  />
+                </div>
 
-                  {/* Skip */}
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    className="w-full text-center cursor-pointer text-xs text-muted-foreground hover:text-gray-700 font-medium py-1 transition-colors"
+                {/* Location */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="first-time-location"
+                    className="text-xs font-bold text-gray-600 flex items-center gap-1.5"
                   >
-                    Cancel, this is not my first time!
-                  </button>
-                </form>
-              </div>
+                    <MapPin className="w-3.5 h-3.5 text-primary" />
+                    Location
+                  </label>
+                  <input
+                    name="location"
+                    required
+                    type="text"
+                    id="first-time-location"
+                    placeholder="e.g. Lagos, Nigeria"
+                    className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium text-sm bg-gray-50/50 focus:bg-white"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full h-12 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all mt-2"
+                >
+                  <span className="flex items-center gap-2">
+                    Connect with Us <Send className="w-4 h-4" />
+                  </span>
+                </Button>
+
+                {/* Skip */}
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="w-full text-center cursor-pointer text-xs text-muted-foreground hover:text-gray-700 font-medium py-1 transition-colors"
+                >
+                  Cancel, this is not my first time!
+                </button>
+              </form>
+            </div>
           </motion.div>
         </div>
       )}

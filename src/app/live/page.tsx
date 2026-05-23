@@ -21,10 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResumePrompt from "@/components/media/ResumePrompt";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
-import {
-  isCurrentlyLive,
-  loadScheduleFromApi,
-} from "@/lib/liveSchedule";
+import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import {
   saveMediaProgress,
   getMediaProgress,

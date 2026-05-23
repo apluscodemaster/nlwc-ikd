@@ -33,10 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
-import {
-  isCurrentlyLive,
-  loadScheduleFromApi,
-} from "@/lib/liveSchedule";
+import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
