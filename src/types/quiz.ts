@@ -123,6 +123,18 @@ export interface AnsweredQuestion {
 
 // ── Analytics event types ──
 export type QuizAnalyticsEvent =
-  | { type: "review_started"; question_id: string; source: "post_answer_chip" | "mastery_review" }
-  | { type: "smart_nudge_shown"; question_id: string; time_to_answer_ms: number }
-  | { type: "mastery_review_completed"; num_reviewed: number; num_skipped: number };
+  | {
+      type: "review_started";
+      question_id: string;
+      source: "post_answer_chip" | "mastery_review";
+    }
+  | {
+      type: "smart_nudge_shown";
+      question_id: string;
+      time_to_answer_ms: number;
+    }
+  | {
+      type: "mastery_review_completed";
+      num_reviewed: number;
+      num_skipped: number;
+    };
