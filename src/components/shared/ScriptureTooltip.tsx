@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Book, Loader2 } from "lucide-react";
 import {
-  fetchBibleVerse,
   getBibleGatewayUrl,
   BibleVerse,
 } from "@/lib/bible-api";
@@ -90,14 +89,23 @@ export default function ScriptureTooltip({
       setError(null);
 
       try {
-        const data = await fetchBibleVerse(reference);
-        if (data) {
-          setVerseData(data);
-        } else {
-          setError("Could not load verse");
+        const encodedReference = encodeURIComponent(reference);
+        const response = await fetch(`/api/scripture/${encodedReference}`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("Scripture reference not found");
+          } else {
+            setError("Failed to load scripture. Please try again.");
+          }
+          return;
         }
-      } catch {
-        setError("Failed to load verse");
+
+        const data = await response.json();
+        setVerseData(data);
+      } catch (error) {
+        console.error("Error fetching verse:", error);
+        setError("Unable to load verse. Please check your connection.");
       } finally {
         setIsLoading(false);
       }
