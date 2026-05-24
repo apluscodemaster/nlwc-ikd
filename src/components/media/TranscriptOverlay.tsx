@@ -167,7 +167,7 @@ export default function TranscriptOverlay({
                 </kbd>{" "}
                 to close
               </p>
-              <div className="flex flex-col-reverse xs:flex-row gap-1.5 xs:gap-2 order-1 xs:order-2 w-full xs:w-auto">
+              <div className="flex flex-row gap-1.5 xs:gap-2 order-1 xs:order-2 w-full xs:w-auto">
                 <button
                   onClick={onClose}
                   className="px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg border border-gray-200 text-gray-700 font-medium text-xs xs:text-sm hover:bg-gray-100 transition-colors flex-1 xs:flex-none"
