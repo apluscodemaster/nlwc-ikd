@@ -12,7 +12,6 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Book, Loader2 } from "lucide-react";
 import {
-  fetchBibleVerse,
   getBibleGatewayUrl,
   parseScriptureReference,
   BibleVerse,
@@ -136,27 +135,40 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
         error: null,
       });
 
-      // Fetch verse
+      // Fetch verse through API endpoint
       try {
-        const data = await fetchBibleVerse(reference);
-        if (data) {
-          cacheRef.current.set(reference, data);
-          setTooltip((prev) => ({
-            ...prev,
-            verseData: data,
-            isLoading: false,
-          }));
-        } else {
-          setTooltip((prev) => ({
-            ...prev,
-            error: "Scripture reference not found in database",
-            isLoading: false,
-          }));
+        const encodedReference = encodeURIComponent(reference);
+        const response = await fetch(`/api/scripture/${encodedReference}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setTooltip((prev) => ({
+              ...prev,
+              error: "Scripture reference not found",
+              isLoading: false,
+            }));
+          } else {
+            setTooltip((prev) => ({
+              ...prev,
+              error: "Failed to load scripture. Please try again.",
+              isLoading: false,
+            }));
+          }
+          return;
         }
-      } catch {
+
+        const data = await response.json();
+        cacheRef.current.set(reference, data);
         setTooltip((prev) => ({
           ...prev,
-          error: "Unable to load scripture",
+          verseData: data,
+          isLoading: false,
+        }));
+      } catch (error) {
+        console.error("Error fetching scripture:", error);
+        setTooltip((prev) => ({
+          ...prev,
+          error: "Unable to load scripture. Please check your connection.",
           isLoading: false,
         }));
       }
