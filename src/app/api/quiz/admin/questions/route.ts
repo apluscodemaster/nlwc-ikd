@@ -62,12 +62,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validCategories: QuizCategory[] = [
-      "Sunday Message",
-      "Sunday School",
-      "Bible Study",
-      "Special Meeting",
-    ];
+    // Category validation: fetch from Supabase if available, otherwise use defaults
+    const { getSupabaseAdmin } = await import("@/lib/supabase");
+    let validCategories: string[];
+    try {
+      const sb = getSupabaseAdmin();
+      const { data } = await sb
+        .from("quiz_categories")
+        .select("name")
+        .order("name");
+      validCategories = data && data.length > 0
+        ? data.map((c: { name: string }) => c.name)
+        : ["Sunday Message", "Sunday School", "Bible Study", "Special Meeting", "Season of the Spirit"];
+    } catch {
+      validCategories = ["Sunday Message", "Sunday School", "Bible Study", "Special Meeting", "Season of the Spirit"];
+    }
     if (!validCategories.includes(category)) {
       return NextResponse.json(
         {

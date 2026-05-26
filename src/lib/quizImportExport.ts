@@ -1,11 +1,21 @@
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
 
-const VALID_CATEGORIES: QuizCategory[] = [
+let VALID_CATEGORIES: QuizCategory[] = [
   "Sunday Message",
   "Sunday School",
   "Bible Study",
   "Special Meeting",
+  "Season of the Spirit",
 ];
+
+/**
+ * Update the valid categories list (called when categories are fetched from DB).
+ */
+export function setValidCategories(categories: QuizCategory[]) {
+  if (categories.length > 0) {
+    VALID_CATEGORIES = categories;
+  }
+}
 
 // ── Export ──────────────────────────────────────────────────────────────────
 
@@ -274,14 +284,18 @@ function normalizeCategory(raw: string): QuizCategory | null {
   );
   if (exact) return exact;
 
-  // Fuzzy fallback
+  // Fuzzy fallback for well-known categories
   const lower = trimmed.toLowerCase();
   if (lower.includes("sunday") && lower.includes("school"))
-    return "Sunday School";
-  if (lower.includes("sunday")) return "Sunday Message";
-  if (lower.includes("bible")) return "Bible Study";
+    return VALID_CATEGORIES.find((c) => c.toLowerCase() === "sunday school") || null;
+  if (lower.includes("sunday"))
+    return VALID_CATEGORIES.find((c) => c.toLowerCase() === "sunday message") || null;
+  if (lower.includes("bible"))
+    return VALID_CATEGORIES.find((c) => c.toLowerCase() === "bible study") || null;
   if (lower.includes("special") || lower.includes("conference"))
-    return "Special Meeting";
+    return VALID_CATEGORIES.find((c) => c.toLowerCase() === "special meeting") || null;
+  if (lower.includes("season") && lower.includes("spirit"))
+    return VALID_CATEGORIES.find((c) => c.toLowerCase() === "season of the spirit") || null;
 
   return null;
 }
