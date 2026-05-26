@@ -1,15 +1,12 @@
 // ── Quiz Categories ──
-export type QuizCategory =
-  | "Sunday Message"
-  | "Sunday School"
-  | "Bible Study"
-  | "Special Meeting";
+export type QuizCategory = string;
 
 export const QUIZ_CATEGORIES: QuizCategory[] = [
   "Sunday Message",
   "Sunday School",
   "Bible Study",
   "Special Meeting",
+  "Season of the Spirit",
 ];
 
 // ── Session ──

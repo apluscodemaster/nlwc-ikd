@@ -24,6 +24,7 @@ import {
   Clock,
   Download,
   Upload,
+  Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
@@ -33,6 +34,7 @@ import {
   exportQuizAsCSV,
   importQuizFromFile,
   downloadFile,
+  setValidCategories,
 } from "@/lib/quizImportExport";
 
 // ──────────────────────────────────────────────
@@ -56,14 +58,15 @@ interface AdminStats {
   }[];
 }
 
-type ActiveTab = "questions" | "stats" | "players";
+type ActiveTab = "questions" | "stats" | "players" | "categories";
 type ModalMode = "create" | "edit" | null;
 
-const CATEGORIES: QuizCategory[] = [
+const DEFAULT_CATEGORIES: QuizCategory[] = [
   "Sunday Message",
   "Sunday School",
   "Bible Study",
   "Special Meeting",
+  "Season of the Spirit",
 ];
 
 // ──────────────────────────────────────────────
@@ -110,12 +113,14 @@ function QuestionModal({
   onClose,
   onSave,
   saving,
+  categories,
 }: {
   mode: ModalMode;
   question: QuizQuestion | null;
   onClose: () => void;
   onSave: (data: Partial<QuizQuestion>) => void;
   saving: boolean;
+  categories: QuizCategory[];
 }) {
   const [formQuestion, setFormQuestion] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
@@ -230,7 +235,7 @@ function QuestionModal({
               onChange={(e) => setCategory(e.target.value as QuizCategory)}
               className="w-full h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
             >
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -504,6 +509,34 @@ export default function AdminQuizPage() {
   const [importingFile, setImportingFile] = useState(false);
   const [exportingFormat, setExportingFormat] = useState<string | null>(null);
 
+  // Categories state (dynamic from DB)
+  const [categories, setCategories] = useState<QuizCategory[]>(DEFAULT_CATEGORIES);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const [dbCategories, setDbCategories] = useState<{ id: string; name: string; created_at: string }[]>([]);
+
+  // ── Fetch categories from DB ──
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    try {
+      const res = await fetch("/api/quiz/admin/categories");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data: { id: string; name: string; created_at: string }[] = await res.json();
+      setDbCategories(data);
+      const names = data.map((c) => c.name);
+      if (names.length > 0) {
+        setCategories(names);
+        setValidCategories(names);
+      }
+    } catch {
+      // Fallback to defaults on error
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   // ── Fetch questions ──
   const fetchQuestions = useCallback(async () => {
     setLoadingQ(true);
@@ -536,13 +569,17 @@ export default function AdminQuizPage() {
 
   useEffect(() => {
     fetchQuestions();
-  }, [fetchQuestions]);
+    fetchCategories();
+  }, [fetchQuestions, fetchCategories]);
 
   useEffect(() => {
     if (activeTab === "stats" || activeTab === "players") {
       fetchStats();
     }
-  }, [activeTab, fetchStats]);
+    if (activeTab === "categories") {
+      fetchCategories();
+    }
+  }, [activeTab, fetchStats, fetchCategories]);
 
   // ── CRUD handlers ──
   const handleSave = async (data: Partial<QuizQuestion>) => {
@@ -820,6 +857,7 @@ export default function AdminQuizPage() {
     { id: "questions", label: "Questions", icon: HelpCircle },
     { id: "stats", label: "Stats", icon: BarChart3 },
     { id: "players", label: "Players", icon: Users },
+    { id: "categories", label: "Categories", icon: Tags },
   ];
 
   return (
@@ -973,7 +1011,7 @@ export default function AdminQuizPage() {
               className="h-10 px-4 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
             >
               <option value="all">All Categories ({questions.length})</option>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c} value={c}>
                   {c} ({categoryCounts[c] || 0})
                 </option>
@@ -1342,6 +1380,151 @@ export default function AdminQuizPage() {
         </div>
       )}
 
+      {/* ════════════════════════════════════════ */}
+      {/* TAB: Categories                         */}
+      {/* ════════════════════════════════════════ */}
+      {activeTab === "categories" && (
+        <div className="space-y-6">
+          {/* Create new category */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Plus className="w-4 h-4 text-primary" />
+              Create New Category
+            </h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const name = newCategoryName.trim();
+                if (!name) return;
+                setCreatingCategory(true);
+                try {
+                  const res = await fetch("/api/quiz/admin/categories", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name }),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Failed to create category");
+                  }
+                  toast.success(`Category "${name}" created!`);
+                  setNewCategoryName("");
+                  fetchCategories();
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error ? err.message : "Failed to create category",
+                  );
+                } finally {
+                  setCreatingCategory(false);
+                }
+              }}
+              className="flex gap-3"
+            >
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="flex-1 h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                placeholder="Enter category name..."
+                maxLength={60}
+                required
+              />
+              <button
+                type="submit"
+                disabled={creatingCategory || !newCategoryName.trim()}
+                className="h-11 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {creatingCategory ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {creatingCategory ? "Creating…" : "Create"}
+              </button>
+            </form>
+          </div>
+
+          {/* Existing categories */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Tags className="w-4 h-4 text-primary" />
+              Existing Categories ({dbCategories.length})
+            </h3>
+            {loadingCategories ? (
+              <div className="flex items-center justify-center py-10 gap-3 text-muted-foreground">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm font-medium">Loading categories…</span>
+              </div>
+            ) : dbCategories.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">
+                No categories found. Create one above.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {dbCategories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wide shrink-0">
+                        {cat.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {categoryCounts[cat.name] || 0} question{(categoryCounts[cat.name] || 0) !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                        Added {new Date(cat.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                      <button
+                        disabled={deletingCategoryId === cat.id}
+                        onClick={async () => {
+                          const qCount = categoryCounts[cat.name] || 0;
+                          const msg = qCount > 0
+                            ? `Delete category "${cat.name}"? There are ${qCount} question(s) using this category. The questions will remain but may need to be recategorized.`
+                            : `Delete category "${cat.name}"? This cannot be undone.`;
+                          const confirmed = await showConfirm(msg, {
+                            title: "Delete Category",
+                            variant: "warning",
+                            confirmLabel: "Delete",
+                            cancelLabel: "Cancel",
+                          });
+                          if (!confirmed) return;
+                          setDeletingCategoryId(cat.id);
+                          try {
+                            const res = await fetch(
+                              `/api/quiz/admin/categories?id=${encodeURIComponent(cat.id)}`,
+                              { method: "DELETE" },
+                            );
+                            if (!res.ok) throw new Error("Failed to delete");
+                            toast.success(`Category "${cat.name}" deleted`);
+                            fetchCategories();
+                          } catch {
+                            toast.error("Failed to delete category");
+                          } finally {
+                            setDeletingCategoryId(null);
+                          }
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 cursor-pointer"
+                        title={`Delete ${cat.name}`}
+                      >
+                        {deletingCategoryId === cat.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Question Modal ── */}
       <AnimatePresence>
         {modalMode && (
@@ -1354,6 +1537,7 @@ export default function AdminQuizPage() {
             }}
             onSave={handleSave}
             saving={saving}
+            categories={categories}
           />
         )}
       </AnimatePresence>
