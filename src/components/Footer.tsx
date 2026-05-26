@@ -27,6 +27,28 @@ const SOCIAL_LINKS = {
   whatsapp: "https://wa.me/2348137436770",
 };
 
+const QUICK_LINKS = [
+  { label: "About", href: "/about" },
+  { label: "Audio Messages", href: "/sermons" },
+  { label: "Listen Live", href: "/listen-live" },
+  { label: "Watch Live", href: "/live" },
+  { label: "Church Gallery", href: "/gallery" },
+];
+
+const RESOURCES_LINKS = [
+  { label: "Daily Devotionals", href: "/devotionals" },
+  { label: "Sunday School Manuals", href: "/manuals" },
+  { label: "Message Transcripts", href: "/transcripts" },
+  { label: "Become Born-Again", href: "/salvation" },
+];
+
+const CONNECT_LINKS = [
+  { label: "House Fellowships", href: "/fellowship" },
+  { label: "Testimonies", href: "/testimonies" },
+  { label: "Blog", href: "https://nlwc.church/blog/", external: true },
+  { label: "Contact Us", href: "/contact" },
+];
+
 export default function Footer() {
   const pathname = usePathname();
   const [email, setEmail] = useState("");
@@ -88,70 +110,25 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Middle Columns: Quick Links & Resources - Side by side on mobile */}
-        <div className="grid grid-cols-2 gap-8 sm:col-span-2 lg:col-span-2">
-          {/* Column 2: Quick Links */}
-          <div>
+        {/* Middle Columns: Quick Links, Resources & Connect */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:col-span-2 lg:col-span-2">
+          {/* Column 2: Quick Links (hidden on mobile) */}
+          <div className="hidden sm:block">
             <h3 className="font-semibold mb-4 text-white text-lg">
               Quick Links
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/about"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/sermons"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Audio Messages
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/fellowship"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  House Fellowships
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://nlwc.church/blog/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/gallery"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Church Gallery
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Contact Us
-                </Link>
-              </li>
+              {QUICK_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                  >
+                    <ChevronRight color={orange} />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -159,60 +136,38 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4 text-white text-lg">Resources</h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/devotionals"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Daily Devotionals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/listen-live"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Listen live
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/live"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Watch live
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manuals"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Sunday School Manuals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/transcripts"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Message Transcripts
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/salvation"
-                  className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
-                >
-                  <ChevronRight color={orange} />
-                  Become Born-Again
-                </Link>
-              </li>
+              {RESOURCES_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                  >
+                    <ChevronRight color={orange} />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 4: Connect */}
+          <div>
+            <h3 className="font-semibold mb-4 text-white text-lg">Connect</h3>
+            <ul className="space-y-3">
+              {CONNECT_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    {...(link.external
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
+                    className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
+                  >
+                    <ChevronRight color={orange} />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
