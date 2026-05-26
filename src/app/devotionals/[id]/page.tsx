@@ -75,7 +75,7 @@ export default function DevotionalViewPage({
           <BookOpen className="w-8 h-8 text-primary absolute inset-0 m-auto" />
         </div>
         <p className="text-muted-foreground font-bold text-xl animate-pulse">
-          Opening the word...
+          Opening Devotional...
         </p>
       </div>
     );
