@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -10,6 +10,8 @@ import {
   Sparkles,
   ArrowRight,
   Loader2,
+  Flame,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { QuizCategory } from "@/types/quiz";
@@ -20,46 +22,100 @@ interface QuizLauncherProps {
   username?: string;
 }
 
-const CATEGORIES: {
-  value: QuizCategory | null;
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-}[] = [
-  {
-    value: null,
-    label: "All Categories",
-    icon: <Sparkles className="w-5 h-5" />,
-    description: "Random mix of all topics",
-  },
-  {
-    value: "Sunday Message",
-    label: "Sunday Message",
-    icon: <Church className="w-5 h-5" />,
-    description: "Test your knowledge of Sunday sermons",
-  },
-  {
-    value: "Sunday School",
-    label: "Sunday School",
-    icon: <GraduationCap className="w-5 h-5" />,
-    description: "Recall Sunday School lessons",
-  },
-  {
-    value: "Bible Study",
-    label: "Bible Study",
-    icon: <BookOpen className="w-5 h-5" />,
-    description: "Midweek Bible study topics",
-  },
-  {
-    value: "Special Meeting",
-    label: "Special Meeting",
-    icon: <Brain className="w-5 h-5" />,
-    description: "Conferences & special meetings",
-  },
-];
+// Icon mapping for known categories
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Sunday Message": <Church className="w-5 h-5" />,
+  "Sunday School": <GraduationCap className="w-5 h-5" />,
+  "Bible Study": <BookOpen className="w-5 h-5" />,
+  "Special Meeting": <Brain className="w-5 h-5" />,
+  "Season of the Spirit": <Flame className="w-5 h-5" />,
+};
 
-export default function QuizLauncher({ onStart, loading, username }: QuizLauncherProps) {
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  "Sunday Message": "Test your knowledge of Sunday sermons",
+  "Sunday School": "Recall Sunday School lessons",
+  "Bible Study": "Weekly Bible study teachings",
+  "Special Meeting": "Conferences & special meetings",
+  "Season of the Spirit": "Review messages from annual SOTS meetings",
+};
+
+export default function QuizLauncher({
+  onStart,
+  loading,
+  username,
+}: QuizLauncherProps) {
   const [selected, setSelected] = useState<QuizCategory | null>(null);
+  const [categoryList, setCategoryList] = useState<
+    {
+      value: QuizCategory | null;
+      label: string;
+      icon: React.ReactNode;
+      description: string;
+    }[]
+  >([
+    {
+      value: null,
+      label: "All Categories",
+      icon: <Sparkles className="w-5 h-5" />,
+      description: "Random mix of all topics",
+    },
+    {
+      value: "Sunday Message",
+      label: "Sunday Message",
+      icon: CATEGORY_ICONS["Sunday Message"],
+      description: CATEGORY_DESCRIPTIONS["Sunday Message"],
+    },
+    {
+      value: "Sunday School",
+      label: "Sunday School",
+      icon: CATEGORY_ICONS["Sunday School"],
+      description: CATEGORY_DESCRIPTIONS["Sunday School"],
+    },
+    {
+      value: "Bible Study",
+      label: "Bible Study",
+      icon: CATEGORY_ICONS["Bible Study"],
+      description: CATEGORY_DESCRIPTIONS["Bible Study"],
+    },
+    {
+      value: "Special Meeting",
+      label: "Special Meeting",
+      icon: CATEGORY_ICONS["Special Meeting"],
+      description: CATEGORY_DESCRIPTIONS["Special Meeting"],
+    },
+    {
+      value: "Season of the Spirit",
+      label: "Season of the Spirit",
+      icon: CATEGORY_ICONS["Season of the Spirit"],
+      description: CATEGORY_DESCRIPTIONS["Season of the Spirit"],
+    },
+  ]);
+
+  // Fetch dynamic categories from DB
+  useEffect(() => {
+    fetch("/api/quiz/admin/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { name: string }[] | null) => {
+        if (!data || !Array.isArray(data) || data.length === 0) return;
+        const items: typeof categoryList = [
+          {
+            value: null,
+            label: "All Categories",
+            icon: <Sparkles className="w-5 h-5" />,
+            description: "Random mix of all topics",
+          },
+          ...data.map((c) => ({
+            value: c.name as QuizCategory,
+            label: c.name,
+            icon: CATEGORY_ICONS[c.name] || <Tag className="w-5 h-5" />,
+            description:
+              CATEGORY_DESCRIPTIONS[c.name] || `Questions from ${c.name}`,
+          })),
+        ];
+        setCategoryList(items);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <motion.div
@@ -91,7 +147,7 @@ export default function QuizLauncher({ onStart, loading, username }: QuizLaunche
             Choose Category
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {CATEGORIES.map((cat) => {
+            {categoryList.map((cat) => {
               const isSelected =
                 selected === cat.value ||
                 (selected === null && cat.value === null);
