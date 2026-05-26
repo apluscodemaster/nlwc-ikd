@@ -47,6 +47,7 @@ const CONNECT_LINKS = [
   { label: "Testimonies", href: "/testimonies" },
   { label: "Blog", href: "https://nlwc.church/blog/", external: true },
   { label: "Contact Us", href: "/contact" },
+  { label: "Give", href: "/give" },
 ];
 
 export default function Footer() {
