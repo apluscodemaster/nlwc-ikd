@@ -107,23 +107,44 @@ export default function GoogleTranslate() {
   }, []);
 
   const selectLanguage = useCallback(async (code: string) => {
+    // Find the <select> Google Translate injected
+    const combo =
+      (document.querySelector(".goog-te-combo") as HTMLSelectElement) ??
+      (await waitForCombo(10));
+
     if (code === "en") {
-      // Clear cookies on all possible domain variants and reload
+      // Clear googtrans cookies on all possible domain variants
       const host = window.location.hostname;
       const expiry = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = `googtrans=;path=/;${expiry}`;
       document.cookie = `googtrans=;path=/;domain=${host};${expiry}`;
       document.cookie = `googtrans=;path=/;domain=.${host};${expiry}`;
-      setCurrentLang("en");
-      setOpen(false);
-      window.location.reload();
+
+      // Tell Google Translate to restore the original page via its own <select>
+      if (combo) {
+        combo.value = "en";
+        combo.dispatchEvent(new Event("change"));
+        setCurrentLang("en");
+        setOpen(false);
+      } else {
+        // Fallback: if combo isn't available, try the iframe-based restore
+        const frame = document.querySelector(
+          ".goog-te-banner-frame"
+        ) as HTMLIFrameElement;
+        const restoreBtn = frame?.contentDocument?.querySelector(
+          "button.goog-close-link"
+        ) as HTMLButtonElement;
+        if (restoreBtn) {
+          restoreBtn.click();
+        } else {
+          // Last resort: reload (cookies are already cleared above)
+          window.location.reload();
+        }
+        setCurrentLang("en");
+        setOpen(false);
+      }
       return;
     }
-
-    // Find the <select> Google Translate injected
-    const combo =
-      (document.querySelector(".goog-te-combo") as HTMLSelectElement) ??
-      (await waitForCombo(10));
 
     if (combo) {
       combo.value = code;
