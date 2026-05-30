@@ -115,7 +115,6 @@ export default function QuizPlayer({
 
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {
-        console.warn("No more questions available in question bank");
         setNoMoreQuestions(true);
         setCurrent(null);
         return;

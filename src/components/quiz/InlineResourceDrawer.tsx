@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Play, Pause } from "lucide-react";
+import Image from "next/image";
 
 interface AudioSermon {
   id: number;
@@ -104,8 +105,9 @@ export function InlineResourceDrawer({
 
   const headerTitle =
     variant === "listen"
-      ? title ?? sermon?.title ?? "Listen"
-      : title ?? "Read Transcript";
+      ? (title ?? sermon?.title ?? "Listen")
+      : (title ?? "Read Transcript");
+  const transcriptTopOffsetPx = 200;
 
   return (
     <AnimatePresence>
@@ -113,7 +115,7 @@ export function InlineResourceDrawer({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-[60] bg-black/40"
+            className="fixed inset-0 z-60 bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -122,39 +124,39 @@ export function InlineResourceDrawer({
 
           {/* Drawer */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-3xl shadow-2xl"
-            style={{ height: "70vh" }}
+            className="fixed bottom-0 left-0 right-0 z-60 bg-card text-card-foreground rounded-t-3xl border-t border-border shadow-2xl flex flex-col"
+            style={{ height: "min(70vh, 640px)" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-800 truncate pr-2">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
+              <h3 className="text-sm font-semibold text-foreground truncate pr-2">
                 {headerTitle}
               </h3>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible-ring"
                 aria-label="Close"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-auto" style={{ height: "calc(70vh - 53px)" }}>
+            <div className="flex-1 min-h-0 overflow-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
               {variant === "listen" && (
                 <div className="p-4 flex flex-col items-center gap-4">
                   {loading && (
                     <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                      <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
                     </div>
                   )}
 
                   {!loading && !sermon && (
-                    <p className="text-gray-500 text-sm py-12">
+                    <p className="text-muted-foreground text-sm py-12">
                       Unable to load audio. Please try again.
                     </p>
                   )}
@@ -162,22 +164,24 @@ export function InlineResourceDrawer({
                   {!loading && sermon && (
                     <>
                       {sermon.thumbnailUrl && (
-                        <img
+                        <Image
                           src={sermon.thumbnailUrl}
                           alt={sermon.title}
+                          width={128}
+                          height={128}
                           className="w-32 h-32 rounded-xl object-cover shadow-md"
                         />
                       )}
 
                       <div className="text-center space-y-1">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-foreground">
                           {sermon.title}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {sermon.speaker}
                         </p>
                         {sermon.series && (
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground/80">
                             {sermon.series}
                           </p>
                         )}
@@ -185,36 +189,21 @@ export function InlineResourceDrawer({
 
                       <button
                         onClick={handlePlayPause}
-                        className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-lg"
+                        className="w-14 h-14 rounded-full bg-[#ff7c18] hover:bg-[#e86f14] text-white flex items-center justify-center transition-colors shadow-lg shadow-[0_14px_28px_-14px_rgba(255,124,24,0.85)]"
                         aria-label={isPlaying ? "Pause" : "Play"}
                       >
                         {isPlaying ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-6 h-6"
-                          >
-                            <path d="M6 4h4v16H6zm8 0h4v16h-4z" />
-                          </svg>
+                          <Pause className="w-6 h-6" />
                         ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-6 h-6"
-                          >
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
+                          <Play className="w-6 h-6 ml-0.5" />
                         )}
                       </button>
 
-                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                       <audio
                         ref={audioRef}
                         src={sermon.downloadUrl}
                         controls
-                        className="w-full max-w-sm"
+                        className="w-full max-w-sm accent-[#ff7c18]"
                         onPlay={() => setIsPlaying(true)}
                         onPause={() => setIsPlaying(false)}
                       />
@@ -224,12 +213,21 @@ export function InlineResourceDrawer({
               )}
 
               {variant === "read" && (
-                <iframe
-                  src={href}
-                  title={headerTitle}
-                  className="w-full h-full border-0"
-                  sandbox="allow-same-origin allow-scripts"
-                />
+                <div className="w-full h-full overflow-hidden relative">
+                  {/* Mask sticky site chrome (logo / hamburger) while keeping transcript body visible */}
+                  <div className="pointer-events-none absolute top-0 left-0 right-0 h-14 sm:h-16 z-10 bg-card border-b border-border" />
+                  {/* Offset the iframe to hide the site header/nav */}
+                  <iframe
+                    src={href}
+                    title={headerTitle}
+                    className="w-full border-0 absolute top-0 left-0"
+                    style={{
+                      height: `calc(100% + ${transcriptTopOffsetPx}px)`,
+                      marginTop: `-${transcriptTopOffsetPx}px`,
+                    }}
+                    sandbox="allow-same-origin allow-scripts"
+                  />
+                </div>
               )}
             </div>
           </motion.div>
