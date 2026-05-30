@@ -974,21 +974,23 @@ export default function AdminQuizPage() {
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 sm:inline-flex gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer w-full ${
-              activeTab === tab.id
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="w-full overflow-x-auto scrollbar-hide">
+        <div className="inline-flex min-w-full sm:min-w-0 gap-1 bg-gray-100 rounded-xl p-1 sm:w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer min-w-28 sm:min-w-0 ${
+                activeTab === tab.id
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <tab.icon className="w-4 h-4 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ════════════════════════════════════════ */}
