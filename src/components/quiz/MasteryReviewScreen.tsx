@@ -11,7 +11,7 @@ import {
   ArrowRight,
   SkipForward,
 } from "lucide-react";
-import Link from "next/link";
+import { ResourceLink } from "./ResourceLink";
 import { Button } from "@/components/ui/button";
 import type { AnsweredQuestion, Recommendation } from "@/types/quiz";
 
@@ -172,12 +172,12 @@ export default function MasteryReviewScreen({
                                   <p className="font-semibold text-gray-900 text-xs mb-2">
                                     {title}
                                   </p>
-                                  <div className="flex gap-2">
+                                    <div className="flex gap-2">
                                     {hasAudio && (
-                                      <Link
+                                      <ResourceLink
                                         href={rec.listen_url || "#"}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        variant="listen"
+                                        title={title}
                                         onClick={() =>
                                           handleAudioClick(item.question.id)
                                         }
@@ -185,13 +185,13 @@ export default function MasteryReviewScreen({
                                       >
                                         <Headphones className="w-3 h-3" />
                                         Listen
-                                      </Link>
+                                      </ResourceLink>
                                     )}
                                     {hasTranscript && (
-                                      <Link
+                                      <ResourceLink
                                         href={rec.read_url || "#"}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        variant="read"
+                                        title={title}
                                         onClick={() =>
                                           handleAudioClick(item.question.id)
                                         }
@@ -199,7 +199,7 @@ export default function MasteryReviewScreen({
                                       >
                                         <FileText className="w-3 h-3" />
                                         Read
-                                      </Link>
+                                      </ResourceLink>
                                     )}
                                   </div>
                                 </div>
