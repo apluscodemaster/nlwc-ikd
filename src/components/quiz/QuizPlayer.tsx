@@ -135,13 +135,33 @@ export default function QuizPlayer({
     }
   }, [category]);
 
-  // Load first question on mount only
+  // Seed answeredIdsRef with previously-answered questions, then load first question
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
-      fetchNextQuestion();
+
+      // Fetch IDs the user has already answered in previous quiz runs
+      const seedAndStart = async () => {
+        try {
+          const params = new URLSearchParams({ session_id: sessionId });
+          if (category) params.set("category", category);
+          const res = await fetch(`/api/quiz/answered-ids?${params}`);
+          if (res.ok) {
+            const ids: string[] = await res.json();
+            if (ids.length > 0) {
+              answeredIdsRef.current = new Set(ids);
+            }
+          }
+        } catch {
+          // Non-critical: if we can't fetch previous IDs, continue with empty set
+        }
+        fetchNextQuestion();
+      };
+
+      seedAndStart();
     }
-  }, [fetchNextQuestion]);
+  }, [fetchNextQuestion, sessionId, category]);
+
 
   const handleSelect = useCallback((index: number) => {
     setSelectedAnswer(index);

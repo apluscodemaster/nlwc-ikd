@@ -11,7 +11,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from "lucide-react";
-import Link from "next/link";
+import { ResourceLink } from "./ResourceLink";
 import { Button } from "@/components/ui/button";
 import type { QuizQuestion, Recommendation } from "@/types/quiz";
 
@@ -158,28 +158,28 @@ export default function FailedQuestionOverlay({
 
                       <div className="flex gap-2">
                         {hasAudio && (
-                          <Link
+                          <ResourceLink
                             href={rec.listen_url || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            variant="listen"
+                            title={title}
                             onClick={() => setRecommendationClicked(true)}
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors active:scale-[0.97]"
                           >
                             <Headphones className="w-3.5 h-3.5" />
                             Listen
-                          </Link>
+                          </ResourceLink>
                         )}
                         {hasTranscript && (
-                          <Link
+                          <ResourceLink
                             href={rec.read_url || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            variant="read"
+                            title={title}
                             onClick={() => setRecommendationClicked(true)}
                             className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors active:scale-[0.97]"
                           >
                             <FileText className="w-3.5 h-3.5" />
                             Read
-                          </Link>
+                          </ResourceLink>
                         )}
                       </div>
                     </motion.div>
