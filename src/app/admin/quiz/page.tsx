@@ -13,7 +13,6 @@ import {
   Trophy,
   HelpCircle,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   ChevronUp,
   BookOpen,
@@ -510,12 +509,17 @@ export default function AdminQuizPage() {
   const [exportingFormat, setExportingFormat] = useState<string | null>(null);
 
   // Categories state (dynamic from DB)
-  const [categories, setCategories] = useState<QuizCategory[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] =
+    useState<QuizCategory[]>(DEFAULT_CATEGORIES);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
-  const [dbCategories, setDbCategories] = useState<{ id: string; name: string; created_at: string }[]>([]);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
+    null,
+  );
+  const [dbCategories, setDbCategories] = useState<
+    { id: string; name: string; created_at: string }[]
+  >([]);
 
   // ── Fetch categories from DB ──
   const fetchCategories = useCallback(async () => {
@@ -523,7 +527,8 @@ export default function AdminQuizPage() {
     try {
       const res = await fetch("/api/quiz/admin/categories");
       if (!res.ok) throw new Error("Failed to fetch");
-      const data: { id: string; name: string; created_at: string }[] = await res.json();
+      const data: { id: string; name: string; created_at: string }[] =
+        await res.json();
       setDbCategories(data);
       const names = data.map((c) => c.name);
       if (names.length > 0) {
@@ -969,21 +974,23 @@ export default function AdminQuizPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === tab.id
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="w-full overflow-x-auto scrollbar-hide">
+        <div className="inline-flex min-w-full sm:min-w-0 gap-1 bg-gray-100 rounded-xl p-1 sm:w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer min-w-28 sm:min-w-0 ${
+                activeTab === tab.id
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <tab.icon className="w-4 h-4 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ════════════════════════════════════════ */}
@@ -1412,7 +1419,9 @@ export default function AdminQuizPage() {
                   fetchCategories();
                 } catch (err) {
                   toast.error(
-                    err instanceof Error ? err.message : "Failed to create category",
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to create category",
                   );
                 } finally {
                   setCreatingCategory(false);
@@ -1471,20 +1480,27 @@ export default function AdminQuizPage() {
                         {cat.name}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {categoryCounts[cat.name] || 0} question{(categoryCounts[cat.name] || 0) !== 1 ? "s" : ""}
+                        {categoryCounts[cat.name] || 0} question
+                        {(categoryCounts[cat.name] || 0) !== 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                        Added {new Date(cat.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                        Added{" "}
+                        {new Date(cat.created_at).toLocaleDateString("en-NG", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </span>
                       <button
                         disabled={deletingCategoryId === cat.id}
                         onClick={async () => {
                           const qCount = categoryCounts[cat.name] || 0;
-                          const msg = qCount > 0
-                            ? `Delete category "${cat.name}"? There are ${qCount} question(s) using this category. The questions will remain but may need to be recategorized.`
-                            : `Delete category "${cat.name}"? This cannot be undone.`;
+                          const msg =
+                            qCount > 0
+                              ? `Delete category "${cat.name}"? There are ${qCount} question(s) using this category. The questions will remain but may need to be recategorized.`
+                              : `Delete category "${cat.name}"? This cannot be undone.`;
                           const confirmed = await showConfirm(msg, {
                             title: "Delete Category",
                             variant: "warning",
