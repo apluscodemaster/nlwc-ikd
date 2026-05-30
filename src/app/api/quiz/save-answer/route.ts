@@ -16,12 +16,34 @@ export async function POST(req: NextRequest) {
 
     const { question_id, selected_answer, category } = answer;
 
+    // Check if this question was already answered by this session
+    const { data: existing } = await getSupabase()
+      .from("quiz_attempts")
+      .select("id, is_correct")
+      .eq("session_id", session_id)
+      .eq("question_id", question_id)
+      .maybeSingle();
+
     // Fetch question to verify correctness
     const question = await fetchQuestionById(question_id);
     if (!question) {
       return NextResponse.json(
         { error: "Question not found" },
         { status: 404 },
+      );
+    }
+
+    // If already answered, return the existing result without re-inserting or re-incrementing
+    if (existing) {
+      return NextResponse.json(
+        {
+          is_correct: existing.is_correct,
+          correct_answer: question.correctAnswer,
+          explanation: question.explain || null,
+        },
+        {
+          headers: { "Cache-Control": "no-store" },
+        },
       );
     }
 
