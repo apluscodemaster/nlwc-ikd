@@ -32,11 +32,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const correct = attempts.filter((a: any) => a.is_correct).length;
-    const total = attempts.length;
+    // Deduplicate: keep only the latest attempt per question_id
+    const latestByQuestion = new Map<string, (typeof attempts)[0]>();
+    for (const a of attempts) {
+      const existing = latestByQuestion.get(a.question_id);
+      if (
+        !existing ||
+        new Date(a.answered_at) > new Date(existing.answered_at)
+      ) {
+        latestByQuestion.set(a.question_id, a);
+      }
+    }
+    const uniqueAttempts = Array.from(latestByQuestion.values());
+
+    const correct = uniqueAttempts.filter((a: any) => a.is_correct).length;
+    const total = uniqueAttempts.length;
 
     const byCategory: Record<string, { correct: number; total: number }> = {};
-    for (const a of attempts) {
+    for (const a of uniqueAttempts) {
       const category = a.category as string;
       if (!byCategory[category]) {
         byCategory[category] = { correct: 0, total: 0 };
@@ -54,7 +67,7 @@ export async function GET(req: NextRequest) {
       question: any;
       explanation?: string;
     }> = [];
-    for (const attempt of attempts) {
+    for (const attempt of uniqueAttempts) {
       if (!attempt.is_correct) {
         const question = await fetchQuestionById(attempt.question_id);
         if (question) {
