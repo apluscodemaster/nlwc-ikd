@@ -101,6 +101,10 @@ const NAVIGATION_DATA: NavItem[] = [
         href: "/fellowship",
       },
       {
+        label: "Testimonies",
+        href: "/testimonies",
+      },
+      {
         label: "Blog",
         href: "https://nlwc.church/blog/",
         isExternal: true,
@@ -170,7 +174,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden xl:flex items-center space-x-1">
             {NAVIGATION_DATA.map((item) => (
               <div
                 key={item.label}
@@ -287,7 +291,7 @@ export default function Navbar() {
             </Link>
 
             {/* Mobile Menu Trigger */}
-            <div className="lg:hidden">
+            <div className="xl:hidden">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
