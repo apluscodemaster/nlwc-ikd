@@ -107,7 +107,7 @@ export default function ServiceTimes() {
               <motion.div
                 key={service.id}
                 variants={cardVariants}
-                className="min-w-[300px] sm:min-w-[380px] bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 group border border-gray-100/50 hover:border-primary/10 flex flex-col h-full"
+                className="min-w-[300px] sm:min-w-[380px] bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 group border border-gray-100/50 hover:border-primary/10 flex flex-col"
               >
                 {/* Image Section */}
                 <div className="relative h-64 overflow-hidden">
@@ -158,7 +158,7 @@ export default function ServiceTimes() {
                     {service.name}
                   </h3>
 
-                  <p className="text-muted-foreground mb-8 leading-relaxed line-clamp-3 text-[0.95rem]">
+                  <p className="text-muted-foreground mb-8 leading-relaxed line-clamp-2 text-[0.95rem]">
                     {service.description}
                   </p>
 
