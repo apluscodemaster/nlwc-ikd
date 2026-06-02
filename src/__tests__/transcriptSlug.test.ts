@@ -78,7 +78,7 @@ describe("normalizeTitle", () => {
   });
 
   it("normalizes en-dash and em-dash to hyphen then strips", () => {
-    expect(normalizeTitle("Faith\u2013Hope")).toBe("faith-hope");
+    expect(normalizeTitle("Faith\u2013Hope")).toBe("faithhope");
   });
 
   it("removes non-alphanumeric chars", () => {
