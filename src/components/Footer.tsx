@@ -40,6 +40,7 @@ const RESOURCES_LINKS = [
   { label: "Sunday School Manuals", href: "/manuals" },
   { label: "Message Transcripts", href: "/transcripts" },
   { label: "Become Born-Again", href: "/salvation" },
+  { label: "Take Quiz", href: "/sermon/quiz" },
 ];
 
 const CONNECT_LINKS = [
