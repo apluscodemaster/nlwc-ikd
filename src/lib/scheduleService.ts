@@ -10,6 +10,8 @@ export interface RecurringService {
   startHour: number;
   /** 24-h end hour (exclusive) */
   endHour: number;
+  /** Whether the event ends on the next day (overnight event) */
+  endsNextDay?: boolean;
   /** Display label, e.g. "Sunday Worship Service" */
   label: string;
   /** Optional description shown on cards / detail views */
@@ -40,6 +42,8 @@ export interface SpecialService {
   startHour: number;
   /** 24-h end hour */
   endHour: number;
+  /** Whether the event ends on the next day (overnight event) */
+  endsNextDay?: boolean;
   /** Display label */
   label: string;
   /** Optional description */
