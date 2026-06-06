@@ -815,7 +815,7 @@ export default function ScheduleAdminPage() {
   // ── Fetch ──
   const fetchSchedules = useCallback(async () => {
     try {
-      const res = await fetch("/api/schedule");
+      const res = await fetch("/api/schedule", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setRecurring(data.recurring || []);
@@ -849,7 +849,9 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Update failed");
         }
-        toast.success("Service updated");
+        toast.success("Service updated", {
+          description: `"${rest.label}" has been updated successfully.`,
+        });
       } else {
         const res = await fetch("/api/schedule", {
           method: "POST",
@@ -860,13 +862,17 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Create failed");
         }
-        toast.success("Service created");
+        toast.success("Service created", {
+          description: `"${rest.label}" has been added to the schedule.`,
+        });
       }
       setRecurringModalMode(null);
       setEditingRecurring(null);
       await fetchSchedules();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Operation failed");
+      toast.error(err instanceof Error ? err.message : "Operation failed", {
+        description: "Please try again or check your connection.",
+      });
     } finally {
       setSaving(false);
     }
@@ -889,7 +895,9 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Update failed");
         }
-        toast.success("Event updated");
+        toast.success("Event updated", {
+          description: `"${rest.label}" has been updated successfully.`,
+        });
       } else {
         const res = await fetch("/api/schedule", {
           method: "POST",
@@ -900,13 +908,17 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Create failed");
         }
-        toast.success("Event created");
+        toast.success("Event created", {
+          description: `"${rest.label}" has been added to the schedule.`,
+        });
       }
       setSpecialModalMode(null);
       setEditingSpecial(null);
       await fetchSchedules();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Operation failed");
+      toast.error(err instanceof Error ? err.message : "Operation failed", {
+        description: "Please try again or check your connection.",
+      });
     } finally {
       setSaving(false);
     }
@@ -929,11 +941,15 @@ export default function ScheduleAdminPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
-      toast.success(`${type === "recurring" ? "Service" : "Event"} deleted`);
+      toast.success(`${type === "recurring" ? "Service" : "Event"} deleted`, {
+        description: "The schedule entry has been removed.",
+      });
       await fetchSchedules();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete");
+      toast.error("Failed to delete", {
+        description: "Please try again or check your connection.",
+      });
     }
   };
 
@@ -950,10 +966,15 @@ export default function ScheduleAdminPage() {
         body: JSON.stringify({ type, id, active: !currentActive }),
       });
       if (!res.ok) throw new Error("Toggle failed");
+      toast.success(!currentActive ? "Activated" : "Deactivated", {
+        description: `Schedule entry has been ${!currentActive ? "activated" : "deactivated"}.`,
+      });
       await fetchSchedules();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to toggle status");
+      toast.error("Failed to toggle status", {
+        description: "Please try again or check your connection.",
+      });
     }
   };
 
