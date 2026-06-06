@@ -115,6 +115,7 @@ function RecurringModal({
   const [dayOfWeek, setDayOfWeek] = useState(0);
   const [startHour, setStartHour] = useState(9);
   const [endHour, setEndHour] = useState(12);
+  const [endsNextDay, setEndsNextDay] = useState(false);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [location, setLocation] = useState("Church Auditorium, Ikorodu");
@@ -129,6 +130,7 @@ function RecurringModal({
       setDayOfWeek(service.dayOfWeek);
       setStartHour(service.startHour);
       setEndHour(service.endHour);
+      setEndsNextDay(service.endsNextDay || false);
       setDescription(service.description || "");
       setImageUrl(service.imageUrl || "");
       setLocation(service.location || "Church Auditorium, Ikorodu");
@@ -141,6 +143,7 @@ function RecurringModal({
       setDayOfWeek(0);
       setStartHour(9);
       setEndHour(12);
+      setEndsNextDay(false);
       setDescription("");
       setImageUrl("");
       setLocation("Church Auditorium, Ikorodu");
@@ -157,8 +160,8 @@ function RecurringModal({
       toast.error("Label is required");
       return;
     }
-    if (startHour >= endHour) {
-      toast.error("Start hour must be before end hour");
+    if (!endsNextDay && startHour >= endHour) {
+      toast.error("Start hour must be before end hour (or enable 'Ends next day')");
       return;
     }
     onSave({
@@ -168,6 +171,7 @@ function RecurringModal({
       dayOfWeek,
       startHour,
       endHour,
+      endsNextDay,
       description: description.trim(),
       imageUrl: imageUrl.trim(),
       location: location.trim(),
@@ -278,6 +282,22 @@ function RecurringModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Ends Next Day toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEndsNextDay(!endsNextDay)}
+              className="flex items-center gap-2 text-sm text-gray-700 hover:text-primary transition"
+            >
+              {endsNextDay ? (
+                <ToggleRight className="w-5 h-5 text-primary" />
+              ) : (
+                <ToggleLeft className="w-5 h-5 text-gray-400" />
+              )}
+              Ends next day (overnight event)
+            </button>
           </div>
 
           {/* Description */}
@@ -444,6 +464,7 @@ function SpecialModal({
   const [date, setDate] = useState("");
   const [startHour, setStartHour] = useState(9);
   const [endHour, setEndHour] = useState(12);
+  const [endsNextDay, setEndsNextDay] = useState(false);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [location, setLocation] = useState("Church Auditorium, Ikorodu");
@@ -458,6 +479,7 @@ function SpecialModal({
       setDate(service.date);
       setStartHour(service.startHour);
       setEndHour(service.endHour);
+      setEndsNextDay(service.endsNextDay || false);
       setDescription(service.description || "");
       setImageUrl(service.imageUrl || "");
       setLocation(service.location || "Church Auditorium, Ikorodu");
@@ -470,6 +492,7 @@ function SpecialModal({
       setDate("");
       setStartHour(9);
       setEndHour(12);
+      setEndsNextDay(false);
       setDescription("");
       setImageUrl("");
       setLocation("Church Auditorium, Ikorodu");
@@ -490,8 +513,8 @@ function SpecialModal({
       toast.error("Date is required");
       return;
     }
-    if (startHour >= endHour) {
-      toast.error("Start hour must be before end hour");
+    if (!endsNextDay && startHour >= endHour) {
+      toast.error("Start hour must be before end hour (or enable 'Ends next day')");
       return;
     }
     onSave({
@@ -501,6 +524,7 @@ function SpecialModal({
       date,
       startHour,
       endHour,
+      endsNextDay,
       description: description.trim(),
       imageUrl: imageUrl.trim(),
       location: location.trim(),
@@ -605,6 +629,22 @@ function SpecialModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Ends Next Day toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEndsNextDay(!endsNextDay)}
+              className="flex items-center gap-2 text-sm text-gray-700 hover:text-primary transition"
+            >
+              {endsNextDay ? (
+                <ToggleRight className="w-5 h-5 text-primary" />
+              ) : (
+                <ToggleLeft className="w-5 h-5 text-gray-400" />
+              )}
+              Ends next day (overnight event)
+            </button>
           </div>
 
           {/* Description */}
@@ -1100,6 +1140,9 @@ export default function ScheduleAdminPage() {
                             {DAY_NAMES[svc.dayOfWeek]} &middot;{" "}
                             {formatHour(svc.startHour)} &ndash;{" "}
                             {formatHour(svc.endHour)}
+                            {svc.endsNextDay && (
+                              <span className="text-[9px] font-medium text-amber-600 ml-1">(+1 day)</span>
+                            )}
                           </p>
                           {svc.location && (
                             <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">
@@ -1230,6 +1273,9 @@ export default function ScheduleAdminPage() {
                             <Calendar className="w-3 h-3 shrink-0" />
                             {evt.date} &middot; {formatHour(evt.startHour)}{" "}
                             &ndash; {formatHour(evt.endHour)}
+                            {evt.endsNextDay && (
+                              <span className="text-[9px] font-medium text-amber-600 ml-1">(+1 day)</span>
+                            )}
                           </p>
                           {evt.location && (
                             <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">
