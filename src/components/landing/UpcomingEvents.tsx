@@ -191,15 +191,21 @@ function apiToChurchEvents(data: {
   return events;
 }
 
-// Module-level cache so we fetch at most once per page session
+// Module-level cache with time-based expiry (60s) so data stays fresh
+// without making excessive API calls
 let cachedEvents: ChurchEvent[] | null = null;
 let cachePromise: Promise<ChurchEvent[]> | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 60_000; // 60 seconds
 
 function fetchScheduleOnce(): Promise<ChurchEvent[]> {
-  if (cachedEvents) return Promise.resolve(cachedEvents);
-  if (cachePromise) return cachePromise;
+  const now = Date.now();
+  if (cachedEvents && now - cacheTimestamp < CACHE_TTL) {
+    return Promise.resolve(cachedEvents);
+  }
+  if (cachePromise && now - cacheTimestamp < CACHE_TTL) return cachePromise;
 
-  cachePromise = fetch("/api/schedule")
+  cachePromise = fetch("/api/schedule", { cache: "no-store" })
     .then((res) => {
       if (!res.ok) throw new Error("API error");
       return res.json();
@@ -207,11 +213,12 @@ function fetchScheduleOnce(): Promise<ChurchEvent[]> {
     .then((data) => {
       const converted = apiToChurchEvents(data);
       cachedEvents = converted.length > 0 ? converted : null;
+      cacheTimestamp = Date.now();
       return cachedEvents || getUpcomingEvents();
     })
     .catch(() => {
       cachePromise = null; // allow retry on error
-      return getUpcomingEvents();
+      return cachedEvents || getUpcomingEvents();
     });
 
   return cachePromise;
@@ -322,7 +329,7 @@ export default function UpcomingEvents() {
   useEffect(() => {
     let cancelled = false;
     fetchScheduleOnce().then((result) => {
-      if (!cancelled) setEvents(result.slice(0, 6));
+      if (!cancelled && result.length > 0) setEvents(result.slice(0, 6));
     });
     return () => {
       cancelled = true;
