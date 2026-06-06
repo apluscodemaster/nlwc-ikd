@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   getRecurringServices,
   createRecurringService,
@@ -9,6 +10,8 @@ import {
   updateSpecialService,
   deleteSpecialService,
 } from "@/lib/scheduleService";
+
+export const dynamic = "force-dynamic";
 
 // ── Default recurring services (seeded when Firestore is empty) ──
 const DEFAULT_RECURRING = [
@@ -220,7 +223,7 @@ export async function GET() {
       { recurring, special },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
         },
       },
     );
@@ -295,6 +298,7 @@ export async function POST(req: NextRequest) {
         recurrenceLabel: data.recurrenceLabel || "",
         active: data.active !== false,
       });
+      revalidatePath("/api/schedule");
       return NextResponse.json(result, { status: 201 });
     }
 
@@ -319,6 +323,7 @@ export async function POST(req: NextRequest) {
         recurrenceLabel: data.recurrenceLabel || "",
         active: data.active !== false,
       });
+      revalidatePath("/api/schedule");
       return NextResponse.json(result, { status: 201 });
     }
 
@@ -368,6 +373,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    revalidatePath("/api/schedule");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to update schedule:", error);
@@ -403,6 +409,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    revalidatePath("/api/schedule");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete schedule:", error);
