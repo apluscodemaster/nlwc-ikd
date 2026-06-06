@@ -263,9 +263,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (data.startHour >= data.endHour) {
+    if (!data.endsNextDay && data.startHour >= data.endHour) {
       return NextResponse.json(
-        { error: "Start hour must be before end hour" },
+        { error: "Start hour must be before end hour (or enable 'Ends next day')" },
         { status: 400 },
       );
     }
@@ -285,6 +285,7 @@ export async function POST(req: NextRequest) {
         dayOfWeek: data.dayOfWeek,
         startHour: data.startHour,
         endHour: data.endHour,
+        endsNextDay: data.endsNextDay || false,
         label: data.label,
         description: data.description || "",
         imageUrl: data.imageUrl || "",
@@ -308,6 +309,7 @@ export async function POST(req: NextRequest) {
         date: data.date,
         startHour: data.startHour,
         endHour: data.endHour,
+        endsNextDay: data.endsNextDay || false,
         label: data.label,
         description: data.description || "",
         imageUrl: data.imageUrl || "",
@@ -347,9 +349,9 @@ export async function PUT(req: NextRequest) {
     }
 
     if (data.startHour !== undefined && data.endHour !== undefined) {
-      if (data.startHour >= data.endHour) {
+      if (!data.endsNextDay && data.startHour >= data.endHour) {
         return NextResponse.json(
-          { error: "Start hour must be before end hour" },
+          { error: "Start hour must be before end hour (or enable 'Ends next day')" },
           { status: 400 },
         );
       }
