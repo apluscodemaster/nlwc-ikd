@@ -21,80 +21,34 @@ export function getBaseSlug(slug: string, transcriptTitle: string): string {
 }
 
 export async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
-  const WP_API =
-    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
-  const CATEGORY_ID = 20;
-  const MAX_PAGES = 5;
-  const PER_PAGE = 100;
-
   try {
-    const allTranscripts: TranscriptStub[] = [];
-    let totalPages = MAX_PAGES;
+    const res = await fetch("/api/transcripts/slugs", {
+      signal: AbortSignal.timeout(15000),
+    });
 
-    for (let page = 1; page <= totalPages; page++) {
-      const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
-
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-
-        if (!res.ok) {
-          logWarn(
-            "Failed to fetch transcript data",
-            { page, status: res.status },
-            { tag: "Transcripts" },
-          );
-          break;
-        }
-
-        const wpTotalPages = res.headers.get("X-WP-TotalPages");
-        if (wpTotalPages) {
-          totalPages = Math.min(
-            parseInt(wpTotalPages, 10) || MAX_PAGES,
-            MAX_PAGES,
-          );
-        }
-
-        const posts: {
-          title: { rendered: string };
-          slug: string;
-          id: number;
-          categories: number[];
-        }[] = await res.json();
-
-        if (posts.length === 0) {
-          break;
-        }
-
-        const pageTranscripts = posts.map((p) => {
-          const baseSlug = getBaseSlug(p.slug, p.title.rendered);
-          const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
-          if (!hasCorrectCategory) {
-            logWarn(
-              "Category mismatch detected",
-              { postId: p.id },
-              { tag: "Transcripts" },
-            );
-          }
-
-          return {
-            slug: p.slug,
-            title: p.title.rendered,
-            id: p.id,
-            categories: p.categories,
-            baseSlug,
-          };
-        });
-
-        allTranscripts.push(...pageTranscripts);
-      } catch (pageErr) {
-        logError("Failed to fetch transcript page", pageErr, {
-          tag: "Transcripts",
-        });
-        break;
-      }
+    if (!res.ok) {
+      logWarn(
+        "Failed to fetch transcript slugs",
+        { status: res.status },
+        { tag: "Transcripts" },
+      );
+      return [];
     }
 
-    return allTranscripts;
+    const posts: {
+      slug: string;
+      title: string;
+      id: number;
+      categories: number[];
+    }[] = await res.json();
+
+    return posts.map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      id: p.id,
+      categories: p.categories,
+      baseSlug: getBaseSlug(p.slug, p.title),
+    }));
   } catch (err) {
     logError("Failed to load transcript data", err, { tag: "Transcripts" });
     return [];
