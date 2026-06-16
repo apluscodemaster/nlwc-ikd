@@ -197,6 +197,7 @@ interface FetchPostsOptions {
   before?: string; // ISO date string — posts published before this date
   after?: string; // ISO date string — posts published after this date
   exclude?: number[]; // Post IDs to exclude
+  noStore?: boolean; // Bypass Data Cache (admin reads) so edits show immediately
 }
 
 /**
@@ -213,6 +214,7 @@ export async function fetchWPPosts(
     orderBy = "date",
     order = "desc",
     embed = true,
+    noStore = false,
   } = options;
 
   const params = new URLSearchParams({
@@ -255,11 +257,12 @@ export async function fetchWPPosts(
       await new Promise((r) => setTimeout(r, attempt * 2000));
     }
 
-    response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, {
-      next: {
-        revalidate: 300,
-      },
-    });
+    response = await fetch(
+      `${WP_API_BASE}/posts?${params.toString()}`,
+      // Admin reads pass noStore so saved edits show immediately; public reads
+      // keep the 5-minute Data Cache.
+      noStore ? { cache: "no-store" } : { next: { revalidate: 300 } },
+    );
 
     if (response.ok) break;
     if (response.status === 429) {
