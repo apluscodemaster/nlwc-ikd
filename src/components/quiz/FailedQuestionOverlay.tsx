@@ -36,6 +36,14 @@ export default function FailedQuestionOverlay({
   const correctAnswerText = question.options[correctAnswer];
   const [recommendationClicked, setRecommendationClicked] = useState(false);
 
+  // Some questions (e.g. the "General Bible Question" category) have no resource
+  // reference, so there are no clickable resources to gate on. Only require a
+  // resource click when at least one actionable resource is actually available.
+  const hasClickableResource = recommendations.some(
+    (rec) => rec.listen_url || rec.read_url
+  );
+  const canContinue = recommendationClicked || !hasClickableResource;
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -65,7 +73,7 @@ export default function FailedQuestionOverlay({
             </div>
           </div>
           <p className="text-white/90 text-sm">
-            {recommendationClicked
+            {canContinue
               ? "✓ Great! Now you're ready to try again."
               : "Review a recommended resource before continuing →"}
           </p>
@@ -193,14 +201,14 @@ export default function FailedQuestionOverlay({
           <motion.div className="flex gap-3 pt-4">
             <Button
               onClick={onContinue}
-              disabled={!recommendationClicked}
+              disabled={!canContinue}
               className={`flex-1 h-12 rounded-full font-bold cursor-pointer transition-all ${
-                recommendationClicked
+                canContinue
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {recommendationClicked ? (
+              {canContinue ? (
                 <>
                   Back to Quiz <ArrowRight className="w-4 h-4 ml-2" />
                 </>
