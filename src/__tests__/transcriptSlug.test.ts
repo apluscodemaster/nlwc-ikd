@@ -25,9 +25,9 @@ describe("getBaseSlug", () => {
   });
 
   it("keeps full slug when title contains 'Part 2'", () => {
-    expect(
-      getBaseSlug("the-love-of-god-2", "The Love of God Part 2"),
-    ).toBe("the-love-of-god-2");
+    expect(getBaseSlug("the-love-of-god-2", "The Love of God Part 2")).toBe(
+      "the-love-of-god-2",
+    );
   });
 
   it("keeps full slug when title contains 'Pt. 3'", () => {
@@ -239,7 +239,9 @@ describe("findTranscriptSlug", () => {
 
   // 6. No match
   it("returns null when no match found", () => {
-    expect(findTranscriptSlug("Totally Unrelated Title", transcripts)).toBeNull();
+    expect(
+      findTranscriptSlug("Totally Unrelated Title", transcripts),
+    ).toBeNull();
   });
 
   it("returns null for empty title", () => {
