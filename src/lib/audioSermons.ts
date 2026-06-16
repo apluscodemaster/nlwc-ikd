@@ -77,18 +77,23 @@ export interface AudioSermonsFilters {
   topicId?: number;
   year?: number;
   order?: "ASC" | "DESC";
+  /** Bypass all caching (dedup + Data Cache) — used by the admin so saved
+   *  edits are reflected immediately. */
+  noStore?: boolean;
 }
 
 // =============================================================================
 // FETCH OPTIONS (handles SSL certificate issues in development)
 // =============================================================================
 
-function getFetchOptions(): RequestInit {
+function getFetchOptions(noStore = false): RequestInit {
   return {
     headers: {
       "User-Agent": "Mozilla/5.0 (compatible; NLWCGallery/1.0)",
     },
-    next: { revalidate: 600 }, // Cache for 10 minutes
+    // Admin reads pass noStore so freshly-saved edits show immediately; public
+    // reads keep the 10-minute Data Cache.
+    ...(noStore ? { cache: "no-store" } : { next: { revalidate: 600 } }),
   } as RequestInit;
 }
 
@@ -133,10 +138,13 @@ async function fetchFromWpApi(
     if (filters.year) params.set("year", filters.year.toString());
     if (filters.order) params.set("order", filters.order);
 
-    const response = await deduplicatedFetch(
-      `${WP_API_URL}/sermons?${params}`,
-      getFetchOptions(),
-    );
+    const sermonsUrl = `${WP_API_URL}/sermons?${params}`;
+    // Admin (noStore) bypasses the in-memory dedup cache (which keys on URL
+    // only and ignores cache options) AND the Data Cache, so saved edits are
+    // reflected immediately.
+    const response = filters.noStore
+      ? await fetch(sermonsUrl, getFetchOptions(true))
+      : await deduplicatedFetch(sermonsUrl, getFetchOptions());
 
     if (response.status === 404) {
       return null;

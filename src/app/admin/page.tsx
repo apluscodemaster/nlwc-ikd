@@ -792,8 +792,11 @@ export default function AdminChurchContentPage() {
         body: formData,
       });
       const data = await res.json();
-      if (data.mediaId) {
-        setEditUploadedMediaId(data.mediaId);
+      // The /api/wp/upload-media route returns the new attachment as `id`
+      // (not `mediaId`). Reading the wrong field left editUploadedMediaId null,
+      // so the thumbnail was never written back on edit.
+      if (data.id) {
+        setEditUploadedMediaId(data.id);
         toast.success("Thumbnail uploaded!");
       } else {
         toast.error("Thumbnail upload failed");
@@ -836,8 +839,9 @@ export default function AdminChurchContentPage() {
             body: formData,
           });
           const audioData = await audioRes.json();
-          if (audioData.mediaId) {
-            uploadedAudioMediaId = audioData.mediaId;
+          // upload-media returns `id`, not `mediaId`.
+          if (audioData.id) {
+            uploadedAudioMediaId = audioData.id;
             toast.success("Audio file uploaded!");
           } else {
             toast.warning(
@@ -884,6 +888,11 @@ export default function AdminChurchContentPage() {
       if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
       if (activeTab === "sermon" && editSeriesId) {
         payload.categories = [Number(editSeriesId)];
+      } else if (activeTab === "transcript") {
+        // Write the transcript type back as its WP category. Without this, the
+        // "Transcript Type" select in the edit modal was a no-op — the value
+        // never reached the update payload (only sermons sent categories).
+        payload.categories = [TRANSCRIPT_TYPE_TO_CATEGORY[editTranscriptType]];
       }
 
       const res = await fetch("/api/wp/update", {
