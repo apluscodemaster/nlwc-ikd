@@ -7,7 +7,6 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  Search,
   BarChart3,
   Users,
   Trophy,
@@ -30,6 +29,8 @@ import type { QuizCategory, QuizQuestion } from "@/types/quiz";
 import { showConfirm } from "@/components/shared/CustomDialog";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/shared/StatCard";
+import { ModalShell } from "@/components/shared/ModalShell";
+import { SearchInput } from "@/components/shared/SearchInput";
 import {
   exportQuizAsJSON,
   exportQuizAsCSV,
@@ -149,20 +150,7 @@ function QuestionModal({
   if (!mode) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 30, scale: 0.95 }}
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100"
-      >
+    <ModalShell onClose={onClose} className="max-w-2xl">
         <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <BrainCircuit className="w-5 h-5 text-primary" />
@@ -314,8 +302,7 @@ function QuestionModal({
             </button>
           </div>
         </form>
-      </motion.div>
-    </div>
+      </ModalShell>
   );
 }
 
@@ -968,16 +955,13 @@ export default function AdminQuizPage() {
         <div className="space-y-4">
           {/* Search + Filter */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQ}
-                onChange={(e) => setSearchQ(e.target.value)}
-                className="w-full h-10 pl-11 pr-4 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                placeholder="Search questions..."
-              />
-            </div>
+            <SearchInput
+              value={searchQ}
+              onChange={setSearchQ}
+              placeholder="Search questions..."
+              wrapperClassName="flex-1"
+              className="h-10 pl-11 pr-4 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
             <select
               value={filterCategory}
               onChange={(e) =>
