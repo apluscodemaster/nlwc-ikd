@@ -66,6 +66,8 @@ export interface WPPublishResult {
   success: boolean;
   postId?: number;
   postUrl?: string;
+  /** The resulting WordPress status — "future" when the post was scheduled. */
+  status?: string;
   error?: string;
 }
 
@@ -74,7 +76,7 @@ export interface WPPublishResult {
  */
 export async function publishToWordPress(
   payload: WPPublishPayload,
-  options?: { featuredMediaId?: number },
+  options?: { featuredMediaId?: number; date?: string },
 ): Promise<WPPublishResult> {
   if (!WP_APP_PASSWORD) {
     return {
@@ -94,6 +96,13 @@ export async function publishToWordPress(
   // Attach featured image (thumbnail) if provided
   if (options?.featuredMediaId) {
     body.featured_media = options.featuredMediaId;
+  }
+
+  // Attach publish date. With status "publish" and a future date, WordPress
+  // automatically stores the post as "future" (scheduled) and publishes it at
+  // that moment. The date is naive local time, interpreted in the site's tz.
+  if (options?.date) {
+    body.date = options.date;
   }
 
   try {
@@ -116,11 +125,16 @@ export async function publishToWordPress(
       };
     }
 
-    const data = (await response.json()) as { id: number; link: string };
+    const data = (await response.json()) as {
+      id: number;
+      link: string;
+      status?: string;
+    };
     return {
       success: true,
       postId: data.id,
       postUrl: data.link,
+      status: data.status,
     };
   } catch (err) {
     return {
