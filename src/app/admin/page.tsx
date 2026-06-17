@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -45,6 +45,19 @@ import { getAuthorizationHeader } from "@/lib/authClient";
 type ContentType = "sermon" | "transcript" | "manual";
 type ViewMode = "create" | "list";
 
+const pad2 = (n: number | string) => String(n).padStart(2, "0");
+
+/** Combine a YYYY-MM-DD date with hour/minute into a local naive datetime
+ *  string (YYYY-MM-DDTHH:mm:00) for the WordPress `date` field. */
+function combinePublishDate(
+  date: string,
+  hour: string,
+  minute: string,
+): string | null {
+  if (!date) return null;
+  return `${date}T${pad2(hour)}:${pad2(minute)}:00`;
+}
+
 interface SermonFormData {
   title: string;
   status: "draft" | "publish";
@@ -87,6 +100,12 @@ interface TextFormData {
   status: "draft" | "publish";
   speaker: string;
   transcriptType: TranscriptType;
+  /** Scheduling: when publishDate+time is in the future and status is
+   *  "publish", WordPress stores the post as "future" (scheduled) and
+   *  auto-publishes at the chosen moment. */
+  publishDate: string; // YYYY-MM-DD
+  publishHour: string; // "0".."23"
+  publishMinute: string; // "0", "5", ... "55"
 }
 
 interface ContentItem {
@@ -589,6 +608,85 @@ function ContentListItem({
   );
 }
 
+// ─── Publish date & time (with scheduling) ──────────────────────────────────
+function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
+  const { control, register, watch } = form;
+  const publishDate = watch("publishDate");
+  const publishHour = watch("publishHour");
+  const publishMinute = watch("publishMinute");
+
+  const combined = combinePublishDate(publishDate, publishHour, publishMinute);
+  const scheduledAt = combined ? new Date(combined) : null;
+  const isFuture = scheduledAt ? scheduledAt.getTime() > Date.now() : false;
+
+  const selectClass =
+    "h-12 pl-4 pr-9 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer";
+
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        Publish Date &amp; Time
+      </label>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Controller
+          name="publishDate"
+          control={control}
+          render={({ field }) => (
+            <CustomDatePicker
+              value={field.value}
+              onChange={field.onChange}
+              wrapperClassName="w-full sm:flex-1"
+              className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+            />
+          )}
+        />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <select {...register("publishHour")} className={selectClass}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {pad2(h)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+          <span className="font-bold text-gray-400">:</span>
+          <div className="relative">
+            <select {...register("publishMinute")} className={selectClass}>
+              {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                <option key={m} value={m}>
+                  {pad2(m)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-gray-500 flex items-start gap-1.5">
+        {isFuture ? (
+          <>
+            <Calendar className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary" />
+            <span>
+              Scheduled — will auto-publish on{" "}
+              <span className="font-semibold text-gray-700">
+                {scheduledAt!.toLocaleString(undefined, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </span>{" "}
+              (only when status is set to Publish).
+            </span>
+          </>
+        ) : (
+          <span>Publishes immediately when status is set to Publish.</span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function AdminChurchContentPage() {
   const [activeTab, setActiveTab] = useState<ContentType>("sermon");
@@ -650,6 +748,7 @@ export default function AdminChurchContentPage() {
     },
   });
 
+  const now = new Date();
   const textForm = useForm<TextFormData>({
     defaultValues: {
       title: "",
@@ -657,6 +756,11 @@ export default function AdminChurchContentPage() {
       status: "draft",
       speaker: "",
       transcriptType: "sunday-message",
+      // Default to "now" (minute rounded down to 5) so leaving it untouched
+      // publishes immediately; choosing a later moment schedules it.
+      publishDate: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
+      publishHour: String(now.getHours()),
+      publishMinute: String(Math.floor(now.getMinutes() / 5) * 5),
     },
   });
 
@@ -1053,6 +1157,15 @@ export default function AdminChurchContentPage() {
       payload.transcriptType = data.transcriptType || "sunday-message";
     }
 
+    // Attach the chosen publish date/time. If it's in the future and the
+    // status is "publish", WordPress schedules the post (status "future").
+    const publishAt = combinePublishDate(
+      data.publishDate,
+      data.publishHour,
+      data.publishMinute,
+    );
+    if (publishAt) payload.date = publishAt;
+
     try {
       // ── Auth header added ─────────────────────────────────────────────────
       const authHeader = await getAuthorizationHeader();
@@ -1068,15 +1181,25 @@ export default function AdminChurchContentPage() {
 
       const result = await res.json();
       if (result.success) {
-        toast.success("Published successfully!", {
-          description: `Post ID: ${result.postId}`,
-          action: result.postUrl
-            ? {
-                label: "View Post",
-                onClick: () => window.open(result.postUrl, "_blank"),
-              }
-            : undefined,
-        });
+        const scheduled = result.status === "future";
+        toast.success(
+          scheduled ? "Scheduled successfully!" : "Published successfully!",
+          {
+            description:
+              scheduled && publishAt
+                ? `Auto-publishes on ${new Date(publishAt).toLocaleString(
+                    undefined,
+                    { dateStyle: "medium", timeStyle: "short" },
+                  )}`
+                : `Post ID: ${result.postId}`,
+            action: result.postUrl
+              ? {
+                  label: "View Post",
+                  onClick: () => window.open(result.postUrl, "_blank"),
+                }
+              : undefined,
+          },
+        );
         textForm.reset();
         setViewMode("list");
         fetchContent(activeTab, 1);
@@ -1546,7 +1669,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] h-12 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
@@ -1666,6 +1789,8 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
+                  <PublishScheduleField form={textForm} />
+
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                       <span className="text-sm font-medium text-gray-600">
@@ -1685,7 +1810,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] h-12 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
@@ -1752,6 +1877,8 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
+                  <PublishScheduleField form={textForm} />
+
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                       <span className="text-sm font-medium text-gray-600">
@@ -1771,7 +1898,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] h-12 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
