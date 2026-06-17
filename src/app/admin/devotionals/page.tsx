@@ -16,7 +16,6 @@ import {
   AlertCircle,
   GripVertical,
   BookOpen,
-  Search,
   Filter,
 } from "lucide-react";
 import {
@@ -37,6 +36,7 @@ import {
   Devotional,
 } from "@/lib/devotionals";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Timestamp } from "firebase/firestore";
 
 // ──────────────────────────────────────────────
@@ -312,16 +312,14 @@ export default function AdminDevotionalsPage() {
 
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-0 sm:min-w-[280px]">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 sm:h-11 pl-9 sm:pl-11 pr-3 sm:pr-4 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-              />
-            </div>
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search by title..."
+              wrapperClassName="flex-1 min-w-0 sm:min-w-[280px]"
+              iconClassName="left-3 sm:left-4 text-muted-foreground"
+              className="h-10 sm:h-11 pl-9 sm:pl-11 pr-3 sm:pr-4 rounded-2xl focus:ring-2 focus:ring-primary/10"
+            />
 
             {/* Date Range Inputs */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">

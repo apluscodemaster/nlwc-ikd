@@ -19,10 +19,10 @@ import {
   ShieldCheck,
   ShieldX,
   BarChart3,
-  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatCard } from "@/components/shared/StatCard";
+import { SearchInput } from "@/components/shared/SearchInput";
 import {
   subscribeToAllTestimonies,
   updateTestimonyStatus,
@@ -374,16 +374,14 @@ export default function AdminTestimoniesPage() {
           </div>
         </div>
 
-        <div className="relative flex-1 w-full lg:max-w-md">
-          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search name, location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-3 sm:pr-4 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
-          />
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search name, location..."
+          wrapperClassName="flex-1 w-full lg:max-w-md"
+          iconClassName="left-3 sm:left-4"
+          className="h-10 sm:h-12 pl-10 sm:pl-12 pr-3 sm:pr-4 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary"
+        />
       </div>
 
       {/* Content */}
