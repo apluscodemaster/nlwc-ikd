@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
 import { showConfirm } from "@/components/shared/CustomDialog";
+import { Button } from "@/components/ui/button";
 import {
   exportQuizAsJSON,
   exportQuizAsCSV,
@@ -1438,10 +1439,12 @@ export default function AdminQuizPage() {
                 maxLength={60}
                 required
               />
-              <button
+              <Button
                 type="submit"
+                variant="brand"
+                size="pill"
                 disabled={creatingCategory || !newCategoryName.trim()}
-                className="w-full sm:w-auto h-11 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full sm:w-auto"
               >
                 {creatingCategory ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1449,7 +1452,7 @@ export default function AdminQuizPage() {
                   <Plus className="w-4 h-4" />
                 )}
                 {creatingCategory ? "Creating…" : "Create"}
-              </button>
+              </Button>
             </form>
           </div>
 
