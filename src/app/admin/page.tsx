@@ -39,6 +39,8 @@ import {
 } from "lucide-react";
 import { showPrompt } from "@/components/shared/CustomDialog";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
@@ -595,15 +597,15 @@ function ContentListItem({
             <Pencil className="w-3.5 h-3.5" />
           </button>
         )}
-        <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+        <StatusBadge
+          className={`text-[10px] uppercase tracking-wider px-2 py-0.5 ${
             item.status === "publish"
               ? "bg-emerald-50 text-emerald-600"
               : "bg-amber-50 text-amber-600"
           }`}
         >
           {item.status === "publish" ? "Live" : "Draft"}
-        </span>
+        </StatusBadge>
       </div>
     </div>
   );
@@ -619,9 +621,6 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
   const combined = combinePublishDate(publishDate, publishHour, publishMinute);
   const scheduledAt = combined ? new Date(combined) : null;
   const isFuture = scheduledAt ? scheduledAt.getTime() > Date.now() : false;
-
-  const selectClass =
-    "h-12 pl-4 pr-9 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer";
 
   return (
     <div>
@@ -642,27 +641,29 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
           )}
         />
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <select {...register("publishHour")} className={selectClass}>
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={h}>
-                  {pad2(h)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
+          <SelectField
+            {...register("publishHour")}
+            className="w-auto h-12 pl-4 pr-9"
+            chevronClassName="right-3"
+          >
+            {Array.from({ length: 24 }, (_, h) => (
+              <option key={h} value={h}>
+                {pad2(h)}
+              </option>
+            ))}
+          </SelectField>
           <span className="font-bold text-gray-400">:</span>
-          <div className="relative">
-            <select {...register("publishMinute")} className={selectClass}>
-              {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
-                <option key={m} value={m}>
-                  {pad2(m)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
+          <SelectField
+            {...register("publishMinute")}
+            className="w-auto h-12 pl-4 pr-9"
+            chevronClassName="right-3"
+          >
+            {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+              <option key={m} value={m}>
+                {pad2(m)}
+              </option>
+            ))}
+          </SelectField>
         </div>
       </div>
       <p className="mt-2 text-xs text-gray-500 flex items-start gap-1.5">
@@ -1439,48 +1440,42 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
                     </label>
-                    <div className="relative">
-                      <select
-                        {...sermonForm.register("speaker")}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select a minister…</option>
-                        {loadingSpeakers ? (
-                          <option disabled>Loading ministers…</option>
-                        ) : (
-                          speakers.map((s) => (
-                            <option key={s.id} value={s.name}>
-                              {s.name} ({s.messageCount} messages)
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      {...sermonForm.register("speaker")}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="">Select a minister…</option>
+                      {loadingSpeakers ? (
+                        <option disabled>Loading ministers…</option>
+                      ) : (
+                        speakers.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            {s.name} ({s.messageCount} messages)
+                          </option>
+                        ))
+                      )}
+                    </SelectField>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Series / Category
                     </label>
-                    <div className="relative">
-                      <select
-                        {...sermonForm.register("seriesId")}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select a series…</option>
-                        {loadingSeries ? (
-                          <option disabled>Loading series…</option>
-                        ) : (
-                          seriesList.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.title} ({s.messageCount} messages)
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      {...sermonForm.register("seriesId")}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="">Select a series…</option>
+                      {loadingSeries ? (
+                        <option disabled>Loading series…</option>
+                      ) : (
+                        seriesList.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.title} ({s.messageCount} messages)
+                          </option>
+                        ))
+                      )}
+                    </SelectField>
                   </div>
 
                   <div>
@@ -1725,53 +1720,45 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Transcript Type <span className="text-red-400">*</span>
                     </label>
-                    <div className="relative">
-                      <select
-                        {...textForm.register("transcriptType")}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="sunday-message">
-                          Sunday Message Transcript
-                        </option>
-                        <option value="sunday-school">
-                          Sunday School Transcript
-                        </option>
-                        <option value="bible-study">
-                          Bible Study Transcript
-                        </option>
-                        <option value="other-meetings">
-                          Other Meetings Transcript
-                        </option>
-                        <option value="season-of-the-spirit">
-                          Season of the Spirit
-                        </option>
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      {...textForm.register("transcriptType")}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="sunday-message">
+                        Sunday Message Transcript
+                      </option>
+                      <option value="sunday-school">
+                        Sunday School Transcript
+                      </option>
+                      <option value="bible-study">Bible Study Transcript</option>
+                      <option value="other-meetings">
+                        Other Meetings Transcript
+                      </option>
+                      <option value="season-of-the-spirit">
+                        Season of the Spirit
+                      </option>
+                    </SelectField>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
                     </label>
-                    <div className="relative">
-                      <select
-                        {...textForm.register("speaker")}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select a minister…</option>
-                        {loadingSpeakers ? (
-                          <option disabled>Loading ministers…</option>
-                        ) : (
-                          speakers.map((s) => (
-                            <option key={s.id} value={s.name}>
-                              {s.name} ({s.messageCount} messages)
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      {...textForm.register("speaker")}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="">Select a minister…</option>
+                      {loadingSpeakers ? (
+                        <option disabled>Loading ministers…</option>
+                      ) : (
+                        speakers.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            {s.name} ({s.messageCount} messages)
+                          </option>
+                        ))
+                      )}
+                    </SelectField>
                   </div>
 
                   <div>
@@ -2002,25 +1989,22 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Speaker / Minister
                     </label>
-                    <div className="relative">
-                      <select
-                        value={editSpeaker}
-                        onChange={(e) => setEditSpeaker(e.target.value)}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select a minister…</option>
-                        {loadingSpeakers ? (
-                          <option disabled>Loading ministers…</option>
-                        ) : (
-                          speakers.map((s) => (
-                            <option key={s.id} value={s.name}>
-                              {s.name} ({s.messageCount} messages)
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      value={editSpeaker}
+                      onChange={(e) => setEditSpeaker(e.target.value)}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="">Select a minister…</option>
+                      {loadingSpeakers ? (
+                        <option disabled>Loading ministers…</option>
+                      ) : (
+                        speakers.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            {s.name} ({s.messageCount} messages)
+                          </option>
+                        ))
+                      )}
+                    </SelectField>
                   </div>
                 )}
 
@@ -2029,34 +2013,27 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Transcript Type
                     </label>
-                    <div className="relative">
-                      <select
-                        value={editTranscriptType}
-                        onChange={(e) =>
-                          setEditTranscriptType(
-                            e.target.value as TranscriptType,
-                          )
-                        }
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="sunday-message">
-                          Sunday Message Transcript
-                        </option>
-                        <option value="sunday-school">
-                          Sunday School Transcript
-                        </option>
-                        <option value="bible-study">
-                          Bible Study Transcript
-                        </option>
-                        <option value="other-meetings">
-                          Other Meetings Transcript
-                        </option>
-                        <option value="season-of-the-spirit">
-                          Season of the Spirit
-                        </option>
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      value={editTranscriptType}
+                      onChange={(e) =>
+                        setEditTranscriptType(e.target.value as TranscriptType)
+                      }
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="sunday-message">
+                        Sunday Message Transcript
+                      </option>
+                      <option value="sunday-school">
+                        Sunday School Transcript
+                      </option>
+                      <option value="bible-study">Bible Study Transcript</option>
+                      <option value="other-meetings">
+                        Other Meetings Transcript
+                      </option>
+                      <option value="season-of-the-spirit">
+                        Season of the Spirit
+                      </option>
+                    </SelectField>
                   </div>
                 )}
 
@@ -2065,25 +2042,22 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Series / Category
                     </label>
-                    <div className="relative">
-                      <select
-                        value={editSeriesId}
-                        onChange={(e) => setEditSeriesId(e.target.value)}
-                        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="">Select a series…</option>
-                        {loadingSeries ? (
-                          <option disabled>Loading series…</option>
-                        ) : (
-                          seriesList.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.title} ({s.messageCount} messages)
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <SelectField
+                      value={editSeriesId}
+                      onChange={(e) => setEditSeriesId(e.target.value)}
+                      className="h-12 px-4 pr-10"
+                    >
+                      <option value="">Select a series…</option>
+                      {loadingSeries ? (
+                        <option disabled>Loading series…</option>
+                      ) : (
+                        seriesList.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.title} ({s.messageCount} messages)
+                          </option>
+                        ))
+                      )}
+                    </SelectField>
                   </div>
                 )}
 

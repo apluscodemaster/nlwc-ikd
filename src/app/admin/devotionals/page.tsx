@@ -37,6 +37,7 @@ import {
 } from "@/lib/devotionals";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { SearchInput } from "@/components/shared/SearchInput";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Timestamp } from "firebase/firestore";
 
 // ──────────────────────────────────────────────
@@ -673,13 +674,13 @@ export default function AdminDevotionalsPage() {
                     {/* Status */}
                     <div className="shrink-0">
                       {isFuture ? (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] sm:text-xs font-bold">
+                        <StatusBadge className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-amber-50 text-amber-700 text-[10px] sm:text-xs">
                           Scheduled
-                        </span>
+                        </StatusBadge>
                       ) : (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-50 text-green-700 text-[10px] sm:text-xs font-bold">
+                        <StatusBadge className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-green-50 text-green-700 text-[10px] sm:text-xs">
                           Published
-                        </span>
+                        </StatusBadge>
                       )}
                     </div>
                   </div>
