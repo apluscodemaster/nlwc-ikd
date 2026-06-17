@@ -22,6 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StatCard } from "@/components/shared/StatCard";
 import {
   subscribeToAllTestimonies,
   updateTestimonyStatus,
@@ -42,40 +43,6 @@ const FILTER_TABS: { id: FilterTab; label: string; icon: React.ElementType }[] =
     { id: "verified", label: "Verified", icon: CheckCircle2 },
     { id: "rejected", label: "Rejected", icon: XCircle },
   ];
-
-// ──────────────────────────────────────────────
-// Stats Card
-// ──────────────────────────────────────────────
-
-function StatCard({
-  label,
-  count,
-  icon: Icon,
-  color,
-}: {
-  label: string;
-  count: number;
-  icon: React.ElementType;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm min-w-0">
-      <div
-        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}
-      >
-        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-lg sm:text-2xl font-bold text-gray-900 leading-none mb-0.5">
-          {count}
-        </p>
-        <p className="text-[9px] sm:text-xs text-muted-foreground font-medium uppercase tracking-tight truncate w-full">
-          {label}
-        </p>
-      </div>
-    </div>
-  );
-}
 
 // ──────────────────────────────────────────────
 // Admin Testimony Card
@@ -353,25 +320,25 @@ export default function AdminTestimoniesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-6">
         <StatCard
           label="Total"
-          count={counts.all}
+          value={counts.all}
           icon={BarChart3}
           color="bg-gray-100 text-gray-600"
         />
         <StatCard
           label="Pending"
-          count={counts.pending}
+          value={counts.pending}
           icon={Clock}
           color="bg-amber-100 text-amber-600"
         />
         <StatCard
           label="Verified"
-          count={counts.verified}
+          value={counts.verified}
           icon={CheckCircle2}
           color="bg-emerald-100 text-emerald-600"
         />
         <StatCard
           label="Rejected"
-          count={counts.rejected}
+          value={counts.rejected}
           icon={XCircle}
           color="bg-red-100 text-red-500"
         />
