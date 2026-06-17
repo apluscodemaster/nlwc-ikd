@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { showConfirm } from "@/components/shared/CustomDialog";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { StatCard } from "@/components/shared/StatCard";
+import { ModalShell } from "@/components/shared/ModalShell";
 import type { RecurringService, SpecialService } from "@/lib/scheduleService";
 
 // ──────────────────────────────────────────────
@@ -153,20 +154,7 @@ function RecurringModal({
   if (!mode) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 30, scale: 0.95 }}
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100"
-      >
+    <ModalShell onClose={onClose}>
         <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
             <RepeatIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -406,8 +394,7 @@ function RecurringModal({
             </button>
           </div>
         </form>
-      </motion.div>
-    </div>
+      </ModalShell>
   );
 }
 
@@ -506,20 +493,7 @@ function SpecialModal({
   if (!mode) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 30, scale: 0.95 }}
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100"
-      >
+    <ModalShell onClose={onClose}>
         <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
             <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -747,8 +721,7 @@ function SpecialModal({
             </button>
           </div>
         </form>
-      </motion.div>
-    </div>
+      </ModalShell>
   );
 }
 
