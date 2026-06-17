@@ -1669,7 +1669,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
@@ -1810,7 +1810,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
@@ -1898,7 +1898,7 @@ export default function AdminChurchContentPage() {
                     <button
                       type="submit"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] min-h-12 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {publishing ? (
                         <>
