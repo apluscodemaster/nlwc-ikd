@@ -36,6 +36,7 @@ import {
   replaceDevotionalPdf,
   Devotional,
 } from "@/lib/devotionals";
+import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { Timestamp } from "firebase/firestore";
 
 // ──────────────────────────────────────────────
@@ -328,11 +329,12 @@ export default function AdminDevotionalsPage() {
                 <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
                   From
                 </span>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-transparent text-xs sm:text-sm focus:outline-none w-full min-w-0"
+                  onChange={setFilterStartDate}
+                  placeholder="From"
+                  wrapperClassName="w-full min-w-0"
+                  className="w-full flex items-center justify-between gap-2 bg-transparent text-xs sm:text-sm text-left focus:outline-none cursor-pointer"
                 />
               </div>
 
@@ -344,11 +346,12 @@ export default function AdminDevotionalsPage() {
                 <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
                   To
                 </span>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-transparent text-xs sm:text-sm focus:outline-none w-full min-w-0"
+                  onChange={setFilterEndDate}
+                  placeholder="To"
+                  wrapperClassName="w-full min-w-0"
+                  className="w-full flex items-center justify-between gap-2 bg-transparent text-xs sm:text-sm text-left focus:outline-none cursor-pointer"
                 />
               </div>
             </div>
@@ -492,16 +495,15 @@ export default function AdminDevotionalsPage() {
                             <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase hidden lg:block shrink-0">
                               Date:
                             </span>
-                            <input
-                              type="date"
+                            <CustomDatePicker
                               value={item.scheduledDate}
-                              onChange={(e) =>
-                                updateQueueItem(index, {
-                                  scheduledDate: e.target.value,
-                                })
+                              onChange={(v) =>
+                                updateQueueItem(index, { scheduledDate: v })
                               }
                               disabled={item.status !== "pending"}
-                              className="bg-transparent text-sm focus:outline-none w-full min-w-0"
+                              placeholder="Pick date"
+                              wrapperClassName="w-full min-w-0"
+                              className="w-full flex items-center justify-between gap-2 bg-transparent text-sm text-left focus:outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             />
                           </div>
 
@@ -657,11 +659,10 @@ export default function AdminDevotionalsPage() {
                   <div className="flex items-center gap-3 lg:contents">
                     <div className="flex-1">
                       {editingId === d.id ? (
-                        <input
-                          type="date"
+                        <CustomDatePicker
                           value={editDate}
-                          onChange={(e) => setEditDate(e.target.value)}
-                          className="h-9 px-3 rounded-lg border border-primary/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full min-w-0"
+                          onChange={setEditDate}
+                          className="w-full min-w-0 h-9 flex items-center justify-between gap-2 px-3 rounded-lg border border-primary/30 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                         />
                       ) : (
                         <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5">

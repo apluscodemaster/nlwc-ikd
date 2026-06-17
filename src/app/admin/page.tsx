@@ -38,6 +38,7 @@ import {
   Quote,
 } from "lucide-react";
 import { showPrompt } from "@/components/shared/CustomDialog";
+import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1368,14 +1369,17 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Sermon Date
                     </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      <input
-                        type="date"
-                        {...sermonForm.register("sermonDate")}
-                        className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-                      />
-                    </div>
+                    <Controller
+                      name="sermonDate"
+                      control={sermonForm.control}
+                      render={({ field }) => (
+                        <CustomDatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                        />
+                      )}
+                    />
                   </div>
 
                   {/* Thumbnail */}
@@ -1969,15 +1973,11 @@ export default function AdminChurchContentPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Sermon Date
                     </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      <input
-                        type="date"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                        className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-                      />
-                    </div>
+                    <CustomDatePicker
+                      value={editDate}
+                      onChange={setEditDate}
+                      className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                    />
                   </div>
                 )}
 
