@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { showPrompt } from "@/components/shared/CustomDialog";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
+import { Button } from "@/components/ui/button";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1228,21 +1229,25 @@ export default function AdminChurchContentPage() {
           </p>
         </div>
         {viewMode === "list" ? (
-          <button
+          <Button
+            variant="brand"
+            size="none"
             onClick={() => setViewMode("create")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 font-semibold"
           >
             <Plus className="w-4 h-4" />
             New {currentTab.label.slice(0, -1)}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="soft"
+            size="none"
             onClick={() => setViewMode("list")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5"
           >
             <Eye className="w-4 h-4" />
             View Published
-          </button>
+          </Button>
         )}
       </div>
 
@@ -1301,15 +1306,17 @@ export default function AdminChurchContentPage() {
                     </p>
                   </div>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => fetchContent(activeTab, contentPage)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600 cursor-pointer"
+                  className="rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                   title="Refresh"
                 >
                   <RefreshCw
                     className={`w-4 h-4 ${loadingContent ? "animate-spin" : ""}`}
                   />
-                </button>
+                </Button>
               </div>
 
               <div className="p-4 sm:p-6">
@@ -1666,10 +1673,12 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    <button
+                    <Button
                       type="submit"
+                      variant="brand"
+                      size="none"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4"
                     >
                       {publishing ? (
                         <>
@@ -1682,7 +1691,7 @@ export default function AdminChurchContentPage() {
                           Publish Sermon
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               )}
@@ -1807,10 +1816,12 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    <button
+                    <Button
                       type="submit"
+                      variant="brand"
+                      size="none"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4"
                     >
                       {publishing ? (
                         <>
@@ -1823,7 +1834,7 @@ export default function AdminChurchContentPage() {
                           Publish Transcript
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               )}
@@ -1895,10 +1906,12 @@ export default function AdminChurchContentPage() {
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    <button
+                    <Button
                       type="submit"
+                      variant="brand"
+                      size="none"
                       disabled={publishing}
-                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 sm:flex-none sm:min-w-[200px] py-4"
                     >
                       {publishing ? (
                         <>
@@ -1911,7 +1924,7 @@ export default function AdminChurchContentPage() {
                           Publish Manual
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               )}
@@ -2276,16 +2289,20 @@ export default function AdminChurchContentPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                <button
+                <Button
+                  variant="ghost"
+                  size="none"
                   onClick={() => setEditingItem(null)}
-                  className="px-5 h-10 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="px-5 h-10 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-600"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="brand"
+                  size="none"
                   onClick={handleSaveEdit}
                   disabled={saving}
-                  className="px-6 h-10 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                  className="px-6 h-10"
                 >
                   {saving ? (
                     <>
@@ -2298,7 +2315,7 @@ export default function AdminChurchContentPage() {
                       Save Changes
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </>
