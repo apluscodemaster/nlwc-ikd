@@ -1427,13 +1427,13 @@ export default function AdminQuizPage() {
                   setCreatingCategory(false);
                 }
               }}
-              className="flex gap-3"
+              className="flex flex-col sm:flex-row gap-3"
             >
               <input
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                className="w-full sm:flex-1 h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 placeholder="Enter category name..."
                 maxLength={60}
                 required
@@ -1441,7 +1441,7 @@ export default function AdminQuizPage() {
               <button
                 type="submit"
                 disabled={creatingCategory || !newCategoryName.trim()}
-                className="h-11 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto h-11 px-5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
               >
                 {creatingCategory ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
