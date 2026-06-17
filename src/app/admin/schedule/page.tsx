@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { showConfirm } from "@/components/shared/CustomDialog";
+import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import type { RecurringService, SpecialService } from "@/lib/scheduleService";
 
 // ──────────────────────────────────────────────
@@ -586,13 +587,7 @@ function SpecialModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Date
             </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
-              required
-            />
+            <CustomDatePicker value={date} onChange={setDate} />
           </div>
 
           {/* Start/End Hours */}
