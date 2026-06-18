@@ -18,12 +18,18 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") || "sermon";
   const page = parseInt(searchParams.get("page") || "1");
   const perPage = parseInt(searchParams.get("per_page") || "6");
+  const search = searchParams.get("search")?.trim() || undefined;
 
   try {
     switch (type) {
       case "sermon": {
         // Admin view: bypass caches so freshly-saved edits appear immediately.
-        const result = await getAudioSermons({ page, perPage, noStore: true });
+        const result = await getAudioSermons({
+          page,
+          perPage,
+          noStore: true,
+          search,
+        });
         return NextResponse.json({
           items: result.data.map((s) => ({
             id: s.id,
@@ -47,12 +53,14 @@ export async function GET(request: NextRequest) {
             categories: [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS],
             page,
             perPage: Math.ceil(perPage / 2),
+            search,
             noStore: true,
           }),
           fetchWPPosts({
             categories: [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS],
             page,
             perPage: Math.floor(perPage / 2),
+            search,
             noStore: true,
           }),
         ]);
@@ -108,6 +116,7 @@ export async function GET(request: NextRequest) {
           categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
           page,
           perPage,
+          search,
           noStore: true,
         });
 
