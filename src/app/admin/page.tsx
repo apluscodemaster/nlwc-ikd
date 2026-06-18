@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { showPrompt } from "@/components/shared/CustomDialog";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
@@ -706,6 +707,8 @@ export default function AdminChurchContentPage() {
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentPage, setContentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [speakers, setSpeakers] = useState<SpeakerItem[]>([]);
   const [loadingSpeakers, setLoadingSpeakers] = useState(false);
@@ -774,23 +777,29 @@ export default function AdminChurchContentPage() {
   // This route is read-only and doesn't require auth headers (it's public data
   // fetched from WP). The content is only rendered inside the auth-gated admin
   // layout so it is already protected at the page level.
-  const fetchContent = useCallback(async (type: ContentType, page: number) => {
-    setLoadingContent(true);
-    try {
-      const res = await fetch(
-        `/api/wp/content?type=${type}&page=${page}&per_page=6`,
-      );
-      const data = await res.json();
-      if (data.items) {
-        setContentItems(data.items);
-        setTotalPages(data.pagination?.totalPages || 1);
+  const fetchContent = useCallback(
+    async (type: ContentType, page: number, search = "") => {
+      setLoadingContent(true);
+      try {
+        const searchParam = search
+          ? `&search=${encodeURIComponent(search)}`
+          : "";
+        const res = await fetch(
+          `/api/wp/content?type=${type}&page=${page}&per_page=6${searchParam}`,
+        );
+        const data = await res.json();
+        if (data.items) {
+          setContentItems(data.items);
+          setTotalPages(data.pagination?.totalPages || 1);
+        }
+      } catch {
+        console.error("Failed to load content");
+      } finally {
+        setLoadingContent(false);
       }
-    } catch {
-      console.error("Failed to load content");
-    } finally {
-      setLoadingContent(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   // ── Fetch speakers for dropdown ─────────────────────────────────────────────
   const fetchSpeakers = useCallback(async () => {
@@ -820,9 +829,18 @@ export default function AdminChurchContentPage() {
     }
   }, []);
 
+  // Debounce the search box; a new query also resets to page 1.
   useEffect(() => {
-    fetchContent(activeTab, contentPage);
-  }, [activeTab, contentPage, fetchContent]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setContentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    fetchContent(activeTab, contentPage, debouncedSearch);
+  }, [activeTab, contentPage, debouncedSearch, fetchContent]);
 
   useEffect(() => {
     fetchSpeakers();
@@ -834,6 +852,8 @@ export default function AdminChurchContentPage() {
     setActiveTab(tab);
     setViewMode("list");
     setContentPage(1);
+    setSearchQuery("");
+    setDebouncedSearch("");
     sermonForm.reset();
     textForm.reset();
     setAudioFileName(null);
@@ -1020,7 +1040,7 @@ export default function AdminChurchContentPage() {
         setEditAudioFile(null);
         if (editAudioInputRef.current) editAudioInputRef.current.value = "";
         // Refresh the admin list so the updated post is immediately visible
-        fetchContent(activeTab, contentPage);
+        fetchContent(activeTab, contentPage, debouncedSearch);
       } else {
         toast.error("Failed to update", {
           description: data.error || "Unknown error",
@@ -1126,7 +1146,7 @@ export default function AdminChurchContentPage() {
         setThumbnailFileName(null);
         setUploadedMediaId(null);
         setViewMode("list");
-        fetchContent(activeTab, 1);
+        fetchContent(activeTab, 1, debouncedSearch);
       } else {
         toast.error("Failed to publish", {
           description: result.error || "Unknown error",
@@ -1204,7 +1224,7 @@ export default function AdminChurchContentPage() {
         );
         textForm.reset();
         setViewMode("list");
-        fetchContent(activeTab, 1);
+        fetchContent(activeTab, 1, debouncedSearch);
       } else {
         toast.error("Failed to publish", {
           description: result.error || "Unknown error",
@@ -1310,7 +1330,9 @@ export default function AdminChurchContentPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => fetchContent(activeTab, contentPage)}
+                  onClick={() =>
+                    fetchContent(activeTab, contentPage, debouncedSearch)
+                  }
                   className="rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                   title="Refresh"
                 >
@@ -1318,6 +1340,15 @@ export default function AdminChurchContentPage() {
                     className={`w-4 h-4 ${loadingContent ? "animate-spin" : ""}`}
                   />
                 </Button>
+              </div>
+
+              <div className="px-5 sm:px-6 py-4 border-b border-gray-50">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder={`Search ${currentTab.label.toLowerCase()}…`}
+                  className="h-11 pl-11 pr-4 bg-gray-50 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
               </div>
 
               <div className="p-4 sm:p-6">
@@ -1329,12 +1360,29 @@ export default function AdminChurchContentPage() {
                 ) : contentItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                     <currentTab.icon className="w-12 h-12 mb-3 opacity-30" />
-                    <p className="text-sm font-medium">
-                      No {currentTab.label.toLowerCase()} found
-                    </p>
-                    <p className="text-xs mt-1">
-                      Create your first one by clicking the button above
-                    </p>
+                    {debouncedSearch ? (
+                      <>
+                        <p className="text-sm font-medium">
+                          No {currentTab.label.toLowerCase()} match “
+                          {debouncedSearch}”
+                        </p>
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="text-xs mt-1 text-primary font-medium hover:underline cursor-pointer"
+                        >
+                          Clear search
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">
+                          No {currentTab.label.toLowerCase()} found
+                        </p>
+                        <p className="text-xs mt-1">
+                          Create your first one by clicking the button above
+                        </p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
