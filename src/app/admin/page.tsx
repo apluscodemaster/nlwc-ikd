@@ -63,6 +63,16 @@ function combinePublishDate(
   return `${date}T${pad2(hour)}:${pad2(minute)}:00`;
 }
 
+/** Convert any date string (a formatted label like "January 5, 2025" or an ISO
+ *  string) to a YYYY-MM-DD value for the date picker, using LOCAL calendar
+ *  parts so the day never shifts by one (toISOString would convert to UTC). */
+function toDateInputValue(value?: string): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
 interface SermonFormData {
   title: string;
   status: "draft" | "publish";
@@ -250,119 +260,42 @@ function RichTextEditor({
     handleInput();
   };
 
+  const focusEditor = () => editorRef.current?.focus();
+
+  // All formatting goes through document.execCommand: it acts on the current
+  // selection/cursor (so lists apply to the active line, not the whole doc) and
+  // participates in the browser's native undo/redo stack (Ctrl+Z / Ctrl+Y).
   const formatBlock = (tag: string) => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-    editorRef.current.focus();
-
-    const range = sel.getRangeAt(0);
-    let block = range.startContainer as Node;
-    while (
-      block &&
-      block !== editorRef.current &&
-      block.parentNode !== editorRef.current
-    ) {
-      block = block.parentNode!;
-    }
-
-    if (block && block !== editorRef.current && block instanceof HTMLElement) {
-      if (block.tagName.toLowerCase() === tag.toLowerCase()) {
-        const p = document.createElement("p");
-        p.innerHTML = block.innerHTML;
-        block.replaceWith(p);
-      } else {
-        const newEl = document.createElement(tag);
-        newEl.innerHTML = block.innerHTML;
-        block.replaceWith(newEl);
-      }
-    } else {
-      const newEl = document.createElement(tag);
-      try {
-        range.surroundContents(newEl);
-      } catch {
-        const content = range.extractContents();
-        newEl.appendChild(content);
-        range.insertNode(newEl);
-      }
-    }
+    focusEditor();
+    const current = document.queryCommandValue("formatBlock")?.toLowerCase();
+    document.execCommand(
+      "formatBlock",
+      false,
+      current === tag.toLowerCase() ? "<p>" : `<${tag}>`,
+    );
     handleInput();
   };
 
   const insertList = (ordered: boolean) => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-    editorRef.current.focus();
-
-    const range = sel.getRangeAt(0);
-
-    let block = range.startContainer as Node;
-    while (
-      block &&
-      block !== editorRef.current &&
-      block.parentNode !== editorRef.current
-    ) {
-      block = block.parentNode!;
-    }
-
-    const listTag = ordered ? "OL" : "UL";
-
-    if (block instanceof HTMLElement) {
-      if (block.tagName === "UL" || block.tagName === "OL") {
-        const items = block.querySelectorAll("li");
-        const frag = document.createDocumentFragment();
-        items.forEach((li) => {
-          const p = document.createElement("p");
-          p.innerHTML = li.innerHTML;
-          frag.appendChild(p);
-        });
-        block.replaceWith(frag);
-        handleInput();
-        return;
-      }
-    }
-
-    const list = document.createElement(listTag);
-    const li = document.createElement("li");
-
-    if (block && block !== editorRef.current && block instanceof HTMLElement) {
-      li.innerHTML = block.innerHTML || "List item";
-      list.appendChild(li);
-      block.replaceWith(list);
-    } else {
-      const selectedText = range.toString() || "List item";
-      li.textContent = selectedText;
-      list.appendChild(li);
-      range.deleteContents();
-      range.insertNode(list);
-    }
-
-    const newRange = document.createRange();
-    newRange.selectNodeContents(li);
-    newRange.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-
+    focusEditor();
+    document.execCommand(
+      ordered ? "insertOrderedList" : "insertUnorderedList",
+      false,
+    );
     handleInput();
   };
 
   const setAlignment = (align: "left" | "center" | "right" | "justify") => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-    editorRef.current.focus();
-
-    const range = sel.getRangeAt(0);
-    let block = range.startContainer as Node;
-    while (
-      block &&
-      block !== editorRef.current &&
-      block.parentNode !== editorRef.current
-    ) {
-      block = block.parentNode!;
-    }
-
-    if (block && block !== editorRef.current && block instanceof HTMLElement) {
-      block.style.textAlign = align === "left" ? "" : align;
-    }
+    focusEditor();
+    const cmd =
+      align === "left"
+        ? "justifyLeft"
+        : align === "center"
+          ? "justifyCenter"
+          : align === "right"
+            ? "justifyRight"
+            : "justifyFull";
+    document.execCommand(cmd, false);
     handleInput();
   };
 
@@ -378,32 +311,15 @@ function RichTextEditor({
       return;
     }
 
-    editorRef.current?.focus();
+    focusEditor();
     restoreSelection(savedRange);
 
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-
-    const range = sel.getRangeAt(0);
-    const selectedText = range.toString();
-
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.target = "_blank";
-    anchor.rel = "noopener noreferrer";
-    anchor.textContent = selectedText || url;
-    anchor.style.color = "#2563eb";
-    anchor.style.textDecoration = "underline";
-
-    range.deleteContents();
-    range.insertNode(anchor);
-
-    const newRange = document.createRange();
-    newRange.setStartAfter(anchor);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-
+    if (sel && sel.toString()) {
+      document.execCommand("createLink", false, url);
+    } else {
+      document.execCommand("insertHTML", false, `<a href="${url}">${url}</a>`);
+    }
     handleInput();
   };
 
@@ -445,62 +361,6 @@ function RichTextEditor({
     { icon: LinkIcon, action: () => insertLink(), title: "Insert Link" },
   ];
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) return;
-
-      const li =
-        (sel.anchorNode as HTMLElement)?.closest?.("li") ||
-        sel.anchorNode?.parentElement?.closest?.("li");
-
-      if (li) {
-        e.preventDefault();
-        if (!li.textContent?.trim()) {
-          const list = li.closest("ul, ol");
-          if (list) {
-            const p = document.createElement("p");
-            p.innerHTML = "<br>";
-            list.after(p);
-            li.remove();
-            if (list.children.length === 0) list.remove();
-            const range = document.createRange();
-            range.selectNodeContents(p);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            handleInput();
-          }
-          return;
-        }
-
-        const newLi = document.createElement("li");
-        newLi.innerHTML = "<br>";
-        li.after(newLi);
-        const range = document.createRange();
-        range.selectNodeContents(newLi);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        handleInput();
-      }
-    }
-
-    if (e.key === "Tab") {
-      const sel = window.getSelection();
-      if (!sel) return;
-      const li =
-        (sel.anchorNode as HTMLElement)?.closest?.("li") ||
-        sel.anchorNode?.parentElement?.closest?.("li");
-      if (li) {
-        e.preventDefault();
-        const current = parseInt(li.style.marginLeft || "0");
-        li.style.marginLeft = `${current + (e.shiftKey ? -20 : 20)}px`;
-        handleInput();
-      }
-    }
-  };
-
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
       <div className="flex flex-wrap items-center gap-1 px-3 py-2 border-b border-gray-100 bg-gray-50/80">
@@ -532,14 +392,13 @@ function RichTextEditor({
         ref={editorRef}
         contentEditable
         onInput={handleInput}
-        onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         data-placeholder={placeholder}
         className="min-h-[280px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed focus:outline-none prose prose-sm max-w-none
           [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400
           [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
           [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600
-          [&_p]:leading-relaxed [&_p]:my-3
+          [&_p]:leading-relaxed
           [&_a]:text-blue-600 [&_a]:underline [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2"
         style={{ wordBreak: "break-word" }}
       />
@@ -914,9 +773,7 @@ export default function AdminChurchContentPage() {
     setEditTitle(item.title);
     setEditContent(item.content || item.excerpt || "");
     setEditStatus(item.status as "draft" | "publish");
-    setEditDate(
-      item.date ? new Date(item.date).toISOString().split("T")[0] : "",
-    );
+    setEditDate(toDateInputValue(item.date));
     setEditSpeaker(item.speaker || "");
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
@@ -1048,7 +905,9 @@ export default function AdminChurchContentPage() {
         status: editStatus,
         speaker: editSpeaker,
       };
-      if (editDate) payload.date = new Date(editDate).toISOString();
+      // Send a naive local datetime (noon, no timezone) so WordPress keeps the
+      // exact calendar day the admin picked — toISOString() would shift it.
+      if (editDate) payload.date = `${editDate}T12:00:00`;
       if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
       if (activeTab === "sermon" && editSeriesId) {
         payload.categories = [Number(editSeriesId)];
@@ -2173,18 +2032,16 @@ export default function AdminChurchContentPage() {
                   )}
                 </div>
 
-                {activeTab === "sermon" && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Sermon Date
-                    </label>
-                    <CustomDatePicker
-                      value={editDate}
-                      onChange={setEditDate}
-                      className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {activeTab === "sermon" ? "Sermon Date" : "Date"}
+                  </label>
+                  <CustomDatePicker
+                    value={editDate}
+                    onChange={setEditDate}
+                    className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                  />
+                </div>
 
                 {activeTab === "sermon" && (
                   <div>
