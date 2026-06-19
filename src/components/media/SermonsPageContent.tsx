@@ -67,111 +67,76 @@ interface TranscriptStub {
  * while preserving intentional series continuations.
  */
 function getBaseSlug(slug: string, transcriptTitle: string): string {
-  // Pattern to detect intentional part references: "Part 2", "part 2", "Pt 2", "pt 2", "PT 2", "pt. 2", etc.
-  const partPattern = /\b(?:part|pt\.?)\s*\d+\b/i;
+  const match = slug.match(/-(\d+)$/);
+  if (!match) return slug;
 
-  // If transcript title contains "Part X" or "pt X", it's intentional - keep the full slug
-  if (partPattern.test(transcriptTitle)) {
+  // If that trailing number actually appears in the title (e.g. "Psalm 23",
+  // "Part 2", "Acts 2"), the suffix is meaningful — keep the full slug so the
+  // link resolves. Only strip it when it's a WordPress collision variant
+  // (e.g. "the-gospel-2" for a re-published "The Gospel").
+  const num = match[1];
+  if (new RegExp(`\\b${num}\\b`).test(transcriptTitle)) {
     return slug;
   }
 
-  // Otherwise, strip numeric suffix (WordPress collision variant)
-  return slug.replace(/-\d+$/, "");
+  return slug.slice(0, match.index);
 }
 
+// Read transcript stubs from our cached server route (revalidated hourly), so
+// WordPress is queried at most once per hour instead of once per visitor.
 async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
-  const WP_API =
-    process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
-  const CATEGORY_ID = 20; // Sunday Message Transcripts
-  const MAX_PAGES = 5; // Fetch up to 5 pages × 100 = 500 transcripts
-  const PER_PAGE = 100;
-
   try {
-    const allTranscripts: TranscriptStub[] = [];
-    let totalFetched = 0;
-    let slugCollisionCount = 0;
-    let totalPages = MAX_PAGES; // Will be refined from WP header after first fetch
-
-    // Fetch multiple pages to capture older transcripts
-    for (let page = 1; page <= totalPages; page++) {
-      // Include categories array to verify we're getting posts from the correct category
-      const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
-
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-
-        if (!res.ok) {
-          logWarn(
-            "Failed to fetch transcript data",
-            { page, status: res.status },
-            { tag: "Transcripts" },
-          );
-          break; // Stop pagination if we get an error
-        }
-
-        // Use WP total pages header to avoid requesting beyond available pages
-        const wpTotalPages = res.headers.get("X-WP-TotalPages");
-        if (wpTotalPages) {
-          totalPages = Math.min(
-            parseInt(wpTotalPages, 10) || MAX_PAGES,
-            MAX_PAGES,
-          );
-        }
-
-        const posts: {
-          title: { rendered: string };
-          slug: string;
-          id: number;
-          categories: number[];
-        }[] = await res.json();
-
-        if (posts.length === 0) {
-          break;
-        }
-
-        const pageTranscripts = posts.map((p) => {
-          const baseSlug = getBaseSlug(p.slug, p.title.rendered);
-          const hasSlugSuffix = baseSlug !== p.slug;
-
-          if (hasSlugSuffix) {
-            slugCollisionCount++;
-          }
-
-          // Verify category is correct (even though we filtered by it)
-          const hasCorrectCategory = p.categories.includes(CATEGORY_ID);
-          if (!hasCorrectCategory) {
-            logWarn(
-              "Category mismatch detected",
-              { postId: p.id },
-              { tag: "Transcripts" },
-            );
-          }
-
-          return {
-            slug: p.slug,
-            title: p.title.rendered,
-            id: p.id,
-            categories: p.categories,
-            baseSlug,
-          };
-        });
-
-        allTranscripts.push(...pageTranscripts);
-        totalFetched += posts.length;
-      } catch (pageErr) {
-        logError("Failed to fetch transcript page", pageErr, {
-          tag: "Transcripts",
-        });
-        break;
-      }
+    const res = await fetch("/api/wp/transcript-slugs", {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) {
+      logWarn(
+        "Failed to fetch transcript data",
+        { status: res.status },
+        { tag: "Transcripts" },
+      );
+      return [];
     }
 
-    return allTranscripts;
+    const data: {
+      items?: {
+        slug: string;
+        title: string;
+        id: number;
+        categories: number[];
+      }[];
+    } = await res.json();
+
+    return (data.items ?? []).map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      id: p.id,
+      categories: p.categories,
+      baseSlug: getBaseSlug(p.slug, p.title),
+    }));
   } catch (err) {
     logError("Failed to load transcript data", err, { tag: "Transcripts" });
     return [];
   }
 }
+
+// Spelled-out part numbers → digits, so "Part One" matches "Part 1".
+const PART_WORD_TO_NUM: Record<string, string> = {
+  one: "1",
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+  ten: "10",
+  eleven: "11",
+  twelve: "12",
+};
+const PART_WORD_RE =
+  /\bpart\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g;
 
 function normalizeTitle(title: string): string {
   return (
@@ -195,6 +160,8 @@ function normalizeTitle(title: string): string {
       .replace(/[\u2013\u2014]/g, "-")
       // Normalize part references: "Pt.", "pt", "PT.", "Part" all become "part"
       .replace(/\bpt\.?\s*/gi, "part ")
+      // Spelled-out part numbers → digits: "part one" → "part 1"
+      .replace(PART_WORD_RE, (_m, w: string) => `part ${PART_WORD_TO_NUM[w]}`)
       // Remove all non-alphanumeric chars except spaces
       .replace(/[^a-z0-9\s]/g, "")
       .replace(/\s+/g, " ")
