@@ -88,6 +88,9 @@ export async function GET(request: NextRequest) {
           status: adminStatus,
           authHeader,
           noStore: true,
+          // Admin list shows no thumbnail for transcripts — skip _embed to
+          // lighten the WP query and response.
+          embed: false,
         });
 
         return NextResponse.json({
@@ -124,6 +127,7 @@ export async function GET(request: NextRequest) {
           status: adminStatus,
           authHeader,
           noStore: true,
+          embed: false,
         });
 
         return NextResponse.json({

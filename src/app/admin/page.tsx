@@ -539,6 +539,7 @@ function RichTextEditor({
           [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400
           [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
           [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600
+          [&_p]:leading-relaxed [&_p]:my-3
           [&_a]:text-blue-600 [&_a]:underline [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2"
         style={{ wordBreak: "break-word" }}
       />
