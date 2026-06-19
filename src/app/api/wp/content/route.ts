@@ -8,6 +8,24 @@ import {
 } from "@/lib/wordpress";
 import { getAudioSermons } from "@/lib/audioSermons";
 
+// All five transcript categories, so the admin list shows every transcript
+// type (not just Sunday Message + Sunday School).
+const ALL_TRANSCRIPT_CATEGORIES = [
+  WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+  WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+  WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+  WP_CATEGORIES.OTHER_MEETINGS,
+  WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
+];
+
+/** Basic-auth header so the admin list can read drafts/scheduled posts. */
+function getAdminAuth(): string | undefined {
+  const user = process.env.WP_APPLICATION_USER || "admin";
+  const pass = process.env.WP_APPLICATION_PASSWORD || "";
+  if (!pass) return undefined;
+  return `Basic ${Buffer.from(`${user}:${pass}`).toString("base64")}`;
+}
+
 /**
  * GET /api/wp/content?type=sermon|transcript|manual&page=1&per_page=6
  *
@@ -19,6 +37,14 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const perPage = parseInt(searchParams.get("per_page") || "6");
   const search = searchParams.get("search")?.trim() || undefined;
+
+  // When credentials exist, include unpublished statuses so newly created
+  // drafts/scheduled posts appear in the admin list. Without creds we fall
+  // back to published-only (the public behaviour).
+  const authHeader = getAdminAuth();
+  const adminStatus = authHeader
+    ? "publish,future,draft,pending"
+    : undefined;
 
   try {
     switch (type) {
@@ -47,66 +73,39 @@ export async function GET(request: NextRequest) {
       }
 
       case "transcript": {
-        // Fetch both sunday message and sunday school transcripts with full content
-        const [msgResult, ssResult] = await Promise.all([
-          fetchWPPosts({
-            categories: [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS],
-            page,
-            perPage: Math.ceil(perPage / 2),
-            search,
-            noStore: true,
-          }),
-          fetchWPPosts({
-            categories: [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS],
-            page,
-            perPage: Math.floor(perPage / 2),
-            search,
-            noStore: true,
-          }),
-        ]);
-
-        const allTranscripts = [
-          ...msgResult.posts.map((post) => {
-            const transcript = transformToTranscript(post);
-            return {
-              id: transcript.id,
-              title: transcript.title,
-              date: transcript.formattedDate,
-              status: "publish",
-              speaker: transcript.speaker,
-              type: "transcript" as const,
-              transcriptType: transcript.type,
-              content: transcript.content,
-              excerpt: transcript.excerpt,
-              slug: transcript.slug,
-            };
-          }),
-          ...ssResult.posts.map((post) => {
-            const transcript = transformToTranscript(post);
-            return {
-              id: transcript.id,
-              title: transcript.title,
-              date: transcript.formattedDate,
-              status: "publish",
-              speaker: transcript.speaker,
-              type: "transcript" as const,
-              transcriptType: transcript.type,
-              content: transcript.content,
-              excerpt: transcript.excerpt,
-              slug: transcript.slug,
-            };
-          }),
-        ].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        );
+        // One query across all transcript categories (fewer API calls), with
+        // unpublished statuses so drafts/scheduled transcripts also appear.
+        const result = await fetchWPPosts({
+          categories: ALL_TRANSCRIPT_CATEGORIES,
+          page,
+          perPage,
+          search,
+          status: adminStatus,
+          authHeader,
+          noStore: true,
+        });
 
         return NextResponse.json({
-          items: allTranscripts.slice(0, perPage),
+          items: result.posts.map((post) => {
+            const transcript = transformToTranscript(post);
+            return {
+              id: transcript.id,
+              title: transcript.title,
+              date: transcript.formattedDate,
+              status: post.status,
+              speaker: transcript.speaker,
+              type: "transcript" as const,
+              transcriptType: transcript.type,
+              content: transcript.content,
+              excerpt: transcript.excerpt,
+              slug: transcript.slug,
+            };
+          }),
           pagination: {
             page,
             perPage,
-            total: msgResult.total + ssResult.total,
-            totalPages: Math.max(msgResult.totalPages, ssResult.totalPages),
+            total: result.total,
+            totalPages: result.totalPages,
           },
         });
       }
@@ -117,6 +116,8 @@ export async function GET(request: NextRequest) {
           page,
           perPage,
           search,
+          status: adminStatus,
+          authHeader,
           noStore: true,
         });
 
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
               id: manual.id,
               title: manual.title,
               date: manual.formattedDate,
-              status: "publish",
+              status: post.status,
               speaker: extractSpeaker(post.content.rendered),
               type: "manual" as const,
               content: manual.content,
