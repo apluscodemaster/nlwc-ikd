@@ -8,6 +8,11 @@ import {
 } from "@/lib/wordpress";
 import { getAudioSermons } from "@/lib/audioSermons";
 
+// Always run fresh (never serve a cached response) and on the Node runtime
+// (Buffer is used to build the WP Basic-auth header).
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // All five transcript categories, so the admin list shows every transcript
 // type (not just Sunday Message + Sunday School).
 const ALL_TRANSCRIPT_CATEGORIES = [
