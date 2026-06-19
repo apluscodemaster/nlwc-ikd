@@ -43,6 +43,7 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
+import { cleanInlineStyles } from "@/utils/sanitizeWP";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -198,6 +199,34 @@ function RichTextEditor({
       isInternalChange.current = true;
       onChange(editorRef.current.innerHTML);
     }
+  };
+
+  // Strip external formatting on paste (Word / Google Docs etc.) so the app's
+  // own typography wins. Structural tags (headings, paragraphs, lists) and
+  // emphasis (bold/italic/alignment) are kept; font-family, colors, sizes,
+  // classes and Office cruft are removed.
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const html = e.clipboardData.getData("text/html");
+    const text = e.clipboardData.getData("text/plain");
+    if (!html && !text) return;
+    e.preventDefault();
+
+    if (html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      tmp
+        .querySelectorAll("style, script, meta, link, title")
+        .forEach((n) => n.remove());
+      tmp.querySelectorAll("*").forEach((el) => {
+        el.removeAttribute("class");
+        el.removeAttribute("lang");
+        el.removeAttribute("face");
+      });
+      document.execCommand("insertHTML", false, cleanInlineStyles(tmp.innerHTML));
+    } else {
+      document.execCommand("insertText", false, text);
+    }
+    handleInput();
   };
 
   const saveSelection = (): Range | null => {
@@ -504,6 +533,7 @@ function RichTextEditor({
         contentEditable
         onInput={handleInput}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         data-placeholder={placeholder}
         className="min-h-[280px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed focus:outline-none prose prose-sm max-w-none
           [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400
@@ -602,10 +632,16 @@ function ContentListItem({
           className={`text-[10px] uppercase tracking-wider px-2 py-0.5 ${
             item.status === "publish"
               ? "bg-emerald-50 text-emerald-600"
-              : "bg-amber-50 text-amber-600"
+              : item.status === "future"
+                ? "bg-blue-50 text-blue-600"
+                : "bg-amber-50 text-amber-600"
           }`}
         >
-          {item.status === "publish" ? "Live" : "Draft"}
+          {item.status === "publish"
+            ? "Live"
+            : item.status === "future"
+              ? "Scheduled"
+              : "Draft"}
         </StatusBadge>
       </div>
     </div>
