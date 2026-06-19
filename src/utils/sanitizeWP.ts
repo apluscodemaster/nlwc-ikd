@@ -61,6 +61,42 @@ const NBSP_PARAGRAPH_RE = /<p[^>]*>(\s|&nbsp;)*<\/p>/gi;
 const EXCESSIVE_BR_RE = /(<br\s*\/?>[\s]*){3,}/gi;
 const EXCESSIVE_NEWLINES_RE = /\n{3,}/g;
 
+// ─── External "core" formatting stripping ─────────────────────────────────────
+// Content pasted from Word / Google Docs carries inline styles (font-family,
+// colors, sizes, line-height, mso-* …) that override the app's own typography.
+// We strip those so the app's font/colors win, while KEEPING structural and
+// emphasis properties (font-weight, font-style, text-align, text-decoration,
+// vertical-align) so bold/italic/alignment from the source survive.
+const BLOCKED_STYLE_PROP_RE =
+  /^(?:font-family|font-size|font|font-variant|font-feature-settings|font-stretch|color|background|background-color|background-image|line-height|letter-spacing|word-spacing|text-shadow|mso-[\w-]+|-webkit-[\w-]+|-moz-[\w-]+)$/i;
+
+// Matches a style="…" / style='…' attribute (with its leading whitespace).
+const STYLE_ATTR_RE = /\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+/**
+ * Remove blocked inline-style properties (font-family, color, size, line-height,
+ * mso-*, …) from every `style` attribute in an HTML string, dropping the
+ * attribute entirely when nothing useful is left. Keeps structural/emphasis
+ * declarations so the app's typography applies but bold/italic/alignment remain.
+ */
+export function cleanInlineStyles(html: string): string {
+  if (!html) return "";
+  return html.replace(STYLE_ATTR_RE, (_m, dq?: string, sq?: string) => {
+    const raw = dq ?? sq ?? "";
+    const kept = raw
+      .split(";")
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .filter((decl) => {
+        const colon = decl.indexOf(":");
+        if (colon === -1) return false;
+        const prop = decl.slice(0, colon).trim().toLowerCase();
+        return prop !== "" && !BLOCKED_STYLE_PROP_RE.test(prop);
+      });
+    return kept.length ? ` style="${kept.join("; ")}"` : "";
+  });
+}
+
 /**
  * Decode known HTML entities to their real characters.
  * ⚡ Uses a single pre-compiled regex instead of 28 individual loops.
@@ -130,6 +166,10 @@ export function sanitizeWPHtml(html: string): string {
   if (!html) return "";
 
   let clean = html;
+
+  // ── Strip external "core" inline styles (font-family, color, size, mso-*) ──
+  // so the app's own typography controls the look, while keeping structure.
+  clean = cleanInlineStyles(clean);
 
   // ── Entity decoding (only in text, not in tags) ──
   // Process text between tags: decode entities
