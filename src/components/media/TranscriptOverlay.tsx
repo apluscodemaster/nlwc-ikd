@@ -71,6 +71,20 @@ export default function TranscriptOverlay({
     fetchTranscript();
   }, [isOpen, slug]);
 
+  // Re-run Logos RefTagger so scripture references in the loaded transcript get
+  // highlighted (same behaviour as the full detail page). RefTagger only scans
+  // the DOM on initial load / route change, so this modal's dynamically-fetched
+  // content would otherwise never be tagged.
+  useEffect(() => {
+    if (!transcript) return;
+    const timer = setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rt = (window as any).refTagger;
+      if (rt?.tag) rt.tag();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [transcript]);
+
   // Close on escape key
   useEffect(() => {
     if (!isOpen) return;
