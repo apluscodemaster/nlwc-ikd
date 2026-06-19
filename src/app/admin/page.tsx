@@ -282,6 +282,15 @@ function RichTextEditor({
       ordered ? "insertOrderedList" : "insertUnorderedList",
       false,
     );
+    if (ordered && editorRef.current) {
+      // Browsers "continue" a new ordered list from a previous one by adding a
+      // `start` attribute (or by splitting one list into two numbered blocks).
+      // Strip it so every separate <ol> numbers from 1, while items kept inside
+      // one list still flow normally.
+      editorRef.current
+        .querySelectorAll("ol[start]")
+        .forEach((ol) => ol.removeAttribute("start"));
+    }
     handleInput();
   };
 
