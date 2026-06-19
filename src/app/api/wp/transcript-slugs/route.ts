@@ -14,7 +14,12 @@ export const revalidate = 3600;
 
 const WP_API =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
-const CATEGORY_ID = 20; // Sunday Message Transcripts
+// All transcript categories, so a sermon can match its transcript even when the
+// transcript was filed under Sunday School / Bible Study / Other Meetings /
+// Season of the Spirit rather than Sunday Message. The matcher still prefers
+// exact/closest title matches, so widening the pool improves recall without
+// overriding good matches.
+const CATEGORY_IDS = [20, 31, 33, 21, 22].join(",");
 const PER_PAGE = 100;
 // Safety bound; the real page count comes from WordPress's X-WP-TotalPages.
 const MAX_PAGES = 30;
@@ -27,7 +32,7 @@ type WPTranscriptPost = {
 };
 
 const buildUrl = (page: number) =>
-  `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
+  `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_IDS}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
 
 // Each WP fetch is itself cached for an hour, so even if this handler re-runs
 // it serves from the Data Cache instead of hitting WordPress.
