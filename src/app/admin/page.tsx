@@ -678,8 +678,8 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
-              </span>{" "}
-              (only when status is set to Publish).
+              </span>
+              .
             </span>
           </>
         ) : (
@@ -1179,14 +1179,20 @@ export default function AdminChurchContentPage() {
       payload.transcriptType = data.transcriptType || "sunday-message";
     }
 
-    // Attach the chosen publish date/time. If it's in the future and the
-    // status is "publish", WordPress schedules the post (status "future").
+    // Attach the chosen publish date/time. A future date means the user wants
+    // the post scheduled, so force status "publish" — WordPress then stores it
+    // as "future" and auto-publishes at that time. (Otherwise a future date
+    // left on the default "Draft" toggle just saves a draft, which is
+    // surprising for something explicitly given a later publish date.)
     const publishAt = combinePublishDate(
       data.publishDate,
       data.publishHour,
       data.publishMinute,
     );
+    const isScheduled =
+      !!publishAt && new Date(publishAt).getTime() > Date.now();
     if (publishAt) payload.date = publishAt;
+    if (isScheduled) payload.status = "publish";
 
     try {
       // ── Auth header added ─────────────────────────────────────────────────
