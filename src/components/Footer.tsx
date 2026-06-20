@@ -113,7 +113,7 @@ export default function Footer() {
         </div>
 
         {/* Middle Columns: Quick Links, Resources & Connect */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:col-span-2 lg:col-span-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-8 sm:gap-8 sm:col-span-2 lg:col-span-2">
           {/* Column 2: Quick Links (hidden on mobile) */}
           <div className="hidden sm:block">
             <h3 className="font-semibold mb-4 text-white text-lg">
@@ -126,7 +126,7 @@ export default function Footer() {
                     href={link.href}
                     className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                   >
-                    <ChevronRight color={orange} />
+                    <ChevronRight color={orange} size={16} className="shrink-0" />
                     {link.label}
                   </Link>
                 </li>
@@ -144,7 +144,7 @@ export default function Footer() {
                     href={link.href}
                     className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                   >
-                    <ChevronRight color={orange} />
+                    <ChevronRight color={orange} size={16} className="shrink-0" />
                     {link.label}
                   </Link>
                 </li>
@@ -165,7 +165,7 @@ export default function Footer() {
                       : {})}
                     className="flex items-center gap-2 text-gray-300 hover:text-primary transition-colors text-sm"
                   >
-                    <ChevronRight color={orange} />
+                    <ChevronRight color={orange} size={16} className="shrink-0" />
                     {link.label}
                   </Link>
                 </li>
