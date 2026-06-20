@@ -12,7 +12,7 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 | **Phase 4** - Polish             | ✅ Complete | Accessibility, Keyboard Navigation, SEO Metadata, PWA/Offline Support          |
 | **Phase 5** - Community Features | ✅ Complete | Bible Quiz, Testimonies, Live Chat, Google Translate, WhatsApp Integration     |
 
-**Last Updated:** May 19, 2026
+**Last Updated:** June 20, 2026
 
 ## ✨ Features
 
@@ -110,10 +110,11 @@ src/
 │   ├── robots.ts               # SEO robots.txt
 │   ├── sitemap.ts              # Dynamic sitemap
 │   ├── about/                  # Church story, leadership, beliefs
-│   ├── admin/                  # Admin dashboard (protected)
-│   │   ├── page.tsx            # Admin home
-│   │   ├── quiz/               # Quiz question management
+│   ├── admin/                  # Admin dashboard (Firebase-auth protected)
+│   │   ├── page.tsx            # Church Content (publish sermons/transcripts/manuals)
+│   │   ├── quiz/               # Quiz question & category management
 │   │   ├── devotionals/        # Devotional uploads
+│   │   ├── schedule/           # Service schedule (recurring + special events)
 │   │   └── testimonies/        # Testimony moderation
 │   ├── api/                    # API routes
 │   │   ├── audio-sermons/      # Audio sermon proxy
@@ -414,10 +415,12 @@ Spiritual guidance page:
 
 ### 📱 Admin Dashboard (`/admin`)
 
-Management interface (restricted access via Bearer token auth):
+Management interface (restricted access via Firebase Authentication — admin API calls carry the signed-in user's Firebase ID token as a Bearer token):
 
-- **Quiz Management** (`/admin/quiz`) — CRUD for quiz questions, CSV/JSON import/export, bulk operations
+- **Church Content** (`/admin`) — Publish and edit WordPress sermons, transcripts, and manuals: rich-text editor (paste-cleaning of external fonts), media uploads, future-date scheduling, and live search across content
+- **Quiz Management** (`/admin/quiz`) — CRUD for quiz questions and categories, CSV/JSON import/export, player stats
 - **Devotional Management** (`/admin/devotionals`) — Upload, edit, and delete daily devotionals
+- **Service Schedule** (`/admin/schedule`) — Manage recurring services and special events
 - **Testimony Moderation** (`/admin/testimonies`) — Approve or reject submitted testimonies
 - Session timeout with automatic logout
 
@@ -542,7 +545,7 @@ The app integrates with WordPress at `https://ikdadmin.nlwc.church` as a headles
 - **140+ Sunday Message Transcripts** with search, category filtering, and pagination
 - **111+ Sunday School Manuals** with series/theme filtering
 - **Adjacent navigation** — Previous/Next links on each detail page
-- **ISR revalidation** — Pages cached for 5 minutes, revalidated on demand via webhook
+- **ISR + on-demand revalidation** — Pages cached server-side and revalidated instantly when content changes: WordPress fires a typed webhook (`POST /api/revalidate?type=transcript|manual|sermon`) on publish/update via the `nlwc-nextjs-revalidate` mu-plugin, so changes appear within seconds without polling. Time-based revalidation remains as a fallback.
 - **Smart caching** — React Query client-side + Next.js server-side
 - **URL-synced state** — Page, search, and filter state persisted in URL query params
 - **Back navigation** — `BackToListLink` component preserves pagination via `sessionStorage`
@@ -663,9 +666,10 @@ fetch("/api/revalidate?path=/page", {
 | Give              | `/give`              | Donation and tithing platform                     |
 | Salvation         | `/salvation`         | Gospel message and spiritual guidance             |
 | Welcome           | `/welcome`           | New visitor landing page                          |
-| Admin             | `/admin`             | Protected admin dashboard                         |
-| Admin Quiz        | `/admin/quiz`        | Quiz question management                          |
+| Admin (Church Content) | `/admin`        | Publish/edit sermons, transcripts & manuals       |
+| Admin Quiz        | `/admin/quiz`        | Quiz question & category management               |
 | Admin Devotionals | `/admin/devotionals` | Devotional content management                     |
+| Admin Schedule    | `/admin/schedule`    | Recurring services & special events               |
 | Admin Testimonies | `/admin/testimonies` | Testimony moderation                              |
 
 ## 🎯 Key Features Breakdown
