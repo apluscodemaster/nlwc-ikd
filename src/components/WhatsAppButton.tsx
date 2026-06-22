@@ -38,7 +38,7 @@ export default function WhatsAppButton() {
         rel="noopener noreferrer"
         aria-label="Chat with us on WhatsApp"
         title="Chat with us on WhatsApp"
-        className="fixed left-5 z-50 w-14 h-14 rounded-full shadow-lg shadow-green-500/30 hover:scale-110 hover:shadow-xl hover:shadow-green-500/40 active:scale-95 transition-all duration-300"
+        className="fixed left-5 z-50 w-11 h-11 md:w-14 md:h-14 rounded-full shadow-lg shadow-green-500/30 hover:scale-110 hover:shadow-xl hover:shadow-green-500/40 active:scale-95 transition-all duration-300"
         style={{
           bottom: "var(--scroll-bottom, 1.25rem)",
           animation: "whatsapp-pop-in 0.5s ease-out both",
