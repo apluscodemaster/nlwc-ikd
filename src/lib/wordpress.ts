@@ -197,6 +197,9 @@ interface FetchPostsOptions {
   before?: string; // ISO date string — posts published before this date
   after?: string; // ISO date string — posts published after this date
   exclude?: number[]; // Post IDs to exclude
+  noStore?: boolean; // Bypass Data Cache (admin reads) so edits show immediately
+  status?: string; // Comma list, e.g. "publish,future,draft" (needs authHeader)
+  authHeader?: string; // WP Basic-auth header to read non-published posts
 }
 
 /**
@@ -213,6 +216,9 @@ export async function fetchWPPosts(
     orderBy = "date",
     order = "desc",
     embed = true,
+    noStore = false,
+    status,
+    authHeader,
   } = options;
 
   const params = new URLSearchParams({
@@ -224,6 +230,15 @@ export async function fetchWPPosts(
 
   if (categories && categories.length > 0) {
     params.append("categories", categories.join(","));
+  }
+
+  // Non-published statuses (draft/future/pending) require authentication.
+  if (status) {
+    status
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => params.append("status[]", s));
   }
 
   if (search) {
@@ -255,11 +270,14 @@ export async function fetchWPPosts(
       await new Promise((r) => setTimeout(r, attempt * 2000));
     }
 
-    response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, {
-      next: {
-        revalidate: 300,
-      },
-    });
+    // Admin reads pass noStore so saved edits show immediately; public reads
+    // keep the 5-minute Data Cache.
+    const fetchInit: RequestInit = noStore
+      ? { cache: "no-store" }
+      : { next: { revalidate: 300 } };
+    if (authHeader) fetchInit.headers = { Authorization: authHeader };
+
+    response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, fetchInit);
 
     if (response.ok) break;
     if (response.status === 429) {

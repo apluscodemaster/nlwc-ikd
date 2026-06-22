@@ -16,7 +16,6 @@ import {
   AlertCircle,
   GripVertical,
   BookOpen,
-  Search,
   Filter,
 } from "lucide-react";
 import {
@@ -36,6 +35,9 @@ import {
   replaceDevotionalPdf,
   Devotional,
 } from "@/lib/devotionals";
+import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Timestamp } from "firebase/firestore";
 
 // ──────────────────────────────────────────────
@@ -311,16 +313,14 @@ export default function AdminDevotionalsPage() {
 
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-0 sm:min-w-[280px]">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 sm:h-11 pl-9 sm:pl-11 pr-3 sm:pr-4 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-              />
-            </div>
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search by title..."
+              wrapperClassName="flex-1 min-w-0 sm:min-w-[280px]"
+              iconClassName="left-3 sm:left-4 text-muted-foreground"
+              className="h-10 sm:h-11 pl-9 sm:pl-11 pr-3 sm:pr-4 rounded-2xl focus:ring-2 focus:ring-primary/10"
+            />
 
             {/* Date Range Inputs */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -328,11 +328,12 @@ export default function AdminDevotionalsPage() {
                 <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
                   From
                 </span>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-transparent text-xs sm:text-sm focus:outline-none w-full min-w-0"
+                  onChange={setFilterStartDate}
+                  placeholder="From"
+                  wrapperClassName="w-full min-w-0"
+                  className="w-full flex items-center justify-between gap-2 bg-transparent text-xs sm:text-sm text-left focus:outline-none cursor-pointer"
                 />
               </div>
 
@@ -344,11 +345,12 @@ export default function AdminDevotionalsPage() {
                 <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
                   To
                 </span>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-transparent text-xs sm:text-sm focus:outline-none w-full min-w-0"
+                  onChange={setFilterEndDate}
+                  placeholder="To"
+                  wrapperClassName="w-full min-w-0"
+                  className="w-full flex items-center justify-between gap-2 bg-transparent text-xs sm:text-sm text-left focus:outline-none cursor-pointer"
                 />
               </div>
             </div>
@@ -492,16 +494,15 @@ export default function AdminDevotionalsPage() {
                             <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase hidden lg:block shrink-0">
                               Date:
                             </span>
-                            <input
-                              type="date"
+                            <CustomDatePicker
                               value={item.scheduledDate}
-                              onChange={(e) =>
-                                updateQueueItem(index, {
-                                  scheduledDate: e.target.value,
-                                })
+                              onChange={(v) =>
+                                updateQueueItem(index, { scheduledDate: v })
                               }
                               disabled={item.status !== "pending"}
-                              className="bg-transparent text-sm focus:outline-none w-full min-w-0"
+                              placeholder="Pick date"
+                              wrapperClassName="w-full min-w-0"
+                              className="w-full flex items-center justify-between gap-2 bg-transparent text-sm text-left focus:outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             />
                           </div>
 
@@ -657,11 +658,10 @@ export default function AdminDevotionalsPage() {
                   <div className="flex items-center gap-3 lg:contents">
                     <div className="flex-1">
                       {editingId === d.id ? (
-                        <input
-                          type="date"
+                        <CustomDatePicker
                           value={editDate}
-                          onChange={(e) => setEditDate(e.target.value)}
-                          className="h-9 px-3 rounded-lg border border-primary/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-full min-w-0"
+                          onChange={setEditDate}
+                          className="w-full min-w-0 h-9 flex items-center justify-between gap-2 px-3 rounded-lg border border-primary/30 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                         />
                       ) : (
                         <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5">
@@ -674,13 +674,13 @@ export default function AdminDevotionalsPage() {
                     {/* Status */}
                     <div className="shrink-0">
                       {isFuture ? (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] sm:text-xs font-bold">
+                        <StatusBadge className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-amber-50 text-amber-700 text-[10px] sm:text-xs">
                           Scheduled
-                        </span>
+                        </StatusBadge>
                       ) : (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-50 text-green-700 text-[10px] sm:text-xs font-bold">
+                        <StatusBadge className="px-2 sm:px-2.5 py-0.5 sm:py-1 bg-green-50 text-green-700 text-[10px] sm:text-xs">
                           Published
-                        </span>
+                        </StatusBadge>
                       )}
                     </div>
                   </div>
