@@ -5,7 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Search, Loader2, X, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { initBibleSearch, searchBible } from "@/lib/bibleSearch";
+import { searchBible } from "@/lib/bibleSearch";
 import type { SearchResult } from "@/types/bible";
 
 interface BibleSearchProps {
@@ -29,45 +29,42 @@ export default function BibleSearch({
   const listRef = useRef<HTMLDivElement>(null);
   const requestId = useRef(0);
 
-  const ensureLoaded = useCallback(async () => {
-    setError(false);
-    setLoading(true);
-    try {
-      await initBibleSearch();
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const openOverlay = useCallback(() => {
-    setOpen(true);
-    void ensureLoaded();
-  }, [ensureLoaded]);
-
-  // Debounced search: 200ms, triggers from 2+ characters. A request id guards
-  // against stale async results when the user types faster than the index loads.
+  // Debounced search: 200ms, triggers from 2+ characters. Each keystroke aborts
+  // the previous request; a request id guards against out-of-order responses.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
       setResults([]);
       setActiveIndex(0);
+      setLoading(false);
+      setError(false);
       return;
     }
+
+    const controller = new AbortController();
     const id = ++requestId.current;
+    setLoading(true);
+
     const handle = setTimeout(async () => {
       try {
-        await initBibleSearch();
+        const found = await searchBible(q, controller.signal);
+        if (id !== requestId.current) return;
+        setResults(found);
+        setActiveIndex(0);
+        setError(false);
       } catch {
-        if (id === requestId.current) setError(true);
-        return;
+        if (controller.signal.aborted || id !== requestId.current) return;
+        setError(true);
+        setResults([]);
+      } finally {
+        if (id === requestId.current) setLoading(false);
       }
-      if (id !== requestId.current) return;
-      setResults(searchBible(q));
-      setActiveIndex(0);
     }, 200);
-    return () => clearTimeout(handle);
+
+    return () => {
+      controller.abort();
+      clearTimeout(handle);
+    };
   }, [query]);
 
   // Reset transient state whenever the overlay closes.
@@ -76,6 +73,7 @@ export default function BibleSearch({
       setQuery("");
       setResults([]);
       setActiveIndex(0);
+      setError(false);
     }
   }, [open]);
 
@@ -113,16 +111,10 @@ export default function BibleSearch({
   const trimmed = query.trim();
 
   return (
-    <DialogPrimitive.Root
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) void ensureLoaded();
-      }}
-    >
+    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <button
         type="button"
-        onClick={openOverlay}
+        onClick={() => setOpen(true)}
         aria-label="Search Scripture"
         className={cn(
           "flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white/70 text-gray-600 transition-all hover:bg-white hover:text-primary active:scale-95 md:w-auto md:px-4",
@@ -179,7 +171,7 @@ export default function BibleSearch({
           <div ref={listRef} className="max-h-[70vh] overflow-y-auto p-2">
             {error ? (
               <div className="px-3 py-10 text-center text-sm text-gray-500">
-                Couldn&apos;t load the scripture index. Please try again.
+                Couldn&apos;t reach the scripture search. Please try again.
               </div>
             ) : trimmed.length < 2 ? (
               <div className="flex flex-col items-center gap-2 px-3 py-10 text-center text-gray-400">
@@ -189,7 +181,7 @@ export default function BibleSearch({
             ) : loading && results.length === 0 ? (
               <div className="flex items-center justify-center gap-2 px-3 py-10 text-sm text-gray-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading scripture...
+                Searching...
               </div>
             ) : results.length === 0 ? (
               <div className="px-3 py-10 text-center text-sm text-gray-500">
