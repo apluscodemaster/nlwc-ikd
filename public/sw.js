@@ -1,5 +1,5 @@
 // Service Worker for offline support
-const CACHE_NAME = "nlwc-gallery-v1";
+const CACHE_NAME = "nlwc-gallery-v2";
 const OFFLINE_PAGE = "/offline";
 const OFFLINE_FALLBACK = "/offline-fallback.html";
 
@@ -63,6 +63,15 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  // Never intercept Next.js build/HMR assets or the large Bible data files.
+  // Caching JS chunks (cache-first, below) would serve stale bundles in dev,
+  // and the Bible JSON is large + updated by the build script. Let these go
+  // straight to the network (and the browser's normal HTTP cache).
+  const reqPath = new URL(event.request.url).pathname;
+  if (reqPath.startsWith("/_next/") || reqPath.startsWith("/data/")) {
     return;
   }
 

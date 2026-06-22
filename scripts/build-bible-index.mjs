@@ -16,9 +16,11 @@ const versesPath = join(dataDir, "kjv.json");
 const indexPath = join(dataDir, "kjv.index.json");
 const booksPath = join(root, "src", "data", "bibleBooks.json");
 
+// Must stay identical to MINISEARCH_OPTIONS in src/lib/bibleSearch.ts.
+// No storeFields: results are resolved by id from kjv.json at runtime.
 const MINISEARCH_OPTIONS = {
   fields: ["text", "ref"],
-  storeFields: ["book", "chapter", "verse", "text", "ref"],
+  storeFields: [],
 };
 
 function normalize(token) {
