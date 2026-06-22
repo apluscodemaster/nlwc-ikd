@@ -19,12 +19,19 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // ── App design language (matches the admin action buttons) ──────────
+        brand:
+          "rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed",
+        soft: "rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9",
+        pill: "h-11 px-5",
+        // No size constraints — caller supplies padding/height via className.
+        none: "",
       },
     },
     defaultVariants: {

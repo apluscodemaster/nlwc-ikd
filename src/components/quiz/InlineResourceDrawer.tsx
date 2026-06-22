@@ -12,6 +12,7 @@ import {
   Headphones,
 } from "lucide-react";
 import Image from "next/image";
+import TranscriptContent from "@/components/shared/TranscriptContent";
 
 interface AudioSermon {
   id: number;
@@ -58,6 +59,8 @@ export function InlineResourceDrawer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [transcriptHtml, setTranscriptHtml] = useState<string | null>(null);
+  const [transcriptTitle, setTranscriptTitle] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const interactedRef = useRef(false);
 
@@ -88,7 +91,42 @@ export function InlineResourceDrawer({
       .finally(() => setLoading(false));
   }, [open, href, variant]);
 
-  // For "read" variant, fire onInteracted after 2 seconds
+  // Fetch the transcript content (read variant) and render it directly, so the
+  // drawer shows clean transcript text instead of the whole site page in an
+  // iframe.
+  useEffect(() => {
+    if (!open || variant !== "read") return;
+
+    const slug = href.match(/\/transcripts\/([^/?#]+)/)?.[1];
+    if (!slug) return;
+
+    setLoading(true);
+    setTranscriptHtml(null);
+    setTranscriptTitle(null);
+
+    fetch(`/api/transcripts/${slug}`)
+      .then((res) => res.json())
+      .then((json) => {
+        setTranscriptHtml(json?.data?.content ?? null);
+        setTranscriptTitle(json?.data?.title ?? null);
+      })
+      .catch(() => setTranscriptHtml(null))
+      .finally(() => setLoading(false));
+  }, [open, href, variant]);
+
+  // Re-run Logos RefTagger so scripture references in the loaded transcript get
+  // highlighted (it only scans on page load / route change).
+  useEffect(() => {
+    if (!transcriptHtml) return;
+    const t = setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rt = (window as any).refTagger;
+      if (rt?.tag) rt.tag();
+    }, 500);
+    return () => clearTimeout(t);
+  }, [transcriptHtml]);
+
+  // For "read" variant, count the resource as reviewed after 2 seconds.
   useEffect(() => {
     if (!open || variant !== "read") return;
 
@@ -152,8 +190,7 @@ export function InlineResourceDrawer({
   const headerTitle =
     variant === "listen"
       ? (title ?? sermon?.title ?? "Listen")
-      : (title ?? "Read Transcript");
-  const transcriptTopOffsetPx = 200;
+      : (transcriptTitle ?? title ?? "Read Transcript");
 
   return (
     <AnimatePresence>
@@ -355,18 +392,28 @@ export function InlineResourceDrawer({
                 </div>
 
                 {/* Transcript Content */}
-                <div className="flex-1 min-h-0 overflow-hidden relative">
-                  <div className="pointer-events-none absolute top-0 left-0 right-0 h-14 sm:h-16 z-10 bg-card border-b border-border" />
-                  <iframe
-                    src={href}
-                    title={headerTitle}
-                    className="w-full border-0 absolute top-0 left-0"
-                    style={{
-                      height: `calc(100% + ${transcriptTopOffsetPx}px)`,
-                      marginTop: `-${transcriptTopOffsetPx}px`,
-                    }}
-                    sandbox="allow-same-origin allow-scripts"
-                  />
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-7 h-7 text-muted-foreground animate-spin" />
+                    </div>
+                  ) : transcriptHtml ? (
+                    <TranscriptContent content={transcriptHtml} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Unable to load the transcript.
+                      </p>
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-semibold text-primary hover:underline"
+                      >
+                        Open full transcript
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

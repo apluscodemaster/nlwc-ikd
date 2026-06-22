@@ -61,6 +61,66 @@ const NBSP_PARAGRAPH_RE = /<p[^>]*>(\s|&nbsp;)*<\/p>/gi;
 const EXCESSIVE_BR_RE = /(<br\s*\/?>[\s]*){3,}/gi;
 const EXCESSIVE_NEWLINES_RE = /\n{3,}/g;
 
+// ─── External "core" formatting stripping ─────────────────────────────────────
+// Content pasted from Word / Google Docs carries inline styles (font-family,
+// colors, sizes, line-height, mso-* …) that override the app's own typography.
+// We strip those so the app's font/colors win, while KEEPING structural and
+// emphasis properties (font-weight, font-style, text-align, text-decoration,
+// vertical-align) so bold/italic/alignment from the source survive.
+const BLOCKED_STYLE_PROP_RE =
+  /^(?:font-family|font-size|font|font-variant|font-feature-settings|font-stretch|color|background|background-color|background-image|line-height|letter-spacing|word-spacing|text-shadow|mso-[\w-]+|-webkit-[\w-]+|-moz-[\w-]+)$/i;
+
+// Matches a style="…" / style='…' attribute (with its leading whitespace).
+const STYLE_ATTR_RE = /\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+// Office / external paste artifacts that carry their own fonts and must be
+// removed entirely (a <style> block can set font-family on classes, and <font>
+// tags carry a face= font) so the app's typography applies.
+const STYLE_BLOCK_RE = /<style[\s\S]*?<\/style>/gi;
+const FONT_TAG_RE = /<\/?font\b[^>]*>/gi;
+const OFFICE_TAG_RE = /<\/?(?:o:p|xml|w:[a-z]+|m:[a-z]+|st1:[a-z]+)\b[^>]*>/gi;
+const CONDITIONAL_COMMENT_RE = /<!--\[if[\s\S]*?endif\]-->/gi;
+
+/**
+ * Remove external formatting that overrides the app's typography: <style>
+ * blocks, <font> tags, Office namespace tags / conditional comments, and the
+ * blocked inline-style properties (via cleanInlineStyles).
+ */
+export function stripExternalFormatting(html: string): string {
+  if (!html) return "";
+  return cleanInlineStyles(
+    html
+      .replace(STYLE_BLOCK_RE, "")
+      .replace(CONDITIONAL_COMMENT_RE, "")
+      .replace(OFFICE_TAG_RE, "")
+      .replace(FONT_TAG_RE, ""),
+  );
+}
+
+/**
+ * Remove blocked inline-style properties (font-family, color, size, line-height,
+ * mso-*, …) from every `style` attribute in an HTML string, dropping the
+ * attribute entirely when nothing useful is left. Keeps structural/emphasis
+ * declarations so the app's typography applies but bold/italic/alignment remain.
+ */
+export function cleanInlineStyles(html: string): string {
+  if (!html) return "";
+  return html.replace(STYLE_ATTR_RE, (_m, dq?: string, sq?: string) => {
+    const raw = dq ?? sq ?? "";
+    const kept = raw
+      .split(";")
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .filter((decl) => {
+        const colon = decl.indexOf(":");
+        if (colon === -1) return false;
+        const prop = decl.slice(0, colon).trim().toLowerCase();
+        return prop !== "" && !BLOCKED_STYLE_PROP_RE.test(prop);
+      });
+    return kept.length ? ` style="${kept.join("; ")}"` : "";
+  });
+}
+
 /**
  * Decode known HTML entities to their real characters.
  * ⚡ Uses a single pre-compiled regex instead of 28 individual loops.
@@ -130,6 +190,11 @@ export function sanitizeWPHtml(html: string): string {
   if (!html) return "";
 
   let clean = html;
+
+  // ── Strip external formatting (font-family, color, size, mso-*, <style>
+  // blocks, <font> tags, Office cruft) so the app's typography controls the
+  // look, while keeping structure (headings, paragraphs, lists, emphasis).
+  clean = stripExternalFormatting(clean);
 
   // ── Entity decoding (only in text, not in tags) ──
   // Process text between tags: decode entities

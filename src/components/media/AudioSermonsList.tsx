@@ -341,7 +341,7 @@ export default function AudioSermonsList({
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2.5 pb-2 sm:pt-3 sm:pb-2.5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2.5 sm:pt-4 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="flex items-center gap-3 sm:gap-6">
                 {/* Song Info */}
                 <div className="flex-1 min-w-0">

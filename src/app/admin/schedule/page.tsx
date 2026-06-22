@@ -9,21 +9,721 @@ import {
   Loader2,
   Calendar,
   Clock,
+  X,
+  Save,
   ToggleLeft,
   ToggleRight,
   Image as ImageIcon,
   RepeatIcon,
   CalendarPlus,
+  BarChart3,
   MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { showConfirm } from "@/components/shared/CustomDialog";
-import type { RecurringService, SpecialService } from "@/lib/scheduleService";
+import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { StatCard } from "@/components/shared/StatCard";
-import { RecurringModal } from "@/components/admin/schedule/RecurringModal";
-import { SpecialModal } from "@/components/admin/schedule/SpecialModal";
-import type { ActiveTab, ModalMode } from "@/components/admin/schedule/types";
-import { DAY_NAMES, formatHour } from "@/components/admin/schedule/types";
+import { ModalShell } from "@/components/shared/ModalShell";
+import type { RecurringService, SpecialService } from "@/lib/scheduleService";
+
+// ──────────────────────────────────────────────
+// Constants
+// ──────────────────────────────────────────────
+
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const CATEGORIES = [
+  "Worship",
+  "Prayer",
+  "Study",
+  "Special",
+  "Conference",
+  "Youth",
+];
+
+type ActiveTab = "recurring" | "special";
+type ModalMode = "create" | "edit" | null;
+
+// ──────────────────────────────────────────────
+// Helper: format hour to 12h
+// ──────────────────────────────────────────────
+
+function formatHour(h: number): string {
+  if (h === 0 || h === 24) return "12:00 AM";
+  if (h === 12) return "12:00 PM";
+  if (h < 12) return `${h}:00 AM`;
+  return `${h - 12}:00 PM`;
+}
+
+// ──────────────────────────────────────────────
+// Recurring Form Modal
+// ──────────────────────────────────────────────
+
+function RecurringModal({
+  mode,
+  service,
+  onClose,
+  onSave,
+  saving,
+}: {
+  mode: ModalMode;
+  service: RecurringService | null;
+  onClose: () => void;
+  onSave: (data: Partial<RecurringService> & { type: "recurring" }) => void;
+  saving: boolean;
+}) {
+  const [label, setLabel] = useState("");
+  const [dayOfWeek, setDayOfWeek] = useState(0);
+  const [startHour, setStartHour] = useState(9);
+  const [endHour, setEndHour] = useState(12);
+  const [endsNextDay, setEndsNextDay] = useState(false);
+  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [location, setLocation] = useState("Church Auditorium, Ikorodu");
+  const [category, setCategory] = useState("Worship");
+  const [icon, setIcon] = useState("⛪");
+  const [recurrenceLabel, setRecurrenceLabel] = useState("");
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    if (service && mode === "edit") {
+      setLabel(service.label);
+      setDayOfWeek(service.dayOfWeek);
+      setStartHour(service.startHour);
+      setEndHour(service.endHour);
+      setEndsNextDay(service.endsNextDay || false);
+      setDescription(service.description || "");
+      setImageUrl(service.imageUrl || "");
+      setLocation(service.location || "Church Auditorium, Ikorodu");
+      setCategory(service.category || "Worship");
+      setIcon(service.icon || "⛪");
+      setRecurrenceLabel(service.recurrenceLabel || "");
+      setActive(service.active);
+    } else {
+      setLabel("");
+      setDayOfWeek(0);
+      setStartHour(9);
+      setEndHour(12);
+      setEndsNextDay(false);
+      setDescription("");
+      setImageUrl("");
+      setLocation("Church Auditorium, Ikorodu");
+      setCategory("Worship");
+      setIcon("⛪");
+      setRecurrenceLabel("");
+      setActive(true);
+    }
+  }, [service, mode]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!label.trim()) {
+      toast.error("Label is required");
+      return;
+    }
+    if (!endsNextDay && startHour >= endHour) {
+      toast.error("Start hour must be before end hour (or enable 'Ends next day')");
+      return;
+    }
+    onSave({
+      type: "recurring",
+      id: service?.id,
+      label: label.trim(),
+      dayOfWeek,
+      startHour,
+      endHour,
+      endsNextDay,
+      description: description.trim(),
+      imageUrl: imageUrl.trim(),
+      location: location.trim(),
+      category,
+      icon: icon.trim(),
+      recurrenceLabel: recurrenceLabel.trim() || `Every ${DAY_NAMES[dayOfWeek]}`,
+      active,
+    });
+  };
+
+  if (!mode) return null;
+
+  return (
+    <ModalShell onClose={onClose}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10 rounded-t-2xl">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+            <RepeatIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            {mode === "create"
+              ? "Add Recurring Service"
+              : "Edit Recurring Service"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer"
+          >
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Service Name
+            </label>
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="e.g. Sunday Worship Service"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              required
+            />
+          </div>
+
+          {/* Day of Week */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Day of Week
+            </label>
+            <select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            >
+              {DAY_NAMES.map((name, idx) => (
+                <option key={idx} value={idx}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Start/End Hours */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Hour
+              </label>
+              <select
+                value={startHour}
+                onChange={(e) => setStartHour(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>
+                    {formatHour(i)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Hour
+              </label>
+              <select
+                value={endHour}
+                onChange={(e) => setEndHour(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                  <option key={h} value={h}>
+                    {formatHour(h)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Ends Next Day toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEndsNextDay(!endsNextDay)}
+              className="flex items-center gap-2 text-sm text-gray-700 hover:text-primary transition"
+            >
+              {endsNextDay ? (
+                <ToggleRight className="w-5 h-5 text-primary" />
+              ) : (
+                <ToggleLeft className="w-5 h-5 text-gray-400" />
+              )}
+              Ends next day (overnight event)
+            </button>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description <span className="text-gray-400">(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description of the service"
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none resize-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Church Auditorium, Ikorodu"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Category + Icon */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Icon <span className="text-gray-400">(emoji)</span>
+              </label>
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="e.g. ⛪ 🙏 📖"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Recurrence Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence Label{" "}
+              <span className="text-gray-400">
+                (auto-filled if empty)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={recurrenceLabel}
+              onChange={(e) => setRecurrenceLabel(e.target.value)}
+              placeholder={`e.g. Every ${DAY_NAMES[dayOfWeek]}`}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="flex items-center gap-1">
+                <ImageIcon className="w-4 h-4" />
+                Image URL{" "}
+                <span className="text-gray-400">
+                  (Cloudinary public ID or URL)
+                </span>
+              </span>
+            </label>
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="e.g. banners/sunday-service or full URL"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Active Toggle */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <span className="text-sm font-medium text-gray-700">
+              Active in Schedule
+            </span>
+            <button
+              type="button"
+              onClick={() => setActive(!active)}
+              className="focus:outline-none"
+            >
+              {active ? (
+                <ToggleRight className="w-8 h-8 text-green-500" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-gray-400" />
+              )}
+            </button>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {mode === "create" ? "Create" : "Save"}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+  );
+}
+
+// ──────────────────────────────────────────────
+// Special Event Form Modal
+// ──────────────────────────────────────────────
+
+function SpecialModal({
+  mode,
+  service,
+  onClose,
+  onSave,
+  saving,
+}: {
+  mode: ModalMode;
+  service: SpecialService | null;
+  onClose: () => void;
+  onSave: (data: Partial<SpecialService> & { type: "special" }) => void;
+  saving: boolean;
+}) {
+  const [label, setLabel] = useState("");
+  const [date, setDate] = useState("");
+  const [startHour, setStartHour] = useState(9);
+  const [endHour, setEndHour] = useState(12);
+  const [endsNextDay, setEndsNextDay] = useState(false);
+  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [location, setLocation] = useState("Church Auditorium, Ikorodu");
+  const [category, setCategory] = useState("Special");
+  const [icon, setIcon] = useState("📅");
+  const [recurrenceLabel, setRecurrenceLabel] = useState("");
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    if (service && mode === "edit") {
+      setLabel(service.label);
+      setDate(service.date);
+      setStartHour(service.startHour);
+      setEndHour(service.endHour);
+      setEndsNextDay(service.endsNextDay || false);
+      setDescription(service.description || "");
+      setImageUrl(service.imageUrl || "");
+      setLocation(service.location || "Church Auditorium, Ikorodu");
+      setCategory(service.category || "Special");
+      setIcon(service.icon || "📅");
+      setRecurrenceLabel(service.recurrenceLabel || "");
+      setActive(service.active);
+    } else {
+      setLabel("");
+      setDate("");
+      setStartHour(9);
+      setEndHour(12);
+      setEndsNextDay(false);
+      setDescription("");
+      setImageUrl("");
+      setLocation("Church Auditorium, Ikorodu");
+      setCategory("Special");
+      setIcon("📅");
+      setRecurrenceLabel("");
+      setActive(true);
+    }
+  }, [service, mode]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!label.trim()) {
+      toast.error("Label is required");
+      return;
+    }
+    if (!date) {
+      toast.error("Date is required");
+      return;
+    }
+    if (!endsNextDay && startHour >= endHour) {
+      toast.error("Start hour must be before end hour (or enable 'Ends next day')");
+      return;
+    }
+    onSave({
+      type: "special",
+      id: service?.id,
+      label: label.trim(),
+      date,
+      startHour,
+      endHour,
+      endsNextDay,
+      description: description.trim(),
+      imageUrl: imageUrl.trim(),
+      location: location.trim(),
+      category,
+      icon: icon.trim(),
+      recurrenceLabel: recurrenceLabel.trim() || "Special Event",
+      active,
+    });
+  };
+
+  if (!mode) return null;
+
+  return (
+    <ModalShell onClose={onClose}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10 rounded-t-2xl">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+            <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            {mode === "create" ? "Add Special Event" : "Edit Special Event"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer"
+          >
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Event Name
+            </label>
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="e.g. Easter Conference"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              required
+            />
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date
+            </label>
+            <CustomDatePicker value={date} onChange={setDate} />
+          </div>
+
+          {/* Start/End Hours */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Hour
+              </label>
+              <select
+                value={startHour}
+                onChange={(e) => setStartHour(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>
+                    {formatHour(i)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Hour
+              </label>
+              <select
+                value={endHour}
+                onChange={(e) => setEndHour(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                  <option key={h} value={h}>
+                    {formatHour(h)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Ends Next Day toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEndsNextDay(!endsNextDay)}
+              className="flex items-center gap-2 text-sm text-gray-700 hover:text-primary transition"
+            >
+              {endsNextDay ? (
+                <ToggleRight className="w-5 h-5 text-primary" />
+              ) : (
+                <ToggleLeft className="w-5 h-5 text-gray-400" />
+              )}
+              Ends next day (overnight event)
+            </button>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description <span className="text-gray-400">(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description of the event"
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none resize-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location <span className="text-gray-400">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Church Auditorium, Ikorodu"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Category + Icon */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category <span className="text-gray-400">(optional)</span>
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Icon <span className="text-gray-400">(emoji)</span>
+              </label>
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="e.g. 📅 🕊️ ✨"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Recurrence Label */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence Label{" "}
+              <span className="text-gray-400">
+                (optional — defaults to &quot;Special Event&quot;)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={recurrenceLabel}
+              onChange={(e) => setRecurrenceLabel(e.target.value)}
+              placeholder="e.g. Every 2nd Saturday, One-time event"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="flex items-center gap-1">
+                <ImageIcon className="w-4 h-4" />
+                Image URL{" "}
+                <span className="text-gray-400">
+                  (Cloudinary public ID or URL)
+                </span>
+              </span>
+            </label>
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="e.g. events/easter-2025 or full URL"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+            />
+          </div>
+
+          {/* Active Toggle */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <span className="text-sm font-medium text-gray-700">
+              Active in Schedule
+            </span>
+            <button
+              type="button"
+              onClick={() => setActive(!active)}
+              className="focus:outline-none"
+            >
+              {active ? (
+                <ToggleRight className="w-8 h-8 text-green-500" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-gray-400" />
+              )}
+            </button>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {mode === "create" ? "Create" : "Save"}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+  );
+}
 
 // ──────────────────────────────────────────────
 // Main Page
@@ -50,7 +750,7 @@ export default function ScheduleAdminPage() {
   // ── Fetch ──
   const fetchSchedules = useCallback(async () => {
     try {
-      const res = await fetch("/api/schedule");
+      const res = await fetch("/api/schedule", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setRecurring(data.recurring || []);
@@ -84,7 +784,9 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Update failed");
         }
-        toast.success("Service updated");
+        toast.success("Service updated", {
+          description: `"${rest.label}" has been updated successfully.`,
+        });
       } else {
         const res = await fetch("/api/schedule", {
           method: "POST",
@@ -95,13 +797,17 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Create failed");
         }
-        toast.success("Service created");
+        toast.success("Service created", {
+          description: `"${rest.label}" has been added to the schedule.`,
+        });
       }
       setRecurringModalMode(null);
       setEditingRecurring(null);
       await fetchSchedules();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Operation failed");
+      toast.error(err instanceof Error ? err.message : "Operation failed", {
+        description: "Please try again or check your connection.",
+      });
     } finally {
       setSaving(false);
     }
@@ -124,7 +830,9 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Update failed");
         }
-        toast.success("Event updated");
+        toast.success("Event updated", {
+          description: `"${rest.label}" has been updated successfully.`,
+        });
       } else {
         const res = await fetch("/api/schedule", {
           method: "POST",
@@ -135,13 +843,17 @@ export default function ScheduleAdminPage() {
           const err = await res.json();
           throw new Error(err.error || "Create failed");
         }
-        toast.success("Event created");
+        toast.success("Event created", {
+          description: `"${rest.label}" has been added to the schedule.`,
+        });
       }
       setSpecialModalMode(null);
       setEditingSpecial(null);
       await fetchSchedules();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Operation failed");
+      toast.error(err instanceof Error ? err.message : "Operation failed", {
+        description: "Please try again or check your connection.",
+      });
     } finally {
       setSaving(false);
     }
@@ -164,11 +876,15 @@ export default function ScheduleAdminPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
-      toast.success(`${type === "recurring" ? "Service" : "Event"} deleted`);
+      toast.success(`${type === "recurring" ? "Service" : "Event"} deleted`, {
+        description: "The schedule entry has been removed.",
+      });
       await fetchSchedules();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete");
+      toast.error("Failed to delete", {
+        description: "Please try again or check your connection.",
+      });
     }
   };
 
@@ -185,10 +901,15 @@ export default function ScheduleAdminPage() {
         body: JSON.stringify({ type, id, active: !currentActive }),
       });
       if (!res.ok) throw new Error("Toggle failed");
+      toast.success(!currentActive ? "Activated" : "Deactivated", {
+        description: `Schedule entry has been ${!currentActive ? "activated" : "deactivated"}.`,
+      });
       await fetchSchedules();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to toggle status");
+      toast.error("Failed to toggle status", {
+        description: "Please try again or check your connection.",
+      });
     }
   };
 
@@ -375,6 +1096,9 @@ export default function ScheduleAdminPage() {
                             {DAY_NAMES[svc.dayOfWeek]} &middot;{" "}
                             {formatHour(svc.startHour)} &ndash;{" "}
                             {formatHour(svc.endHour)}
+                            {svc.endsNextDay && (
+                              <span className="text-[9px] font-medium text-amber-600 ml-1">(+1 day)</span>
+                            )}
                           </p>
                           {svc.location && (
                             <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">
@@ -505,6 +1229,9 @@ export default function ScheduleAdminPage() {
                             <Calendar className="w-3 h-3 shrink-0" />
                             {evt.date} &middot; {formatHour(evt.startHour)}{" "}
                             &ndash; {formatHour(evt.endHour)}
+                            {evt.endsNextDay && (
+                              <span className="text-[9px] font-medium text-amber-600 ml-1">(+1 day)</span>
+                            )}
                           </p>
                           {evt.location && (
                             <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1 mt-0.5">

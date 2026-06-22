@@ -62,6 +62,11 @@ export async function POST(request: NextRequest) {
     ? Number(body.featuredMediaId)
     : undefined;
 
+  // Optional publish date (YYYY-MM-DDTHH:mm:00). A future value combined with
+  // status "publish" makes WordPress schedule the post (status "future").
+  const date =
+    typeof body.date === "string" && body.date.trim() ? body.date : undefined;
+
   // ── Zod validation ────────────────────────────────────────────────────────
   const parsed = wpPublishSchema.safeParse(body);
   if (!parsed.success) {
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Publish to WordPress ──────────────────────────────────────────────────
-  const result = await publishToWordPress(parsed.data, { featuredMediaId });
+  const result = await publishToWordPress(parsed.data, { featuredMediaId, date });
 
   if (!result.success) {
     return NextResponse.json(result, { status: 500 });
