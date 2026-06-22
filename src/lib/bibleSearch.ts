@@ -15,10 +15,14 @@ const BOOKS = bibleBooks as BookEntry[];
  * MiniSearch configuration. These options MUST stay identical between the
  * prebuilt index (scripts/build-bible-index.mjs) and the runtime loader, or
  * MiniSearch.loadJSON will throw on mismatch.
+ *
+ * We deliberately do NOT store fields in the index: kjv.json is loaded anyway
+ * for reference lookups, so results are resolved by id from `verseIndex`. That
+ * keeps the prebuilt index far smaller (no duplicated verse text).
  */
 export const MINISEARCH_OPTIONS: MiniSearchOptions = {
   fields: ["text", "ref"],
-  storeFields: ["book", "chapter", "verse", "text", "ref"],
+  storeFields: [],
 };
 
 const SEARCH_OPTIONS = {
@@ -219,16 +223,11 @@ export function searchBible(query: string): SearchResult[] {
     // Fall through to keyword search if the reference points nowhere.
   }
 
-  return miniSearch
-    .search(trimmed, SEARCH_OPTIONS)
-    .slice(0, MAX_RESULTS)
-    .map((r) => ({
-      id: String(r.id),
-      book: r.book as string,
-      chapter: r.chapter as number,
-      verse: r.verse as number,
-      text: r.text as string,
-      ref: r.ref as string,
-      score: r.score,
-    }));
+  const results: SearchResult[] = [];
+  for (const r of miniSearch.search(trimmed, SEARCH_OPTIONS)) {
+    const verse = verseIndex?.get(String(r.id));
+    if (verse) results.push({ ...verse, score: r.score });
+    if (results.length >= MAX_RESULTS) break;
+  }
+  return results;
 }
