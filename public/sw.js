@@ -66,12 +66,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Never intercept Next.js build/HMR assets or the large Bible data files.
-  // Caching JS chunks (cache-first, below) would serve stale bundles in dev,
-  // and the Bible JSON is large + updated by the build script. Let these go
-  // straight to the network (and the browser's normal HTTP cache).
+  // Never intercept Next.js build/HMR assets or API routes. Caching JS chunks
+  // (cache-first, below) would serve stale bundles in dev, and API responses
+  // (e.g. scripture search) must always hit the network for fresh results.
   const reqPath = new URL(event.request.url).pathname;
-  if (reqPath.startsWith("/_next/") || reqPath.startsWith("/data/")) {
+  if (reqPath.startsWith("/_next/") || reqPath.startsWith("/api/")) {
     return;
   }
 
