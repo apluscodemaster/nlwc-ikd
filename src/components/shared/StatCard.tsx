@@ -1,5 +1,10 @@
 import React from "react";
 
+/**
+ * Compact metric card used across the admin dashboards (quiz, schedule,
+ * testimonies). `color` sets the icon chip's background/text classes, e.g.
+ * "bg-emerald-100 text-emerald-600".
+ */
 export function StatCard({
   label,
   value,
@@ -22,7 +27,7 @@ export function StatCard({
         <p className="text-lg sm:text-2xl font-bold text-gray-900 leading-none mb-0.5">
           {value}
         </p>
-        <p className="text-[9px] sm:text-xs text-muted-foreground font-medium uppercase tracking-tight truncate">
+        <p className="text-[9px] sm:text-xs text-muted-foreground font-medium uppercase tracking-tight truncate w-full">
           {label}
         </p>
       </div>
