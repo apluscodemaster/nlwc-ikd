@@ -31,6 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import BibleSearch from "@/components/BibleSearch";
 
 interface NavLink {
   label: string;
@@ -468,6 +469,9 @@ export default function Navbar() {
                 </SheetContent>
               </Sheet>
             </div>
+
+            {/* Scripture Search (appended last; self-contained overlay) */}
+            <BibleSearch />
           </div>
         </div>
       </nav>
