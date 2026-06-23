@@ -58,8 +58,7 @@ export default function GalleryPreview() {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">
       <motion.div
         initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
+        animate="visible"
         variants={headingVariants}
         className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"
       >
@@ -94,8 +93,7 @@ export default function GalleryPreview() {
       ) : (
         <motion.div
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          animate="visible"
           variants={containerVariants}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
         >
@@ -142,8 +140,7 @@ export default function GalleryPreview() {
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
         className="mt-12 text-center md:hidden"
       >

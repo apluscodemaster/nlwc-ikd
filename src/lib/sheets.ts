@@ -75,6 +75,10 @@ export function groupColumnsToDates(
       const allImages = [...portraitImages, ...landscapeImages];
       const combined =
         maxPerDate === Infinity ? allImages : allImages.slice(0, maxPerDate);
+      // Skip date columns that have a header but no image URLs yet. Otherwise
+      // the gallery (which defaults to the latest date) lands on an empty tab
+      // showing "0 Images Captured" and a blank grid.
+      if (combined.length === 0) return;
       dates.push({
         date: item.date as string,
         portrait: item.portrait,
