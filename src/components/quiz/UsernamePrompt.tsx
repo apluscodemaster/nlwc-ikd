@@ -5,12 +5,18 @@ import { motion } from "framer-motion";
 import { User, ArrowRight, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSupabase } from "@/lib/supabase";
+import RecoverProgressModal from "./RecoverProgressModal";
 
 interface UsernamePromptProps {
   onSubmit: (username: string) => Promise<unknown>;
+  onRecovered: (session: { session_id: string; username: string }) => void;
 }
 
-export default function UsernamePrompt({ onSubmit }: UsernamePromptProps) {
+export default function UsernamePrompt({
+  onSubmit,
+  onRecovered,
+}: UsernamePromptProps) {
+  const [showRecover, setShowRecover] = useState(false);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -175,7 +181,26 @@ export default function UsernamePrompt({ onSubmit }: UsernamePromptProps) {
             )}
           </Button>
         </form>
+
+        {/* Returning user recovery */}
+        <p className="mt-5 text-xs text-muted-foreground">
+          Already played before?{" "}
+          <button
+            type="button"
+            onClick={() => setShowRecover(true)}
+            className="font-semibold text-primary hover:underline cursor-pointer"
+          >
+            Recover your progress
+          </button>
+        </p>
       </div>
+
+      {showRecover && (
+        <RecoverProgressModal
+          onClose={() => setShowRecover(false)}
+          onRecovered={onRecovered}
+        />
+      )}
     </motion.div>
   );
 }

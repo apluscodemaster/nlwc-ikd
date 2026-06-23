@@ -18,6 +18,8 @@ export interface QuizSession {
   last_active: string;
   total_score: number;
   quizzes_taken: number;
+  /** Whether a recovery security question has been configured for this session. */
+  security_set?: boolean;
 }
 
 // ── Firebase Question (read-only from Firestore) ──

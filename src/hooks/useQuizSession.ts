@@ -141,6 +141,35 @@ export function useQuizSession() {
     setNeedsUsername(true);
   }, []);
 
+  // Adopt an existing session recovered via the security question (new device /
+  // cleared history): persist it locally and load its progress.
+  const adoptSession = useCallback(
+    async (sessionId: string, username: string) => {
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ session_id: sessionId, username }),
+      );
+      setLoading(true);
+      const { data } = await getSupabase()
+        .from("sessions")
+        .select("*")
+        .eq("session_id", sessionId)
+        .single();
+      if (data) {
+        setSession(data as QuizSession);
+        setNeedsUsername(false);
+      }
+      setLoading(false);
+    },
+    [],
+  );
+
+  // Optimistically flag the in-memory session as secured after the user sets a
+  // security question (avoids a refetch just to flip the UI banner).
+  const markSecuritySet = useCallback(() => {
+    setSession((prev) => (prev ? { ...prev, security_set: true } : prev));
+  }, []);
+
   return {
     session,
     loading,
@@ -148,5 +177,7 @@ export function useQuizSession() {
     createSession,
     updateScore,
     clearSession,
+    adoptSession,
+    markSecuritySet,
   };
 }
