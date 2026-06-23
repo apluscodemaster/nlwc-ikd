@@ -34,6 +34,7 @@ const GalleryImage: React.FC<Props> = ({
     width: number;
     height: number;
   } | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
@@ -107,10 +108,20 @@ const GalleryImage: React.FC<Props> = ({
                   alt={alt || "Gallery image"}
                   width={width}
                   height={height}
-                  className="w-full block object-contain opacity-0 transition-all duration-1000 group-hover:scale-110"
+                  // Reveal robustly: onLoad covers fresh loads, the ref check
+                  // covers images already cached on mount (onLoad won't fire for
+                  // those), and onError prevents a failed image staying hidden.
+                  ref={(img) => {
+                    if (img?.complete) setLoaded(true);
+                  }}
+                  onLoad={() => setLoaded(true)}
+                  onError={() => setLoaded(true)}
+                  className={cn(
+                    "w-full block object-contain transition-all duration-700 group-hover:scale-110",
+                    loaded ? "opacity-100" : "opacity-0",
+                  )}
                   style={{ aspectRatio: initialWidth && initialHeight ? `${initialWidth}/${initialHeight}` : "auto" }}
                   unoptimized
-                  onLoadingComplete={(img) => img.classList.remove("opacity-0")}
                 />
 
                 {/* Visual Overlay on Hover */}
