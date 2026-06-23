@@ -23,6 +23,7 @@ import {
   Download,
   Upload,
   Tags,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
@@ -458,6 +459,7 @@ export default function AdminQuizPage() {
 
   // Player management state
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
+  const [resettingSecId, setResettingSecId] = useState<string | null>(null);
 
   // Import/Export state
   const [importingFile, setImportingFile] = useState(false);
@@ -1065,39 +1067,96 @@ export default function AdminQuizPage() {
                 {Object.keys(stats.categoryStats).length === 0 ? (
                   <p className="text-sm text-muted-foreground">No data yet.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {Object.entries(stats.categoryStats).map(([cat, data]) => {
-                      const pct =
-                        data.total > 0
-                          ? Math.round((data.correct / data.total) * 100)
-                          : 0;
-                      return (
-                        <div key={cat}>
-                          <div className="flex items-center justify-between text-sm mb-1.5">
-                            <span className="font-medium text-gray-700">
-                              {cat}
-                            </span>
-                            <span className="text-muted-foreground text-xs">
-                              {data.correct}/{data.total} correct ({pct}%)
-                            </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Object.entries(stats.categoryStats)
+                      .map(([cat, data]) => ({
+                        cat,
+                        correct: data.correct,
+                        total: data.total,
+                        pct:
+                          data.total > 0
+                            ? Math.round((data.correct / data.total) * 100)
+                            : 0,
+                      }))
+                      .sort((a, b) => b.pct - a.pct)
+                      .map(({ cat, correct, total, pct }) => {
+                        const tone =
+                          pct >= 70
+                            ? {
+                                ring: "#22c55e",
+                                badge: "bg-emerald-50 text-emerald-600",
+                                label: "Strong",
+                              }
+                            : pct >= 50
+                              ? {
+                                  ring: "#f59e0b",
+                                  badge: "bg-amber-50 text-amber-600",
+                                  label: "Fair",
+                                }
+                              : {
+                                  ring: "#ef4444",
+                                  badge: "bg-red-50 text-red-600",
+                                  label: "Needs work",
+                                };
+                        const radius = 26;
+                        const circ = 2 * Math.PI * radius;
+                        return (
+                          <div
+                            key={cat}
+                            className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-linear-to-br from-white to-gray-50/60 p-4 hover:shadow-md hover:border-gray-200 transition-all"
+                          >
+                            {/* Circular progress ring */}
+                            <div className="relative shrink-0 w-16 h-16">
+                              <svg
+                                viewBox="0 0 64 64"
+                                className="w-16 h-16 -rotate-90"
+                              >
+                                <circle
+                                  cx="32"
+                                  cy="32"
+                                  r={radius}
+                                  fill="none"
+                                  stroke="#f1f5f9"
+                                  strokeWidth="6"
+                                />
+                                <motion.circle
+                                  cx="32"
+                                  cy="32"
+                                  r={radius}
+                                  fill="none"
+                                  stroke={tone.ring}
+                                  strokeWidth="6"
+                                  strokeLinecap="round"
+                                  strokeDasharray={circ}
+                                  initial={{ strokeDashoffset: circ }}
+                                  animate={{
+                                    strokeDashoffset: circ * (1 - pct / 100),
+                                  }}
+                                  transition={{ duration: 0.9, ease: "easeOut" }}
+                                />
+                              </svg>
+                              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-900">
+                                {pct}%
+                              </span>
+                            </div>
+
+                            {/* Category info */}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-gray-900 text-sm truncate">
+                                {cat}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {correct} of {total} correct
+                              </p>
+                              <span
+                                className={`mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${tone.badge}`}
+                              >
+                                {tone.label}
+                              </span>
+                            </div>
                           </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${pct}%` }}
-                              transition={{ duration: 0.8, ease: "easeOut" }}
-                              className={`h-full rounded-full ${
-                                pct >= 70
-                                  ? "bg-green-500"
-                                  : pct >= 50
-                                    ? "bg-amber-500"
-                                    : "bg-red-500"
-                              }`}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -1277,6 +1336,58 @@ export default function AdminQuizPage() {
                           </span>
                         </td>
                         <td className="text-center px-3 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                          <button
+                            disabled={resettingSecId === s.session_id}
+                            onClick={async () => {
+                              const confirmed = await showConfirm(
+                                `Reset the security question for "${s.username}"? They'll be asked to set a new one, and the 30-day change limit is bypassed. Use this when a player is locked out.`,
+                                {
+                                  title: "Reset Security Question",
+                                  confirmLabel: "Reset",
+                                  cancelLabel: "Cancel",
+                                },
+                              );
+                              if (!confirmed) return;
+                              setResettingSecId(s.session_id);
+                              try {
+                                const res = await fetch(
+                                  "/api/quiz/admin/security-reset",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      session_id: s.session_id,
+                                    }),
+                                  },
+                                );
+                                if (res.ok) {
+                                  toast.success(
+                                    `Security question reset for ${s.username}`,
+                                  );
+                                } else {
+                                  const err = await res.json().catch(() => null);
+                                  toast.error(
+                                    err?.error || "Failed to reset",
+                                  );
+                                }
+                              } catch {
+                                toast.error("Failed to reset security question");
+                              } finally {
+                                setResettingSecId(null);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={`Reset security question for ${s.username}`}
+                          >
+                            {resettingSecId === s.session_id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <KeyRound className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                           <button
                             disabled={deletingPlayerId === s.session_id}
                             onClick={async () => {
@@ -1321,6 +1432,7 @@ export default function AdminQuizPage() {
                               <Trash2 className="w-3.5 h-3.5" />
                             )}
                           </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

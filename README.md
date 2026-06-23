@@ -35,7 +35,8 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 ### 🧠 Bible Knowledge Quiz
 
 - Timed multiple-choice quiz with configurable question count
-- Username-based session tracking
+- Username-based session tracking (no account required)
+- **Progress recovery** — set a security question to restore your username and score on a new device or after clearing your browser (self-change limited to once / 30 days; admins can reset a locked-out player)
 - Real-time scoring with leaderboard (powered by Supabase)
 - Admin dashboard for question management (CRUD)
 - CSV/JSON import/export for bulk question management
@@ -371,6 +372,8 @@ Interactive quiz system for Bible knowledge:
 - **Leaderboard** — Top scores tracked in Supabase
 - **Failed Question Review** — See correct answers after session
 - **Scripture Recommendations** — Bible passages suggested based on weak areas
+- **Progress Recovery** — Players set a security question to restore their username + score on another device; admins can reset a locked-out player's question from the Players tab
+- **Performance by Category** — Per-category accuracy shown as animated progress rings on the Stats tab
 - **Admin Panel** (`/admin/quiz`) — Add, edit, delete questions; CSV/JSON bulk import/export
 
 ### 👋 Welcome Page (`/welcome`)
@@ -690,6 +693,7 @@ fetch("/api/revalidate?path=/page", {
 - **Timed quiz sessions** with configurable question count
 - **Multiple-choice questions** stored in Firebase Firestore
 - **Leaderboard** powered by Supabase with top scores
+- **Progress recovery** via a per-user security question (answer hashed in a server-only `session_security` table; verified through `/api/quiz/recover`), so progress survives a new device or cleared history without accounts
 - **CSV/JSON import/export** for bulk question management
 - **Failed question review** with correct answer display
 - **Scripture recommendations** based on quiz performance
@@ -764,8 +768,9 @@ Admin Login (Bearer token via ADMIN_API_KEY)
 | Transcripts     | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
 | Manuals         | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
 | Quiz Questions  | Firebase Firestore     | `quiz_questions` collection      | None (real-time)       |
-| Quiz Sessions   | Supabase               | `quiz_sessions`, `quiz_attempts` | None                   |
-| Leaderboard     | Supabase               | `quiz_sessions` (aggregated)     | React Query            |
+| Quiz Sessions   | Supabase               | `sessions`, `quiz_attempts`      | None                   |
+| Quiz Recovery   | Supabase               | `session_security` (hashed)      | None                   |
+| Leaderboard     | Supabase               | `sessions` (aggregated)          | React Query            |
 | Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
 | Gallery Images  | Google Sheets          | Spreadsheet rows                 | API route cache        |
 | Audio Sermons   | External audio host    | None                             | React Query            |
