@@ -51,13 +51,13 @@ export async function GET() {
     const totalAttempts = attempts?.length || 0;
     const totalCorrect = attempts?.filter((a) => a.is_correct).length || 0;
 
-    // Recent sessions (last 20)
-    const recentSessions = (sessions || [])
-      .sort(
-        (a, b) =>
-          new Date(b.last_active).getTime() - new Date(a.last_active).getTime(),
-      )
-      .slice(0, 20);
+    // All sessions, most-recently-active first
+    const allSessions = (sessions || []).sort(
+      (a, b) =>
+        new Date(b.last_active).getTime() - new Date(a.last_active).getTime(),
+    );
+    // Recent sessions (last 20) — kept for the default "Recent" view
+    const recentSessions = allSessions.slice(0, 20);
 
     return NextResponse.json({
       totalPlayers,
@@ -70,6 +70,7 @@ export async function GET() {
           : 0,
       categoryStats,
       recentSessions,
+      allSessions,
     });
   } catch (error) {
     console.error("Admin stats error:", error);

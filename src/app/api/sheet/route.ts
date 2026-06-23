@@ -14,6 +14,11 @@ export type NormalizedColumn = RawColumn & {
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
 
+// Cache the resolved gallery for 10 minutes (ISR) so Google Photos links are
+// scraped at most occasionally instead of on every visitor request — keeps
+// outbound/CPU load low while images still refresh within a few minutes.
+export const revalidate = 600;
+
 /**
  * Filter out empty image URLs that couldn't be resolved
  */

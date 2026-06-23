@@ -9,6 +9,10 @@ import {
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = "AutoScrollGallery";
 
+// Cache for 10 minutes (ISR) so Google Photos resolution runs occasionally
+// rather than on every visitor request.
+export const revalidate = 600;
+
 export async function GET() {
   if (!SHEET_ID)
     return NextResponse.json(

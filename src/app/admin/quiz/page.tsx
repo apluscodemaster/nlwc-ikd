@@ -51,14 +51,17 @@ interface AdminStats {
   totalCorrect: number;
   avgScore: number;
   categoryStats: Record<string, { total: number; correct: number }>;
-  recentSessions: {
-    session_id: string;
-    username: string;
-    total_score: number;
-    quizzes_taken: number;
-    last_active: string;
-    created_at: string;
-  }[];
+  recentSessions: PlayerSession[];
+  allSessions?: PlayerSession[];
+}
+
+interface PlayerSession {
+  session_id: string;
+  username: string;
+  total_score: number;
+  quizzes_taken: number;
+  last_active: string;
+  created_at: string;
 }
 
 type ActiveTab = "questions" | "stats" | "players" | "categories";
@@ -467,6 +470,8 @@ export default function AdminQuizPage() {
   const [bulkActing, setBulkActing] = useState<null | "remove" | "security">(
     null,
   );
+  // Players tab view: "recent" (last 20 active) or "all" players
+  const [playerView, setPlayerView] = useState<"recent" | "all">("recent");
 
   // Import/Export state
   const [importingFile, setImportingFile] = useState(false);
@@ -630,7 +635,9 @@ export default function AdminQuizPage() {
   };
 
   const toggleSelectAllPlayers = () => {
-    const all = stats?.recentSessions.map((s) => s.session_id) ?? [];
+    const list =
+      (playerView === "all" ? stats?.allSessions : stats?.recentSessions) ?? [];
+    const all = list.map((s) => s.session_id);
     setSelectedPlayerIds((prev) =>
       prev.size === all.length && all.length > 0 ? new Set() : new Set(all),
     );
@@ -909,6 +916,11 @@ export default function AdminQuizPage() {
   for (const q of questions) {
     categoryCounts[q.category] = (categoryCounts[q.category] || 0) + 1;
   }
+
+  // ── Players shown in the Players tab (Recent vs All) ──
+  const allPlayers = stats?.allSessions ?? stats?.recentSessions ?? [];
+  const recentPlayers = stats?.recentSessions ?? [];
+  const shownPlayers = playerView === "all" ? allPlayers : recentPlayers;
 
   // ══════════════════════════════════════════════
   // Tabs
@@ -1326,11 +1338,41 @@ export default function AdminQuizPage() {
             </div>
           ) : stats && stats.recentSessions.length > 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  Recent Players
-                </h3>
+              <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    Players
+                  </h3>
+                  <div className="inline-flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => {
+                        setPlayerView("recent");
+                        setSelectedPlayerIds(new Set());
+                      }}
+                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                        playerView === "recent"
+                          ? "bg-white text-gray-900 shadow-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      Recent ({recentPlayers.length})
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPlayerView("all");
+                        setSelectedPlayerIds(new Set());
+                      }}
+                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                        playerView === "all"
+                          ? "bg-white text-gray-900 shadow-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      All ({allPlayers.length})
+                    </button>
+                  </div>
+                </div>
                 <button
                   onClick={async () => {
                     const confirmed = await showConfirm(
@@ -1427,8 +1469,7 @@ export default function AdminQuizPage() {
                           aria-label="Select all players"
                           checked={
                             selectedPlayerIds.size > 0 &&
-                            selectedPlayerIds.size ===
-                              stats.recentSessions.length
+                            selectedPlayerIds.size === shownPlayers.length
                           }
                           onChange={toggleSelectAllPlayers}
                           className="w-4 h-4 accent-primary cursor-pointer align-middle"
@@ -1452,7 +1493,7 @@ export default function AdminQuizPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {stats.recentSessions.map((s, idx) => (
+                    {shownPlayers.map((s, idx) => (
                       <tr
                         key={s.session_id}
                         className={`transition-colors ${
