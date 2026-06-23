@@ -14,7 +14,6 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 import ObfuscatedContact from "@/components/ObfuscatedContact";
 
@@ -287,7 +286,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <Toaster position="bottom-right" />
     </footer>
   );
 }

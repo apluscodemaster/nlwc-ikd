@@ -9,6 +9,7 @@ import WhatsAppButtonWrapper from "@/components/WhatsAppButtonWrapper";
 import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
 import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
 import CustomDialog from "@/components/shared/CustomDialog";
+import { Toaster } from "@/components/ui/sonner";
 import { Jost } from "next/font/google";
 import Providers from "@/components/Providers";
 import { ServiceWorkerProvider } from "@/components/ServiceWorkerProvider";
@@ -199,6 +200,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </OfflineDetector>
         </ServiceWorkerProvider>
         <Footer />
+
+        {/* Global toast host — mounted here (not inside Footer) so toasts also
+            render on /admin and /offline routes where the Footer is hidden. */}
+        <Toaster position="bottom-right" />
 
         {/* Logos RefTagger — auto-detects Bible references and shows verse on hover */}
         <Script
