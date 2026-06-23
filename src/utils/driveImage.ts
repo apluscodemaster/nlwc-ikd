@@ -47,6 +47,34 @@ export function detectGoogleImageSource(url: string): GoogleImageSource {
 const resolvedCache = new Map<string, string>();
 
 /**
+ * Shared concurrency limiter for Google Photos resolution. Caps how many share
+ * links we resolve against Google at once (across all requests) so a large
+ * gallery can't fire a parallel burst that Google rate-limits. Google Drive
+ * links are already direct and never pass through here.
+ */
+function createLimiter(max: number) {
+  let active = 0;
+  const queue: (() => void)[] = [];
+  return function run<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const exec = () => {
+        active++;
+        fn()
+          .then(resolve, reject)
+          .finally(() => {
+            active--;
+            queue.shift()?.();
+          });
+      };
+      if (active < max) exec();
+      else queue.push(exec);
+    });
+  };
+}
+
+const photosLimiter = createLimiter(6);
+
+/**
  * Resolve a Google Photos share link to its direct image URL.
  *
  * Google Photos share links (photos.app.goo.gl/...) are NOT direct image URLs.
@@ -55,10 +83,14 @@ const resolvedCache = new Map<string, string>();
  * Open Graph / Twitter Card meta tags, or from embedded data attributes.
  *
  * Strategy order:
- *  1. Check in-memory cache
+ *  1. Check in-memory cache (positive results only)
  *  2. Follow redirects to photos.google.com and scrape og:image / meta tags
  *  3. Scan the full HTML body for any lh3.googleusercontent.com URL
  *  4. Return empty string on failure (caller should filter these out)
+ *
+ * Failures are deliberately NOT cached, so a transient timeout / rate-limit
+ * can recover on a later attempt instead of being stuck empty until restart.
+ * All network work runs through a shared concurrency limiter.
  */
 export async function resolveGooglePhotosShareLink(
   shareUrl: string,
@@ -67,127 +99,130 @@ export async function resolveGooglePhotosShareLink(
     return shareUrl;
   }
 
-  // Check cache first
+  // Positive cache only — never short-circuit on a previously failed resolve.
   const cached = resolvedCache.get(shareUrl);
-  if (cached !== undefined) {
+  if (cached) {
     return cached;
   }
 
-  try {
-    console.log("🔍 Resolving Google Photos share link:", shareUrl);
+  return photosLimiter(async () => {
+    // Another concurrent caller may have resolved it while we were queued.
+    const warm = resolvedCache.get(shareUrl);
+    if (warm) return warm;
 
-    // ── Strategy: GET with a browser-like User-Agent ──
-    // Google serves different content based on User-Agent.
-    // A full browser UA gets the richest HTML with og:image meta tags.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    try {
+      console.log("🔍 Resolving Google Photos share link:", shareUrl);
 
-    const response = await fetch(shareUrl, {
-      method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "identity",
-        "Cache-Control": "no-cache",
-      },
-    });
+      // ── Strategy: GET with a browser-like User-Agent ──
+      // Google serves different content based on User-Agent.
+      // A full browser UA gets the richest HTML with og:image meta tags.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    clearTimeout(timeoutId);
+      const response = await fetch(shareUrl, {
+        method: "GET",
+        redirect: "follow",
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "identity",
+          "Cache-Control": "no-cache",
+        },
+      });
 
-    // If the final URL itself is already an lh3 link, use it directly
-    if (response.url.includes("lh3.googleusercontent.com")) {
-      const cleanUrl = response.url.split("?")[0];
-      resolvedCache.set(shareUrl, cleanUrl);
-      console.log("✅ Resolved (redirect URL):", cleanUrl);
-      return cleanUrl;
-    }
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      console.warn(
-        `⚠️ Google Photos returned HTTP ${response.status} for:`,
-        shareUrl,
-      );
-      resolvedCache.set(shareUrl, "");
-      return "";
-    }
+      // If the final URL itself is already an lh3 link, use it directly
+      if (response.url.includes("lh3.googleusercontent.com")) {
+        const cleanUrl = response.url.split("?")[0];
+        resolvedCache.set(shareUrl, cleanUrl);
+        console.log("✅ Resolved (redirect URL):", cleanUrl);
+        return cleanUrl;
+      }
 
-    const html = await response.text();
+      if (!response.ok) {
+        console.warn(
+          `⚠️ Google Photos returned HTTP ${response.status} for:`,
+          shareUrl,
+        );
+        return "";
+      }
 
-    // ── Extract from meta tags (most reliable) ──
-    // Google populates og:image and twitter:image for SEO on public share pages.
-    const metaPatterns = [
-      // og:image meta tag (most common)
-      /<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i,
-      /<meta\s+content="([^"]+)"\s+(?:property|name)="og:image"/i,
-      // twitter:image meta tag
-      /<meta\s+(?:property|name)="twitter:image"\s+content="([^"]+)"/i,
-      /<meta\s+content="([^"]+)"\s+(?:property|name)="twitter:image"/i,
-    ];
+      const html = await response.text();
 
-    for (const pattern of metaPatterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        // Decode HTML entities that Google may use in meta content
-        let url = match[1]
-          .replace(/&amp;/g, "&")
-          .replace(/&#39;/g, "'")
-          .replace(/&quot;/g, '"');
+      // ── Extract from meta tags (most reliable) ──
+      // Google populates og:image and twitter:image for SEO on public share pages.
+      const metaPatterns = [
+        // og:image meta tag (most common)
+        /<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i,
+        /<meta\s+content="([^"]+)"\s+(?:property|name)="og:image"/i,
+        // twitter:image meta tag
+        /<meta\s+(?:property|name)="twitter:image"\s+content="([^"]+)"/i,
+        /<meta\s+content="([^"]+)"\s+(?:property|name)="twitter:image"/i,
+      ];
 
-        // Strip size parameters to get the base URL
-        // e.g. ...=w1200-h630-no → base URL
-        url = url.replace(/=w\d+-h\d+(-[a-z]+)*$/, "");
+      for (const pattern of metaPatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          // Decode HTML entities that Google may use in meta content
+          let url = match[1]
+            .replace(/&amp;/g, "&")
+            .replace(/&#39;/g, "'")
+            .replace(/&quot;/g, '"');
 
-        if (url.includes("lh3.googleusercontent.com")) {
-          resolvedCache.set(shareUrl, url);
-          console.log("✅ Resolved (og:image):", url);
-          return url;
+          // Strip size parameters to get the base URL
+          // e.g. ...=w1200-h630-no → base URL
+          url = url.replace(/=w\d+-h\d+(-[a-z]+)*$/, "");
+
+          if (url.includes("lh3.googleusercontent.com")) {
+            resolvedCache.set(shareUrl, url);
+            console.log("✅ Resolved (og:image):", url);
+            return url;
+          }
         }
       }
-    }
 
-    // ── Fallback: scan full HTML for any lh3 URL ──
-    const lh3Patterns = [
-      /https:\/\/lh3\.googleusercontent\.com\/pw\/[A-Za-z0-9_\-\/]+/g,
-      /https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-\/]+/g,
-    ];
+      // ── Fallback: scan full HTML for any lh3 URL ──
+      const lh3Patterns = [
+        /https:\/\/lh3\.googleusercontent\.com\/pw\/[A-Za-z0-9_\-\/]+/g,
+        /https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-\/]+/g,
+      ];
 
-    for (const pattern of lh3Patterns) {
-      const matches = html.match(pattern);
-      if (matches && matches.length > 0) {
-        // Pick the longest match (most complete URL)
-        const best = matches.sort((a, b) => b.length - a.length)[0];
-        resolvedCache.set(shareUrl, best);
-        console.log("✅ Resolved (HTML scan):", best);
-        return best;
+      for (const pattern of lh3Patterns) {
+        const matches = html.match(pattern);
+        if (matches && matches.length > 0) {
+          // Pick the longest match (most complete URL)
+          const best = matches.sort((a, b) => b.length - a.length)[0];
+          resolvedCache.set(shareUrl, best);
+          console.log("✅ Resolved (HTML scan):", best);
+          return best;
+        }
       }
-    }
 
-    // Could not resolve
-    console.error(
-      "❌ Failed to resolve Google Photos share link:",
-      shareUrl,
-      "\n📝 Hint: Use the direct image URL from Google Photos instead:\n" +
-        "   1. Open the photo in Google Photos\n" +
-        "   2. Right-click the image → 'Copy image address'\n" +
-        "   3. Paste the lh3.googleusercontent.com URL into the spreadsheet",
-    );
+      // Could not resolve
+      console.error(
+        "❌ Failed to resolve Google Photos share link:",
+        shareUrl,
+        "\n📝 Hint: Use the direct image URL from Google Photos instead:\n" +
+          "   1. Open the photo in Google Photos\n" +
+          "   2. Right-click the image → 'Copy image address'\n" +
+          "   3. Paste the lh3.googleusercontent.com URL into the spreadsheet",
+      );
 
-    resolvedCache.set(shareUrl, "");
-    return "";
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      console.warn("⚠️ Resolution timed out:", shareUrl);
-    } else {
-      console.error("❌ Unexpected error resolving:", shareUrl, error);
+      return "";
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.warn("⚠️ Resolution timed out:", shareUrl);
+      } else {
+        console.error("❌ Unexpected error resolving:", shareUrl, error);
+      }
+      return "";
     }
-    resolvedCache.set(shareUrl, "");
-    return "";
-  }
+  });
 }
 
 /**
