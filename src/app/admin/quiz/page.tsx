@@ -460,6 +460,13 @@ export default function AdminQuizPage() {
   // Player management state
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
   const [resettingSecId, setResettingSecId] = useState<string | null>(null);
+  // Bulk-action state (Players tab)
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [bulkActing, setBulkActing] = useState<null | "remove" | "security">(
+    null,
+  );
 
   // Import/Export state
   const [importingFile, setImportingFile] = useState(false);
@@ -522,6 +529,7 @@ export default function AdminQuizPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setStats(data);
+      setSelectedPlayerIds(new Set());
     } catch {
       toast.error("Failed to load stats");
     } finally {
@@ -609,6 +617,97 @@ export default function AdminQuizPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // ── Bulk player actions (Players tab) ──
+  const togglePlayerSelected = (sessionId: string) => {
+    setSelectedPlayerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(sessionId)) next.delete(sessionId);
+      else next.add(sessionId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllPlayers = () => {
+    const all = stats?.recentSessions.map((s) => s.session_id) ?? [];
+    setSelectedPlayerIds((prev) =>
+      prev.size === all.length && all.length > 0 ? new Set() : new Set(all),
+    );
+  };
+
+  const handleBulkRemovePlayers = async () => {
+    const ids = Array.from(selectedPlayerIds);
+    if (ids.length === 0) return;
+    const confirmed = await showConfirm(
+      `Remove ${ids.length} selected player${ids.length !== 1 ? "s" : ""} and all their quiz data? This cannot be undone.`,
+      {
+        title: "Remove Selected Players",
+        variant: "warning",
+        confirmLabel: `Remove ${ids.length}`,
+        cancelLabel: "Cancel",
+      },
+    );
+    if (!confirmed) return;
+    setBulkActing("remove");
+    let ok = 0;
+    let fail = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(
+          `/api/quiz/admin/stats?session_id=${encodeURIComponent(id)}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) ok++;
+        else fail++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkActing(null);
+    if (ok > 0)
+      toast.success(`Removed ${ok} player${ok !== 1 ? "s" : ""}`);
+    if (fail > 0)
+      toast.error(`Failed to remove ${fail} player${fail !== 1 ? "s" : ""}`);
+    fetchStats();
+  };
+
+  const handleBulkResetSecurity = async () => {
+    const ids = Array.from(selectedPlayerIds);
+    if (ids.length === 0) return;
+    const confirmed = await showConfirm(
+      `Reset the security question for ${ids.length} selected player${ids.length !== 1 ? "s" : ""}? Each will be asked to set a new one, and the 30-day change limit is bypassed.`,
+      {
+        title: "Reset Security Questions",
+        confirmLabel: `Reset ${ids.length}`,
+        cancelLabel: "Cancel",
+      },
+    );
+    if (!confirmed) return;
+    setBulkActing("security");
+    let ok = 0;
+    let fail = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch("/api/quiz/admin/security-reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: id }),
+        });
+        if (res.ok) ok++;
+        else fail++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkActing(null);
+    setSelectedPlayerIds(new Set());
+    if (ok > 0)
+      toast.success(
+        `Security question reset for ${ok} player${ok !== 1 ? "s" : ""}`,
+      );
+    if (fail > 0)
+      toast.error(`Failed for ${fail} player${fail !== 1 ? "s" : ""}`);
   };
 
   // ── Export handlers ──
@@ -1265,10 +1364,76 @@ export default function AdminQuizPage() {
                   Remove All
                 </button>
               </div>
+
+              {/* Bulk action toolbar — shown when one or more players selected */}
+              <AnimatePresence>
+                {selectedPlayerIds.size > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden bg-primary/5 border-b border-primary/10"
+                  >
+                    <div className="px-5 py-3 flex flex-wrap items-center gap-3">
+                      <span className="text-sm font-semibold text-gray-700">
+                        {selectedPlayerIds.size} selected
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                        <button
+                          onClick={handleBulkResetSecurity}
+                          disabled={bulkActing !== null}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                        >
+                          {bulkActing === "security" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <KeyRound className="w-3.5 h-3.5" />
+                          )}
+                          Reset Security
+                        </button>
+                        <button
+                          onClick={handleBulkRemovePlayers}
+                          disabled={bulkActing !== null}
+                          className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                        >
+                          {bulkActing === "remove" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          Remove Selected
+                        </button>
+                        <button
+                          onClick={() => setSelectedPlayerIds(new Set())}
+                          disabled={bulkActing !== null}
+                          className="px-3 py-1.5 rounded-lg text-gray-500 text-xs font-semibold hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-50 bg-gray-50/50">
+                      <th className="w-10 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all players"
+                          checked={
+                            selectedPlayerIds.size > 0 &&
+                            selectedPlayerIds.size ===
+                              stats.recentSessions.length
+                          }
+                          onChange={toggleSelectAllPlayers}
+                          className="w-4 h-4 accent-primary cursor-pointer align-middle"
+                        />
+                      </th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Player
                       </th>
@@ -1290,8 +1455,21 @@ export default function AdminQuizPage() {
                     {stats.recentSessions.map((s, idx) => (
                       <tr
                         key={s.session_id}
-                        className="hover:bg-gray-50/50 transition-colors"
+                        className={`transition-colors ${
+                          selectedPlayerIds.has(s.session_id)
+                            ? "bg-primary/5"
+                            : "hover:bg-gray-50/50"
+                        }`}
                       >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${s.username}`}
+                            checked={selectedPlayerIds.has(s.session_id)}
+                            onChange={() => togglePlayerSelected(s.session_id)}
+                            className="w-4 h-4 accent-primary cursor-pointer align-middle"
+                          />
+                        </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
                             <div
