@@ -3,6 +3,15 @@ import Link from "next/link";
 import { ArrowLeft, Headphones } from "lucide-react";
 import { getAudioSermonDetail } from "@/lib/audioSermons";
 import AudioPlayerClient from "./AudioPlayerClient";
+import JsonLd from "@/components/seo/JsonLd";
+import {
+  SITE_URL,
+  PUBLISHER,
+  stripHtml,
+  metaDescription,
+  toIsoDate,
+  parseDurationToISO,
+} from "@/utils/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -41,14 +50,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? descriptionParts.join(" • ")
       : `Listen to message #${sermon.id} from NLWC Ikorodu`;
 
+  const url = `${SITE_URL}/sermons/audio/${sermon.id}`;
+
   return {
     title: `${title}`,
     description,
+    keywords: [
+      stripHtml(title),
+      "audio message",
+      "sermon",
+      "NLWC Ikorodu",
+      ...(sermon.speaker ? [sermon.speaker] : []),
+      ...(sermon.series ? [sermon.series] : []),
+    ],
+    alternates: { canonical: url },
     openGraph: {
       title,
       description,
       type: "music.song",
-      url: `https://ikorodu.nlwc.church/sermons/audio/${sermon.id}`,
+      url,
       ...(sermon.thumbnailUrl && {
         images: [{ url: sermon.thumbnailUrl, width: 1080, height: 720 }],
       }),
@@ -92,5 +112,57 @@ export default async function AudioSermonPage({ params }: Props) {
     );
   }
 
-  return <AudioPlayerClient initialSermon={sermon} />;
+  const hasTitle = sermon.title && !sermon.title.includes("Message #");
+  const ldTitle = stripHtml(
+    hasTitle ? sermon.title : `Audio Message ${sermon.id}`,
+  );
+  const ldUrl = `${SITE_URL}/sermons/audio/${sermon.id}`;
+  const audioLd = {
+    "@context": "https://schema.org",
+    "@type": "AudioObject",
+    name: ldTitle,
+    description: metaDescription(
+      [
+        sermon.speaker && `By ${sermon.speaker}`,
+        sermon.series && `Series: ${sermon.series}`,
+        sermon.date,
+      ]
+        .filter(Boolean)
+        .join(" • ") || `Listen to "${ldTitle}" from NLWC Ikorodu.`,
+    ),
+    contentUrl: sermon.listenUrl,
+    uploadDate: toIsoDate(sermon.date),
+    duration: parseDurationToISO(sermon.duration),
+    thumbnailUrl: sermon.thumbnailUrl,
+    creator: sermon.speaker
+      ? { "@type": "Person", name: sermon.speaker }
+      : undefined,
+    isPartOf: sermon.series
+      ? { "@type": "CreativeWorkSeries", name: sermon.series }
+      : undefined,
+    publisher: PUBLISHER,
+    inLanguage: "en",
+    url: ldUrl,
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Audio Messages",
+        item: `${SITE_URL}/sermons`,
+      },
+      { "@type": "ListItem", position: 3, name: ldTitle, item: ldUrl },
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd data={[audioLd, breadcrumbLd]} />
+      <AudioPlayerClient initialSermon={sermon} />
+    </>
+  );
 }

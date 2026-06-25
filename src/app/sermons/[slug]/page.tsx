@@ -9,6 +9,7 @@ import ShareButton from "@/components/shared/ShareButton";
 import TranscriptContent from "@/components/shared/TranscriptContent";
 import { Calendar, User, ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
+import { SITE_URL, OG_IMAGE, stripHtml, metaDescription } from "@/utils/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -27,9 +28,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const title = stripHtml(sermon.title);
+  const description = metaDescription(
+    sermon.excerpt || `Read the message "${title}" from NLWC Ikorodu.`,
+  );
+  const url = `${SITE_URL}/sermons/${slug}`;
+
   return {
-    title: `${sermon.title}`,
-    description: sermon.excerpt || `Read the message: ${sermon.title}`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title,
+      description,
+      publishedTime: sermon.date,
+      images: [{ url: OG_IMAGE, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
   };
 }
 

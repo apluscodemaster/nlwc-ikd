@@ -22,6 +22,8 @@ import {
 } from "@/lib/devotionals";
 import PageHeader from "@/components/shared/PageHeader";
 import DevotionalSidebar from "@/components/devotionals/DevotionalSidebar";
+import JsonLd from "@/components/seo/JsonLd";
+import { SITE_URL, PUBLISHER } from "@/utils/seo";
 import { toast } from "sonner";
 
 export default function DevotionalViewPage({
@@ -129,8 +131,30 @@ export default function DevotionalViewPage({
     }
   };
 
+  const devotionalUrl = `${SITE_URL}/devotionals/${id}`;
+  const devotionalLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: devotional.title,
+    datePublished: devotional.scheduledDate.toDate().toISOString(),
+    dateModified: devotional.scheduledDate.toDate().toISOString(),
+    inLanguage: "en",
+    author: PUBLISHER,
+    publisher: PUBLISHER,
+    mainEntityOfPage: { "@type": "WebPage", "@id": devotionalUrl },
+    url: devotionalUrl,
+    ...(devotional.pdfUrl && {
+      associatedMedia: {
+        "@type": "MediaObject",
+        contentUrl: devotional.pdfUrl,
+        encodingFormat: "application/pdf",
+      },
+    }),
+  };
+
   return (
     <main className="bg-gray-50/30 min-h-screen">
+      <JsonLd data={devotionalLd} />
       <PageHeader
         title={devotional.title}
         subtitle="Daily Devotional"

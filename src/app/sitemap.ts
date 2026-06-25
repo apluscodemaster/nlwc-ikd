@@ -1,5 +1,7 @@
 import { MetadataRoute } from "next";
 import { fetchWPPosts, WP_CATEGORIES } from "@/lib/wordpress";
+import { getAudioSermons } from "@/lib/audioSermons";
+import { getPublishedDevotionals } from "@/lib/devotionals";
 
 // Regenerate the sitemap at most once a day, so WordPress is queried daily (not
 // per crawler hit) when collecting transcript/manual URLs.
@@ -50,6 +52,72 @@ async function collectEntries(
   return entries;
 }
 
+// Collect audio-message detail URLs from the Series Engine. Bounded and
+// wrapped so the sitemap never fails if the sermon API is unavailable.
+async function collectAudioSermons(
+  baseUrl: string,
+): Promise<MetadataRoute.Sitemap> {
+  const entries: MetadataRoute.Sitemap = [];
+  const MAX_PAGES = 10; // safety cap (up to 500 items at 50/page)
+  try {
+    let page = 1;
+    let lastPage = 1;
+    do {
+      const { data, pagination } = await getAudioSermons({ page, perPage: 50 });
+      lastPage = Math.min(pagination.totalPages || 1, MAX_PAGES);
+      for (const sermon of data) {
+        if (!sermon.id) continue;
+        const modified = sermon.date ? new Date(sermon.date) : new Date();
+        entries.push({
+          url: `${baseUrl}/sermons/audio/${sermon.id}`,
+          lastModified: isNaN(modified.getTime()) ? new Date() : modified,
+          changeFrequency: "monthly",
+          priority: 0.5,
+        });
+      }
+      page += 1;
+    } while (page <= lastPage);
+  } catch {
+    // Sermon API failure — return whatever was collected (possibly none).
+  }
+  return entries;
+}
+
+// Collect published daily-devotional detail URLs from Firestore. Paginated,
+// bounded, and wrapped so the sitemap never fails if Firestore is unavailable.
+async function collectDevotionals(
+  baseUrl: string,
+): Promise<MetadataRoute.Sitemap> {
+  const entries: MetadataRoute.Sitemap = [];
+  const PAGE_SIZE = 48;
+  const MAX_PAGES = 12; // safety cap (up to ~576 items)
+  try {
+    let lastDoc: Parameters<typeof getPublishedDevotionals>[1] = undefined;
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const { devotionals, lastVisible, hasMore } =
+        await getPublishedDevotionals(PAGE_SIZE, lastDoc);
+      for (const d of devotionals) {
+        if (!d.id) continue;
+        const dt =
+          d.scheduledDate && typeof d.scheduledDate.toDate === "function"
+            ? d.scheduledDate.toDate()
+            : new Date();
+        entries.push({
+          url: `${baseUrl}/devotionals/${d.id}`,
+          lastModified: isNaN(dt.getTime()) ? new Date() : dt,
+          changeFrequency: "monthly",
+          priority: 0.5,
+        });
+      }
+      if (!hasMore || !lastVisible) break;
+      lastDoc = lastVisible ?? undefined;
+    }
+  } catch {
+    // Firestore failure — return whatever was collected (possibly none).
+  }
+  return entries;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://ikorodu.nlwc.church";
@@ -76,10 +144,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/welcome`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  const [transcripts, manuals] = await Promise.all([
+  const [transcripts, manuals, audioSermons, devotionals] = await Promise.all([
     collectEntries(baseUrl, "/transcripts", TRANSCRIPT_CATEGORIES),
     collectEntries(baseUrl, "/manuals", [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL]),
+    collectAudioSermons(baseUrl),
+    collectDevotionals(baseUrl),
   ]);
 
-  return [...staticRoutes, ...transcripts, ...manuals];
+  return [
+    ...staticRoutes,
+    ...transcripts,
+    ...manuals,
+    ...audioSermons,
+    ...devotionals,
+  ];
 }

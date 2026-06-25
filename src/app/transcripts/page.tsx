@@ -8,7 +8,21 @@ import { Loader2 } from "lucide-react";
 export const metadata: Metadata = {
   title: "Message Transcripts",
   description:
-    "Read the full transcripts of Sunday messages and teachings from New and Living Way Church, Ikorodu.",
+    "Read the full transcripts of Sunday messages, Bible studies and teachings from New and Living Way Church, Ikorodu.",
+  keywords: [
+    "sermon transcripts",
+    "NLWC Ikorodu transcripts",
+    "Sunday message transcript",
+    "Bible study notes Ikorodu",
+    "read sermons Lagos",
+  ],
+  openGraph: {
+    title: "Message Transcripts | NLWC Ikorodu",
+    description:
+      "Read full transcripts of Sunday messages, Bible studies and teachings from NLWC Ikorodu.",
+    url: "https://ikorodu.nlwc.church/transcripts",
+  },
+  alternates: { canonical: "https://ikorodu.nlwc.church/transcripts" },
 };
 
 export default function TranscriptsPage() {

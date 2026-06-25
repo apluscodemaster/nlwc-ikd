@@ -20,6 +20,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import BackToListLink from "@/components/shared/BackToListLink";
+import JsonLd from "@/components/seo/JsonLd";
+import {
+  SITE_URL,
+  OG_IMAGE,
+  PUBLISHER,
+  stripHtml,
+  metaDescription,
+  toIsoDate,
+} from "@/utils/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -49,10 +58,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const title = stripHtml(manual.title);
+  const description = metaDescription(
+    manual.excerpt || `Read the Sunday School manual "${title}" from NLWC Ikorodu.`,
+  );
+  const url = `${SITE_URL}/manuals/${slug}`;
+
   return {
-    title: `${manual.title} | Sunday School Manuals`,
-    description:
-      manual.excerpt || `Read the Sunday School manual: ${manual.title}`,
+    title: `${title} | Sunday School Manuals`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title,
+      description,
+      publishedTime: manual.date,
+      images: [{ url: OG_IMAGE, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
   };
 }
 
@@ -81,8 +110,44 @@ export default async function ManualPage({ params, searchParams }: Props) {
   // Fetch adjacent manuals for navigation
   const adjacent = await getAdjacentManuals(manual.date, manual.slug);
 
+  const cleanTitle = stripHtml(manual.title);
+  const pageUrl = `${SITE_URL}/manuals/${slug}`;
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: cleanTitle,
+    description: metaDescription(
+      manual.excerpt || `Read the Sunday School manual "${cleanTitle}".`,
+    ),
+    datePublished: toIsoDate(manual.date),
+    dateModified: toIsoDate(manual.date),
+    inLanguage: "en",
+    author: PUBLISHER,
+    publisher: PUBLISHER,
+    image: OG_IMAGE,
+    articleSection: "Sunday School Manual",
+    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+    url: pageUrl,
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Sunday School Manuals",
+        item: `${SITE_URL}/manuals`,
+      },
+      { "@type": "ListItem", position: 3, name: cleanTitle, item: pageUrl },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
+      <JsonLd data={[articleLd, breadcrumbLd]} />
+
       {/* Reading Progress Bar */}
       <ReadingProgressBar />
 
