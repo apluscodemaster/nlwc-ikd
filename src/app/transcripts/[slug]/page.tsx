@@ -12,6 +12,15 @@ import SearchHighlightBanner from "@/components/shared/SearchHighlightBanner";
 import { Calendar, User, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
 import BackToListLink from "@/components/shared/BackToListLink";
+import JsonLd from "@/components/seo/JsonLd";
+import {
+  SITE_URL,
+  OG_IMAGE,
+  PUBLISHER,
+  stripHtml,
+  metaDescription,
+  toIsoDate,
+} from "@/utils/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,10 +40,41 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const title = stripHtml(transcript.title);
+  const description = metaDescription(
+    transcript.excerpt || `Read the full transcript of "${title}" from NLWC Ikorodu.`,
+  );
+  const url = `${SITE_URL}/transcripts/${slug}`;
+  const image = transcript.thumbnail || OG_IMAGE;
+
   return {
-    title: `${transcript.title}`,
-    description:
-      transcript.excerpt || `Read the transcript of ${transcript.title}`,
+    title,
+    description,
+    keywords: [
+      title,
+      "sermon transcript",
+      "NLWC Ikorodu",
+      ...(transcript.speaker ? [transcript.speaker] : []),
+      ...(transcript.categories || []),
+    ],
+    authors: transcript.speaker ? [{ name: transcript.speaker }] : undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title,
+      description,
+      publishedTime: transcript.date,
+      modifiedTime: transcript.date,
+      authors: transcript.speaker ? [transcript.speaker] : undefined,
+      images: [{ url: image, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 
@@ -64,8 +104,46 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
   // Fetch adjacent transcripts for navigation
   const adjacent = await getAdjacentTranscripts(transcript.date, transcript.slug);
 
+  const cleanTitle = stripHtml(transcript.title);
+  const pageUrl = `${SITE_URL}/transcripts/${slug}`;
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: cleanTitle,
+    description: metaDescription(
+      transcript.excerpt || `Read the full transcript of "${cleanTitle}".`,
+    ),
+    datePublished: toIsoDate(transcript.date),
+    dateModified: toIsoDate(transcript.date),
+    inLanguage: "en",
+    author: transcript.speaker
+      ? { "@type": "Person", name: transcript.speaker }
+      : PUBLISHER,
+    publisher: PUBLISHER,
+    image: transcript.thumbnail || OG_IMAGE,
+    articleSection: transcript.categories?.[0],
+    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+    url: pageUrl,
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Transcripts",
+        item: `${SITE_URL}/transcripts`,
+      },
+      { "@type": "ListItem", position: 3, name: cleanTitle, item: pageUrl },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
+      <JsonLd data={[articleLd, breadcrumbLd]} />
+
       {/* Search Highlight Banner */}
       {searchQuery && (
         <SearchHighlightBanner
