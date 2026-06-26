@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NLWC Sermons API
  * Description: Custom REST API endpoint to expose Series Engine audio messages data.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: NLWC Dev Team
  *
  * Upload to: wp-content/mu-plugins/nlwc-sermons-api.php
@@ -18,6 +18,9 @@
  *
  * Endpoints (static routes registered before dynamic to avoid conflicts):
  *   GET /wp-json/nlwc/v1/sermons          — Paginated list of audio messages
+ *                                           (?slug=<slug> returns the single
+ *                                           message whose sanitize_title(title)
+ *                                           equals <slug>, for legacy redirects)
  *   GET /wp-json/nlwc/v1/sermons/series   — List of all series
  *   GET /wp-json/nlwc/v1/sermons/speakers — List of all speakers
  *   GET /wp-json/nlwc/v1/sermons/topics   — List of all topics
@@ -81,6 +84,7 @@ class NLWC_Sermons_API {
                 'page'       => [ 'default' => 1,  'sanitize_callback' => 'absint' ],
                 'per_page'   => [ 'default' => 10, 'sanitize_callback' => 'absint' ],
                 'search'     => [ 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
+                'slug'       => [ 'default' => '', 'sanitize_callback' => 'sanitize_title' ],
                 'series_id'  => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
                 'speaker_id' => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
                 'topic_id'   => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
@@ -256,6 +260,15 @@ class NLWC_Sermons_API {
         $order      = strtoupper( $request->get_param( 'order' ) ) === 'ASC' ? 'ASC' : 'DESC';
         $offset     = ( $page - 1 ) * $per_page;
 
+        // ── Exact slug lookup ────────────────────────────────────────────
+        // Resolve a public slug (sanitize_title of the title) back to its single
+        // message so legacy /messages/<slug> permalinks can 301 to
+        // /sermons/audio/<id>. Short-circuits the normal listing logic below.
+        $slug = $request->get_param( 'slug' );
+        if ( ! empty( $slug ) ) {
+            return self::with_headers( self::get_sermon_by_slug( $slug ) );
+        }
+
         // ── Build query parts ────────────────────────────────────────────
 
         $where        = [ '1=1' ];
@@ -397,6 +410,61 @@ class NLWC_Sermons_API {
                 'totalPages' => $total_pages,
             ],
         ], 200 ) );
+    }
+
+    /**
+     * Resolve a public slug (sanitize_title of the title) to a single message.
+     * Returns the standard { data, pagination } envelope with 0 or 1 result.
+     *
+     * The slug is sanitize_title(title), which can't be reproduced in SQL, so we
+     * scan the (small) id+title set and compare in PHP. Cached for an hour by the
+     * with_headers() wrapper applied at the call site.
+     */
+    private static function get_sermon_by_slug( string $slug ): WP_REST_Response {
+        global $wpdb;
+        $t = self::tables();
+
+        $rows = $wpdb->get_results( "SELECT message_id, title FROM {$t['messages']}", ARRAY_A );
+        if ( $wpdb->last_error ) {
+            return self::db_error( 'get_sermon_by_slug scan' );
+        }
+
+        $match_id = 0;
+        foreach ( $rows ?: [] as $r ) {
+            if ( sanitize_title( $r['title'] ) === $slug ) {
+                $match_id = (int) $r['message_id'];
+                break;
+            }
+        }
+
+        $sermons = [];
+        if ( $match_id > 0 ) {
+            $row = $wpdb->get_row( $wpdb->prepare( "
+                SELECT
+                    m.message_id, m.title, m.speaker, m.date, m.description,
+                    m.message_length, m.message_thumbnail, m.audio_url, m.video_url,
+                    m.audio_file_size, m.audio_count, m.primary_series, m.focus_scripture,
+                    s.s_title       AS series_title,
+                    s.thumbnail_url AS series_thumbnail
+                FROM {$t['messages']} AS m
+                LEFT JOIN {$t['series']} AS s ON m.primary_series = s.series_id
+                WHERE m.message_id = %d
+            ", $match_id ), ARRAY_A );
+
+            if ( $row ) {
+                $sermons[] = self::format_sermon_row( $row );
+            }
+        }
+
+        return new WP_REST_Response( [
+            'data'       => $sermons,
+            'pagination' => [
+                'page'       => 1,
+                'perPage'    => 1,
+                'total'      => count( $sermons ),
+                'totalPages' => count( $sermons ) > 0 ? 1 : 0,
+            ],
+        ], 200 );
     }
 
     /* =====================================================================
