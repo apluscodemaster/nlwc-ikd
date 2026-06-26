@@ -72,6 +72,8 @@ export interface AudioSermonsFilters {
   page?: number;
   perPage?: number;
   search?: string;
+  /** Exact slug lookup (sanitize_title of the title). Resolves to one message. */
+  slug?: string;
   seriesId?: number;
   speakerId?: number;
   topicId?: number;
@@ -131,6 +133,7 @@ async function fetchFromWpApi(
       per_page: (filters.perPage || 12).toString(),
     });
     if (filters.search) params.set("search", filters.search);
+    if (filters.slug) params.set("slug", filters.slug);
     if (filters.seriesId) params.set("series_id", filters.seriesId.toString());
     if (filters.speakerId)
       params.set("speaker_id", filters.speakerId.toString());
@@ -160,6 +163,7 @@ async function fetchFromWpApi(
       (item: Record<string, unknown>) => ({
         id: item.id,
         title: item.title as string,
+        slug: (item.slug as string) || undefined,
         speaker: item.speaker as string,
         date: formatDate(item.date as string),
         listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
@@ -510,6 +514,28 @@ export async function getAudioSermons(
         total: 0,
       },
     };
+  }
+}
+
+/**
+ * Resolve an audio message by its public slug (sanitize_title of the title).
+ * Used to 301 legacy /messages/<slug> permalinks to /sermons/audio/<id>.
+ *
+ * Guard: if the WordPress endpoint doesn't yet support the `slug` param it
+ * returns the normal (latest-first) list, so we only trust an EXACT slug match
+ * on the first item. That keeps this safe before the API change is deployed and
+ * makes it exact afterwards.
+ */
+export async function getAudioSermonBySlug(
+  slug: string,
+): Promise<AudioSermon | null> {
+  if (!slug) return null;
+  try {
+    const { data } = await getAudioSermons({ slug, perPage: 1 });
+    const match = data[0];
+    return match && match.slug === slug ? match : null;
+  } catch {
+    return null;
   }
 }
 
