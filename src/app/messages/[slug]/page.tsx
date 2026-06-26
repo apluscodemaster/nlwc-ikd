@@ -1,5 +1,5 @@
 import { permanentRedirect } from "next/navigation";
-import { getAudioSermons } from "@/lib/audioSermons";
+import { getAudioSermons, getAudioSermonBySlug } from "@/lib/audioSermons";
 import {
   getMessageTranscriptBySlug,
   getTranscriptBySlug,
@@ -25,12 +25,22 @@ async function resolveDestination(slug: string): Promise<string> {
   const target = normalize(slug);
 
   // 1) Audio message — old /messages/<slug> usually maps to an audio sermon,
-  //    which is addressable only by numeric id in the new app. Search by the
-  //    slug-as-phrase, then require an exact normalised title match.
+  //    which is addressable only by numeric id in the new app.
+  //    1a) Exact slug → id lookup (once the WP API exposes the `slug` param).
+  try {
+    const exact = await getAudioSermonBySlug(slug);
+    if (exact?.id) return `/sermons/audio/${exact.id}`;
+  } catch {
+    // fall through to the search-based match below
+  }
+  //    1b) Fallback: search by slug-as-phrase, then match on the API slug or an
+  //        exact normalised title match (works even before the API change).
   try {
     const phrase = slug.replace(/-/g, " ");
     const { data } = await getAudioSermons({ search: phrase, perPage: 50 });
-    const hit = data.find((s) => s.title && normalize(s.title) === target);
+    const hit = data.find(
+      (s) => s.slug === slug || (s.title && normalize(s.title) === target),
+    );
     if (hit?.id) return `/sermons/audio/${hit.id}`;
   } catch {
     // Sermon API unavailable — fall through to the transcript routes.
