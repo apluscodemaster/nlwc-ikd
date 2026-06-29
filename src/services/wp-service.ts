@@ -43,6 +43,27 @@ function getCategoryIds(payload: WPPublishPayload): number[] {
   }
 }
 
+/**
+ * Build the public frontend URL for a freshly-published post.
+ * Transcripts/manuals resolve by WP slug; sermons by post ID. Returns a
+ * root-relative URL so it resolves against the frontend origin (works in
+ * dev and prod, regardless of the WordPress admin domain).
+ */
+function frontendPostUrl(
+  payload: WPPublishPayload,
+  id: number,
+  slug: string,
+): string {
+  switch (payload.type) {
+    case "transcript":
+      return `/transcripts/${slug}`;
+    case "manual":
+      return `/manuals/${slug}`;
+    case "sermon":
+      return `/sermons/audio/${id}`;
+  }
+}
+
 /** Optionally prepend speaker / description to the content body */
 function buildContent(payload: WPPublishPayload): string {
   const parts: string[] = [];
@@ -128,12 +149,16 @@ export async function publishToWordPress(
     const data = (await response.json()) as {
       id: number;
       link: string;
+      slug: string;
       status?: string;
     };
     return {
       success: true,
       postId: data.id,
-      postUrl: data.link,
+      // Point "View Post" at the frontend route, not the raw WordPress
+      // permalink (ikdadmin.nlwc.church/<slug>). Relative URLs resolve against
+      // the frontend origin the admin runs on.
+      postUrl: frontendPostUrl(payload, data.id, data.slug),
       status: data.status,
     };
   } catch (err) {
