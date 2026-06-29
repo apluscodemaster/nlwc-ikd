@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
   const topicId = searchParams.get("topic_id")
     ? parseInt(searchParams.get("topic_id")!)
     : undefined;
+  const year = searchParams.get("year")
+    ? parseInt(searchParams.get("year")!)
+    : undefined;
   const order = (searchParams.get("order") as "ASC" | "DESC") || "DESC";
 
   // Normalize search query to handle punctuation variations
@@ -67,6 +70,7 @@ export async function GET(request: NextRequest) {
       seriesId,
       speakerId,
       topicId,
+      year,
       order,
     });
 
