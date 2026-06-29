@@ -27,7 +27,7 @@ import {
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
-import { slugify } from "@/lib/slugify";
+import { videoSlug, findVideoBySlug } from "@/lib/videoSlug";
 
 interface VideoMessage {
   date: string;
@@ -39,15 +39,6 @@ interface VideoMessage {
 }
 
 const VIDEOS_PER_PAGE = 12;
-
-/**
- * Human-readable slug used in shareable /video-messages/<slug> links. Falls
- * back to the YouTube id for messages without a title so every video stays
- * shareable.
- */
-function videoSlug(video: Pick<VideoMessage, "title" | "id">): string {
-  return slugify(video.title || "") || video.id;
-}
 
 async function fetchVideoMessages(): Promise<VideoMessage[]> {
   const response = await fetch("/api/video-messages");
@@ -384,9 +375,7 @@ export default function VideoMessagesContent({
     didAutoOpenRef.current = true;
     const target = openSlug || legacyShareIdRef.current;
     if (!target) return;
-    const match = videos.find(
-      (v) => videoSlug(v) === target || v.id === target,
-    );
+    const match = findVideoBySlug(videos, target);
     if (match) handleVideoClick(match);
   }, [videos, openSlug, handleVideoClick]);
 
