@@ -84,7 +84,7 @@ class NLWC_Sermons_API {
                 'page'       => [ 'default' => 1,  'sanitize_callback' => 'absint' ],
                 'per_page'   => [ 'default' => 10, 'sanitize_callback' => 'absint' ],
                 'search'     => [ 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
-                'slug'       => [ 'default' => '', 'sanitize_callback' => 'sanitize_title' ],
+                'slug'       => [ 'default' => '', 'sanitize_callback' => function( $value ) { return sanitize_title( $value ); } ],
                 'series_id'  => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
                 'speaker_id' => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
                 'topic_id'   => [ 'default' => 0,  'sanitize_callback' => 'absint' ],
