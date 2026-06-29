@@ -4,10 +4,14 @@
  * Prevents duplicate API calls for the same query within a 1-minute window.
  * Multiple concurrent requests for the same endpoint return the same cached promise.
  *
+ * Each caller receives a **cloned** Response so that `.json()` / `.text()` can
+ * be called independently without "body already read" errors.
+ *
  * TTL: 1 minute (60,000 ms)
  */
 
 interface CacheEntry {
+  /** Resolves to a Response that is ONLY used as a clone source — never consumed directly. */
   promise: Promise<Response>;
   timestamp: number;
 }
@@ -30,8 +34,11 @@ function isCacheValid(entry: CacheEntry): boolean {
 }
 
 /**
- * Wrap a fetch call with request deduplication
- * Returns cached promise if same request is in-flight, otherwise caches new promise
+ * Wrap a fetch call with request deduplication.
+ *
+ * Returns a **cloned** Response on every call so each consumer can safely read
+ * the body independently. The original Response is kept in the cache as the
+ * clone source and is never consumed directly.
  */
 export async function deduplicatedFetch(
   url: string,
@@ -43,7 +50,9 @@ export async function deduplicatedFetch(
   // Check for existing cached promise
   const cachedEntry = REQUEST_CACHE.get(cacheKey);
   if (cachedEntry && isCacheValid(cachedEntry)) {
-    return cachedEntry.promise;
+    // Clone so the caller gets its own consumable body stream
+    const cached = await cachedEntry.promise;
+    return cached.clone();
   }
 
   // Clean up expired entry if present
@@ -63,7 +72,10 @@ export async function deduplicatedFetch(
     timestamp: Date.now(),
   });
 
-  return promise;
+  // Clone the first response too — the cached promise's Response is reserved
+  // as the clone source and must never be consumed directly.
+  const response = await promise;
+  return response.clone();
 }
 
 /**

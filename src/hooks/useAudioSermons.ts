@@ -89,13 +89,13 @@ export function useAudioSermons(
         setIsLoading(false);
       }
     },
-    [perPage, search, seriesId, speakerId, topicId, order],
+    [perPage, search, seriesId, speakerId, topicId, year, order],
   );
 
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, seriesId, speakerId, topicId, order]);
+  }, [search, seriesId, speakerId, topicId, year, order]);
 
   useEffect(() => {
     fetchSermons(currentPage);
