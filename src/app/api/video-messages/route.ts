@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // Add cache headers for successful responses
     const response = NextResponse.json({ messages });
-    response.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
+    response.headers.set("Cache-Control", "public, s-maxage=600, stale-while-revalidate=600");
     return response;
   } catch (err: unknown) {
     console.error("Video Messages API Error:", err);
