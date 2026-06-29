@@ -27,6 +27,7 @@ import {
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
+import { slugify } from "@/lib/slugify";
 
 interface VideoMessage {
   date: string;
@@ -38,6 +39,15 @@ interface VideoMessage {
 }
 
 const VIDEOS_PER_PAGE = 12;
+
+/**
+ * Human-readable slug used in shareable /video-messages/<slug> links. Falls
+ * back to the YouTube id for messages without a title so every video stays
+ * shareable.
+ */
+function videoSlug(video: Pick<VideoMessage, "title" | "id">): string {
+  return slugify(video.title || "") || video.id;
+}
 
 async function fetchVideoMessages(): Promise<VideoMessage[]> {
   const response = await fetch("/api/video-messages");
@@ -84,7 +94,12 @@ function VideoProgressBar({ videoId }: { videoId: string }) {
 // Main Component
 // =============================================================================
 
-export default function VideoMessagesContent() {
+export default function VideoMessagesContent({
+  openSlug,
+}: {
+  /** Title slug (or YouTube id) of a video to open automatically on load. */
+  openSlug?: string;
+} = {}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMinister, setSelectedMinister] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -347,6 +362,51 @@ export default function VideoMessagesContent() {
   }, [saveCurrentProgress, stopProgressInterval]);
 
   // ===========================================================================
+  // Deep linking — a shared /video-messages?v=<id> link opens that video, and
+  // the URL stays in sync with whichever video is open so it can be re-shared.
+  // ===========================================================================
+
+  // Capture a legacy ?v=<id> link on the first render (older shared links).
+  // (undefined = not yet captured, null = no param.)
+  const legacyShareIdRef = useRef<string | null | undefined>(undefined);
+  if (legacyShareIdRef.current === undefined) {
+    legacyShareIdRef.current =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("v");
+  }
+  const didAutoOpenRef = useRef(false);
+
+  // Open the deep-linked video once the list has loaded. Resolves both the
+  // /video-messages/<slug> path (openSlug) and legacy /video-messages?v=<id>.
+  useEffect(() => {
+    if (didAutoOpenRef.current || videos.length === 0) return;
+    didAutoOpenRef.current = true;
+    const target = openSlug || legacyShareIdRef.current;
+    if (!target) return;
+    const match = videos.find(
+      (v) => videoSlug(v) === target || v.id === target,
+    );
+    if (match) handleVideoClick(match);
+  }, [videos, openSlug, handleVideoClick]);
+
+  // Reflect the open video in the URL as /video-messages/<slug> so it can be
+  // re-shared from the address bar. Skips the first run so a deep-linked slug
+  // isn't stripped before the auto-open effect resolves it.
+  const urlSyncReadyRef = useRef(false);
+  useEffect(() => {
+    if (!urlSyncReadyRef.current) {
+      urlSyncReadyRef.current = true;
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const url = selectedVideo
+      ? `/video-messages/${videoSlug(selectedVideo)}`
+      : "/video-messages";
+    window.history.replaceState(null, "", url);
+  }, [selectedVideo]);
+
+  // ===========================================================================
   // Render
   // ===========================================================================
 
@@ -520,30 +580,17 @@ export default function VideoMessagesContent() {
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
                       {video.serviceCategory || "Video Message"}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {/* Share Button */}
                       <button
                         type="button"
                         title="Share this video"
-                        className="p-1 rounded-full hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="p-2 rounded-full hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Slugify the title for the URL
-                          function slugify(text: string) {
-                            return text
-                              .toString()
-                              .normalize("NFKD")
-                              .replace(/[\u0300-\u036F]/g, "") // Remove accents
-                              .replace(/[^a-zA-Z0-9\s-]/g, "") // Remove non-alphanumeric
-                              .trim()
-                              .replace(/\s+/g, "-")
-                              .replace(/-+/g, "-")
-                              .toLowerCase();
-                          }
-                          const slug = slugify(video.title || "video-message");
-                          // Optionally append ID for uniqueness if needed:
-                          // const url = `${window.location.origin}/video-messages/${slug}-${video.id}`;
-                          const url = `${window.location.origin}/video-messages/${slug}`;
+                          // Shareable, human-readable deep link; the page opens
+                          // this video automatically from the title slug on load.
+                          const url = `${window.location.origin}/video-messages/${videoSlug(video)}`;
                           const shareData = {
                             title: video.title || "Video Message",
                             text: video.title || "Video Message",
