@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import TranscriptContent from "@/components/shared/TranscriptContent";
+import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
 
 interface AudioSermon {
   id: number;
@@ -63,6 +64,7 @@ export function InlineResourceDrawer({
   const [transcriptTitle, setTranscriptTitle] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const interactedRef = useRef(false);
+  const transcriptScopeRef = useRef<HTMLDivElement>(null);
 
   // Reset interacted flag when drawer opens with new content
   useEffect(() => {
@@ -114,17 +116,12 @@ export function InlineResourceDrawer({
       .finally(() => setLoading(false));
   }, [open, href, variant]);
 
-  // Re-run Logos RefTagger so scripture references in the loaded transcript get
-  // highlighted (it only scans on page load / route change).
-  useEffect(() => {
-    if (!transcriptHtml) return;
-    const t = setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rt = (window as any).refTagger;
-      if (rt?.tag) rt.tag();
-    }, 500);
-    return () => clearTimeout(t);
-  }, [transcriptHtml]);
+  // Scripture references inside the transcript are highlighted by the scoped
+  // ScriptureProvider (see the "read" markup below), NOT Logos RefTagger.
+  // RefTagger positions its popup in document space, which breaks inside this
+  // fixed, independently-scrolling drawer; the in-app provider uses a portal
+  // with viewport-relative `fixed` coordinates, so the verse tooltip lands
+  // correctly here.
 
   // For "read" variant, count the resource as reviewed after 2 seconds.
   useEffect(() => {
@@ -392,7 +389,11 @@ export function InlineResourceDrawer({
                 </div>
 
                 {/* Transcript Content */}
-                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <ScriptureProvider scopeRef={transcriptScopeRef}>
+                <div
+                  ref={transcriptScopeRef}
+                  className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]"
+                >
                   {loading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="w-7 h-7 text-muted-foreground animate-spin" />
@@ -415,6 +416,7 @@ export function InlineResourceDrawer({
                     </div>
                   )}
                 </div>
+                </ScriptureProvider>
               </div>
             )}
           </motion.div>
