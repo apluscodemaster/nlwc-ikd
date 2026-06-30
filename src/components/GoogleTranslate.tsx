@@ -67,14 +67,12 @@ export default function GoogleTranslate() {
   const pathname = usePathname();
   const initRef = useRef(false);
 
-  // Load Google Translate script & initialize the hidden widget
-  useEffect(() => {
+  // Injects the Google Translate script and initializes the hidden widget.
+  // Deferred (see below) so the ~heavy script + its request cascade don't load
+  // on every page for the vast majority of visitors who never translate.
+  const loadTranslateScript = useCallback(() => {
     if (initRef.current) return;
     initRef.current = true;
-
-    // Read persisted language from cookie
-    const match = document.cookie.match(/googtrans=\/en\/([a-z-]+)/i);
-    if (match) setCurrentLang(match[1]);
 
     // If already loaded (e.g. HMR), just mark ready
     if (document.querySelector(".goog-te-combo")) {
@@ -105,6 +103,22 @@ export default function GoogleTranslate() {
     script.async = true;
     document.body.appendChild(script);
   }, []);
+
+  // On mount, only load eagerly if the visitor already chose a non-English
+  // language (the googtrans cookie is set) — they need the widget to restore
+  // their translation. Everyone else loads it lazily on first panel open.
+  useEffect(() => {
+    const match = document.cookie.match(/googtrans=\/en\/([a-z-]+)/i);
+    if (match && match[1] !== "en") {
+      setCurrentLang(match[1]);
+      loadTranslateScript();
+    }
+  }, [loadTranslateScript]);
+
+  // Ensure the script is loaded once the user actually opens the language panel.
+  useEffect(() => {
+    if (open) loadTranslateScript();
+  }, [open, loadTranslateScript]);
 
   const selectLanguage = useCallback(async (code: string) => {
     // Find the <select> Google Translate injected
