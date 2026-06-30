@@ -47,11 +47,24 @@ export function useScripture() {
 }
 
 /**
- * Global Scripture Provider that:
+ * Scripture Provider that:
  * 1. Provides a single tooltip portal for all scripture references
  * 2. Automatically detects and wraps scripture references in the DOM
+ *
+ * Pass `scopeRef` to limit detection/observation to a single subtree (e.g. a
+ * modal or drawer). When omitted it scans the whole document body. Scoping is
+ * what makes this safe to use inside a `position: fixed` container — the tooltip
+ * renders through a portal with viewport-relative `fixed` coordinates, so it
+ * lands correctly even when the trigger lives in an independently-scrolling
+ * overlay (unlike Logos RefTagger, whose popup is positioned in document space).
  */
-export function ScriptureProvider({ children }: { children: React.ReactNode }) {
+export function ScriptureProvider({
+  children,
+  scopeRef,
+}: {
+  children: React.ReactNode;
+  scopeRef?: React.RefObject<HTMLElement | null>;
+}) {
   const [isMounted, setIsMounted] = useState(false);
   const [tooltip, setTooltip] = useState<TooltipState>({
     isOpen: false,
@@ -74,8 +87,10 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
     const padding = 16;
     const arrowSize = 8;
 
+    // Coordinates are viewport-relative: the tooltip renders through a portal
+    // with `position: fixed`, so we must NOT add window.scrollY here.
     let left = triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2;
-    let top = triggerRect.top - tooltipHeight - arrowSize + window.scrollY;
+    let top = triggerRect.top - tooltipHeight - arrowSize;
     let arrowPosition: "bottom" | "top" = "bottom";
     let arrowLeft = tooltipWidth / 2;
 
@@ -94,7 +109,7 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
 
     // Vertical adjustment
     if (triggerRect.top - tooltipHeight - arrowSize < padding) {
-      top = triggerRect.bottom + arrowSize + window.scrollY;
+      top = triggerRect.bottom + arrowSize;
       arrowPosition = "top";
     }
 
@@ -189,9 +204,14 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isMounted) return;
 
+    // Limit scanning/observation to the provided subtree (e.g. a drawer) so we
+    // don't double-process content that the global RefTagger already handles.
+    const root = scopeRef ? scopeRef.current : document.body;
+    if (!root) return;
+
     const processScriptureReferences = () => {
       // Find all text nodes in prose content
-      const proseElements = document.querySelectorAll(
+      const proseElements = root.querySelectorAll(
         ".prose, [data-scripture-content]",
       );
 
@@ -295,13 +315,13 @@ export function ScriptureProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    observer.observe(document.body, {
+    observer.observe(root, {
       childList: true,
       subtree: true,
     });
 
     return () => observer.disconnect();
-  }, [isMounted, showTooltip, hideTooltip]);
+  }, [isMounted, showTooltip, hideTooltip, scopeRef]);
 
   const tooltipContent = (
     <AnimatePresence>
