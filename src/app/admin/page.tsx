@@ -80,7 +80,8 @@ interface SermonFormData {
   seriesId: string;
   description: string;
   sermonDate: string;
-  audioFile: FileList | null;
+  /** S3 (or other) URL of the MP3 — audio is NOT hosted on WordPress. */
+  audioUrl: string;
   thumbnailFile: FileList | null;
 }
 
@@ -600,13 +601,15 @@ export default function AdminChurchContentPage() {
   const [activeTab, setActiveTab] = useState<ContentType>("sermon");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [publishing, setPublishing] = useState(false);
-  const [audioFileName, setAudioFileName] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(
     null,
   );
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadedMediaId, setUploadedMediaId] = useState<number | null>(null);
+  // The public URL of the uploaded thumbnail. Series Engine stores the
+  // thumbnail as a URL (message_thumbnail), not a media attachment ID.
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null);
 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
@@ -636,11 +639,8 @@ export default function AdminChurchContentPage() {
   );
   const [editUploadingThumbnail, setEditUploadingThumbnail] = useState(false);
   const editThumbnailInputRef = useRef<HTMLInputElement>(null);
-  const [editAudioFileName, setEditAudioFileName] = useState<string | null>(
-    null,
-  );
-  const [editAudioFile, setEditAudioFile] = useState<FileList | null>(null);
-  const editAudioInputRef = useRef<HTMLInputElement>(null);
+  // Audio is referenced by URL (S3), not uploaded to WordPress.
+  const [editAudioUrl, setEditAudioUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editTranscriptType, setEditTranscriptType] =
     useState<TranscriptType>("sunday-message");
@@ -653,7 +653,7 @@ export default function AdminChurchContentPage() {
       seriesId: "",
       description: "",
       sermonDate: new Date().toISOString().split("T")[0],
-      audioFile: null,
+      audioUrl: "",
       thumbnailFile: null,
     },
   });
@@ -674,7 +674,6 @@ export default function AdminChurchContentPage() {
     },
   });
 
-  const audioInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const currentTab = TABS.find((t) => t.id === activeTab)!;
 
@@ -761,19 +760,10 @@ export default function AdminChurchContentPage() {
     setDebouncedSearch("");
     sermonForm.reset();
     textForm.reset();
-    setAudioFileName(null);
     setThumbnailPreview(null);
     setThumbnailFileName(null);
     setUploadedMediaId(null);
-  };
-
-  // ── Audio file selection ────────────────────────────────────────────────────
-  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAudioFileName(file.name);
-      sermonForm.setValue("audioFile", e.target.files);
-    }
+    setUploadedMediaUrl(null);
   };
 
   // ── Edit item ───────────────────────────────────────────────────────────────
@@ -789,9 +779,8 @@ export default function AdminChurchContentPage() {
     setEditThumbnailPreview(item.thumbnail || null);
     setEditUploadedMediaId(null);
     setEditUploadingThumbnail(false);
-    setEditAudioFileName(null);
-    setEditAudioFile(null);
-    if (editAudioInputRef.current) editAudioInputRef.current.value = "";
+    // Prefill with the existing MP3 URL (real audio_url when the message has one).
+    setEditAudioUrl(item.audioUrl || "");
     if (item.transcriptType) {
       setEditTranscriptType(item.transcriptType as TranscriptType);
     } else {
@@ -838,14 +827,6 @@ export default function AdminChurchContentPage() {
     }
   };
 
-  // ── Edit audio file selection ───────────────────────────────────────────────
-  const handleEditAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setEditAudioFileName(file.name);
-      setEditAudioFile(e.target.files);
-    }
-  };
 
   // ── Save edit ───────────────────────────────────────────────────────────────
   // FIX: getAuthorizationHeader() called and Authorization header sent on every
@@ -856,34 +837,6 @@ export default function AdminChurchContentPage() {
     try {
       // Get Firebase ID token once and reuse for all requests in this handler
       const authHeader = await getAuthorizationHeader();
-
-      // Upload new audio if selected
-      let uploadedAudioMediaId: number | null = null;
-      if (activeTab === "sermon" && editAudioFile && editAudioFile[0]) {
-        try {
-          const formData = new FormData();
-          formData.append("file", editAudioFile[0]);
-          const audioRes = await fetch("/api/wp/upload-media", {
-            method: "POST",
-            headers: { Authorization: authHeader }, // ← auth header added
-            body: formData,
-          });
-          const audioData = await audioRes.json();
-          // upload-media returns `id`, not `mediaId`.
-          if (audioData.id) {
-            uploadedAudioMediaId = audioData.id;
-            toast.success("Audio file uploaded!");
-          } else {
-            toast.warning(
-              "Audio upload failed, but continuing with other changes...",
-            );
-          }
-        } catch {
-          toast.warning(
-            "Audio upload failed, but continuing with other changes...",
-          );
-        }
-      }
 
       // Build content with speaker prepended if provided
       let contentToSave = editContent;
@@ -918,8 +871,11 @@ export default function AdminChurchContentPage() {
       // exact calendar day the admin picked — toISOString() would shift it.
       if (editDate) payload.date = `${editDate}T12:00:00`;
       if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
-      if (activeTab === "sermon" && editSeriesId) {
-        payload.categories = [Number(editSeriesId)];
+      if (activeTab === "sermon") {
+        // Sermons are Series Engine messages: the MP3 is a URL, and the series
+        // is reassigned via seriesId (the update route maps it to series_id).
+        if (editAudioUrl) payload.audioUrl = editAudioUrl;
+        if (editSeriesId) payload.seriesId = Number(editSeriesId);
       } else if (activeTab === "transcript") {
         // Write the transcript type back as its WP category. Without this, the
         // "Transcript Type" select in the edit modal was a no-op — the value
@@ -941,9 +897,7 @@ export default function AdminChurchContentPage() {
           description: `Post #${data.postId} saved.`,
         });
         setEditingItem(null);
-        setEditAudioFileName(null);
-        setEditAudioFile(null);
-        if (editAudioInputRef.current) editAudioInputRef.current.value = "";
+        setEditAudioUrl("");
         // Refresh the admin list so the updated post is immediately visible
         fetchContent(activeTab, contentPage, debouncedSearch);
       } else {
@@ -986,6 +940,8 @@ export default function AdminChurchContentPage() {
       const data = await res.json();
       if (data.id) {
         setUploadedMediaId(data.id);
+        // Series Engine references the thumbnail by URL, so keep the public URL.
+        setUploadedMediaUrl(data.url || null);
         toast.success("Thumbnail uploaded", {
           description: "Image saved to WordPress media library.",
         });
@@ -1008,16 +964,11 @@ export default function AdminChurchContentPage() {
   const onSermonSubmit = async (data: SermonFormData) => {
     setPublishing(true);
     try {
-      const contentParts = [];
-      if (data.speaker)
-        contentParts.push(`<p><strong>Minister:</strong> ${data.speaker}</p>`);
-      if (data.description) contentParts.push(`<p>${data.description}</p>`);
-      if (!contentParts.length)
-        contentParts.push(`<p>Audio sermon uploaded via admin dashboard.</p>`);
-
       // ── Auth header added ─────────────────────────────────────────────────
       const authHeader = await getAuthorizationHeader();
 
+      // Audio sermons are Series Engine messages, not WordPress posts. The MP3
+      // is referenced by URL (S3), and the thumbnail is sent as a URL too.
       const res = await fetch("/api/wp/publish", {
         method: "POST",
         headers: {
@@ -1027,17 +978,19 @@ export default function AdminChurchContentPage() {
         body: JSON.stringify({
           type: "sermon",
           title: data.title,
-          content: contentParts.join("\n"),
-          status: data.status,
-          speaker: data.speaker,
-          featuredMediaId: uploadedMediaId || undefined,
+          audioUrl: data.audioUrl,
+          speaker: data.speaker || undefined,
+          description: data.description || undefined,
+          seriesId: data.seriesId || undefined,
+          date: data.sermonDate || undefined,
+          thumbnailUrl: uploadedMediaUrl || undefined,
         }),
       });
 
       const result = await res.json();
       if (result.success) {
         toast.success("Sermon published successfully!", {
-          description: `Post ID: ${result.postId}`,
+          description: `Message ID: ${result.postId}`,
           action: result.postUrl
             ? {
                 label: "View Post",
@@ -1046,10 +999,10 @@ export default function AdminChurchContentPage() {
             : undefined,
         });
         sermonForm.reset();
-        setAudioFileName(null);
         setThumbnailPreview(null);
         setThumbnailFileName(null);
         setUploadedMediaId(null);
+        setUploadedMediaUrl(null);
         setViewMode("list");
         fetchContent(activeTab, 1, debouncedSearch);
       } else {
@@ -1519,6 +1472,7 @@ export default function AdminChurchContentPage() {
                                   setThumbnailPreview(null);
                                   setThumbnailFileName(null);
                                   setUploadedMediaId(null);
+                                  setUploadedMediaUrl(null);
                                   if (thumbnailInputRef.current)
                                     thumbnailInputRef.current.value = "";
                                 }}
@@ -1551,62 +1505,36 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  {/* Audio */}
+                  {/* Audio MP3 URL — audio is hosted on S3, not WordPress */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Audio File <span className="text-red-400">*</span>
+                      Audio MP3 URL <span className="text-red-400">*</span>
                     </label>
-                    <input
-                      ref={audioInputRef}
-                      type="file"
-                      accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac"
-                      onChange={handleAudioSelect}
-                      className="hidden"
-                    />
-                    {audioFileName ? (
-                      <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <FileAudio className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {audioFileName}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            Audio file selected
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAudioFileName(null);
-                            sermonForm.setValue("audioFile", null);
-                            if (audioInputRef.current)
-                              audioInputRef.current.value = "";
-                          }}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => audioInputRef.current?.click()}
-                        className="w-full flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 bg-gray-50/50 hover:bg-primary/5 transition-all cursor-pointer group"
-                      >
-                        <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/20 transition-all">
-                          <Upload className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-medium text-gray-600 group-hover:text-primary transition-colors">
-                            Click to upload audio file
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            MP3, WAV, OGG, M4A, or AAC
-                          </p>
-                        </div>
-                      </button>
+                    <div className="relative">
+                      <FileAudio className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                      <input
+                        type="url"
+                        inputMode="url"
+                        {...sermonForm.register("audioUrl", {
+                          required: "Audio MP3 URL is required",
+                          pattern: {
+                            value: /^https?:\/\/.+/i,
+                            message: "Enter a valid URL starting with http(s)://",
+                          },
+                        })}
+                        className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                        placeholder="https://nlwc-ikorodu.s3.us-east-2.amazonaws.com/…/message.mp3"
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs text-gray-400">
+                      Paste the link to the hosted MP3 (e.g. AWS S3). The audio is
+                      not uploaded to WordPress.
+                    </p>
+                    {sermonForm.formState.errors.audioUrl && (
+                      <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {sermonForm.formState.errors.audioUrl.message}
+                      </p>
                     )}
                   </div>
 
@@ -2147,55 +2075,23 @@ export default function AdminChurchContentPage() {
                 {activeTab === "sermon" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Audio File (Update)
+                      Audio MP3 URL
                     </label>
-                    <input
-                      ref={editAudioInputRef}
-                      type="file"
-                      accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac"
-                      onChange={handleEditAudioSelect}
-                      className="hidden"
-                    />
-                    {editAudioFileName ? (
-                      <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <FileAudio className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {editAudioFileName}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            New audio file selected
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditAudioFileName(null);
-                            setEditAudioFile(null);
-                            if (editAudioInputRef.current)
-                              editAudioInputRef.current.value = "";
-                          }}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => editAudioInputRef.current?.click()}
-                        className="w-full flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 bg-gray-50/50 hover:bg-primary/5 transition-all cursor-pointer group"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover:shadow-md group-hover:border-primary/20 transition-all">
-                          <Upload className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
-                        </div>
-                        <p className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">
-                          Upload new audio file (optional)
-                        </p>
-                      </button>
-                    )}
+                    <div className="relative">
+                      <FileAudio className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                      <input
+                        type="url"
+                        inputMode="url"
+                        value={editAudioUrl}
+                        onChange={(e) => setEditAudioUrl(e.target.value)}
+                        className="w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                        placeholder="https://nlwc-ikorodu.s3.us-east-2.amazonaws.com/…/message.mp3"
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs text-gray-400">
+                      Link to the hosted MP3 (e.g. AWS S3). Leave unchanged to keep
+                      the current audio.
+                    </p>
                   </div>
                 )}
 

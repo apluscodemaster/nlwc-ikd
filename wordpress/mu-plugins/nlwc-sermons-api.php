@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NLWC Sermons API
  * Description: Custom REST API endpoint to expose Series Engine audio messages data.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: NLWC Dev Team
  *
  * Upload to: wp-content/mu-plugins/nlwc-sermons-api.php
@@ -17,15 +17,18 @@
  *   ikorodu_se_message_topic_matches   — message↔topic junction (many-to-many)
  *
  * Endpoints (static routes registered before dynamic to avoid conflicts):
- *   GET /wp-json/nlwc/v1/sermons          — Paginated list of audio messages
- *                                           (?slug=<slug> returns the single
- *                                           message whose sanitize_title(title)
- *                                           equals <slug>, for legacy redirects)
- *   GET /wp-json/nlwc/v1/sermons/series   — List of all series
- *   GET /wp-json/nlwc/v1/sermons/speakers — List of all speakers
- *   GET /wp-json/nlwc/v1/sermons/topics   — List of all topics
- *   GET /wp-json/nlwc/v1/sermons/<id>     — Single message with full details
- *   PUT /wp-json/nlwc/v1/sermons/<id>     — Update a message (requires auth)
+ *   GET  /wp-json/nlwc/v1/sermons          — Paginated list of audio messages
+ *                                            (?slug=<slug> returns the single
+ *                                            message whose sanitize_title(title)
+ *                                            equals <slug>, for legacy redirects)
+ *   POST /wp-json/nlwc/v1/sermons          — Create a new audio message (auth).
+ *                                            The MP3 is referenced by an
+ *                                            `audio_url` (S3), NOT uploaded to WP.
+ *   GET  /wp-json/nlwc/v1/sermons/series   — List of all series
+ *   GET  /wp-json/nlwc/v1/sermons/speakers — List of all speakers
+ *   GET  /wp-json/nlwc/v1/sermons/topics   — List of all topics
+ *   GET  /wp-json/nlwc/v1/sermons/<id>     — Single message with full details
+ *   PUT  /wp-json/nlwc/v1/sermons/<id>     — Update a message (requires auth)
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -99,6 +102,19 @@ class NLWC_Sermons_API {
                     },
                 ],
             ],
+        ] );
+
+        // POST /sermons — Create a new audio message (auth required)
+        // Registered on the same /sermons pattern as GET above; WordPress
+        // dispatches by HTTP method so both definitions coexist without conflict.
+        // The MP3 is stored as an `audio_url` (S3) — nothing is uploaded to WP.
+        register_rest_route( $ns, '/sermons', [
+            'methods'             => WP_REST_Server::CREATABLE, // POST
+            'callback'            => [ __CLASS__, 'create_sermon' ],
+            'permission_callback' => function ( WP_REST_Request $request ) {
+                // Accept either a logged-in WP admin or a valid Application Password.
+                return current_user_can( 'edit_posts' ) || self::verify_app_password( $request );
+            },
         ] );
 
         // GET /sermons/series — All series
@@ -567,6 +583,70 @@ class NLWC_Sermons_API {
                 ];
             }, $topics ?: [] ),
         ], 200 ) );
+    }
+
+    /* =====================================================================
+     *  POST /sermons — Create a Series Engine message (auth required)
+     *
+     *  The MP3 lives on S3 and is referenced by `audio_url`; nothing is
+     *  uploaded to WordPress. Only the columns the Series Engine admin UI
+     *  normally fills are set here — any other columns fall back to their
+     *  DB defaults.
+     * ===================================================================== */
+    public static function create_sermon( WP_REST_Request $request ): WP_REST_Response {
+        global $wpdb;
+        $t    = self::tables();
+        $body = $request->get_json_params();
+
+        // ── Required fields ──────────────────────────────────────────────
+        $title     = isset( $body['title'] ) ? sanitize_text_field( $body['title'] ) : '';
+        $audio_url = isset( $body['audio_url'] ) ? esc_url_raw( $body['audio_url'] ) : '';
+
+        if ( $title === '' ) {
+            return new WP_REST_Response( [ 'error' => 'Title is required' ], 400 );
+        }
+        if ( $audio_url === '' ) {
+            return new WP_REST_Response( [ 'error' => 'audio_url is required' ], 400 );
+        }
+
+        $series_id = isset( $body['series_id'] ) ? absint( $body['series_id'] ) : 0;
+
+        // ── Build the insert with sensible defaults ──────────────────────
+        $data = [
+            'title'             => $title,
+            'audio_url'         => $audio_url,
+            'speaker'           => isset( $body['speaker'] ) ? sanitize_text_field( $body['speaker'] ) : '',
+            'date'              => ( isset( $body['date'] ) && $body['date'] !== '' )
+                                       ? sanitize_text_field( $body['date'] )
+                                       : current_time( 'Y-m-d' ),
+            'description'       => isset( $body['description'] ) ? wp_kses_post( $body['description'] ) : '',
+            'message_thumbnail' => isset( $body['message_thumbnail'] ) ? esc_url_raw( $body['message_thumbnail'] ) : '',
+            'focus_scripture'   => isset( $body['focus_scripture'] ) ? sanitize_text_field( $body['focus_scripture'] ) : '',
+            'message_length'    => isset( $body['message_length'] ) ? sanitize_text_field( $body['message_length'] ) : '',
+            'video_url'         => isset( $body['video_url'] ) ? esc_url_raw( $body['video_url'] ) : '',
+            'audio_file_size'   => 0,
+            'audio_count'       => 0,
+            'primary_series'    => $series_id,
+        ];
+        $format = [ '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' ];
+
+        $inserted = $wpdb->insert( $t['messages'], $data, $format );
+        if ( $inserted === false ) {
+            return self::db_error( 'create_sermon' );
+        }
+
+        $new_id = (int) $wpdb->insert_id;
+
+        // ── Link to a series via the junction table ──────────────────────
+        if ( $series_id > 0 ) {
+            $wpdb->insert(
+                $t['series_matches'],
+                [ 'message_id' => $new_id, 'series_id' => $series_id ],
+                [ '%d', '%d' ]
+            );
+        }
+
+        return new WP_REST_Response( [ 'success' => true, 'id' => $new_id ], 201 );
     }
 
     /* =====================================================================

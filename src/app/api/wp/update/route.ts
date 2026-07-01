@@ -172,6 +172,8 @@ export async function PUT(request: NextRequest) {
     categories,
     speaker,
     seriesId,
+    audioUrl,
+    thumbnailUrl,
   } = body as {
     id?: number;
     type?: string;
@@ -183,6 +185,8 @@ export async function PUT(request: NextRequest) {
     categories?: (number | string)[];
     speaker?: string;
     seriesId?: number;
+    audioUrl?: string;
+    thumbnailUrl?: string;
     [key: string]: unknown;
   };
 
@@ -199,7 +203,9 @@ export async function PUT(request: NextRequest) {
     if (date) seBody.date = date;
     if (seriesId) seBody.series_id = seriesId;
     if (content) seBody.description = content;
-    if (featuredMediaId) seBody.thumbnail_id = featuredMediaId;
+    // Audio & thumbnail are URLs in Series Engine, not WP media attachments.
+    if (audioUrl) seBody.audio_url = audioUrl;
+    if (thumbnailUrl) seBody.message_thumbnail = thumbnailUrl;
 
     const result = await updateSESermon(id, seBody);
 
