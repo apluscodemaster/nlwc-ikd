@@ -48,6 +48,29 @@ export const wpSermonSchema = z.object({
   description: z.string().optional(),
 });
 
+/**
+ * Sermon creation payload — audio sermons are NOT WordPress posts. They are
+ * Series Engine messages, and the MP3 is referenced by a URL (S3), not a file
+ * uploaded to WordPress. Validated separately from `wpPublishSchema` because it
+ * targets the Series Engine backend (`/wp-json/nlwc/v1/sermons`) rather than
+ * `/wp/v2/posts`.
+ */
+export const wpSermonCreateSchema = z.object({
+  type: z.literal("sermon"),
+  title: z.string().min(1, "Title is required"),
+  audioUrl: z
+    .string()
+    .min(1, "Audio URL is required")
+    .url("Audio URL must be a valid URL"),
+  speaker: z.string().optional(),
+  description: z.string().optional(),
+  seriesId: z.coerce.number().int().positive().optional(),
+  date: z.string().optional(),
+  thumbnailUrl: z.string().url("Thumbnail URL must be a valid URL").optional(),
+});
+
+export type WPSermonCreatePayload = z.infer<typeof wpSermonCreateSchema>;
+
 export const wpTranscriptSchema = z.object({
   type: z.literal("transcript"),
   title: z.string().min(1, "Title is required"),
