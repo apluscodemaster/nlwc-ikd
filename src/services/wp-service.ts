@@ -6,7 +6,7 @@
  */
 
 import { WP_CATEGORIES } from "@/lib/wordpress";
-import type { WPPublishPayload } from "@/types/wp-types";
+import type { WPPublishPayload, WPSermonCreatePayload } from "@/types/wp-types";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -160,6 +160,82 @@ export async function publishToWordPress(
       // the frontend origin the admin runs on.
       postUrl: frontendPostUrl(payload, data.id, data.slug),
       status: data.status,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Create an audio sermon in the Series Engine backend.
+ *
+ * Unlike transcripts/manuals, audio sermons are NOT WordPress posts — they are
+ * Series Engine messages (`ikorodu_se_messages`). The MP3 is hosted on S3 and
+ * referenced by `audio_url`; nothing is uploaded to WordPress here.
+ *
+ * Hits POST /wp-json/nlwc/v1/sermons (nlwc-sermons-api.php v1.5.0+).
+ */
+export async function createSermonInSeriesEngine(
+  payload: WPSermonCreatePayload,
+): Promise<WPPublishResult> {
+  if (!WP_APP_PASSWORD) {
+    return {
+      success: false,
+      error: "WP_APPLICATION_PASSWORD is not configured on the server.",
+    };
+  }
+
+  const body: Record<string, unknown> = {
+    title: payload.title,
+    audio_url: payload.audioUrl,
+  };
+  if (payload.speaker) body.speaker = payload.speaker;
+  if (payload.description) body.description = payload.description;
+  if (payload.seriesId) body.series_id = payload.seriesId;
+  if (payload.date) body.date = payload.date;
+  if (payload.thumbnailUrl) body.message_thumbnail = payload.thumbnailUrl;
+
+  try {
+    const response = await fetch(`${WP_URL}/wp-json/nlwc/v1/sermons`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getAuthHeader(),
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 404) {
+      return {
+        success: false,
+        error:
+          "The Series Engine create endpoint is not registered. Ensure " +
+          "nlwc-sermons-api.php v1.5.0+ is deployed to wp-content/mu-plugins/.",
+      };
+    }
+
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+      };
+      return {
+        success: false,
+        error:
+          errorData.message ||
+          errorData.error ||
+          `Series Engine API returned ${response.status}`,
+      };
+    }
+
+    const data = (await response.json()) as { id: number; success?: boolean };
+    return {
+      success: true,
+      postId: data.id,
+      postUrl: `/sermons/audio/${data.id}`,
     };
   } catch (err) {
     return {
