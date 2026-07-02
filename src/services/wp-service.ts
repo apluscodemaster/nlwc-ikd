@@ -6,6 +6,7 @@
  */
 
 import { WP_CATEGORIES } from "@/lib/wordpress";
+import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 import type { WPPublishPayload, WPSermonCreatePayload } from "@/types/wp-types";
 
 const WP_URL =
@@ -109,7 +110,10 @@ export async function publishToWordPress(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const body: Record<string, any> = {
     title: payload.title,
-    content: buildContent(payload),
+    // Serialize to Gutenberg blocks so WordPress stores native blocks instead
+    // of a single Classic block (which would trigger wpautop and mangle the
+    // content on the frontend).
+    content: htmlToGutenbergBlocks(buildContent(payload)),
     status: payload.status,
     categories: getCategoryIds(payload),
   };
