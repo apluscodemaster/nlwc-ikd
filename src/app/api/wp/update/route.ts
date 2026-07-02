@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -223,7 +224,9 @@ export async function PUT(request: NextRequest) {
   // Transcripts and manuals — standard WP posts via /wp/v2/posts/<id>
   const wpBody: Record<string, unknown> = {};
   if (title) wpBody.title = title;
-  if (content) wpBody.content = content;
+  // Serialize to Gutenberg blocks (see gutenberg.ts) so edited posts are stored
+  // as native blocks, not a Classic block that wpautop would mangle on render.
+  if (content) wpBody.content = htmlToGutenbergBlocks(content);
   if (status !== undefined) wpBody.status = status;
   if (featuredMediaId !== undefined)
     wpBody.featured_media = Number(featuredMediaId);
