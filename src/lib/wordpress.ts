@@ -83,6 +83,11 @@ export interface WPPost {
   featured_media: number;
   categories: number[];
   tags: number[];
+  /** Registered post meta exposed via REST (e.g. nlwc_manual_theme). */
+  meta?: {
+    nlwc_manual_theme?: string;
+    [key: string]: unknown;
+  };
   _embedded?: {
     author?: WPAuthor[];
     "wp:featuredmedia"?: WPMedia[];
@@ -163,6 +168,12 @@ export interface SundaySchoolManual {
   link: string;
   thumbnail?: string;
   readingTime: number;
+  /** Series/theme parsed from the "THEME:" label in the excerpt. */
+  theme?: string;
+  /** Lesson label parsed from the "LESSON:" label in the excerpt. */
+  lesson?: string;
+  /** Memory verse parsed from the body (detail transform only). */
+  memoryVerse?: string;
 }
 
 // =============================================================================
@@ -580,23 +591,75 @@ export function transformToTranscriptListing(post: WPPost): TranscriptPost {
   };
 }
 
+// Manual metadata parsing ────────────────────────────────────────────────────
+// Editors write manual excerpts as "THEME: <name> LESSON: <label> …" and put a
+// "MEMORY VERSE/TRACK: …" line in the body. These labels are the only structure
+// available (there is no theme taxonomy on the WordPress side), so we parse them
+// to power theme categorization and richer cards. Kept in sync with
+// /api/manuals/themes.
+const MANUAL_THEME_RE = /THEME:\s*(.+?)(?:\s+LESSON:|$)/i;
+const MANUAL_LESSON_RE =
+  /LESSON:\s*(.+?)(?:\s+(?:TOPIC|MEMORY|INTRODUCTION|OBJECTIVE|STUDY|TEXT)\b|$)/i;
+const MANUAL_MEMORY_VERSE_RE =
+  /MEMORY\s*(?:VERSE|TRACK)(?:\s*\/\s*TRACK)?\s*:?\s*(?:<\/strong>)?([\s\S]*?)<\/p>/i;
+
+function extractManualTheme(excerpt: string): string | undefined {
+  const val = excerpt?.match(MANUAL_THEME_RE)?.[1]?.trim();
+  return val || undefined;
+}
+
+/**
+ * Resolve a manual's theme: an explicit `nlwc_manual_theme` meta override (set
+ * from the admin drag-and-drop grouping) wins over the "THEME:" label parsed
+ * from the excerpt. Requires the nlwc-manual-theme mu-plugin for the override to
+ * be present; falls back to parsing when absent.
+ */
+export function resolveManualTheme(
+  post: WPPost,
+  parsedExcerpt: string,
+): string | undefined {
+  const override = post.meta?.nlwc_manual_theme?.trim();
+  if (override) return override;
+  return extractManualTheme(parsedExcerpt);
+}
+
+function extractManualLesson(excerpt: string): string | undefined {
+  const val = excerpt?.match(MANUAL_LESSON_RE)?.[1]?.trim();
+  if (!val) return undefined;
+  return val.length > 90 ? val.slice(0, 90).replace(/\s+\S*$/, "") + "…" : val;
+}
+
+function extractMemoryVerse(html: string): string | undefined {
+  const match = html?.match(MANUAL_MEMORY_VERSE_RE);
+  if (!match) return undefined;
+  const text = match[1]
+    .replace(HTML_TAG_STRIP_RE, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || undefined;
+}
+
 /**
  * Transform WP post to Sunday School Manual format (full — for detail pages)
  */
 export function transformToManual(post: WPPost): SundaySchoolManual {
+  const excerpt = sanitizeWPText(
+    post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+  );
   return {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: sanitizeWPHtml(post.content.rendered),
-    excerpt: sanitizeWPText(
-      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
-    ),
+    excerpt,
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
     link: normalizeWPLink(post.link),
     thumbnail: getFeaturedImage(post) || undefined,
     readingTime: calculateReadingTime(post.content.rendered),
+    theme: resolveManualTheme(post, excerpt),
+    lesson: extractManualLesson(excerpt),
+    memoryVerse: extractMemoryVerse(post.content.rendered),
   };
 }
 
@@ -604,19 +667,22 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
  * ⚡ Lightweight transform for listing pages — skips content sanitization.
  */
 export function transformToManualListing(post: WPPost): SundaySchoolManual {
+  const excerpt = sanitizeWPText(
+    post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
+  );
   return {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
     content: "", // Content not needed for listings — fetched on detail view
-    excerpt: sanitizeWPText(
-      post.excerpt.rendered.replace(HTML_TAG_STRIP_RE, ""),
-    ),
+    excerpt,
     date: post.date,
     formattedDate: formatDate(post.date),
     slug: post.slug,
     link: normalizeWPLink(post.link),
     thumbnail: getFeaturedImage(post) || undefined,
     readingTime: calculateReadingTime(post.content.rendered),
+    theme: resolveManualTheme(post, excerpt),
+    lesson: extractManualLesson(excerpt),
   };
 }
 

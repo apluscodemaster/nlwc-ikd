@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
-  Upload,
   Music,
   Eye,
   Calendar,
@@ -29,6 +28,7 @@ import {
   Italic,
   Underline as UnderlineIcon,
   List,
+  Layers,
   ListOrdered,
   AlignLeft,
   AlignCenter,
@@ -43,6 +43,7 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
+import ManualThemeBoard from "@/components/admin/ManualThemeBoard";
 import { cleanInlineStyles } from "@/utils/sanitizeWP";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
@@ -138,6 +139,10 @@ interface ContentItem {
   series?: string;
   transcriptType?: string;
   slug?: string;
+  /** Manual theme/series (resolved: meta override ?? parsed "THEME:" label). */
+  theme?: string;
+  /** Manual lesson label parsed from the excerpt. */
+  lesson?: string;
 }
 
 interface SpeakerItem {
@@ -600,6 +605,8 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
 export default function AdminChurchContentPage() {
   const [activeTab, setActiveTab] = useState<ContentType>("sermon");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  // Manual list only: toggle the theme drag-and-drop grouping board.
+  const [manualGroupMode, setManualGroupMode] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(
@@ -688,8 +695,12 @@ export default function AdminChurchContentPage() {
         const searchParam = search
           ? `&search=${encodeURIComponent(search)}`
           : "";
+        // The theme drag-and-drop board groups only the manuals on the current
+        // page, so load a much larger page there (≈4+ themes visible) to make
+        // dragging between themes actually useful. The normal list stays at 6.
+        const perPage = type === "manual" && manualGroupMode ? 48 : 6;
         const res = await fetch(
-          `/api/wp/content?type=${type}&page=${page}&per_page=6${searchParam}`,
+          `/api/wp/content?type=${type}&page=${page}&per_page=${perPage}${searchParam}`,
         );
         const data = await res.json();
         if (data.items) {
@@ -702,7 +713,7 @@ export default function AdminChurchContentPage() {
         setLoadingContent(false);
       }
     },
-    [],
+    [manualGroupMode],
   );
 
   // ── Fetch speakers for dropdown ─────────────────────────────────────────────
@@ -1191,19 +1202,53 @@ export default function AdminChurchContentPage() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    fetchContent(activeTab, contentPage, debouncedSearch)
-                  }
-                  className="rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                  title="Refresh"
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 ${loadingContent ? "animate-spin" : ""}`}
-                  />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {activeTab === "manual" && (
+                    <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200">
+                      <button
+                        onClick={() => {
+                          setManualGroupMode(false);
+                          setContentPage(1);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                          !manualGroupMode
+                            ? "bg-white text-amber-600 shadow-sm"
+                            : "text-gray-500 hover:text-amber-600"
+                        }`}
+                      >
+                        <List className="w-3.5 h-3.5" />
+                        List
+                      </button>
+                      <button
+                        onClick={() => {
+                          setManualGroupMode(true);
+                          setContentPage(1);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                          manualGroupMode
+                            ? "bg-white text-amber-600 shadow-sm"
+                            : "text-gray-500 hover:text-amber-600"
+                        }`}
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        Group by theme
+                      </button>
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      fetchContent(activeTab, contentPage, debouncedSearch)
+                    }
+                    className="rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    title="Refresh"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${loadingContent ? "animate-spin" : ""}`}
+                    />
+                  </Button>
+                </div>
               </div>
 
               <div className="px-5 sm:px-6 py-4 border-b border-gray-50">
@@ -1248,6 +1293,21 @@ export default function AdminChurchContentPage() {
                       </>
                     )}
                   </div>
+                ) : activeTab === "manual" && manualGroupMode ? (
+                  <ManualThemeBoard
+                    items={contentItems.map((it) => ({
+                      id: it.id,
+                      title: it.title,
+                      theme: it.theme,
+                      lesson: it.lesson,
+                      date: it.date,
+                    }))}
+                    getAuthHeader={getAuthorizationHeader}
+                    onEditItem={(id) => {
+                      const item = contentItems.find((x) => x.id === id);
+                      if (item) handleEditItem(item);
+                    }}
+                  />
                 ) : (
                   <div className="space-y-3">
                     {contentItems.map((item) => (
