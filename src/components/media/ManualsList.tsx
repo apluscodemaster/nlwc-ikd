@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { storeListUrl } from "@/components/shared/BackToListLink";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -12,10 +12,14 @@ import {
   BookMarked,
   Filter,
   X,
+  Layers,
+  LayoutGrid,
 } from "lucide-react";
 import { useManuals } from "@/hooks/useWordPress";
 import { useQuery } from "@tanstack/react-query";
 import ManualCard from "./ManualCard";
+import FeaturedManual from "./FeaturedManual";
+import type { SundaySchoolManual } from "@/lib/wordpress";
 
 interface ManualsListProps {
   initialPage?: number;
@@ -54,6 +58,8 @@ export default function ManualsList({
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [selectedSeries, setSelectedSeries] = useState(initialSeries);
   const [showFilters, setShowFilters] = useState(!!initialSeries);
+  // "grid" = flat cards (default); "grouped" = lessons bucketed under themes.
+  const [viewMode, setViewMode] = useState<"grouped" | "grid">("grid");
 
   // Track previous values to detect real user-driven changes (not initial mount)
   const prevDebouncedSearch = useRef(debouncedSearch);
@@ -150,6 +156,34 @@ export default function ManualsList({
 
   const manuals = data?.data || [];
   const pagination = data?.pagination;
+
+  // Feature the most-recent manual as a hero card, but only on the unfiltered
+  // first page (mirrors the devotionals "Latest" treatment). When filtering or
+  // paging, every result stays an equal grid card.
+  const isFiltering = !!debouncedSearch || !!selectedSeries;
+  const showFeatured = !isFiltering && page === 1 && manuals.length > 0;
+  const featuredManual = showFeatured ? manuals[0] : null;
+  const gridManuals = showFeatured ? manuals.slice(1) : manuals;
+
+  // Group the grid manuals by their parsed theme so lessons in the same series
+  // sit together under one heading. Order follows first appearance (newest
+  // theme first, since manuals arrive date-desc). Manuals with no parsed theme
+  // fall into a trailing "More Manuals" group.
+  const themeGroups = useMemo(() => {
+    const groups: { theme: string; items: SundaySchoolManual[] }[] = [];
+    const indexByTheme = new Map<string, number>();
+    for (const manual of gridManuals) {
+      const key = manual.theme?.trim() || "More Manuals";
+      let gi = indexByTheme.get(key);
+      if (gi === undefined) {
+        gi = groups.length;
+        indexByTheme.set(key, gi);
+        groups.push({ theme: key, items: [] });
+      }
+      groups[gi].items.push(manual);
+    }
+    return groups;
+  }, [gridManuals]);
 
   // Shorten long theme names for pills
   function shortenTheme(theme: string): string {
@@ -280,46 +314,139 @@ export default function ManualsList({
         </div>
       )}
 
-      {/* Manuals Grid */}
-      {!isLoading && !isError && (
+      {/* Featured "This Week's Lesson" hero (unfiltered first page only) */}
+      {!isLoading && !isError && featuredManual && (
+        <FeaturedManual manual={featuredManual} />
+      )}
+
+      {/* View toggle: grouped by theme vs. flat cards */}
+      {!isLoading && !isError && manuals.length > 0 && (
+        <div className="flex items-center justify-end">
+          <div
+            className="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200"
+            role="tablist"
+            aria-label="Manuals view"
+          >
+            <button
+              role="tab"
+              aria-selected={viewMode === "grid"}
+              onClick={() => setViewMode("grid")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                viewMode === "grid"
+                  ? "bg-white text-amber-600 shadow-sm"
+                  : "text-gray-500 hover:text-amber-600"
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              All Lessons
+            </button>
+            <button
+              role="tab"
+              aria-selected={viewMode === "grouped"}
+              onClick={() => setViewMode("grouped")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                viewMode === "grouped"
+                  ? "bg-white text-amber-600 shadow-sm"
+                  : "text-gray-500 hover:text-amber-600"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              By Theme
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Grouped-by-theme view */}
+      {!isLoading && !isError && manuals.length > 0 && viewMode === "grouped" && (
+        <div className="space-y-12">
+          {themeGroups.map((group) => (
+            <section key={group.theme} className="space-y-5">
+              {/* Theme heading — only meaningful when it labels the lessons
+                  below (skipped for the catch-all "More Manuals" bucket when
+                  it's the only group). */}
+              {!(
+                group.theme === "More Manuals" && themeGroups.length === 1
+              ) && (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 shrink-0 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                      <BookMarked className="w-4.5 h-4.5 text-amber-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2
+                        className="text-base sm:text-lg font-bold text-gray-900 truncate"
+                        title={group.theme}
+                      >
+                        {group.theme}
+                      </h2>
+                      <p className="text-[11px] sm:text-xs text-amber-600 font-semibold uppercase tracking-wider">
+                        {group.items.length}{" "}
+                        {group.items.length === 1 ? "lesson" : "lessons"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-px flex-1 bg-linear-to-r from-amber-200 to-transparent" />
+                </div>
+              )}
+
+              <AnimatePresence mode="wait">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                  {group.items.map((manual) => (
+                    <ManualCard
+                      key={manual.id}
+                      manual={manual}
+                      searchQuery={debouncedSearch}
+                    />
+                  ))}
+                </div>
+              </AnimatePresence>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {/* Flat cards view */}
+      {!isLoading && !isError && manuals.length > 0 && viewMode === "grid" && (
         <AnimatePresence mode="wait">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {manuals.map((manual) => (
+            {gridManuals.map((manual) => (
               <ManualCard
                 key={manual.id}
                 manual={manual}
                 searchQuery={debouncedSearch}
               />
             ))}
-
-            {manuals.length === 0 && (
-              <div className="col-span-full py-20 text-center">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <BookMarked className="w-10 h-10 text-gray-300" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  No manuals found
-                </h3>
-                <p className="text-muted-foreground">
-                  {debouncedSearch || selectedSeries
-                    ? `No results for ${[debouncedSearch && `"${debouncedSearch}"`, selectedSeries && `series "${shortenTheme(selectedSeries)}"`].filter(Boolean).join(" in ")}`
-                    : "Check back later for new content."}
-                </p>
-                {(debouncedSearch || selectedSeries) && (
-                  <button
-                    onClick={() => {
-                      setSearch("");
-                      setSelectedSeries("");
-                    }}
-                    className="mt-6 px-6 py-2 rounded-full bg-amber-500/10 text-amber-600 font-bold hover:bg-amber-500/20 transition-colors"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </AnimatePresence>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !isError && manuals.length === 0 && (
+        <div className="py-20 text-center">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <BookMarked className="w-10 h-10 text-gray-300" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            No manuals found
+          </h3>
+          <p className="text-muted-foreground">
+            {debouncedSearch || selectedSeries
+              ? `No results for ${[debouncedSearch && `"${debouncedSearch}"`, selectedSeries && `series "${shortenTheme(selectedSeries)}"`].filter(Boolean).join(" in ")}`
+              : "Check back later for new content."}
+          </p>
+          {(debouncedSearch || selectedSeries) && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedSeries("");
+              }}
+              className="mt-6 px-6 py-2 rounded-full bg-amber-500/10 text-amber-600 font-bold hover:bg-amber-500/20 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       )}
 
       {/* Pagination */}
