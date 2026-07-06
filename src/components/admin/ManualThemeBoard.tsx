@@ -208,8 +208,11 @@ export default function ManualThemeBoard({
         Drag a lesson onto a theme to re-group it. Changes save automatically.
       </p>
 
-      {/* Theme columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Theme columns use a CSS multi-column (masonry) layout so cards pack
+          vertically and the next card fills under the shorter column instead of
+          every card starting its own equal-height grid row. Single column on
+          mobile, two columns on desktop/large screens. */}
+      <div className="columns-1 md:columns-2 gap-4">
         {groups.map((group) => {
           const isOver = dragOverKey === group.theme;
           const isRenaming = renaming === group.theme;
@@ -232,7 +235,7 @@ export default function ManualThemeBoard({
                 const id = Number(e.dataTransfer.getData("text/plain"));
                 if (id) assign(id, group.theme);
               }}
-              className={`rounded-2xl border transition-colors ${
+              className={`mb-4 break-inside-avoid rounded-2xl border transition-colors ${
                 isOver
                   ? "border-amber-400 bg-amber-50/60 ring-2 ring-amber-300/50"
                   : group.theme === UNGROUPED
