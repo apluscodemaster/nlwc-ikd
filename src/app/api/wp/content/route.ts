@@ -144,6 +144,8 @@ export async function GET(request: NextRequest) {
               excerpt: manual.excerpt,
               slug: manual.slug,
               thumbnail: manual.thumbnail,
+              theme: manual.theme,
+              lesson: manual.lesson,
             };
           }),
           pagination: {

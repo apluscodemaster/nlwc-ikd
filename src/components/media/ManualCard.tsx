@@ -57,6 +57,15 @@ export default function ManualCard({
     ? `/manuals/${manual.slug}?q=${encodeURIComponent(searchQuery)}`
     : `/manuals/${manual.slug}`;
 
+  // Surface the parsed theme as the category badge (falls back to the generic
+  // label when a manual's excerpt has no "THEME:" line). Truncated so long
+  // theme strings don't blow out the card header.
+  const badgeLabel = manual.theme
+    ? manual.theme.length > 32
+      ? manual.theme.slice(0, 32).replace(/\s+\S*$/, "") + "…"
+      : manual.theme
+    : "Sunday School Manual";
+
   return (
     <motion.div
       layout
@@ -88,9 +97,12 @@ export default function ManualCard({
         <div className="p-5 sm:p-6">
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="bg-amber-500/10 text-amber-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-              <FileText className="w-3.5 h-3.5" />
-              Sunday School Manuals
+            <div
+              className="bg-amber-500/10 text-amber-600 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2 max-w-full"
+              title={manual.theme || "Sunday School Manual"}
+            >
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{badgeLabel}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">

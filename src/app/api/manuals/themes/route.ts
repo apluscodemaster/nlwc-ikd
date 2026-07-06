@@ -35,6 +35,14 @@ export async function GET() {
       totalPages = result.totalPages;
 
       for (const post of result.posts) {
+        // Prefer the admin drag-and-drop override (nlwc_manual_theme post meta)
+        // over the "THEME:" label parsed from the excerpt, so re-grouped lessons
+        // show up under their new theme in the frontend filter pills too.
+        const override = post.meta?.nlwc_manual_theme?.trim();
+        if (override) {
+          allThemes.add(override);
+          continue;
+        }
         // Extract theme from raw excerpt — only sanitize the text, not full HTML content
         const rawExcerpt = post.excerpt.rendered.replace(HTML_TAG_RE, "");
         const cleanExcerpt = sanitizeWPText(rawExcerpt);
