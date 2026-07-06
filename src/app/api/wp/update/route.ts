@@ -175,6 +175,7 @@ export async function PUT(request: NextRequest) {
     seriesId,
     audioUrl,
     thumbnailUrl,
+    manualTheme,
   } = body as {
     id?: number;
     type?: string;
@@ -188,6 +189,7 @@ export async function PUT(request: NextRequest) {
     seriesId?: number;
     audioUrl?: string;
     thumbnailUrl?: string;
+    manualTheme?: string;
     [key: string]: unknown;
   };
 
@@ -235,6 +237,11 @@ export async function PUT(request: NextRequest) {
     wpBody.categories = categories.map((c) =>
       typeof c === "string" ? parseInt(c, 10) : c,
     );
+  }
+  // Manual theme override — stored as post meta (nlwc-manual-theme mu-plugin),
+  // set by the admin drag-and-drop grouping. Empty string clears the override.
+  if (manualTheme !== undefined) {
+    wpBody.meta = { nlwc_manual_theme: manualTheme };
   }
 
   if (Object.keys(wpBody).length === 0) {
