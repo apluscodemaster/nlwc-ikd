@@ -262,8 +262,10 @@ describe("findTranscriptSlug", () => {
     expect(findTranscriptSlug("God's Grace", withEntities)).toBe("gods-grace");
   });
 
-  // 8. Uses baseSlug when available
-  it("returns baseSlug over slug when available", () => {
+  // 8. Returns the real, resolvable slug — never the collision-stripped base.
+  //    A "-2" suffix means another post (often a same-title manual) owns the
+  //    base slug, so navigating to the base would resolve to the wrong content.
+  it("returns the transcript's real slug, not the stripped base slug", () => {
     const stubs: TranscriptStub[] = [
       {
         slug: "grace-message-2",
@@ -273,7 +275,7 @@ describe("findTranscriptSlug", () => {
         baseSlug: "grace-message",
       },
     ];
-    expect(findTranscriptSlug("Grace Message", stubs)).toBe("grace-message");
+    expect(findTranscriptSlug("Grace Message", stubs)).toBe("grace-message-2");
   });
 
   // 9. Falls back to slug when no baseSlug

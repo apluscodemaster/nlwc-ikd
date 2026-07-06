@@ -875,14 +875,33 @@ export async function getFeaturedContent(limit = 6) {
   };
 }
 
+/** Category IDs that legitimately represent a transcript. */
+const TRANSCRIPT_CATEGORY_IDS: number[] = [
+  WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
+  WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
+  WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+  WP_CATEGORIES.OTHER_MEETINGS,
+  WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
+];
+
 /**
- * Get a single transcript by slug
+ * Get a single transcript by slug.
+ *
+ * WordPress slugs are globally unique, so when a transcript shares its title
+ * with a manual (or any other post), WordPress appends "-2" to one of them and
+ * the base slug is owned by the other post. A category guard here ensures we
+ * never render a non-transcript post (e.g. a Sunday School Manual, cat 19) as a
+ * transcript — it returns null instead, so the caller shows "not found" rather
+ * than the wrong content.
  */
 export async function getTranscriptBySlug(
   slug: string,
 ): Promise<TranscriptPost | null> {
   const post = await fetchWPPost(slug);
   if (!post) return null;
+  if (!post.categories?.some((c) => TRANSCRIPT_CATEGORY_IDS.includes(c))) {
+    return null;
+  }
   return transformToTranscript(post);
 }
 

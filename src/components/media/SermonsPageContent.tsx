@@ -273,7 +273,7 @@ function findTranscriptSlug(
   // 1. Exact normalized title match (most reliable)
   for (const t of transcripts) {
     if (normalizeTitle(t.title) === normalizedSermon) {
-      return t.baseSlug || t.slug;
+      return t.slug;
     }
   }
 
@@ -295,18 +295,18 @@ function findTranscriptSlug(
         const partMatch = coreCandidates.find(
           (c) => extractPartNumber(c.normTitle) === sermonPartNum,
         );
-        if (partMatch) return partMatch.t.baseSlug || partMatch.t.slug;
+        if (partMatch) return partMatch.t.slug;
       } else {
         // Sermon has no part number — match transcript without a part number
         const noPartMatch = coreCandidates.find(
           (c) => extractPartNumber(c.normTitle) === null,
         );
-        if (noPartMatch) return noPartMatch.t.baseSlug || noPartMatch.t.slug;
+        if (noPartMatch) return noPartMatch.t.slug;
         // Fallback: if all transcripts have part numbers, take part 1
         const part1 = coreCandidates.find(
           (c) => extractPartNumber(c.normTitle) === 1,
         );
-        if (part1) return part1.t.baseSlug || part1.t.slug;
+        if (part1) return part1.t.slug;
       }
     }
   }
@@ -331,7 +331,7 @@ function findTranscriptSlug(
         if (sermonPartNum !== null && tPartNum === null) {
           continue; // Sermon has part number but transcript doesn't — likely different content
         }
-        return t.baseSlug || t.slug;
+        return t.slug;
       }
     }
   }
@@ -345,7 +345,6 @@ function findTranscriptSlug(
   if (sermonWords.size >= 2) {
     let bestMatch: {
       slug: string;
-      baseSlug: string;
       score: number;
     } | null = null;
 
@@ -384,13 +383,12 @@ function findTranscriptSlug(
       if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
         bestMatch = {
           slug: t.slug,
-          baseSlug: t.baseSlug || t.slug,
           score,
         };
       }
     }
     if (bestMatch) {
-      return bestMatch.baseSlug;
+      return bestMatch.slug;
     }
   }
 
