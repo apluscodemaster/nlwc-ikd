@@ -644,6 +644,11 @@ export default function AdminChurchContentPage() {
   const [editUploadedMediaId, setEditUploadedMediaId] = useState<number | null>(
     null,
   );
+  // Public URL of the uploaded thumbnail. Sermons (Series Engine) store the
+  // thumbnail as a URL (message_thumbnail), not a WP media attachment ID.
+  const [editUploadedMediaUrl, setEditUploadedMediaUrl] = useState<
+    string | null
+  >(null);
   const [editUploadingThumbnail, setEditUploadingThumbnail] = useState(false);
   const editThumbnailInputRef = useRef<HTMLInputElement>(null);
   // Audio is referenced by URL (S3), not uploaded to WordPress.
@@ -789,6 +794,7 @@ export default function AdminChurchContentPage() {
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
     setEditThumbnailPreview(item.thumbnail || null);
     setEditUploadedMediaId(null);
+    setEditUploadedMediaUrl(null);
     setEditUploadingThumbnail(false);
     // Prefill with the existing MP3 URL (real audio_url when the message has one).
     setEditAudioUrl(item.audioUrl || "");
@@ -827,6 +833,8 @@ export default function AdminChurchContentPage() {
       // so the thumbnail was never written back on edit.
       if (data.id) {
         setEditUploadedMediaId(data.id);
+        // Series Engine sermons need the thumbnail URL, not the media ID.
+        setEditUploadedMediaUrl(data.url || null);
         toast.success("Thumbnail uploaded!");
       } else {
         toast.error("Thumbnail upload failed");
@@ -883,9 +891,12 @@ export default function AdminChurchContentPage() {
       if (editDate) payload.date = `${editDate}T12:00:00`;
       if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
       if (activeTab === "sermon") {
-        // Sermons are Series Engine messages: the MP3 is a URL, and the series
-        // is reassigned via seriesId (the update route maps it to series_id).
+        // Sermons are Series Engine messages: the MP3 and thumbnail are URLs,
+        // and the series is reassigned via seriesId (mapped to series_id). The
+        // thumbnail must be sent as a URL (message_thumbnail) — the media ID in
+        // featuredMediaId is ignored by the Series Engine update.
         if (editAudioUrl) payload.audioUrl = editAudioUrl;
+        if (editUploadedMediaUrl) payload.thumbnailUrl = editUploadedMediaUrl;
         if (editSeriesId) payload.seriesId = Number(editSeriesId);
       } else if (activeTab === "transcript") {
         // Write the transcript type back as its WP category. Without this, the
