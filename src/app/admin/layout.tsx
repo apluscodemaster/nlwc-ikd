@@ -50,8 +50,14 @@ export const useAdminAuth = () => useContext(AdminAuthContext);
 // ──────────────────────────────────────────────
 const NAV_ITEMS = [
   {
-    label: "Church Content",
+    label: "Dashboard",
     href: "/admin",
+    icon: LayoutDashboard,
+    description: "Analytics across all sections",
+  },
+  {
+    label: "Church Content",
+    href: "/admin/content",
     icon: Church,
     description: "Sermons, Transcripts & Manuals",
   },

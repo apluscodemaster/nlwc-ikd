@@ -219,7 +219,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await safeRevalidate(["/sermons", "/admin"]);
+    await safeRevalidate(["/sermons", "/admin/content"]);
     return NextResponse.json({ success: true, postId: result.data!.id });
   }
 
@@ -260,7 +260,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  await safeRevalidate(["/transcripts", "/manuals", "/sermons", "/admin"]);
+  await safeRevalidate(["/transcripts", "/manuals", "/sermons", "/admin/content"]);
   return NextResponse.json({
     success: true,
     postId: result.data!.id,
