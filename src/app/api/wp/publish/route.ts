@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(sermonResult, { status: 500 });
     }
 
-    await safeRevalidate(["/admin", "/sermons", "/sermons/audio/[id]"]);
+    await safeRevalidate(["/admin/content", "/sermons", "/sermons/audio/[id]"]);
     return NextResponse.json(sermonResult, { status: 201 });
   }
 
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
   // ── Bust Next.js cache (best-effort) ──────────────────────────────────────
   const type = parsed.data.type;
-  const paths = ["/admin"];
+  const paths = ["/admin/content"];
   if (type === "sermon") {
     paths.push("/sermons", "/sermons/audio/[id]");
   } else if (type === "transcript") {
