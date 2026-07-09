@@ -10,13 +10,20 @@ const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
 
 /**
  * Safely bust Next.js route cache without crashing under Turbopack / dev.
+ *
+ * Dynamic detail routes (e.g. "/transcripts/[slug]") must be revalidated with
+ * the "page" kind so every cached instance is refreshed — otherwise an edit
+ * updates the listing but the individual page keeps serving stale content.
  */
-async function safeRevalidate(paths: string[]) {
+async function safeRevalidate(
+  targets: Array<{ path: string; kind?: "page" | "layout" }>,
+) {
   try {
     const { revalidatePath } = await import("next/cache");
-    for (const p of paths) {
+    for (const t of targets) {
       try {
-        revalidatePath(p);
+        if (t.kind) revalidatePath(t.path, t.kind);
+        else revalidatePath(t.path);
       } catch {
         /* non-fatal */
       }
@@ -219,7 +226,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await safeRevalidate(["/sermons", "/admin/content"]);
+    await safeRevalidate([
+      { path: "/sermons" },
+      { path: "/sermons/audio/[id]", kind: "page" },
+      { path: "/admin/content" },
+    ]);
     return NextResponse.json({ success: true, postId: result.data!.id });
   }
 
@@ -260,7 +271,14 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  await safeRevalidate(["/transcripts", "/manuals", "/sermons", "/admin/content"]);
+  await safeRevalidate([
+    { path: "/transcripts" },
+    { path: "/transcripts/[slug]", kind: "page" },
+    { path: "/manuals" },
+    { path: "/manuals/[slug]", kind: "page" },
+    { path: "/sermons" },
+    { path: "/admin/content" },
+  ]);
   return NextResponse.json({
     success: true,
     postId: result.data!.id,
