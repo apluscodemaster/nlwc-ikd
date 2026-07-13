@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          // Short edge window so a newly published manual reaches the "This
+          // Week's Lesson" hero within ~1 minute. The underlying WP fetch is
+          // tagged ("manuals") and revalidated on publish/update, so the edge
+          // refetch picks up fresh data rather than a stale Data Cache entry.
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         },
       }
     );

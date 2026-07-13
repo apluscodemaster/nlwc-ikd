@@ -13,14 +13,36 @@ import { rateLimitMiddleware } from "@/lib/rateLimit";
  * Turbopack in development. We never want that to turn a successful
  * publish into a 500.
  */
-async function safeRevalidate(paths: string[]) {
+async function safeRevalidate(
+  targets: Array<{ path: string; kind?: "page" | "layout" }>,
+) {
   try {
     const { revalidatePath } = await import("next/cache");
-    for (const p of paths) {
+    for (const t of targets) {
       try {
-        revalidatePath(p);
+        // Dynamic detail routes ("/manuals/[slug]", "/sermons/audio/[id]") must
+        // be revalidated with the "page" kind so every cached instance — not
+        // just the literal path — is refreshed.
+        if (t.kind) revalidatePath(t.path, t.kind);
+        else revalidatePath(t.path);
       } catch {
         // individual path failure is non-fatal
+      }
+    }
+  } catch {
+    // next/cache unavailable in this runtime context — safe to skip
+  }
+}
+
+/** Bust tagged Data Cache entries (e.g. the "manuals" listing fetch). */
+async function safeRevalidateTags(tags: string[]) {
+  try {
+    const { revalidateTag } = await import("next/cache");
+    for (const t of tags) {
+      try {
+        revalidateTag(t);
+      } catch {
+        // individual tag failure is non-fatal
       }
     }
   } catch {
@@ -85,7 +107,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(sermonResult, { status: 500 });
     }
 
-    await safeRevalidate(["/admin/content", "/sermons", "/sermons/audio/[id]"]);
+    await safeRevalidate([
+      { path: "/admin/content" },
+      { path: "/sermons" },
+      { path: "/sermons/audio/[id]", kind: "page" },
+    ]);
     return NextResponse.json(sermonResult, { status: 201 });
   }
 
@@ -124,15 +150,30 @@ export async function POST(request: NextRequest) {
 
   // ── Bust Next.js cache (best-effort) ──────────────────────────────────────
   const type = parsed.data.type;
-  const paths = ["/admin/content"];
+  const targets: Array<{ path: string; kind?: "page" | "layout" }> = [
+    { path: "/admin/content" },
+  ];
   if (type === "sermon") {
-    paths.push("/sermons", "/sermons/audio/[id]");
+    targets.push(
+      { path: "/sermons" },
+      { path: "/sermons/audio/[id]", kind: "page" },
+    );
   } else if (type === "transcript") {
-    paths.push("/transcripts", "/transcripts/[slug]", "/sermons");
+    targets.push(
+      { path: "/transcripts" },
+      { path: "/transcripts/[slug]", kind: "page" },
+      { path: "/sermons" },
+    );
   } else if (type === "manual") {
-    paths.push("/manuals", "/manuals/[slug]");
+    targets.push(
+      { path: "/manuals" },
+      { path: "/manuals/[slug]", kind: "page" },
+    );
   }
-  await safeRevalidate(paths);
+  await safeRevalidate(targets);
+  // The manuals listing (client-fetched via /api/manuals) reads a tagged WP
+  // fetch — bust it so the new manual reaches the "This Week's Lesson" hero.
+  if (type === "manual") await safeRevalidateTags(["manuals"]);
 
   return NextResponse.json(result, { status: 201 });
 }

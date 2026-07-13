@@ -211,6 +211,7 @@ interface FetchPostsOptions {
   noStore?: boolean; // Bypass Data Cache (admin reads) so edits show immediately
   status?: string; // Comma list, e.g. "publish,future,draft" (needs authHeader)
   authHeader?: string; // WP Basic-auth header to read non-published posts
+  tags?: string[]; // Next Data Cache tags so publish/update can revalidateTag()
 }
 
 /**
@@ -230,6 +231,7 @@ export async function fetchWPPosts(
     noStore = false,
     status,
     authHeader,
+    tags,
   } = options;
 
   const params = new URLSearchParams({
@@ -285,7 +287,7 @@ export async function fetchWPPosts(
     // keep the 5-minute Data Cache.
     const fetchInit: RequestInit = noStore
       ? { cache: "no-store" }
-      : { next: { revalidate: 300 } };
+      : { next: { revalidate: 300, ...(tags ? { tags } : {}) } };
     if (authHeader) fetchInit.headers = { Authorization: authHeader };
 
     response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, fetchInit);
@@ -775,6 +777,10 @@ export async function getSundaySchoolManuals(
     page: options.page || 1,
     perPage: options.perPage || 10,
     search: options.search,
+    // Tagged so publishing / editing a manual can revalidateTag("manuals") and
+    // the frontend listing (incl. the "This Week's Lesson" hero) refreshes
+    // promptly instead of waiting out the 5-minute Data Cache window.
+    tags: ["manuals"],
   });
 
   return {
