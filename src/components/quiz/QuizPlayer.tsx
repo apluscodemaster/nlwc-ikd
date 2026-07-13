@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Loader2, Send, Square } from "lucide-react";
+import { ArrowRight, Loader2, RefreshCw, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QuestionCard from "./QuestionCard";
 import QuizProgressBar from "./QuizProgressBar";
@@ -126,7 +126,7 @@ export default function QuizPlayer({
       if (!Array.isArray(data) || data.length === 0) {
         setNoMoreQuestions(true);
         setCurrent(null);
-        return;
+        return false;
       }
 
       setCurrent(data[0]);
@@ -134,14 +134,45 @@ export default function QuizPlayer({
       setCorrectAnswer(undefined);
       setRevealed(false);
       questionStartTimeRef.current = Date.now();
+      return true;
     } catch (error) {
       console.error("Failed to load question:", error);
       setNoMoreQuestions(true);
       setCurrent(null);
+      return false;
     } finally {
       setLoadingQuestion(false);
     }
   }, [category, sessionId]);
+
+  // "No more questions" is not necessarily permanent — an admin may add more to
+  // the category. Let the player re-check without leaving the quiz, and auto-check
+  // when they return to the tab.
+  const [checkingForNew, setCheckingForNew] = useState(false);
+  const [noNewFound, setNoNewFound] = useState(false);
+
+  const handleCheckForNew = useCallback(async () => {
+    setCheckingForNew(true);
+    setNoNewFound(false);
+    const found = await fetchNextQuestion();
+    setCheckingForNew(false);
+    if (!found) setNoNewFound(true);
+  }, [fetchNextQuestion]);
+
+  // While parked on the "no more questions" screen, auto re-check when the
+  // player returns to the tab (they may have been told to wait for new ones).
+  useEffect(() => {
+    if (!noMoreQuestions || current || checkingForNew) return;
+    const recheck = () => {
+      if (document.visibilityState === "visible") handleCheckForNew();
+    };
+    window.addEventListener("focus", recheck);
+    document.addEventListener("visibilitychange", recheck);
+    return () => {
+      window.removeEventListener("focus", recheck);
+      document.removeEventListener("visibilitychange", recheck);
+    };
+  }, [noMoreQuestions, current, checkingForNew, handleCheckForNew]);
 
   // Seed answeredIdsRef with previously-answered questions, then load first question
   useEffect(() => {
@@ -439,7 +470,25 @@ export default function QuizPlayer({
             <p className="text-gray-600">
               You&apos;ve answered all available questions in this category.
             </p>
-            <div className="pt-4">
+            {noNewFound && (
+              <p className="text-sm text-gray-400">
+                No new questions yet — check back later.
+              </p>
+            )}
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCheckForNew}
+                disabled={checkingForNew || submitting}
+                className="h-12 px-6 rounded-full font-bold cursor-pointer gap-2"
+              >
+                {checkingForNew ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Check for new questions
+              </Button>
               <Button
                 onClick={handleFinishQuiz}
                 disabled={submitting}
