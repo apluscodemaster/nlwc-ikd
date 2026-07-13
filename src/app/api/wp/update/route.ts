@@ -33,22 +33,6 @@ async function safeRevalidate(
   }
 }
 
-/** Bust tagged Data Cache entries (e.g. the "manuals" listing fetch). */
-async function safeRevalidateTags(tags: string[]) {
-  try {
-    const { revalidateTag } = await import("next/cache");
-    for (const t of tags) {
-      try {
-        revalidateTag(t);
-      } catch {
-        /* non-fatal */
-      }
-    }
-  } catch {
-    /* next/cache unavailable in this runtime context */
-  }
-}
-
 /**
  * Update a standard WordPress post (transcripts / manuals).
  * Uses the WP REST API: PUT /wp-json/wp/v2/posts/<id>
@@ -295,9 +279,6 @@ export async function PUT(request: NextRequest) {
     { path: "/sermons" },
     { path: "/admin/content" },
   ]);
-  // Bust the tagged manuals listing fetch so an edited manual refreshes on the
-  // frontend hero promptly (harmless no-op for transcript edits).
-  await safeRevalidateTags(["manuals"]);
   return NextResponse.json({
     success: true,
     postId: result.data!.id,

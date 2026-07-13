@@ -34,22 +34,6 @@ async function safeRevalidate(
   }
 }
 
-/** Bust tagged Data Cache entries (e.g. the "manuals" listing fetch). */
-async function safeRevalidateTags(tags: string[]) {
-  try {
-    const { revalidateTag } = await import("next/cache");
-    for (const t of tags) {
-      try {
-        revalidateTag(t);
-      } catch {
-        // individual tag failure is non-fatal
-      }
-    }
-  } catch {
-    // next/cache unavailable in this runtime context — safe to skip
-  }
-}
-
 /**
  * POST /api/wp/publish
  *
@@ -171,9 +155,6 @@ export async function POST(request: NextRequest) {
     );
   }
   await safeRevalidate(targets);
-  // The manuals listing (client-fetched via /api/manuals) reads a tagged WP
-  // fetch — bust it so the new manual reaches the "This Week's Lesson" hero.
-  if (type === "manual") await safeRevalidateTags(["manuals"]);
 
   return NextResponse.json(result, { status: 201 });
 }
