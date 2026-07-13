@@ -25,10 +25,21 @@ export async function fetchQuizQuestions(
     q = q.where("category", "==", category);
   }
 
-  // Fetch enough questions to guarantee results after filtering out excluded IDs.
-  // Firestore doesn't support "NOT IN" with more than 10 items efficiently,
-  // so we fetch all available (up to 100) and filter in-memory.
-  const fetchLimit = excludeIds.length > 0 ? 100 : count;
+  // Firestore has no efficient "NOT IN" for large sets, so we over-fetch and
+  // filter the excluded (already-answered) IDs in memory. The window must be
+  // large enough that at least `count` UNanswered questions survive the filter:
+  // fetchLimit = excludeIds.length + count guarantees this (removing up to
+  // excludeIds.length docs from the window still leaves ≥ count), and because
+  // the window grows with the exclude set, EVERY question in the collection
+  // eventually becomes reachable.
+  //
+  // The previous fixed limit of 100 meant only the first 100 documents (by
+  // document ID) were ever candidates — so once a user had answered those, they
+  // were wrongly told they'd exhausted the category, even with hundreds/thousands
+  // of unanswered questions remaining (and the "All" choice capped at 100 total).
+  const BUFFER = 25; // extra unanswered candidates so the shuffle has variety
+  const fetchLimit =
+    excludeIds.length > 0 ? excludeIds.length + count + BUFFER : count;
   q = q.limit(fetchLimit);
 
   const snapshot = await q.get();

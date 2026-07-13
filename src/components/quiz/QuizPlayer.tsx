@@ -102,12 +102,21 @@ export default function QuizPlayer({
     setLoadingQuestion(true);
     setNoMoreQuestions(false);
     try {
-      const params = new URLSearchParams({ count: "1" });
+      const params = new URLSearchParams({
+        count: "1",
+        session_id: sessionId,
+      });
       if (category) params.set("category", category);
 
-      // Read the ref directly — always has the latest answered IDs
+      // The server excludes every question this session has answered (read from
+      // the DB via session_id). We additionally pass only the most recent IDs —
+      // enough to cover an answer that may not be persisted yet — so the URL
+      // stays short no matter how many questions the player has answered. (The
+      // old code sent the entire answered set, which both capped reachable
+      // questions and risked exceeding request-length limits.)
       if (answeredIdsRef.current.size > 0) {
-        params.set("exclude", Array.from(answeredIdsRef.current).join(","));
+        const recent = Array.from(answeredIdsRef.current).slice(-25);
+        params.set("exclude", recent.join(","));
       }
 
       const res = await fetch(`/api/quiz/questions?${params}`);
@@ -132,7 +141,7 @@ export default function QuizPlayer({
     } finally {
       setLoadingQuestion(false);
     }
-  }, [category]);
+  }, [category, sessionId]);
 
   // Seed answeredIdsRef with previously-answered questions, then load first question
   useEffect(() => {
