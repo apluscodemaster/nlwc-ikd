@@ -42,6 +42,29 @@ const BLOCK_TAGS = new Set([
   "table",
 ]);
 
+/** Block-level open-tag detector — used to spot an inline wrapper that illegally
+ *  spans block elements (the classic Word / Google Docs "bold everything"
+ *  paste, where the whole selection is inside one <b>/<span>). */
+const BLOCK_OPEN_RE = /<(?:p|h[1-6]|blockquote|ul|ol|pre|figure|table|hr|div)\b/i;
+
+/** Inline emphasis / formatting tags that carry styling but never define a
+ *  block. When one of these wraps block-level elements it is a paste artifact
+ *  to unwrap rather than a real block. */
+const INLINE_WRAPPER_TAGS = new Set([
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "strike",
+  "mark",
+  "span",
+  "small",
+  "sub",
+  "sup",
+]);
+
 /** Normalise legacy/execCommand cruft before scanning for blocks. */
 function preClean(html: string): string {
   return (
@@ -228,6 +251,28 @@ function serializeNode(node: string): string {
   }
 
   const tag = m[1].toLowerCase();
+
+  // An inline element (<strong>/<b>/<span …>) sitting at the top level. Word /
+  // Google Docs pastes routinely wrap the whole selection — or a run spanning
+  // several paragraphs — in one such tag. Left alone, splitTopLevel treats that
+  // wrapper as ONE node and it lands in the `default` branch below as a raw
+  // wp:html block, so the frontend renders the ENTIRE manual bold and wpautop
+  // mangles the nested <p> tags into a stray "p>". Handle it here instead:
+  //   • wrapper around block elements → unwrap and serialize the inner blocks
+  //   • leaf inline run (no blocks inside) → a normal paragraph that keeps the
+  //     emphasis
+  if (INLINE_WRAPPER_TAGS.has(tag)) {
+    const innerRaw = innerHtml(node, tag);
+    if (BLOCK_OPEN_RE.test(innerRaw)) {
+      return splitTopLevel(innerRaw)
+        .map(serializeNode)
+        .filter(Boolean)
+        .join("\n\n");
+    }
+    const leaf = cleanInner(node);
+    return leaf ? paragraphBlock(leaf, null) : "";
+  }
+
   const align = alignFromOpenTag(m[0]);
   const inner = cleanInner(innerHtml(node, tag));
 

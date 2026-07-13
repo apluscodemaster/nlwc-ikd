@@ -139,7 +139,9 @@ export function useManuals(
     queryKey: ["manuals", page, perPage, search],
     queryFn: () => fetchManuals(page, perPage, search),
     enabled,
-    staleTime: 5 * 60 * 1000,
+    // Short so revisiting the manuals page after a new one is published refetches
+    // and surfaces it (incl. the "This Week's Lesson" hero) promptly.
+    staleTime: 60 * 1000,
   });
 }
 
