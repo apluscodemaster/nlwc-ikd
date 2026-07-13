@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
       {
         headers: {
           // Short edge window so a newly published manual reaches the "This
-          // Week's Lesson" hero within ~1 minute. The underlying WP fetch is
-          // tagged ("manuals") and revalidated on publish/update, so the edge
-          // refetch picks up fresh data rather than a stale Data Cache entry.
+          // Week's Lesson" hero within ~1 minute. Pairs with the 60s Data Cache
+          // window on the underlying WP fetch (getSundaySchoolManuals), so the
+          // edge refetch picks up fresh data instead of a stale cache entry.
           "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         },
       }
