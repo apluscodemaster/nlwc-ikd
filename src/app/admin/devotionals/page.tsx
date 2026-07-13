@@ -325,9 +325,6 @@ export default function AdminDevotionalsPage() {
             {/* Date Range Inputs */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="flex items-center h-10 sm:h-11 px-3 sm:px-4 rounded-2xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-primary/10 transition-all flex-1 sm:flex-none min-w-0">
-                <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
-                  From
-                </span>
                 <CustomDatePicker
                   value={filterStartDate}
                   onChange={setFilterStartDate}
@@ -342,9 +339,6 @@ export default function AdminDevotionalsPage() {
               </span>
 
               <div className="flex items-center h-10 sm:h-11 px-3 sm:px-4 rounded-2xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-primary/10 transition-all flex-1 sm:flex-none min-w-0">
-                <span className="text-[10px] font-bold text-gray-400 mr-2 uppercase tracking-wider hidden sm:block">
-                  To
-                </span>
                 <CustomDatePicker
                   value={filterEndDate}
                   onChange={setFilterEndDate}
