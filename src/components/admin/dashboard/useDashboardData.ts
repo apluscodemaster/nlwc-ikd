@@ -18,6 +18,7 @@ import {
   type Testimony,
 } from "@/lib/testimonyService";
 import { getAllDevotionals } from "@/lib/devotionals";
+import { getAuthorizationHeader } from "@/lib/authClient";
 
 export interface SpeakerStat {
   name: string;
@@ -109,6 +110,10 @@ export function useDashboardData() {
   const loadStatic = useCallback(async () => {
     setError(null);
     try {
+      // The quiz stats route is admin-authenticated (it exposes player data), so
+      // it needs the Firebase ID token — the /admin layout's gate is UI-only.
+      const authHeader = await getAuthorizationHeader().catch(() => "");
+
       const [
         sermons,
         transcripts,
@@ -128,7 +133,9 @@ export function useDashboardData() {
         fetch("/api/wp/speakers?type=series")
           .then((r) => r.json())
           .catch(() => ({ series: [] })),
-        fetch("/api/quiz/admin/stats")
+        fetch("/api/quiz/admin/stats", {
+          headers: authHeader ? { Authorization: authHeader } : undefined,
+        })
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null),
         fetch("/api/schedule", { cache: "no-store" })

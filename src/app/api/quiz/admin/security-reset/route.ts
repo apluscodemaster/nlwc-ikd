@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { requireAuth } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -8,12 +9,18 @@ export const runtime = "nodejs";
  * POST /api/quiz/admin/security-reset
  * Admin escape hatch: clears a user's security question so they can set a new
  * one (bypasses the 30-day self-change cooldown). Used when a user is locked
- * out. Protected by the auth-gated admin dashboard + rate limiting, matching
- * the other /api/quiz/admin/* routes.
+ * out.
+ *
+ * Requires a valid admin token. This previously relied on "the auth-gated admin
+ * dashboard" — but that gate is client-side only and never protected the route,
+ * so anyone could clear any player's security question.
  *
  * Body: { session_id }
  */
 export async function POST(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   const limited = rateLimitMiddleware(req, "authenticated");
   if (limited) return limited;
 

@@ -39,6 +39,30 @@ import {
   downloadFile,
   setValidCategories,
 } from "@/lib/quizImportExport";
+import { getAuthorizationHeader } from "@/lib/authClient";
+
+/**
+ * The /api/quiz/admin/* routes now require a valid admin token. This page's
+ * fetches previously sent none — they relied on the /admin layout's login gate,
+ * which is client-side only and never protected the endpoints.
+ *
+ * Every admin call goes through here so the Firebase ID token is always
+ * attached. (A failure to mint a token still issues the request, which the
+ * server rejects with 401 — the existing error handling surfaces that.)
+ */
+async function authFetch(
+  input: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const authHeader = await getAuthorizationHeader().catch(() => "");
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      ...(authHeader ? { Authorization: authHeader } : {}),
+    },
+  });
+}
 
 // ──────────────────────────────────────────────
 // Types
@@ -494,7 +518,7 @@ export default function AdminQuizPage() {
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch("/api/quiz/admin/categories");
+      const res = await authFetch("/api/quiz/admin/categories");
       if (!res.ok) throw new Error("Failed to fetch");
       const data: { id: string; name: string; created_at: string }[] =
         await res.json();
@@ -515,7 +539,7 @@ export default function AdminQuizPage() {
   const fetchQuestions = useCallback(async () => {
     setLoadingQ(true);
     try {
-      const res = await fetch("/api/quiz/admin/questions");
+      const res = await authFetch("/api/quiz/admin/questions");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setQuestions(data);
@@ -530,7 +554,7 @@ export default function AdminQuizPage() {
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try {
-      const res = await fetch("/api/quiz/admin/stats");
+      const res = await authFetch("/api/quiz/admin/stats");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setStats(data);
@@ -561,7 +585,7 @@ export default function AdminQuizPage() {
     setSaving(true);
     try {
       if (modalMode === "create") {
-        const res = await fetch("/api/quiz/admin/questions", {
+        const res = await authFetch("/api/quiz/admin/questions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -572,7 +596,7 @@ export default function AdminQuizPage() {
         }
         toast.success("Question created!");
       } else if (modalMode === "edit") {
-        const res = await fetch("/api/quiz/admin/questions", {
+        const res = await authFetch("/api/quiz/admin/questions", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -608,8 +632,7 @@ export default function AdminQuizPage() {
     if (!confirmed) return;
     setDeletingId(id);
     try {
-      const res = await fetch(
-        `/api/quiz/admin/questions?id=${encodeURIComponent(id)}`,
+      const res = await authFetch(`/api/quiz/admin/questions?id=${encodeURIComponent(id)}`,
         {
           method: "DELETE",
         },
@@ -661,8 +684,7 @@ export default function AdminQuizPage() {
     let fail = 0;
     for (const id of ids) {
       try {
-        const res = await fetch(
-          `/api/quiz/admin/stats?session_id=${encodeURIComponent(id)}`,
+        const res = await authFetch(`/api/quiz/admin/stats?session_id=${encodeURIComponent(id)}`,
           { method: "DELETE" },
         );
         if (res.ok) ok++;
@@ -696,7 +718,7 @@ export default function AdminQuizPage() {
     let fail = 0;
     for (const id of ids) {
       try {
-        const res = await fetch("/api/quiz/admin/security-reset", {
+        const res = await authFetch("/api/quiz/admin/security-reset", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: id }),
@@ -804,7 +826,7 @@ export default function AdminQuizPage() {
       // Add new questions
       for (const q of newQuestions) {
         try {
-          const res = await fetch("/api/quiz/admin/questions", {
+          const res = await authFetch("/api/quiz/admin/questions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(q),
@@ -832,7 +854,7 @@ export default function AdminQuizPage() {
           const existing = existingMap.get(q.question.trim().toLowerCase());
           if (!existing) continue;
 
-          const res = await fetch("/api/quiz/admin/questions", {
+          const res = await authFetch("/api/quiz/admin/questions", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1294,8 +1316,7 @@ export default function AdminQuizPage() {
                     );
                     if (!confirmed) return;
                     try {
-                      const res = await fetch(
-                        "/api/quiz/admin/stats?target=all",
+                      const res = await authFetch("/api/quiz/admin/stats?target=all",
                         { method: "DELETE" },
                       );
                       if (res.ok) {
@@ -1385,8 +1406,7 @@ export default function AdminQuizPage() {
                     );
                     if (!confirmed) return;
                     try {
-                      const res = await fetch(
-                        "/api/quiz/admin/stats?target=players",
+                      const res = await authFetch("/api/quiz/admin/stats?target=players",
                         { method: "DELETE" },
                       );
                       if (res.ok) {
@@ -1570,8 +1590,7 @@ export default function AdminQuizPage() {
                               if (!confirmed) return;
                               setResettingSecId(s.session_id);
                               try {
-                                const res = await fetch(
-                                  "/api/quiz/admin/security-reset",
+                                const res = await authFetch("/api/quiz/admin/security-reset",
                                   {
                                     method: "POST",
                                     headers: {
@@ -1621,8 +1640,7 @@ export default function AdminQuizPage() {
                               if (!confirmed) return;
                               setDeletingPlayerId(s.session_id);
                               try {
-                                const res = await fetch(
-                                  `/api/quiz/admin/stats?session_id=${encodeURIComponent(s.session_id)}`,
+                                const res = await authFetch(`/api/quiz/admin/stats?session_id=${encodeURIComponent(s.session_id)}`,
                                   { method: "DELETE" },
                                 );
                                 if (res.ok) {
@@ -1688,7 +1706,7 @@ export default function AdminQuizPage() {
                 if (!name) return;
                 setCreatingCategory(true);
                 try {
-                  const res = await fetch("/api/quiz/admin/categories", {
+                  const res = await authFetch("/api/quiz/admin/categories", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name }),
@@ -1795,8 +1813,7 @@ export default function AdminQuizPage() {
                           if (!confirmed) return;
                           setDeletingCategoryId(cat.id);
                           try {
-                            const res = await fetch(
-                              `/api/quiz/admin/categories?id=${encodeURIComponent(cat.id)}`,
+                            const res = await authFetch(`/api/quiz/admin/categories?id=${encodeURIComponent(cat.id)}`,
                               { method: "DELETE" },
                             );
                             if (!res.ok) throw new Error("Failed to delete");
