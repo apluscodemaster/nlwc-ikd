@@ -34,6 +34,8 @@ import {
   clearMediaProgress,
   formatProgressTime,
 } from "@/lib/mediaProgress";
+import { parseSermonPart, findAdjacentParts } from "@/lib/sermonParts";
+import NextPartSuggestion from "@/components/media/NextPartSuggestion";
 
 interface AudioPlayerClientProps {
   initialSermon: AudioSermon;
@@ -53,6 +55,52 @@ export default function AudioPlayerClient({
   const [copied, setCopied] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // ── Multi-part message suggestion (purely additive) ───────────────────────
+  // Only ever populated when the title carries an explicit "Pt./Part N" marker.
+  // For ordinary single-part messages this stays empty, so the end-of-playback
+  // behaviour below is exactly what it was before.
+  const [partSiblings, setPartSiblings] = useState<{
+    previous: AudioSermon | null;
+    next: AudioSermon | null;
+    currentPart: number | null;
+  }>({ previous: null, next: null, currentPart: null });
+  const [showPartSuggestion, setShowPartSuggestion] = useState(false);
+
+  // Resolve the adjacent parts once, by searching the catalogue for the base
+  // title and matching siblings that share it. Best-effort: any failure just
+  // means no suggestion is offered.
+  useEffect(() => {
+    const info = parseSermonPart(sermon.title);
+    if (!info) return; // not a multi-part message — nothing to do
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = new URLSearchParams({
+          search: info.baseTitle,
+          per_page: "25",
+        });
+        const res = await fetch(`/api/audio-sermons?${params}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const candidates: AudioSermon[] = Array.isArray(json?.data)
+          ? json.data
+          : [];
+        const found = findAdjacentParts(
+          sermon.title,
+          candidates.filter((c) => c.id !== sermon.id),
+        );
+        if (!cancelled) setPartSiblings(found);
+      } catch {
+        // Suggestion is non-critical — fail silently.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sermon]);
 
   // Resume prompt state
   const [resumePrompt, setResumePrompt] = useState<{
@@ -256,8 +304,24 @@ export default function AudioPlayerClient({
           }
 
           setIsPlaying(false);
+
+          // Multi-part message → offer the adjacent part. For messages without
+          // a "Pt./Part N" marker partSiblings is empty, so this is a no-op and
+          // the player simply ends as it always has.
+          if (partSiblings.next || partSiblings.previous) {
+            setShowPartSuggestion(true);
+          }
         }}
         preload="metadata"
+      />
+
+      {/* ===== NEXT/PREVIOUS PART SUGGESTION (multi-part messages only) ===== */}
+      <NextPartSuggestion
+        show={showPartSuggestion}
+        onClose={() => setShowPartSuggestion(false)}
+        currentPart={partSiblings.currentPart}
+        previous={partSiblings.previous}
+        next={partSiblings.next}
       />
 
       {/* ===== RESUME PLAYBACK PROMPT ===== */}
