@@ -244,7 +244,7 @@ export function Donut({
         </svg>
         <Tooltip tip={tip} />
       </div>
-      <div className="flex-1 space-y-2">
+      <div className="w-full min-w-0 flex-1 space-y-2">
         {data.map((d) => {
           const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
           return (
@@ -296,15 +296,15 @@ export function HBars({
 
   if (rows === 0) {
     return (
-      <div ref={ref} className="flex h-24 items-center justify-center text-sm text-gray-400">
+      <div ref={ref} className="flex h-24 w-full min-w-0 items-center justify-center text-sm text-gray-400">
         {emptyLabel}
       </div>
     );
   }
 
   return (
-    <div ref={ref} className="relative w-full">
-      <svg width={w || "100%"} height={height}>
+    <div ref={ref} className="relative w-full min-w-0">
+      <svg width={w || "100%"} height={height} className="block max-w-full">
         {data.map((d, i) => {
           const y = i * rowH + (rowH - barH) / 2;
           const bw = (d.value / max) * barMax;
@@ -386,8 +386,15 @@ export function Columns({
   const ticks = 4;
 
   return (
-    <div ref={ref} className="relative w-full">
-      <svg width={width} height={height}>
+    // min-w-0 is load-bearing: as a grid/flex child this container defaults to
+    // min-width:auto, so the SVG's pixel width would become the column's minimum
+    // and the layout could never shrink below it. The SVG is also only rendered
+    // once the container has been measured, so it never forces its own width.
+    <div ref={ref} className="relative w-full min-w-0">
+      {w === 0 ? (
+        <div style={{ height }} />
+      ) : (
+      <svg width={width} height={height} className="block max-w-full">
         {/* gridlines + y ticks */}
         {Array.from({ length: ticks + 1 }, (_, i) => {
           const val = (niceMax / ticks) * i;
@@ -437,6 +444,7 @@ export function Columns({
         })}
         <line x1={padL} y1={padT + plotH} x2={width - 8} y2={padT + plotH} stroke={BASELINE} strokeWidth={1} />
       </svg>
+      )}
       <Tooltip tip={tip} />
     </div>
   );
@@ -484,10 +492,16 @@ export function LineArea({
   const step = Math.max(1, Math.ceil(n / 7));
 
   return (
-    <div ref={ref} className="relative w-full">
+    // See Columns: min-w-0 lets the container shrink inside the grid, and the
+    // SVG only renders once measured so it never dictates the column width.
+    <div ref={ref} className="relative w-full min-w-0">
+      {w === 0 ? (
+        <div style={{ height }} />
+      ) : (
       <svg
         width={width}
         height={height}
+        className="block max-w-full"
         onMouseLeave={() => setHover(null)}
         onMouseMove={(e) => {
           const box = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
@@ -534,6 +548,7 @@ export function LineArea({
         )}
         <line x1={padL} y1={padT + plotH} x2={width - 10} y2={padT + plotH} stroke={BASELINE} strokeWidth={1} />
       </svg>
+      )}
       {hover !== null && data[hover] && (
         <Tooltip
           tip={{
