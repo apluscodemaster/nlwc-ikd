@@ -34,7 +34,7 @@ import { useTranscripts, useManuals } from "@/hooks/useWordPress";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
-import MobileFullPlayer from "@/components/media/MobileFullPlayer";
+import { useGlobalAudio } from "@/components/providers/GlobalAudioProvider";
 import ManualThumbnail from "@/components/media/ManualThumbnail";
 import ResumePrompt from "@/components/media/ResumePrompt";
 import {
@@ -149,19 +149,16 @@ export default function MediaHub() {
     fetchSermonDetail,
   } = useAudioSermons({ page: 1, perPage: 3, order: "DESC" });
 
-  const [activeSermon, setActiveSermon] = useState<AudioSermon | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [showMobilePlayer, setShowMobilePlayer] = useState(false);
+  // Audio playback is owned by GlobalAudioProvider (root layout) so it survives
+  // navigating away from the homepage. This section only starts tracks; the
+  // persistent bar and full-screen player are rendered by the provider. The
+  // resume prompt below stays here since it's part of this section's flow.
+  const audio = useGlobalAudio();
+  const [loadingSermonId, setLoadingSermonId] = useState<number | null>(null);
   const [resumePrompt, setResumePrompt] = useState<{
     sermon: AudioSermon;
     savedProgress: ReturnType<typeof getMediaProgress>;
   } | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ---- Video state ----
   const {
@@ -200,42 +197,48 @@ export default function MediaHub() {
   } = useManuals(1, 3);
 
   // ---- Audio player controls ----
-  const startPlayback = useCallback((sermon: AudioSermon, startTime = 0) => {
-    if (audioRef.current && sermon.downloadUrl) {
-      audioRef.current.src = sermon.downloadUrl;
-      audioRef.current.currentTime = startTime;
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  }, []);
+  const startPlayback = useCallback(
+    (sermon: AudioSermon, startTime = 0) => {
+      if (!sermon.downloadUrl) return;
+      audio.play(
+        {
+          id: sermon.id,
+          title: sermon.title,
+          speaker: sermon.speaker,
+          series: sermon.series,
+          thumbnailUrl: sermon.thumbnailUrl,
+          src: sermon.downloadUrl,
+          downloadUrl: sermon.downloadUrl,
+          href: `/sermons/audio/${sermon.id}`,
+        },
+        startTime,
+      );
+    },
+    [audio],
+  );
 
   const handlePlay = useCallback(
     async (sermon: AudioSermon) => {
-      if (activeSermon?.id === sermon.id && audioRef.current?.src) {
-        if (isPlaying) {
-          audioRef.current.pause();
-        } else {
-          audioRef.current.play();
-        }
-        setIsPlaying(!isPlaying);
+      // Same sermon → plain play/pause of the already-loaded element.
+      if (audio.isCurrent(sermon.id)) {
+        audio.toggle();
         return;
       }
 
-      setIsLoadingAudio(true);
+      setLoadingSermonId(sermon.id);
       let sermonToPlay = sermon;
       if (!sermon.downloadUrl) {
         const detail = await fetchSermonDetail(sermon.id);
         if (detail && detail.downloadUrl) {
           sermonToPlay = detail;
         } else {
-          setIsLoadingAudio(false);
+          setLoadingSermonId(null);
           return;
         }
       }
 
-      setActiveSermon(sermonToPlay);
-
-      // Check for saved progress
+      // Check for saved progress (now the shared store, so a position saved
+      // anywhere else on the site is offered here too).
       const saved = getMediaProgress(sermonToPlay.id);
       if (saved && saved.currentTime > 0) {
         setResumePrompt({ sermon: sermonToPlay, savedProgress: saved });
@@ -243,67 +246,9 @@ export default function MediaHub() {
         startPlayback(sermonToPlay, 0);
       }
 
-      setIsLoadingAudio(false);
+      setLoadingSermonId(null);
     },
-    [activeSermon, isPlaying, fetchSermonDetail, startPlayback],
-  );
-
-  const togglePlay = useCallback(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) audioRef.current.pause();
-    else audioRef.current.play();
-    setIsPlaying(!isPlaying);
-  }, [isPlaying]);
-
-  const toggleMute = useCallback(() => {
-    if (!audioRef.current) return;
-    audioRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  }, [isMuted]);
-
-  const seek = useCallback((seconds: number) => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = Math.max(
-      0,
-      Math.min(
-        audioRef.current.duration,
-        audioRef.current.currentTime + seconds,
-      ),
-    );
-  }, []);
-
-  const SPEED_OPTIONS = useMemo(() => [1, 1.25, 1.5, 1.75, 2], []);
-  const cycleSpeed = useCallback(() => {
-    setPlaybackRate((prev) => {
-      const idx = SPEED_OPTIONS.indexOf(prev);
-      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
-    });
-  }, [SPEED_OPTIONS]);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
-  }, [playbackRate]);
-
-  useEffect(() => {
-    const vis = Boolean(activeSermon);
-    if (vis) {
-      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
-    } else {
-      document.documentElement.style.removeProperty("--scroll-bottom");
-    }
-    return () => {
-      document.documentElement.style.removeProperty("--scroll-bottom");
-    };
-  }, [activeSermon]);
-
-  const handleProgressClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!audioRef.current || !duration) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      audioRef.current.currentTime = (x / rect.width) * duration;
-    },
-    [duration],
+    [audio, fetchSermonDetail, startPlayback],
   );
 
   const handleResume = useCallback(() => {
@@ -321,17 +266,6 @@ export default function MediaHub() {
 
   const handleDismissResume = useCallback(() => {
     setResumePrompt(null);
-  }, []);
-
-  const closePlayer = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-    }
-    setActiveSermon(null);
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
   }, []);
 
   // ---- Video player controls (YouTube IFrame API) ----
@@ -503,26 +437,8 @@ export default function MediaHub() {
         />
       )}
 
-      {/* Hidden audio el */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => setIsPlaying(false)}
-        onPause={() => {
-          // Save progress when paused
-          if (audioRef.current && activeSermon) {
-            saveMediaProgress(
-              activeSermon.id,
-              audioRef.current.currentTime,
-              audioRef.current.duration || 0,
-              activeSermon.title,
-              "audio",
-            );
-          }
-        }}
-        preload="none"
-      />
+      {/* The <audio> element and its progress saving live in
+          GlobalAudioProvider now. */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
@@ -616,10 +532,9 @@ export default function MediaHub() {
                   className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
                 >
                   {audioSermons.slice(0, 3).map((sermon) => {
-                    const isActive = activeSermon?.id === sermon.id;
-                    const isThisPlaying = isActive && isPlaying;
-                    const isThisLoading =
-                      isLoadingAudio && activeSermon?.id === sermon.id;
+                    const isActive = audio.isCurrent(sermon.id);
+                    const isThisPlaying = isActive && audio.isPlaying;
+                    const isThisLoading = loadingSermonId === sermon.id;
 
                     return (
                       <motion.div
@@ -685,7 +600,7 @@ export default function MediaHub() {
                               <div
                                 className="h-full bg-primary transition-[width] duration-200"
                                 style={{
-                                  width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                                  width: `${audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0}%`,
                                 }}
                               />
                             </div>
@@ -965,156 +880,9 @@ export default function MediaHub() {
         </AnimatePresence>
       </div>
 
-      {/* ===== FLOATING MINI PLAYER (Audio) ===== */}
-      <AnimatePresence>
-        {activeSermon && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-[0_-4px_30px_rgba(0,0,0,0.1)]"
-          >
-            <div
-              className="h-1.5 bg-gray-100 cursor-pointer group/progress"
-              onClick={handleProgressClick}
-            >
-              <motion.div
-                className="h-full bg-primary relative"
-                style={{
-                  width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
-                }}
-              >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary rounded-full shadow-md opacity-0 group-hover/progress:opacity-100 transition-opacity" />
-              </motion.div>
-            </div>
-
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-2.5 pb-2 sm:pt-3 sm:pb-2.5">
-              <div className="flex items-center gap-2.5 sm:gap-5">
-                {/* Thumbnail */}
-                <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden shrink-0 shadow-md">
-                  {activeSermon.thumbnailUrl ? (
-                    <Image
-                      src={activeSermon.thumbnailUrl}
-                      alt={activeSermon.title}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                      <Headphones className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Song Info — clickable on mobile */}
-                <button
-                  className="min-w-0 flex-1 text-left sm:pointer-events-none cursor-pointer sm:cursor-default"
-                  onClick={() => setShowMobilePlayer(true)}
-                  aria-label="Open full player"
-                >
-                  <h4 className="font-bold text-gray-900 text-xs sm:text-base truncate">
-                    {activeSermon.title}
-                  </h4>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground truncate">
-                    {activeSermon.speaker}
-                  </p>
-                </button>
-
-                {/* Time (desktop) */}
-                <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground font-mono shrink-0">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>/</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                  <button
-                    onClick={() => seek(-15)}
-                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
-                    aria-label="Rewind 15 seconds"
-                  >
-                    <SkipBack className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={togglePlay}
-                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
-                    aria-label={isPlaying ? "Pause" : "Play"}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
-                    ) : (
-                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white ml-0.5" />
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => seek(15)}
-                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
-                    aria-label="Forward 15 seconds"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={toggleMute}
-                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
-                    aria-label={isMuted ? "Unmute" : "Mute"}
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-4 h-4" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                  </button>
-
-                  <button
-                    onClick={cycleSpeed}
-                    className="flex items-center justify-center px-2 py-1 sm:px-2.5 rounded-full bg-gray-100 text-gray-600 hover:bg-primary/10 hover:text-primary text-[10px] sm:text-xs font-bold transition-all min-w-[36px] sm:min-w-[44px]"
-                    aria-label={`Playback speed ${playbackRate}x`}
-                  >
-                    {playbackRate}x
-                  </button>
-
-                  <button
-                    onClick={closePlayer}
-                    className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    aria-label="Close player"
-                  >
-                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Full-screen mobile player */}
-      {activeSermon && (
-        <MobileFullPlayer
-          show={showMobilePlayer}
-          onClose={() => setShowMobilePlayer(false)}
-          onClosePlayer={closePlayer}
-          title={activeSermon.title}
-          speaker={activeSermon.speaker}
-          series={activeSermon.series}
-          thumbnailUrl={activeSermon.thumbnailUrl}
-          downloadUrl={activeSermon.downloadUrl}
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          duration={duration}
-          playbackRate={playbackRate}
-          isMuted={isMuted}
-          onTogglePlay={togglePlay}
-          onSeek={seek}
-          onToggleMute={toggleMute}
-          onCycleSpeed={cycleSpeed}
-          onProgressClick={handleProgressClick}
-        />
-      )}
+      {/* The audio mini player and full-screen player now live in
+          GlobalAudioProvider (root layout) so playback survives navigation.
+          The video player below is unaffected. */}
 
       {/* Video Resume Prompt */}
       <AnimatePresence>
