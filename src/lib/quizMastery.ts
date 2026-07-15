@@ -87,7 +87,7 @@ export function recordCorrectReview(
   const alreadyReviewed = state.reviewed_question_ids.includes(questionId);
 
   let newReviewCount = state.num_correct_reviews;
-  let newReviewedIds = [...state.reviewed_question_ids];
+  const newReviewedIds = [...state.reviewed_question_ids];
 
   if (!alreadyReviewed) {
     newReviewCount += 1;

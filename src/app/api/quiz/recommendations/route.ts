@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecommendations } from "@/lib/quizService";
-import type { WeakArea } from "@/types/quiz";
+import type { WeakArea, QuizCategory } from "@/types/quiz";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const weakAreas: WeakArea[] = category
       ? [
           {
-            category: category as any,
+            category: category as QuizCategory,
             wrong_count: 1,
             total_count: 1,
             fail_rate: 100,

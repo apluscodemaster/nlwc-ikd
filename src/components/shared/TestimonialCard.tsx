@@ -35,7 +35,7 @@ export default function TestimonialCard({
           </div>
 
           <p className="text-lg text-gray-700 italic flex-grow mb-8">
-            "{content}"
+            &ldquo;{content}&rdquo;
           </p>
 
           <div className="flex items-center gap-4">
