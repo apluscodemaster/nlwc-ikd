@@ -5,7 +5,7 @@ import {
   getRecommendations,
   fetchQuestionById,
 } from "@/lib/quizService";
-import type { QuizResult } from "@/types/quiz";
+import type { QuizResult, QuizQuestion } from "@/types/quiz";
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
     }
     const uniqueAttempts = Array.from(latestByQuestion.values());
 
-    const correct = uniqueAttempts.filter((a: any) => a.is_correct).length;
+    // `uniqueAttempts` elements are already typed from the map above.
+    const correct = uniqueAttempts.filter((a) => a.is_correct).length;
     const total = uniqueAttempts.length;
 
     const byCategory: Record<string, { correct: number; total: number }> = {};
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
     // Collect sermon_refs and failed question data in a single pass
     const failedSermonRefs: { slug: string; category: string }[] = [];
     const failedQuestions: Array<{
-      question: any;
+      question: QuizQuestion;
       explanation?: string;
     }> = [];
     for (const attempt of uniqueAttempts) {

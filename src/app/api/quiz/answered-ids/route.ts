@@ -35,7 +35,9 @@ export async function GET(req: NextRequest) {
 
     // Return distinct question_id values as a flat array
     const answeredIds = [
-      ...new Set((data ?? []).map((row: any) => row.question_id)),
+      ...new Set(
+        (data ?? []).map((row: { question_id: string }) => row.question_id),
+      ),
     ];
 
     return NextResponse.json(answeredIds, {

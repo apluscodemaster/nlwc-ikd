@@ -46,7 +46,15 @@ interface Answer {
 function trackEvent(event: QuizAnalyticsEvent) {
   try {
     if (typeof window !== "undefined" && "gtag" in window) {
-      const gtag = (window as unknown as Record<string, Function>).gtag;
+      const gtag = (
+        window as unknown as {
+          gtag: (
+            command: "event",
+            eventName: string,
+            params?: Record<string, unknown>,
+          ) => void;
+        }
+      ).gtag;
       gtag("event", event.type, event);
     }
   } catch {
