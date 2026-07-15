@@ -4,7 +4,8 @@
       "PowerShell(node --experimental-strip-types --no-warnings \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\parts.mts\" 2>&1)",
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripmediahub.mjs\")",
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripsermons.mjs\")",
-      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripprogress.mjs\")"
+      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripprogress.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\authfetch.mjs\")"
     ]
   }
 }
