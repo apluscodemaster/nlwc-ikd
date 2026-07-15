@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
 import TranscriptContent from "@/components/shared/TranscriptContent";
+import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
 import { logError } from "@/lib/devLog";
 import Link from "next/link";
 
@@ -71,19 +72,17 @@ export default function TranscriptOverlay({
     fetchTranscript();
   }, [isOpen, slug]);
 
-  // Re-run Logos RefTagger so scripture references in the loaded transcript get
-  // highlighted (same behaviour as the full detail page). RefTagger only scans
-  // the DOM on initial load / route change, so this modal's dynamically-fetched
-  // content would otherwise never be tagged.
-  useEffect(() => {
-    if (!transcript) return;
-    const timer = setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rt = (window as any).refTagger;
-      if (rt?.tag) rt.tag();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [transcript]);
+  // Scripture references inside this modal are handled by the scoped
+  // ScriptureProvider below, NOT Logos RefTagger.
+  //
+  // RefTagger positions its popup in DOCUMENT space. This modal is `position:
+  // fixed` with its own scroll container, so a document-space popup lands in the
+  // wrong place entirely: on desktop it renders outside/behind the modal (the
+  // verse never appears on hover), and on mobile it gets injected into the
+  // scrolling subtree and blows out the layout. The in-app provider renders its
+  // tooltip through a portal with viewport-relative `fixed` coordinates, which
+  // is exactly why the quiz drawer already uses it (see InlineResourceDrawer).
+  const contentScopeRef = useRef<HTMLDivElement>(null);
 
   // Close on escape key
   useEffect(() => {
@@ -145,7 +144,11 @@ export default function TranscriptOverlay({
             </div>
 
             {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 xs:p-4 sm:p-6 md:p-8 relative">
+            <ScriptureProvider scopeRef={contentScopeRef}>
+            <div
+              ref={contentScopeRef}
+              className="flex-1 overflow-y-auto overflow-x-hidden p-3 xs:p-4 sm:p-6 md:p-8 relative"
+            >
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 text-primary animate-spin" />
@@ -171,6 +174,7 @@ export default function TranscriptOverlay({
                 </div>
               ) : null}
             </div>
+            </ScriptureProvider>
 
             {/* Footer */}
             <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-3 p-3 xs:p-4 sm:p-6 md:p-8 border-t border-gray-100 bg-gray-50 shrink-0">
