@@ -208,7 +208,7 @@ export default function GoogleTranslate() {
       <button
         onClick={() => setOpen(!open)}
         aria-label="Translate page"
-        className="notranslate fixed bottom-28 sm:bottom-24 right-2 sm:right-6 z-40 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white/80 sm:bg-white border border-gray-200 shadow-md shadow-black/10 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 hover:shadow-primary/10 transition-all active:scale-95 cursor-pointer"
+        className="notranslate fixed bottom-[calc(7rem+var(--player-bottom,0px))] sm:bottom-[calc(6rem+var(--player-bottom,0px))] right-2 sm:right-6 z-40 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white/80 sm:bg-white border border-gray-200 shadow-md shadow-black/10 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 hover:shadow-primary/10 transition-all active:scale-95 cursor-pointer"
       >
         <Languages className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
