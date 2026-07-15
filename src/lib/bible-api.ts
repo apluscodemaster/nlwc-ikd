@@ -282,9 +282,22 @@ export async function fetchBibleVerse(
 }
 
 /**
+ * Raw payload from bible-api.com. Only the fields this module reads are
+ * described; `error` is present when the API rejects the reference.
+ */
+interface BibleApiResponse {
+  reference: string;
+  text: string;
+  verses?: unknown[];
+  error?: string;
+}
+
+/**
  * Helper to try fetching a single verse format
  */
-async function tryFetchVerse(reference: string): Promise<any> {
+async function tryFetchVerse(
+  reference: string,
+): Promise<BibleApiResponse | null> {
   try {
     const response = await fetch(
       `${BIBLE_API_BASE}/${encodeURIComponent(reference)}`,
@@ -297,7 +310,7 @@ async function tryFetchVerse(reference: string): Promise<any> {
       return null;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as BibleApiResponse;
 
     // Check if API returned an error or incomplete data
     if (data.error || !data.reference || !data.text) {

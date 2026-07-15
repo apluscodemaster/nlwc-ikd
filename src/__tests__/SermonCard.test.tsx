@@ -6,24 +6,35 @@ import type { AudioSermon } from "@/lib/audioSermons";
 import type { TranscriptStub } from "@/utils/transcriptSlug";
 
 // Mock framer-motion to render plain divs
-vi.mock("framer-motion", () => ({
-  motion: {
-    div: React.forwardRef(
-      (props: React.HTMLAttributes<HTMLDivElement>, ref: React.Ref<HTMLDivElement>) => {
-        const { children, ...rest } = props;
-        // Strip motion-specific props
-        const htmlProps = Object.fromEntries(
-          Object.entries(rest).filter(
-            ([key]) =>
-              !["initial", "animate", "exit", "transition", "whileHover", "whileTap", "layout", "variants"].includes(key),
-          ),
-        );
-        return <div ref={ref} {...htmlProps}>{children}</div>;
-      },
-    ),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock("framer-motion", () => {
+  const MotionDiv = React.forwardRef(
+    (
+      props: React.HTMLAttributes<HTMLDivElement>,
+      ref: React.Ref<HTMLDivElement>,
+    ) => {
+      const { children, ...rest } = props;
+      // Strip motion-specific props
+      const htmlProps = Object.fromEntries(
+        Object.entries(rest).filter(
+          ([key]) =>
+            !["initial", "animate", "exit", "transition", "whileHover", "whileTap", "layout", "variants"].includes(key),
+        ),
+      );
+      return <div ref={ref} {...htmlProps}>{children}</div>;
+    },
+  );
+  MotionDiv.displayName = "MotionDiv";
+
+  const MockAnimatePresence = ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  );
+  MockAnimatePresence.displayName = "AnimatePresence";
+
+  return {
+    motion: { div: MotionDiv },
+    AnimatePresence: MockAnimatePresence,
+  };
+});
 
 const baseSemon: AudioSermon = {
   id: 1,
