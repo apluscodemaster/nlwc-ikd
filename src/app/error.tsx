@@ -55,6 +55,11 @@ export default function Error({ error, reset }: ErrorProps) {
             Try again
             <ArrowRight className="w-4 h-4" />
           </button>
+          {/* Intentionally a plain <a>, not next/link: this is an error
+              boundary, so the React tree has already crashed. A hard navigation
+              tears down the broken runtime and gets the user a clean app; a
+              client-side Link would reuse the same failed state. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
             className="w-full bg-gray-100 text-gray-900 font-bold py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center block text-sm"

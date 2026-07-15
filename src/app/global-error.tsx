@@ -58,6 +58,11 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
                 Try again
                 <ArrowRight className="w-4 h-4" />
               </button>
+              {/* Intentionally plain <a>, not next/link. global-error replaces
+                  the ROOT layout (it renders its own <html>/<body>), so it lives
+                  outside the router — and the app has crashed, so a hard
+                  navigation is what actually recovers it. */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a
                 href="/"
                 className="w-full bg-gray-100 text-gray-900 font-bold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center block"
@@ -69,6 +74,7 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
             {/* Support Link */}
             <p className="text-center text-xs text-gray-500 mt-6">
               Need help?{" "}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a href="/contact" className="text-primary hover:underline">
                 Contact us
               </a>

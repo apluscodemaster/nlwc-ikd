@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDecodedContact } from "@/components/ObfuscatedContact";
 import {
@@ -395,10 +396,10 @@ export default function GivePage() {
                     className="rounded-full text-white hover:bg-white/5 h-12 px-6 group"
                     asChild
                   >
-                    <a href="/contact" className="flex items-center gap-2">
+                    <Link href="/contact" className="flex items-center gap-2">
                       Visit Contact Page
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </div>

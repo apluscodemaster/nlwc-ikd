@@ -7,11 +7,34 @@
  * trying to communicate with the page. This module provides safe handling.
  */
 
-type MessageHandler = (
-  message: any,
-  sender: any,
-  sendResponse: (response?: any) => void,
-) => boolean | void | Promise<any>;
+/**
+ * Minimal shape of the `chrome.runtime` surface we touch. The extension APIs
+ * aren't typed in this project (and only exist when an extension injects them),
+ * so we describe just the one listener we register rather than pulling in the
+ * whole `chrome` typings.
+ */
+type SendResponse = (response?: unknown) => void;
+
+interface ChromeLike {
+  runtime?: {
+    onMessage?: {
+      addListener: (
+        handler: (
+          message: unknown,
+          sender: unknown,
+          sendResponse: SendResponse,
+        ) => boolean | void,
+      ) => void;
+    };
+  };
+}
+
+/** Extension messages arrive as arbitrary JSON — narrow before use. */
+interface ExtensionMessageData {
+  type?: string;
+  __extension__?: boolean;
+  extensionMessage?: boolean;
+}
 
 let isInitialized = false;
 
@@ -22,23 +45,21 @@ export function initializeExtensionSafeHandler() {
 
   // Listen for messages from extensions via chrome.runtime
   try {
-    if (
-      typeof (window as any).chrome !== "undefined" &&
-      (window as any).chrome?.runtime?.onMessage
-    ) {
-      (window as any).chrome.runtime.onMessage.addListener(
-        (message: any, sender: any, sendResponse: (response?: any) => void) => {
+    const chrome = (window as unknown as { chrome?: ChromeLike }).chrome;
+    if (chrome?.runtime?.onMessage) {
+      chrome.runtime.onMessage.addListener(
+        (_message, _sender, sendResponse: SendResponse) => {
           // Send an immediate response to prevent "message channel closed" errors
           try {
             sendResponse({ received: true });
-          } catch (err) {
+          } catch {
             // Connection already closed, ignore
           }
           return false; // Don't return true to indicate async response
         },
       );
     }
-  } catch (err) {
+  } catch {
     // chrome.runtime might not be available or other errors
     // Silently ignore
   }
@@ -51,7 +72,7 @@ export function initializeExtensionSafeHandler() {
         // Only handle messages from the page itself (not from iframes or external sources)
         if (event.source !== window) return;
 
-        const data = event.data;
+        const data = event.data as ExtensionMessageData | null;
         if (!data || typeof data !== "object") return;
 
         // Check for common extension message patterns
@@ -69,7 +90,7 @@ export function initializeExtensionSafeHandler() {
       },
       true, // Use capture phase to intercept early
     );
-  } catch (err) {
+  } catch {
     // Silently ignore
   }
 }
