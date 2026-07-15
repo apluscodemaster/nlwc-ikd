@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState, useEffect } from "react";
 import { initializeExtensionSafeHandler } from "@/lib/extensionSafeHandler";
 import { setupGlobalErrorHandlers } from "@/lib/globalErrorHandlers";
+import GlobalAudioProvider from "@/components/providers/GlobalAudioProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -33,7 +34,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      {/* Mounted from the root layout so its <audio> element survives
+          client-side navigation — see GlobalAudioProvider for the rationale.
+          Renders no UI until a surface calls play(). */}
+      <GlobalAudioProvider>{children}</GlobalAudioProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
