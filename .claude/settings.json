@@ -5,7 +5,11 @@
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripmediahub.mjs\")",
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripsermons.mjs\")",
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\stripprogress.mjs\")",
-      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\authfetch.mjs\")"
+      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\authfetch.mjs\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npm install --no-audit --no-fund 2>&1 | Select-Object -Last 15; Write-Output \"=== INSTALL EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/sermonProgress.test.ts --reporter=basic 2>&1 | Select-String -Pattern \"FAIL|✓|×|✗\" | Select-Object -First 30; Write-Output \"=== EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npm test 2>&1 | Select-Object -Last 20; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npm run lint 2>&1 | Select-Object -Last 30; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\")"
     ]
   }
 }
