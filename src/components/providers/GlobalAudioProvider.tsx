@@ -58,6 +58,13 @@ export interface GlobalAudioTrack {
   href?: string;
 }
 
+/**
+ * Resolves a playable URL for a queued track that doesn't have one yet (sermon
+ * listings don't carry `downloadUrl` until their detail is fetched). Supplied by
+ * whichever surface owns the queue, so the fetching logic stays there.
+ */
+export type SrcResolver = (id: number | string) => Promise<string | null>;
+
 interface GlobalAudioContextValue {
   track: GlobalAudioTrack | null;
   isPlaying: boolean;
@@ -66,6 +73,14 @@ interface GlobalAudioContextValue {
   playbackRate: number;
   isMuted: boolean;
   repeatMode: "off" | "one";
+  isShuffled: boolean;
+  toggleShuffle: () => void;
+  /**
+   * Hand the provider the list to advance through when a track finishes. The
+   * queue lives here (not in a page) so auto-play-next keeps working after the
+   * listener navigates away from the list that started it.
+   */
+  setQueue: (tracks: GlobalAudioTrack[], resolveSrc?: SrcResolver) => void;
   /** True when a track is loaded (the bar is showing). */
   isActive: boolean;
   /**
@@ -409,13 +424,20 @@ export default function GlobalAudioProvider({
     if (href) router.push(href);
   }, [isMobile, router]);
 
-  // Keep fixed-bar height clear of page content (and the footer).
+  // Keep the fixed bar clear of page content (and the footer), and lift the
+  // floating buttons above it. ScrollToTop and WhatsAppButton both position
+  // themselves with `var(--scroll-bottom)`; the per-page players used to set it
+  // and they no longer exist, so the provider owns it now.
   useEffect(() => {
     if (!showBar) return;
-    const prev = document.body.style.paddingBottom;
-    document.body.style.paddingBottom = "calc(4.5rem + env(safe-area-inset-bottom))";
+    const body = document.body;
+    const root = document.documentElement;
+    const prevPadding = body.style.paddingBottom;
+    body.style.paddingBottom = "calc(4.5rem + env(safe-area-inset-bottom))";
+    root.style.setProperty("--scroll-bottom", "6rem");
     return () => {
-      document.body.style.paddingBottom = prev;
+      body.style.paddingBottom = prevPadding;
+      root.style.removeProperty("--scroll-bottom");
     };
   }, [showBar]);
 
