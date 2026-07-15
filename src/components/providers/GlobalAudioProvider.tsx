@@ -135,9 +135,18 @@ export default function GlobalAudioProvider({
   const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const [showFullPlayer, setShowFullPlayer] = useState(false);
   const [endedTrackId, setEndedTrackId] = useState<number | string | null>(null);
+  const [isShuffled, setIsShuffled] = useState(false);
 
   const trackRef = useRef<GlobalAudioTrack | null>(null);
   trackRef.current = track;
+
+  // Queue state is held in refs: it's only ever read inside `onEnded`, and refs
+  // keep that handler from needing to be rebuilt (and the <audio> re-rendered)
+  // every time the list changes.
+  const queueRef = useRef<GlobalAudioTrack[]>([]);
+  const resolverRef = useRef<SrcResolver | null>(null);
+  const isShuffledRef = useRef(false);
+  isShuffledRef.current = isShuffled;
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const play = useCallback((next: GlobalAudioTrack, startTime = 0) => {
@@ -232,6 +241,56 @@ export default function GlobalAudioProvider({
   const isCurrent = useCallback(
     (id: number | string) => trackRef.current?.id === id,
     [],
+  );
+
+  const setQueue = useCallback(
+    (tracks: GlobalAudioTrack[], resolveSrc?: SrcResolver) => {
+      queueRef.current = tracks;
+      if (resolveSrc) resolverRef.current = resolveSrc;
+    },
+    [],
+  );
+
+  const toggleShuffle = useCallback(() => setIsShuffled((s) => !s), []);
+
+  /**
+   * Advance to the next track after `finishedId` completes.
+   * Returns false when there's nothing to advance to, so the caller can report
+   * a plain "ended" instead.
+   */
+  const playNextInQueue = useCallback(
+    async (finishedId: number | string | null): Promise<boolean> => {
+      if (finishedId == null) return false;
+      const queue = queueRef.current;
+      const index = queue.findIndex((t) => t.id === finishedId);
+      // The finished track isn't part of the active queue (e.g. it was opened
+      // directly from its own page) — don't hijack playback with an unrelated list.
+      if (index === -1) return false;
+
+      let next: GlobalAudioTrack | undefined;
+      if (isShuffledRef.current) {
+        const others = queue.filter((t) => t.id !== finishedId);
+        if (others.length > 0) {
+          next = others[Math.floor(Math.random() * others.length)];
+        }
+      } else if (index < queue.length - 1) {
+        next = queue[index + 1];
+      }
+      if (!next) return false;
+
+      // Listings often lack a playable URL until their detail is fetched.
+      let src = next.src;
+      if (!src && resolverRef.current) {
+        const resolved = await resolverRef.current(next.id).catch(() => null);
+        if (!resolved) return false;
+        src = resolved;
+      }
+      if (!src) return false;
+
+      play({ ...next, src }, 0);
+      return true;
+    },
+    [play],
   );
 
   // ── Keep the element's rate/mute in sync with state ───────────────────────
@@ -364,6 +423,9 @@ export default function GlobalAudioProvider({
       playbackRate,
       isMuted,
       repeatMode,
+      isShuffled,
+      toggleShuffle,
+      setQueue,
       isActive: !!track,
       endedTrackId,
       isCurrent,
@@ -387,6 +449,9 @@ export default function GlobalAudioProvider({
       playbackRate,
       isMuted,
       repeatMode,
+      isShuffled,
+      toggleShuffle,
+      setQueue,
       endedTrackId,
       isCurrent,
       play,
@@ -470,14 +535,23 @@ export default function GlobalAudioProvider({
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onEnded={() => {
           const el = audioRef.current;
-          if (trackRef.current) clearMediaProgress(trackRef.current.id);
+          const finishedId = trackRef.current?.id ?? null;
+          if (finishedId != null) clearMediaProgress(finishedId);
+
+          // Repeat-one wins and never reports "ended", so it can't collide with
+          // the queue or with end-of-message suggestions.
           if (repeatMode === "one" && el) {
             el.currentTime = 0;
             void el.play();
             return;
           }
           setIsPlaying(false);
-          setEndedTrackId(trackRef.current?.id ?? null);
+
+          // Auto-advance through the queue if this track belongs to one;
+          // otherwise report it as finished so surfaces can react.
+          void playNextInQueue(finishedId).then((advanced) => {
+            if (!advanced) setEndedTrackId(finishedId);
+          });
         }}
       />
 
@@ -493,6 +567,16 @@ export default function GlobalAudioProvider({
           onExpand={handleExpand}
           onClose={close}
           expandable={isMobile || !!track.href}
+          playbackRate={playbackRate}
+          isMuted={isMuted}
+          repeatMode={repeatMode}
+          isShuffled={isShuffled}
+          onSeekBy={seekBy}
+          onSeekTo={seekTo}
+          onCycleSpeed={cycleSpeed}
+          onToggleMute={toggleMute}
+          onToggleRepeat={toggleRepeat}
+          onToggleShuffle={toggleShuffle}
         />
       )}
 
@@ -522,6 +606,8 @@ export default function GlobalAudioProvider({
           }}
           repeatMode={repeatMode}
           onToggleRepeat={toggleRepeat}
+          isShuffled={isShuffled}
+          onToggleShuffle={toggleShuffle}
         />
       )}
     </GlobalAudioContext.Provider>
