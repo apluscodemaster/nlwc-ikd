@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
-import { AnimatePresence, motion, Variants } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
