@@ -499,7 +499,7 @@ export default function AdminDashboardPage() {
 
       {/* ── Filters row ── */}
       <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="overflow-x-auto pb-1">
+        <div className="-mx-1 min-w-0 overflow-x-auto px-1 pb-1">
           <div className="flex w-max items-center gap-1 rounded-2xl bg-gray-100/80 p-1">
             {SECTIONS.map((s) => (
               <button
@@ -519,20 +519,22 @@ export default function AdminDashboardPage() {
         </div>
 
         {showTimeFilter && (
-          <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-0.5">
-            {RANGES.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => setRange(r.id)}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
-                  range === r.id
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
+          <div className="-mx-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:shrink-0 lg:overflow-visible lg:px-0 lg:pb-0">
+            <div className="flex w-max items-center gap-1 rounded-xl bg-gray-100 p-0.5">
+              {RANGES.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setRange(r.id)}
+                  className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
+                    range === r.id
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -746,6 +748,11 @@ export default function AdminDashboardPage() {
 // ──────────────────────────────────────────────
 // Small presentational pieces
 // ──────────────────────────────────────────────
+/**
+ * `min-w-0` on the card is load-bearing: as a grid child it defaults to
+ * min-width:auto, which would let a chart SVG's pixel width become the column's
+ * minimum and stop the grid from ever shrinking on narrow screens.
+ */
 function Card({
   title,
   subtitle,
@@ -764,7 +771,7 @@ function Card({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={`rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ${
+      className={`min-w-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ${
         span ? "lg:col-span-2" : ""
       }`}
     >
@@ -804,31 +811,43 @@ function Kpi({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${tint}`}>
+    <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tint}`}
+        >
           <Icon className="h-4 w-4" />
         </div>
+        {/* The sparkline has a fixed 96px width — hidden on the narrowest
+            (2-column) layout where it would overflow the tile. */}
         {spark && spark.some((v) => v > 0) && !loading && (
-          <Sparkline data={spark} color={sparkColor} />
+          <div className="hidden shrink-0 sm:block">
+            <Sparkline data={spark} color={sparkColor} />
+          </div>
         )}
       </div>
-      <p className="mt-3 text-2xl font-bold leading-none text-gray-900">
+      <p className="mt-3 truncate text-2xl font-bold leading-none text-gray-900">
         {loading ? "—" : value}
       </p>
-      <p className="mt-1 text-xs font-medium uppercase tracking-tight text-gray-400">
+      <p className="mt-1 truncate text-xs font-medium uppercase tracking-tight text-gray-400">
         {label}
       </p>
-      {sub && <p className="mt-0.5 text-[11px] font-semibold text-amber-600">{sub}</p>}
+      {sub && (
+        <p className="mt-0.5 truncate text-[11px] font-semibold text-amber-600">
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <p className="text-2xl font-bold leading-none text-gray-900">{value}</p>
-      <p className="mt-1 text-xs font-medium uppercase tracking-tight text-gray-400">
+    <div className="min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <p className="truncate text-2xl font-bold leading-none text-gray-900">
+        {value}
+      </p>
+      <p className="mt-1 truncate text-xs font-medium uppercase tracking-tight text-gray-400">
         {label}
       </p>
     </div>
