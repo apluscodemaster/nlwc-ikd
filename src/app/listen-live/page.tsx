@@ -155,15 +155,16 @@ export default function ListenLivePage() {
     }
   }, [playbackRate]);
 
+  // Additive clearance for this page's own bottom player — see ScrollToTop.
   useEffect(() => {
     const isPlayerVisible = Boolean(activeSermon);
     if (isPlayerVisible) {
-      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
+      document.documentElement.style.setProperty("--player-bottom", "6.5rem");
     } else {
-      document.documentElement.style.removeProperty("--scroll-bottom");
+      document.documentElement.style.removeProperty("--player-bottom");
     }
     return () => {
-      document.documentElement.style.removeProperty("--scroll-bottom");
+      document.documentElement.style.removeProperty("--player-bottom");
     };
   }, [activeSermon]);
 
