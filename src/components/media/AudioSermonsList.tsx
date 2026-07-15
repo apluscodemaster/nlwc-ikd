@@ -123,15 +123,19 @@ export default function AudioSermonsList({
     }
   }, [playbackRate]);
 
+  // `--player-bottom` is the height of this page's own bottom player, added to
+  // each floating button's resting offset. (It replaced `--scroll-bottom`, which
+  // was an absolute bottom and so collided ScrollToTop into the Translate
+  // button whenever a player was showing.)
   useEffect(() => {
     const isPlayerVisible = Boolean(activeSermon && activeSermon.downloadUrl);
     if (isPlayerVisible) {
-      document.documentElement.style.setProperty("--scroll-bottom", "8.5rem");
+      document.documentElement.style.setProperty("--player-bottom", "6.5rem");
     } else {
-      document.documentElement.style.removeProperty("--scroll-bottom");
+      document.documentElement.style.removeProperty("--player-bottom");
     }
     return () => {
-      document.documentElement.style.removeProperty("--scroll-bottom");
+      document.documentElement.style.removeProperty("--player-bottom");
     };
   }, [activeSermon]);
 

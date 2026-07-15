@@ -217,7 +217,7 @@ export default function GoogleTranslate() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="notranslate fixed bottom-30 sm:bottom-26 right-2 sm:right-6 z-50 w-56 bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/15 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="notranslate fixed bottom-[calc(7.5rem+var(--player-bottom,0px))] sm:bottom-[calc(6.5rem+var(--player-bottom,0px))] right-2 sm:right-6 z-50 w-56 bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/15 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
               <div className="flex items-center gap-2">
