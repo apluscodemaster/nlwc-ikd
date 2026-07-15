@@ -457,10 +457,6 @@ export default function SermonsPageContent() {
   // prompt — those are list concerns, not element concerns.
   const audio = useGlobalAudio();
   const [loadingSermonId, setLoadingSermonId] = useState<number | null>(null);
-  const [isShuffled, setIsShuffled] = useState(false);
-  // Tracks which sermon this list started, so "play next" knows where it is in
-  // the list even though the element itself lives in the provider.
-  const [activeSermon, setActiveSermon] = useState<AudioSermon | null>(null);
 
   // Resume playback state
   const [resumePrompt, setResumePrompt] = useState<{
@@ -608,7 +604,6 @@ export default function SermonsPageContent() {
   const startPlayback = useCallback(
     (sermon: AudioSermon, startTime: number = 0) => {
       if (!sermon.downloadUrl) return;
-      setActiveSermon(sermon);
       audio.play(
         {
           id: sermon.id,
@@ -673,38 +668,30 @@ export default function SermonsPageContent() {
     setResumePrompt(null);
   }, []);
 
-  // Auto-play the next sermon when the one this list started finishes.
-  //
-  // The provider owns the <audio> element (and therefore `onEnded`), so it
-  // reports the finished track's id here instead. Repeat-one is handled inside
-  // the provider and never sets `endedTrackId`, so it can't collide with this.
-  // If the listener has navigated away this list is unmounted and no auto-next
-  // happens — playback simply ends, which is the sane outcome.
+  // Hand the current list to the provider as the playback queue. Auto-play-next
+  // and shuffle live there now, so they keep working after the listener
+  // navigates away from this page (previously the queue died with this
+  // component). Listings often have no downloadUrl yet, so we also pass a
+  // resolver that fetches the detail on demand.
+  const { setQueue } = audio;
   useEffect(() => {
-    if (!activeSermon) return;
-    if (audio.endedTrackId !== activeSermon.id) return;
-
-    clearProgress(activeSermon.id);
-
-    if (sermons.length === 0) return;
-    const currentIndex = sermons.findIndex((s) => s.id === activeSermon.id);
-    let nextSermon: AudioSermon | undefined;
-
-    if (isShuffled) {
-      const others = sermons.filter((s) => s.id !== activeSermon.id);
-      if (others.length > 0) {
-        nextSermon = others[Math.floor(Math.random() * others.length)];
-      }
-    } else if (currentIndex !== -1 && currentIndex < sermons.length - 1) {
-      nextSermon = sermons[currentIndex + 1];
-    }
-
-    if (nextSermon) handlePlay(nextSermon);
-  }, [audio.endedTrackId, activeSermon, isShuffled, sermons, handlePlay]);
-
-  const toggleShuffle = useCallback(() => {
-    setIsShuffled((prev) => !prev);
-  }, []);
+    setQueue(
+      sermons.map((s) => ({
+        id: s.id,
+        title: s.title,
+        speaker: s.speaker,
+        series: s.series,
+        thumbnailUrl: s.thumbnailUrl,
+        src: s.downloadUrl || "",
+        downloadUrl: s.downloadUrl,
+        href: `/sermons/audio/${s.id}`,
+      })),
+      async (id) => {
+        const detail = await fetchSermonDetail(Number(id));
+        return detail?.downloadUrl || null;
+      },
+    );
+  }, [sermons, setQueue, fetchSermonDetail]);
 
   return (
     <div className="space-y-6 sm:space-y-8">
