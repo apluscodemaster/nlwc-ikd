@@ -26,6 +26,7 @@ import {
   RotateCcw,
   Repeat2,
   BrainCircuit,
+  FileText,
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 import {
@@ -34,6 +35,10 @@ import {
   formatProgressTime,
 } from "@/lib/mediaProgress";
 import { parseSermonPart, findAdjacentParts } from "@/lib/sermonParts";
+import {
+  findTranscriptSlug,
+  type TranscriptStub,
+} from "@/utils/transcriptSlug";
 import NextPartSuggestion from "@/components/media/NextPartSuggestion";
 import {
   useGlobalAudio,
@@ -88,6 +93,38 @@ export default function AudioPlayerClient({
     currentPart: number | null;
   }>({ previous: null, next: null, currentPart: null });
   const [showPartSuggestion, setShowPartSuggestion] = useState(false);
+
+  // ── Matching transcript ───────────────────────────────────────────────────
+  // The sermons list already matches audio messages to their transcripts; this
+  // page didn't. Reuses the same tested matcher and the same cached endpoint,
+  // which only serves the transcript categories (Sunday Message / Sunday School
+  // / Bible Study / Other Meetings / Season of the Spirit) — Sunday School
+  // *manuals* are a different category and are never matched here.
+  const [transcriptStubs, setTranscriptStubs] = useState<TranscriptStub[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/wp/transcript-slugs", {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data?.items)) setTranscriptStubs(data.items);
+      } catch {
+        // Best-effort: no match simply means no transcript link is shown.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const matchedTranscriptSlug = useMemo(
+    () => findTranscriptSlug(sermon.title, transcriptStubs, sermon.id),
+    [sermon.title, sermon.id, transcriptStubs],
+  );
 
   // Resolve the adjacent parts once, by searching the catalogue for the base
   // title and matching siblings that share it. Best-effort: any failure just
@@ -372,6 +409,19 @@ export default function AudioPlayerClient({
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Only shown when this message actually has a matching transcript. */}
+            {matchedTranscriptSlug && (
+              <Link
+                href={`/transcripts/${matchedTranscriptSlug}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white text-sm font-medium transition-all"
+                title="Read the transcript for this message"
+              >
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">Read Transcript</span>
+                <span className="sm:hidden">Transcript</span>
+              </Link>
+            )}
+
             <Link
               href="/sermons/quiz"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white hover:scale-105 hover:shadow-lg hover:shadow-primary/20 text-sm font-bold transition-all"
