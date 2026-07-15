@@ -66,6 +66,12 @@ interface GlobalAudioContextValue {
   repeatMode: "off" | "one";
   /** True when a track is loaded (the bar is showing). */
   isActive: boolean;
+  /**
+   * Id of the track that most recently played to completion (cleared when
+   * playback starts again). Surfaces can react to "my track finished" now that
+   * the <audio> element — and therefore `onEnded` — lives here.
+   */
+  endedTrackId: number | string | null;
   isCurrent: (id: number | string) => boolean;
   play: (track: GlobalAudioTrack, startTime?: number) => void;
   toggle: () => void;
@@ -110,6 +116,7 @@ export default function GlobalAudioProvider({
   const [isMuted, setIsMuted] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const [showFullPlayer, setShowFullPlayer] = useState(false);
+  const [endedTrackId, setEndedTrackId] = useState<number | string | null>(null);
 
   const trackRef = useRef<GlobalAudioTrack | null>(null);
   trackRef.current = track;
@@ -121,6 +128,7 @@ export default function GlobalAudioProvider({
 
     const isSame = trackRef.current?.id === next.id;
     setTrack(next);
+    setEndedTrackId(null);
 
     if (!isSame) {
       // Only swap the source — never recreate the element (iOS gesture).
@@ -321,6 +329,7 @@ export default function GlobalAudioProvider({
       isMuted,
       repeatMode,
       isActive: !!track,
+      endedTrackId,
       isCurrent,
       play,
       toggle,
@@ -342,6 +351,7 @@ export default function GlobalAudioProvider({
       playbackRate,
       isMuted,
       repeatMode,
+      endedTrackId,
       isCurrent,
       play,
       toggle,
@@ -355,9 +365,14 @@ export default function GlobalAudioProvider({
     ],
   );
 
-  // The bar is mobile-only and never shows over the admin console.
-  const showBar =
-    !!track && isMobile && !pathname?.startsWith("/admin");
+  // The bar is mobile-only, never shows over the admin console, and is hidden on
+  // the sermon detail route — that page IS a full player, so the bar would be
+  // redundant there. It appears the moment you navigate away, which is the whole
+  // point of the persistent player.
+  const barHiddenHere =
+    !!pathname &&
+    (pathname.startsWith("/admin") || /^\/sermons\/audio\//.test(pathname));
+  const showBar = !!track && isMobile && !barHiddenHere;
 
   // Keep fixed-bar height clear of page content (and the footer).
   useEffect(() => {
@@ -405,6 +420,7 @@ export default function GlobalAudioProvider({
             return;
           }
           setIsPlaying(false);
+          setEndedTrackId(trackRef.current?.id ?? null);
         }}
       />
 
