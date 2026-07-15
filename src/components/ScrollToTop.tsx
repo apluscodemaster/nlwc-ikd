@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 
+/**
+ * `--player-bottom` is the height of any visible bottom player (0 when none).
+ * Each floating button ADDS it to its own resting offset, so the whole stack
+ * rises above the player while keeping its spacing — see GlobalAudioProvider.
+ */
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
 
@@ -29,7 +34,7 @@ export default function ScrollToTop() {
           exit={{ opacity: 0, scale: 0.5, y: 20 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           onClick={scrollToTop}
-          style={{ bottom: "var(--scroll-bottom, 2rem)" }}
+          style={{ bottom: "calc(2rem + var(--player-bottom, 0px))" }}
           className="fixed right-8 z-50 w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-1 active:scale-95 transition-all duration-300 group"
           aria-label="Scroll to top"
         >

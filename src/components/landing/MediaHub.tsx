@@ -332,6 +332,11 @@ export default function MediaHub() {
           events: {
             onStateChange: (event: YT.OnStateChangeEvent) => {
               if (event.data === YT.PlayerState.PLAYING) {
+                // The global player pauses itself when another <audio>/<video>
+                // element starts, but YouTube runs in an iframe whose `play`
+                // event never reaches this document — so hand off explicitly,
+                // otherwise a sermon and this video would play over each other.
+                audio.pause();
                 startVideoProgressInterval();
               } else if (
                 event.data === YT.PlayerState.PAUSED ||
