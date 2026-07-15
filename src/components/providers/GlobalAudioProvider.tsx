@@ -35,7 +35,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   saveMediaProgress,
@@ -54,6 +54,8 @@ export interface GlobalAudioTrack {
   src: string;
   /** Optional direct download URL surfaced in the full player. */
   downloadUrl?: string;
+  /** Where the bar should navigate on desktop (mobile expands in place). */
+  href?: string;
 }
 
 interface GlobalAudioContextValue {
@@ -106,6 +108,7 @@ export default function GlobalAudioProvider({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const isMobile = useIsMobile();
 
   const [track, setTrack] = useState<GlobalAudioTrack | null>(null);
@@ -257,6 +260,24 @@ export default function GlobalAudioProvider({
     return () => window.removeEventListener("beforeunload", onUnload);
   }, []);
 
+  // ── Yield to any not-yet-migrated player ──────────────────────────────────
+  // Other surfaces (sermons list, landing, quiz drawer, listen-live) still own
+  // their own <audio>. Now that this one survives navigation, a user could start
+  // one of those while this is still playing and hear both at once. Pause
+  // ourselves whenever another media element starts. `play` doesn't bubble, so
+  // this listens in the capture phase. Requires no changes to those surfaces.
+  useEffect(() => {
+    const onOtherPlay = (e: Event) => {
+      const el = audioRef.current;
+      if (!el || e.target === el) return;
+      if (e.target instanceof HTMLMediaElement && !el.paused) {
+        el.pause();
+      }
+    };
+    document.addEventListener("play", onOtherPlay, true);
+    return () => document.removeEventListener("play", onOtherPlay, true);
+  }, []);
+
   // ── Media Session: lock-screen / notification controls ────────────────────
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
@@ -365,14 +386,28 @@ export default function GlobalAudioProvider({
     ],
   );
 
-  // The bar is mobile-only, never shows over the admin console, and is hidden on
-  // the sermon detail route — that page IS a full player, so the bar would be
-  // redundant there. It appears the moment you navigate away, which is the whole
-  // point of the persistent player.
+  // The bar shows at EVERY breakpoint. It was mobile-only at first, but since
+  // audio now survives navigation, a desktop user would be left with audio
+  // playing and no way to see or stop it. Persistent audio must always carry a
+  // visible control. (Only the full-screen expansion stays mobile-only — on
+  // desktop the bar navigates back to the message instead.)
+  //
+  // It is hidden over the admin console, and on the sermon detail route, since
+  // that page IS a full player. It appears the moment you navigate away — which
+  // is the whole point.
   const barHiddenHere =
     !!pathname &&
     (pathname.startsWith("/admin") || /^\/sermons\/audio\//.test(pathname));
-  const showBar = !!track && isMobile && !barHiddenHere;
+  const showBar = !!track && !barHiddenHere;
+
+  const handleExpand = useCallback(() => {
+    if (isMobile) {
+      setShowFullPlayer(true);
+      return;
+    }
+    const href = trackRef.current?.href;
+    if (href) router.push(href);
+  }, [isMobile, router]);
 
   // Keep fixed-bar height clear of page content (and the footer).
   useEffect(() => {
@@ -433,8 +468,9 @@ export default function GlobalAudioProvider({
           currentTime={currentTime}
           duration={duration}
           onToggle={toggle}
-          onExpand={() => setShowFullPlayer(true)}
+          onExpand={handleExpand}
           onClose={close}
+          expandable={isMobile || !!track.href}
         />
       )}
 
