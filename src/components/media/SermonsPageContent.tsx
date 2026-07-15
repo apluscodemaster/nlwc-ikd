@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -46,6 +40,14 @@ import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
 import type { AudioSermon } from "@/lib/audioSermons";
 import { useGlobalAudio } from "@/components/providers/GlobalAudioProvider";
+import {
+  getProgress,
+  clearProgress,
+  cleanupOldProgress,
+  formatProgressTime,
+  PROGRESS_MIN_SECONDS,
+  type SavedProgress,
+} from "@/utils/sermonProgress";
 import { logWarn, logError } from "@/lib/devLog";
 import { normalizeSearchQuery } from "@/lib/utils";
 
@@ -397,122 +399,12 @@ function findTranscriptSlug(
 }
 
 // =============================================================================
-// Playback Progress Persistence (localStorage)
+// Playback Progress Persistence
 // =============================================================================
-
-interface SavedProgress {
-  sermonId: number;
-  currentTime: number;
-  duration: number;
-  title: string;
-  timestamp: number; // Date.now() when saved
-}
-
-const PROGRESS_KEY_PREFIX = "nlwc-sermon-progress-";
-const PROGRESS_INDEX_KEY = "nlwc-sermon-progress-index";
-const PROGRESS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const PROGRESS_MIN_SECONDS = 15; // Don't save if less than 15s played
-const PROGRESS_NEAR_END_SECONDS = 30; // Consider finished if within 30s of end
-
-function saveProgress(sermon: AudioSermon, time: number, dur: number) {
-  if (typeof window === "undefined") return;
-  // Don't save if barely started or near the end
-  if (time < PROGRESS_MIN_SECONDS) return;
-  if (dur > 0 && dur - time < PROGRESS_NEAR_END_SECONDS) {
-    clearProgress(sermon.id);
-    return;
-  }
-
-  const data: SavedProgress = {
-    sermonId: sermon.id,
-    currentTime: time,
-    duration: dur,
-    title: sermon.title,
-    timestamp: Date.now(),
-  };
-
-  try {
-    localStorage.setItem(
-      `${PROGRESS_KEY_PREFIX}${sermon.id}`,
-      JSON.stringify(data),
-    );
-    // Also maintain an index of saved IDs for cleanup
-    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
-    const index: number[] = indexStr ? JSON.parse(indexStr) : [];
-    if (!index.includes(sermon.id)) {
-      index.push(sermon.id);
-      localStorage.setItem(PROGRESS_INDEX_KEY, JSON.stringify(index));
-    }
-  } catch {
-    // Storage full or not available — silently ignore
-  }
-}
-
-function getProgress(sermonId: number): SavedProgress | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const str = localStorage.getItem(`${PROGRESS_KEY_PREFIX}${sermonId}`);
-    if (!str) return null;
-    const data: SavedProgress = JSON.parse(str);
-    // Check age
-    if (Date.now() - data.timestamp > PROGRESS_MAX_AGE_MS) {
-      clearProgress(sermonId);
-      return null;
-    }
-    // Don't offer resume for very short progress
-    if (data.currentTime < PROGRESS_MIN_SECONDS) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function clearProgress(sermonId: number) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.removeItem(`${PROGRESS_KEY_PREFIX}${sermonId}`);
-    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
-    if (indexStr) {
-      const index: number[] = JSON.parse(indexStr);
-      const newIndex = index.filter((id) => id !== sermonId);
-      localStorage.setItem(PROGRESS_INDEX_KEY, JSON.stringify(newIndex));
-    }
-  } catch {
-    // Silently ignore
-  }
-}
-
-function cleanupOldProgress() {
-  if (typeof window === "undefined") return;
-  try {
-    const indexStr = localStorage.getItem(PROGRESS_INDEX_KEY);
-    if (!indexStr) return;
-    const index: number[] = JSON.parse(indexStr);
-    for (const id of index) {
-      const str = localStorage.getItem(`${PROGRESS_KEY_PREFIX}${id}`);
-      if (str) {
-        const data: SavedProgress = JSON.parse(str);
-        if (Date.now() - data.timestamp > PROGRESS_MAX_AGE_MS) {
-          clearProgress(id);
-        }
-      } else {
-        clearProgress(id);
-      }
-    }
-  } catch {
-    // Silently ignore
-  }
-}
-
-function formatProgressTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  }
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+// This file used to carry its OWN inline copy of the progress helpers, writing
+// to the legacy "nlwc-sermon-progress-" keys. That's why resume never carried
+// between this list and the rest of the site. It now uses the shared module,
+// which reads/writes the single store (and migrates legacy entries forward).
 
 // =============================================================================
 // Main Component
@@ -575,9 +467,6 @@ export default function SermonsPageContent() {
     sermon: AudioSermon;
     savedProgress: SavedProgress;
   } | null>(null);
-  const progressSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
 
   // Transcript overlay state
   const [transcriptOverlay, setTranscriptOverlay] = useState<{
