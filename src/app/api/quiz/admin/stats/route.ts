@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
+import { requireAuth } from "@/lib/auth";
 
 // ── GET: Quiz stats for admin dashboard ──
-export async function GET() {
+// Auth required: this returns every player's session_id, username and scores.
+// The /admin UI is gated client-side only, which never protected this route.
+export async function GET(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const supabase = getSupabase();
 
@@ -82,7 +88,12 @@ export async function GET() {
 }
 
 // ── DELETE: Reset stats and/or player data ──
+// Auth required: this is destructive and irreversible (`?target=all` wipes every
+// session and attempt).
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = req.nextUrl;
     const target = searchParams.get("target"); // "stats" | "players" | "all"
