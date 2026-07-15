@@ -73,6 +73,7 @@ export default function AudioPlayerClient({
       thumbnailUrl: sermon.thumbnailUrl,
       src: sermon.downloadUrl || "",
       downloadUrl: sermon.downloadUrl,
+      href: `/sermons/audio/${sermon.id}`,
     }),
     [sermon],
   );
@@ -144,17 +145,25 @@ export default function AudioPlayerClient({
   // when playback starts — this page no longer owns an element. Progress saving
   // (interval + on pause + on unload) is likewise centralised in the provider.
   useEffect(() => {
-    if (!hasCheckedResume && sermon) {
-      const saved = getMediaProgress(sermon.id);
-      if (saved && saved.currentTime >= 15) {
-        setResumePrompt({
-          currentTime: saved.currentTime,
-          duration: saved.duration,
-        });
-      }
+    if (hasCheckedResume || !sermon) return;
+
+    // If this sermon is already loaded in the global player, the user navigated
+    // back to something that never stopped — prompting them to "resume" over
+    // live playback would be wrong.
+    if (isCurrent) {
       setHasCheckedResume(true);
+      return;
     }
-  }, [sermon, hasCheckedResume]);
+
+    const saved = getMediaProgress(sermon.id);
+    if (saved && saved.currentTime >= 15) {
+      setResumePrompt({
+        currentTime: saved.currentTime,
+        duration: saved.duration,
+      });
+    }
+    setHasCheckedResume(true);
+  }, [sermon, hasCheckedResume, isCurrent]);
 
   // Start playback from a specific time
   const startPlayback = useCallback(
