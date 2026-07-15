@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { requireAuth } from "@/lib/auth";
+
+/**
+ * NOTE: GET is deliberately PUBLIC — the player-facing QuizLauncher reads this
+ * to render the category picker, and it only exposes category names. The write
+ * handlers (POST/DELETE) require an admin token.
+ */
 
 // ── GET: List all categories ──
 export async function GET() {
@@ -23,6 +30,9 @@ export async function GET() {
 
 // ── POST: Create a new category ──
 export async function POST(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const name = body.name?.trim();
@@ -76,6 +86,9 @@ export async function POST(req: NextRequest) {
 
 // ── DELETE: Remove a category ──
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = req.nextUrl;
     const id = searchParams.get("id");

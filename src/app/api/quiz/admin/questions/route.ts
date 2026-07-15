@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
 import type { QuizCategory } from "@/types/quiz";
 
+/**
+ * Every handler here requires a valid admin token. The /admin UI is gated
+ * client-side only, which never protected these endpoints: before this, anyone
+ * could read the question bank *including correct answers*, or create/edit/
+ * delete questions.
+ */
+
 // ── GET: List all questions (admin only — no answer stripping) ──
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const adminDb = getAdminDb();
     const snapshot = await adminDb
@@ -28,6 +39,9 @@ export async function GET() {
 
 // ── POST: Create a new question ──
 export async function POST(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
 
@@ -113,6 +127,9 @@ export async function POST(req: NextRequest) {
 
 // ── PUT: Update a question ──
 export async function PUT(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { id, ...updates } = body;
@@ -169,6 +186,9 @@ export async function PUT(req: NextRequest) {
 
 // ── DELETE: Remove a question ──
 export async function DELETE(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+
   try {
     const { searchParams } = req.nextUrl;
     const id = searchParams.get("id");
