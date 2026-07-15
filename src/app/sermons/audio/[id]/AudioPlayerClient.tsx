@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,13 +29,16 @@ import {
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 import {
-  saveMediaProgress,
   getMediaProgress,
   clearMediaProgress,
   formatProgressTime,
 } from "@/lib/mediaProgress";
 import { parseSermonPart, findAdjacentParts } from "@/lib/sermonParts";
 import NextPartSuggestion from "@/components/media/NextPartSuggestion";
+import {
+  useGlobalAudio,
+  type GlobalAudioTrack,
+} from "@/components/providers/GlobalAudioProvider";
 
 interface AudioPlayerClientProps {
   initialSermon: AudioSermon;
@@ -46,15 +49,33 @@ export default function AudioPlayerClient({
 }: AudioPlayerClientProps) {
   const [sermon] = useState<AudioSermon>(initialSermon);
 
-  // Audio state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState(1);
   const [copied, setCopied] = useState(false);
-  const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // ── Playback is owned by GlobalAudioProvider ──────────────────────────────
+  // The single <audio> element lives in the root layout, so playback survives
+  // navigating away from this page (and the mobile mini-bar takes over). This
+  // page keeps its own rich UI and simply reads/drives that element via context.
+  const audio = useGlobalAudio();
+  const isCurrent = audio.isCurrent(sermon.id);
+  const isPlaying = isCurrent && audio.isPlaying;
+  const currentTime = isCurrent ? audio.currentTime : 0;
+  const duration = isCurrent ? audio.duration : 0;
+  const playbackRate = audio.playbackRate;
+  const isMuted = audio.isMuted;
+  const repeatMode = audio.repeatMode;
+
+  const track = useMemo<GlobalAudioTrack>(
+    () => ({
+      id: sermon.id,
+      title: sermon.title,
+      speaker: sermon.speaker,
+      series: sermon.series,
+      thumbnailUrl: sermon.thumbnailUrl,
+      src: sermon.downloadUrl || "",
+      downloadUrl: sermon.downloadUrl,
+    }),
+    [sermon],
+  );
 
   // ── Multi-part message suggestion (purely additive) ───────────────────────
   // Only ever populated when the title carries an explicit "Pt./Part N" marker.
@@ -102,23 +123,27 @@ export default function AudioPlayerClient({
     };
   }, [sermon]);
 
+  // The provider owns `onEnded` now, so it reports which track finished. When
+  // it's this sermon and a sibling part exists, offer it. Messages without a
+  // "Pt./Part N" marker leave partSiblings empty, so this stays a no-op.
+  useEffect(() => {
+    if (audio.endedTrackId !== sermon.id) return;
+    if (partSiblings.next || partSiblings.previous) {
+      setShowPartSuggestion(true);
+    }
+  }, [audio.endedTrackId, sermon.id, partSiblings]);
+
   // Resume prompt state
   const [resumePrompt, setResumePrompt] = useState<{
     currentTime: number;
     duration: number;
   } | null>(null);
-  const progressSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
   const [hasCheckedResume, setHasCheckedResume] = useState(false);
 
-  // Load audio source and check for saved progress on mount
+  // Check for saved progress on mount. The audio source is set by the provider
+  // when playback starts — this page no longer owns an element. Progress saving
+  // (interval + on pause + on unload) is likewise centralised in the provider.
   useEffect(() => {
-    if (sermon?.downloadUrl && audioRef.current) {
-      audioRef.current.src = sermon.downloadUrl;
-    }
-
-    // Check for saved progress
     if (!hasCheckedResume && sermon) {
       const saved = getMediaProgress(sermon.id);
       if (saved && saved.currentTime >= 15) {
@@ -131,60 +156,13 @@ export default function AudioPlayerClient({
     }
   }, [sermon, hasCheckedResume]);
 
-  // Save progress periodically while playing
-  useEffect(() => {
-    if (isPlaying && sermon) {
-      progressSaveIntervalRef.current = setInterval(() => {
-        if (audioRef.current && sermon) {
-          saveMediaProgress(
-            sermon.id,
-            audioRef.current.currentTime,
-            audioRef.current.duration || 0,
-            sermon.title,
-            "audio",
-          );
-        }
-      }, 5000);
-    } else {
-      if (progressSaveIntervalRef.current) {
-        clearInterval(progressSaveIntervalRef.current);
-        progressSaveIntervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (progressSaveIntervalRef.current) {
-        clearInterval(progressSaveIntervalRef.current);
-      }
-    };
-  }, [isPlaying, sermon]);
-
-  // Save progress on page unload
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (audioRef.current && sermon && audioRef.current.currentTime > 0) {
-        saveMediaProgress(
-          sermon.id,
-          audioRef.current.currentTime,
-          audioRef.current.duration || 0,
-          sermon.title,
-          "audio",
-        );
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [sermon]);
-
   // Start playback from a specific time
   const startPlayback = useCallback(
     (startTime: number = 0) => {
-      if (!audioRef.current || !sermon?.downloadUrl) return;
-      audioRef.current.currentTime = startTime;
-      audioRef.current.play();
-      setIsPlaying(true);
+      if (!sermon?.downloadUrl) return;
+      audio.play(track, startTime);
     },
-    [sermon],
+    [audio, track, sermon],
   );
 
   // Resume handlers
@@ -206,55 +184,33 @@ export default function AudioPlayerClient({
   }, []);
 
   const togglePlay = useCallback(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+    if (!sermon?.downloadUrl) return;
+    // First press on this page (or after another message took over the player)
+    // loads this sermon; afterwards it's a plain play/pause of the same element.
+    if (!isCurrent) {
+      audio.play(track, 0);
+      return;
     }
-    setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+    audio.toggle();
+  }, [audio, track, isCurrent, sermon]);
 
-  const toggleMute = useCallback(() => {
-    if (!audioRef.current) return;
-    audioRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  }, [isMuted]);
+  const toggleMute = useCallback(() => audio.toggleMute(), [audio]);
 
-  const seek = useCallback((seconds: number) => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = Math.max(
-      0,
-      Math.min(
-        audioRef.current.duration,
-        audioRef.current.currentTime + seconds,
-      ),
-    );
-  }, []);
+  const seek = useCallback(
+    (seconds: number) => audio.seekBy(seconds),
+    [audio],
+  );
 
-  const SPEED_OPTIONS = [1, 1.25, 1.5, 1.75, 2];
-  const cycleSpeed = useCallback(() => {
-    setPlaybackRate((prev) => {
-      const idx = SPEED_OPTIONS.indexOf(prev);
-      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
-    });
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = playbackRate;
-    }
-  }, [playbackRate]);
+  const cycleSpeed = useCallback(() => audio.cycleSpeed(), [audio]);
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!audioRef.current || !duration) return;
+      if (!duration) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      const percentage = x / rect.width;
-      audioRef.current.currentTime = percentage * duration;
+      audio.seekTo((x / rect.width) * duration);
     },
-    [duration],
+    [audio, duration],
   );
 
   const formatTime = (time: number) => {
@@ -288,32 +244,9 @@ export default function AudioPlayerClient({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
-      {/* Hidden Audio Element */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => {
-          if (sermon) clearMediaProgress(sermon.id);
-
-          // Repeat-one: replay the same sermon
-          if (repeatMode === "one" && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play();
-            return;
-          }
-
-          setIsPlaying(false);
-
-          // Multi-part message → offer the adjacent part. For messages without
-          // a "Pt./Part N" marker partSiblings is empty, so this is a no-op and
-          // the player simply ends as it always has.
-          if (partSiblings.next || partSiblings.previous) {
-            setShowPartSuggestion(true);
-          }
-        }}
-        preload="metadata"
-      />
+      {/* The <audio> element now lives in GlobalAudioProvider (root layout) so
+          playback continues when this page unmounts. Progress clearing and
+          repeat-one are handled there too. */}
 
       {/* ===== NEXT/PREVIOUS PART SUGGESTION (multi-part messages only) ===== */}
       <NextPartSuggestion
@@ -611,7 +544,7 @@ export default function AudioPlayerClient({
         <div className="flex items-center justify-center gap-4 mt-6 pb-8">
           {/* Repeat */}
           <button
-            onClick={() => setRepeatMode((prev) => (prev === "off" ? "one" : "off"))}
+            onClick={audio.toggleRepeat}
             className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 relative ${
               repeatMode === "one"
                 ? "bg-primary/20 text-primary"
