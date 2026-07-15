@@ -15,6 +15,8 @@ interface GlobalAudioBarProps {
   onToggle: () => void;
   onExpand: () => void;
   onClose: () => void;
+  /** False when there's nowhere to expand/navigate to — hides the affordance. */
+  expandable?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export default function GlobalAudioBar({
   onToggle,
   onExpand,
   onClose,
+  expandable = true,
 }: GlobalAudioBarProps) {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
@@ -52,10 +55,11 @@ export default function GlobalAudioBar({
       </div>
 
       <div className="flex items-center gap-3 px-3 py-2.5">
-        {/* Tap target → expand */}
+        {/* Tap target → expand (mobile) / open the message (desktop) */}
         <button
-          onClick={onExpand}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          onClick={expandable ? onExpand : undefined}
+          disabled={!expandable}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
           aria-label="Open full player"
         >
           <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white/5">
@@ -81,7 +85,9 @@ export default function GlobalAudioBar({
             </p>
           </div>
 
-          <ChevronUp className="h-4 w-4 shrink-0 text-white/30" />
+          {expandable && (
+            <ChevronUp className="h-4 w-4 shrink-0 text-white/30" />
+          )}
         </button>
 
         <button
