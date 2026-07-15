@@ -490,19 +490,22 @@ export default function GlobalAudioProvider({
   }, [isMobile, router]);
 
   // Keep the fixed bar clear of page content (and the footer), and lift the
-  // floating buttons above it. ScrollToTop and WhatsAppButton both position
-  // themselves with `var(--scroll-bottom)`; the per-page players used to set it
-  // and they no longer exist, so the provider owns it now.
+  // floating buttons (WhatsApp / ScrollToTop / Translate) above it.
+  //
+  // `--player-bottom` is a CLEARANCE, not an absolute offset: each floating
+  // button adds it to its own resting position, so they all rise together and
+  // keep their spacing. (The old `--scroll-bottom` was an absolute bottom, which
+  // meant setting it slammed ScrollToTop straight into the Translate button.)
   useEffect(() => {
     if (!showBar) return;
     const body = document.body;
     const root = document.documentElement;
     const prevPadding = body.style.paddingBottom;
     body.style.paddingBottom = "calc(4.5rem + env(safe-area-inset-bottom))";
-    root.style.setProperty("--scroll-bottom", "6rem");
+    root.style.setProperty("--player-bottom", "4.5rem");
     return () => {
       body.style.paddingBottom = prevPadding;
-      root.style.removeProperty("--scroll-bottom");
+      root.style.removeProperty("--player-bottom");
     };
   }, [showBar]);
 
