@@ -34,7 +34,10 @@ import { useTranscripts, useManuals } from "@/hooks/useWordPress";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
-import { useGlobalAudio } from "@/components/providers/GlobalAudioProvider";
+import {
+  useGlobalAudio,
+  AudioProgressBar,
+} from "@/components/providers/GlobalAudioProvider";
 import ManualThumbnail from "@/components/media/ManualThumbnail";
 import ResumePrompt from "@/components/media/ResumePrompt";
 import {
@@ -600,16 +603,13 @@ export default function MediaHub() {
                             </div>
                           </button>
 
-                          {isActive && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
-                              <div
-                                className="h-full bg-primary transition-[width] duration-200"
-                                style={{
-                                  width: `${audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0}%`,
-                                }}
-                              />
-                            </div>
-                          )}
+                          {/* Subscribes to the ~4x/second position on its own,
+                              so this whole section doesn't have to. */}
+                          <AudioProgressBar
+                            trackId={sermon.id}
+                            className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10"
+                            fillClassName="h-full bg-primary transition-[width] duration-200"
+                          />
                         </div>
 
                         <Link href="/sermons">
