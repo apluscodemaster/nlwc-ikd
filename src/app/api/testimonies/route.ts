@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 
@@ -172,7 +173,13 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
 // POST handler
 // ──────────────────────────────────────────────
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Public + unauthenticated + sends mail on every accepted submission, so an
+  // unthrottled caller could both spam the testimony store and mail-bomb the
+  // church inbox. 100/min is far above any human submitting a testimony.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const body = await req.json();
 

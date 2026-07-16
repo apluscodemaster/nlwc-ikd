@@ -25,6 +25,26 @@ import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { StatCard } from "@/components/shared/StatCard";
 import { ModalShell } from "@/components/shared/ModalShell";
 import type { RecurringService, SpecialService } from "@/lib/scheduleService";
+import { getAuthorizationHeader } from "@/lib/authClient";
+
+/**
+ * The schedule write endpoints require an admin token. This page's fetches sent
+ * none — they relied on the /admin layout's login gate, which is client-side
+ * only and never protected the API. (GET stays public for the live pages.)
+ */
+async function authFetch(
+  input: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const authHeader = await getAuthorizationHeader().catch(() => "");
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      ...(authHeader ? { Authorization: authHeader } : {}),
+    },
+  });
+}
 
 // ──────────────────────────────────────────────
 // Constants
@@ -750,7 +770,7 @@ export default function ScheduleAdminPage() {
   // ── Fetch ──
   const fetchSchedules = useCallback(async () => {
     try {
-      const res = await fetch("/api/schedule", { cache: "no-store" });
+      const res = await authFetch("/api/schedule", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setRecurring(data.recurring || []);
@@ -775,7 +795,7 @@ export default function ScheduleAdminPage() {
     try {
       const { type, ...rest } = data;
       if (recurringModalMode === "edit" && rest.id) {
-        const res = await fetch("/api/schedule", {
+        const res = await authFetch("/api/schedule", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, id: rest.id, ...rest }),
@@ -788,7 +808,7 @@ export default function ScheduleAdminPage() {
           description: `"${rest.label}" has been updated successfully.`,
         });
       } else {
-        const res = await fetch("/api/schedule", {
+        const res = await authFetch("/api/schedule", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, ...rest }),
@@ -821,7 +841,7 @@ export default function ScheduleAdminPage() {
     try {
       const { type, ...rest } = data;
       if (specialModalMode === "edit" && rest.id) {
-        const res = await fetch("/api/schedule", {
+        const res = await authFetch("/api/schedule", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, id: rest.id, ...rest }),
@@ -834,7 +854,7 @@ export default function ScheduleAdminPage() {
           description: `"${rest.label}" has been updated successfully.`,
         });
       } else {
-        const res = await fetch("/api/schedule", {
+        const res = await authFetch("/api/schedule", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type, ...rest }),
@@ -872,7 +892,7 @@ export default function ScheduleAdminPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/schedule?type=${type}&id=${id}`, {
+      const res = await authFetch(`/api/schedule?type=${type}&id=${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
@@ -895,7 +915,7 @@ export default function ScheduleAdminPage() {
     currentActive: boolean,
   ) => {
     try {
-      const res = await fetch("/api/schedule", {
+      const res = await authFetch("/api/schedule", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, id, active: !currentActive }),
