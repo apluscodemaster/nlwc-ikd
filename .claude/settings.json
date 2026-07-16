@@ -44,7 +44,13 @@
       "Bash(grep -vE \"^\\\\S+:\\\\s*\\(//|\\\\*\\)\")",
       "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")",
       "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/scriptureScope.test.ts 2>&1 | Select-Object -Last 14; Write-Output \"=== EXIT: $LASTEXITCODE ===\")",
-      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 8; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 4; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")"
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 8; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 4; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/authTokenVerification.test.ts 2>&1 | Select-Object -Last 18; Write-Output \"=== EXIT: $LASTEXITCODE ===\")",
+      "Bash(cp src/lib/auth.ts /tmp/auth.bak.ts)",
+      "Bash(cp src/lib/auth.ts src/lib/auth.ts.bak)",
+      "Bash(node -e ' *)",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/authTokenVerification.test.ts 2>&1 | Select-String -Pattern \"Tests |Test Files|FAIL|AssertionError|expected\" | Select-Object -First 12; Write-Output \"=== EXIT \\(expect NON-zero\\): $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/authTokenVerification.test.ts 2>&1 | Select-Object -Last 8; Write-Output \"=== EXIT: $LASTEXITCODE ===\")"
     ]
   }
 }
