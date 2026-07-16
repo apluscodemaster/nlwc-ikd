@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
-  // Public signup form — throttle so the list can't be stuffed automatically.
-  const limited = rateLimitMiddleware(request, "public");
+  // Public signup form — "strict" (10/min) so the list can't be stuffed
+  // automatically. A real person signs up once.
+  const limited = rateLimitMiddleware(request, "strict");
   if (limited) return limited;
 
   try {
