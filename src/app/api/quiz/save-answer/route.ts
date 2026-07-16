@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { fetchQuestionById, saveQuizAttempts } from "@/lib/quizService";
 import { getSupabase } from "@/lib/supabase";
 import type { QuizAttempt } from "@/types/quiz";
 
 export async function POST(req: NextRequest) {
+  // Rate limited: writes a quiz attempt.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const { session_id, answer } = await req.json();
 

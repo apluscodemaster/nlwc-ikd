@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import {
   WP_CATEGORIES,
   fetchWPPosts,
@@ -37,6 +38,10 @@ function getAdminAuth(): string | undefined {
  * Fetches existing WordPress content for the admin dashboard.
  */
 export async function GET(request: NextRequest) {
+  // Rate limited: proxies WordPress.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get("type") || "sermon";
   const page = parseInt(searchParams.get("page") || "1");

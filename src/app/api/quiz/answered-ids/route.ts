@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getSupabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
+  // Rate limited: unbounded read per session.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const searchParams = req.nextUrl.searchParams;
     const session_id = searchParams.get("session_id");
