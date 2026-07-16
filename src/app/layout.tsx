@@ -216,6 +216,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   tagChapters: true,
                   dropShadow: true,
                   noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
+                  // Content rendered by ScriptureContent is tagged by the in-app
+                  // ScriptureProvider (KJV, portal-positioned so it works inside
+                  // overlays). Excluding it here stops RefTagger double-tagging
+                  // the same references.
+                  noSearchClassNames: ["no-reftagger"],
                   tagColor: "#FF7C18"
                 }
               };

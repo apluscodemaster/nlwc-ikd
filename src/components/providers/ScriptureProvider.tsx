@@ -233,11 +233,15 @@ export function ScriptureProvider({
 
         textNodes.forEach((textNode) => {
           const text = textNode.textContent || "";
-          // Improved regex to catch more scripture reference formats:
-          // - Multi-digit book numbers (1-3 John, etc)
-          // - Multiple spaces
-          // - Optional periods in book names
-          const pattern = /\(?\s*(\d{1,3}?\s+)?([A-Za-z]+\.?)\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\s*\)?/gi;
+          // Candidate finder — kept in sync with parseScriptureReference():
+          // verse/range/list are all optional so chapter-only refs ("John 3")
+          // are caught, matching RefTagger's `tagChapters: true` behaviour.
+          //
+          // This pattern is deliberately loose; parseScriptureReference() is the
+          // authority and rejects anything whose book isn't canonical, so prose
+          // like "Lesson 3" or "Service 5:30" never becomes a link.
+          const pattern =
+            /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*-\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/gi;
           const matches = [...text.matchAll(pattern)];
 
           if (matches.length === 0) return;
