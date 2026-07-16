@@ -5,10 +5,7 @@ import { fetchBibleVerse } from "@/lib/bible-api";
  * API route to fetch Bible verses
  * Bypasses CORS issues by routing requests through the server
  */
-export async function GET(
-  request: NextRequest,
-  props: { params: Promise<{ reference: string }> },
-) {
+export async function GET(request: NextRequest) {
   try {
     const { reference } = await props.params;
 
