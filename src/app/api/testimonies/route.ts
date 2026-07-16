@@ -175,9 +175,11 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
 
 export async function POST(req: NextRequest) {
   // Public + unauthenticated + sends mail on every accepted submission, so an
-  // unthrottled caller could both spam the testimony store and mail-bomb the
-  // church inbox. 100/min is far above any human submitting a testimony.
-  const limited = rateLimitMiddleware(req, "public");
+  // unthrottled caller could spam the testimony store AND mail-bomb the church
+  // inbox (risking the SMTP account being flagged). "strict" (10/min), not
+  // "public" (100/min) — nobody submits ten testimonies a minute, and 100
+  // emails/min is still an email bomb.
+  const limited = rateLimitMiddleware(req, "strict");
   if (limited) return limited;
 
   try {

@@ -11,10 +11,14 @@ import type { QuizCategory } from "@/types/quiz";
  * deep into the bank can cost ~1k document reads per question. Unthrottled, an
  * anonymous caller could loop this and burn the Firestore quota.
  *
- * The "public" tier (100/min) is far above real play (~1 question per 10-30s).
+ * "strict" (10/min), not "public" (100/min): at 100/min this endpoint could pull
+ * ~90k Firestore reads per minute from a single IP — the entire daily free quota
+ * in ~30 seconds. Real play is ~2-6 questions/min, so 10/min is still generous.
+ * Note this only caps the blast radius; the real fix is making each call cheap
+ * (random-field sampling) rather than over-fetching by answered-count.
  */
 export async function GET(req: NextRequest) {
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = rateLimitMiddleware(req, "strict");
   if (limited) return limited;
 
   try {
