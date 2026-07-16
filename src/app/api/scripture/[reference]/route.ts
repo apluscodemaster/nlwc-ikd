@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchBibleVerse } from "@/lib/bible-api";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
  * API route to fetch Bible verses
  * Bypasses CORS issues by routing requests through the server
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  props: { params: Promise<{ reference: string }> },
+) {
+  // Rate limited: proxies an external API.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   try {
     const { reference } = await props.params;
 

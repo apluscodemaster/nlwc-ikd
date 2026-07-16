@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { normalizeApiBibleResults } from "@/lib/bibleApi";
 
 // API.Bible config (server-side only — BIBLE_API_KEY is never sent to the client).
@@ -13,6 +14,10 @@ const UPSTREAM_LIMIT = 50;
 const CACHE_TTL_SECONDS = 86400;
 
 export async function GET(req: NextRequest) {
+  // Rate limited: proxies an external API.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   const query = (req.nextUrl.searchParams.get("q") ?? "").trim();
   if (query.length < 2) return NextResponse.json({ results: [] });
 

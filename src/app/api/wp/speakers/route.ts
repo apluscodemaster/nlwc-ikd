@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getSpeakersList, getSeriesList } from "@/lib/audioSermons";
 
 /**
@@ -8,6 +9,10 @@ import { getSpeakersList, getSeriesList } from "@/lib/audioSermons";
  * for use in the admin dropdowns.
  */
 export async function GET(request: NextRequest) {
+  // Rate limited: proxies WordPress.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   const type = request.nextUrl.searchParams.get("type") || "speakers";
 
   try {

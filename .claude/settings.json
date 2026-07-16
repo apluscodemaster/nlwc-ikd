@@ -28,7 +28,8 @@
       "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\schedauth.mjs\")",
       "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 10; Write-Output \"=== TSC DONE ===\"; npx eslint src/app/api/schedule/route.ts src/app/admin/schedule/page.tsx 2>&1 | Select-Object -Last 6; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\")",
       "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 10; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 5; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")",
-      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\ratelimit.mjs\")"
+      "PowerShell(node \"C:\\\\Users\\\\ADEBAN~1.ADE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adebanjo-adeniji-Documents-personal-files-nlwc-ikd\\\\7c56f5a7-7617-4cf1-81c8-a1bf6bd48960\\\\scratchpad\\\\ratelimit.mjs\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 12; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 6; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")"
     ]
   }
 }
