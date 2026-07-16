@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getSundaySchoolManuals } from "@/lib/wordpress";
 
 export async function GET(request: NextRequest) {
+  // Rate limited: proxies WordPress.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");

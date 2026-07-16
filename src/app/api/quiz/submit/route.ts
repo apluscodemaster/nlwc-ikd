@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { fetchQuestionById, buildQuizResult } from "@/lib/quizService";
 import { getSupabase } from "@/lib/supabase";
 import { z } from "zod";
@@ -15,6 +16,10 @@ const submitSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limited: writes attempts + builds results.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const result = submitSchema.safeParse(body);

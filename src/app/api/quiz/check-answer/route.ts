@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { fetchQuestionById } from "@/lib/quizService";
 
 export async function POST(req: NextRequest) {
+  // Rate limited: reveals the answer; DB read per call.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const { question_id, selected_answer } = await req.json();
 

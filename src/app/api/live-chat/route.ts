@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 // =============================================================================
 // In-memory Chat Store (persists across requests within the same server process)
@@ -85,6 +86,10 @@ export async function GET(request: NextRequest) {
 // POST — Send a new message
 // =============================================================================
 export async function POST(request: NextRequest) {
+  // Rate limited: public write.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { name, message } = body;
