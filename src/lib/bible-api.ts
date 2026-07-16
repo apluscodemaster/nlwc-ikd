@@ -284,11 +284,13 @@ export async function fetchBibleVerse(
 /**
  * Raw payload from bible-api.com. Only the fields this module reads are
  * described; `error` is present when the API rejects the reference.
+ * `verses` mirrors BibleVerse["verses"] — it is passed straight through.
  */
 interface BibleApiResponse {
   reference: string;
   text: string;
-  verses?: unknown[];
+  translation_name?: string;
+  verses?: BibleVerse["verses"];
   error?: string;
 }
 
