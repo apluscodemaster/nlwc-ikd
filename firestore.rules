@@ -1,0 +1,85 @@
+rules_version = '2';
+
+/**
+ * Firestore security rules.
+ *
+ * WHY THIS FILE EXISTS
+ * --------------------
+ * These rules were previously not in the repo at all — they lived only in the
+ * Firebase console, so they could not be reviewed, diffed, or deployed with the
+ * code. That matters more than usual here, because several collections are
+ * written DIRECTLY FROM THE BROWSER with the client SDK:
+ *
+ *   testimonies  - public submits; admin verifies/rejects (testimonyService.ts)
+ *   devotionals  - admin creates/updates/deletes  (devotionals.ts)
+ *   live-chat    - public posts messages          (liveChatService.ts)
+ *
+ * Those paths never touch an API route, so `requireAuth()` on the server does
+ * NOT protect them. These rules are the only boundary. If the console is still
+ * in test mode (`allow read, write: if true`), anyone can read, alter or wipe
+ * every testimony and devotional regardless of any server-side auth.
+ *
+ * Collections reached only via the Admin SDK (quiz_questions, schedule) are
+ * denied to clients outright — the Admin SDK bypasses these rules, so locking
+ * them down costs the server nothing.
+ *
+ * ⚠️ NOT YET VERIFIED AGAINST PRODUCTION. Test with the emulator or the console
+ * Rules Playground before deploying:  firebase deploy --only firestore:rules
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Only administrators hold Firebase Auth accounts — the public quiz
+     * identifies players with a Supabase session id, not Firebase Auth, and
+     * testimony submission is anonymous. So "signed in" == "admin" here.
+     *
+     * If that ever stops being true (e.g. public accounts are introduced),
+     * this MUST become a custom-claim check (request.auth.token.admin == true).
+     */
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // ── Testimonies ─────────────────────────────────────────────────────────
+    // Public may submit and may read only verified+public entries (the client
+    // query filters on exactly these fields). Admins read all and moderate.
+    match /testimonies/{testimonyId} {
+      allow read: if isAdmin()
+                  || (resource.data.status == 'verified'
+                      && resource.data.displayPreference == 'public');
+
+      // A submission may only ever arrive as 'pending' — nobody can self-verify.
+      allow create: if request.resource.data.status == 'pending';
+
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Devotionals ─────────────────────────────────────────────────────────
+    // Publicly readable (the PDFs are public anyway); admin-only writes.
+    match /devotionals/{devotionalId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Live chat ───────────────────────────────────────────────────────────
+    // Public read + post; only admins may edit or remove messages.
+    match /live-chat/{messageId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Server-only collections ─────────────────────────────────────────────
+    // Reached exclusively through the Admin SDK, which bypasses these rules.
+    // quiz_questions in particular holds the CORRECT ANSWERS.
+    match /quiz_questions/{questionId} {
+      allow read, write: if false;
+    }
+
+    // ── Default deny ────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
