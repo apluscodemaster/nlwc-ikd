@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { sanitizeWPHtml } from "@/utils/sanitizeWP";
+import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
 
 interface ScriptureContentProps {
   content: string;
@@ -9,12 +10,18 @@ interface ScriptureContentProps {
 }
 
 /**
- * Component that renders HTML content with prose styling.
- * Scripture references are automatically detected and made interactive
- * by the global ScriptureProvider.
+ * Renders HTML content with prose styling and interactive scripture references.
  *
- * Use the `data-scripture-content` attribute to enable automatic
- * scripture reference detection on any element.
+ * It carries its OWN scoped ScriptureProvider, so every consumer — the
+ * transcript/manual/sermon detail pages, the transcript overlay and the quiz
+ * drawer — gets the same in-app KJV tooltip with no extra wiring. That matters
+ * because the `no-reftagger` class below opts this content out of Logos
+ * RefTagger entirely; if a page rendered this without a provider, its scripture
+ * would simply stop being tagged.
+ *
+ * Why in-app instead of RefTagger: RefTagger positions its popup in DOCUMENT
+ * space, which breaks inside a `position: fixed` overlay, and it was showing a
+ * different translation (WEB) than the rest of the site (KJV).
  */
 export default function ScriptureContent({
   content,
@@ -22,11 +29,14 @@ export default function ScriptureContent({
 }: ScriptureContentProps) {
   // Clean up WordPress content artifacts (entities, empty paragraphs, excess whitespace)
   const cleanedContent = sanitizeWPHtml(content);
+  const scopeRef = useRef<HTMLDivElement>(null);
 
   return (
+    <ScriptureProvider scopeRef={scopeRef}>
     <div
+      ref={scopeRef}
       data-scripture-content="true"
-      className={`prose prose-sm sm:prose-base md:prose-lg prose-gray max-w-none text-justify
+      className={`no-reftagger prose prose-sm sm:prose-base md:prose-lg prose-gray max-w-none text-justify
         prose-headings:font-bold prose-headings:text-gray-900 prose-headings:text-left
         prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-justify
         prose-strong:text-gray-900
@@ -42,6 +52,7 @@ export default function ScriptureContent({
         ${className}`}
       dangerouslySetInnerHTML={{ __html: cleanedContent }}
     />
+    </ScriptureProvider>
   );
 }
 
