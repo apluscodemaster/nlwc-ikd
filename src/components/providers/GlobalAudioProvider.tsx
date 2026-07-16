@@ -65,11 +65,25 @@ export interface GlobalAudioTrack {
  */
 export type SrcResolver = (id: number | string) => Promise<string | null>;
 
+/**
+ * Playback position, split into its OWN context on purpose.
+ *
+ * `timeupdate` fires ~4x/second. If these lived on the main context value, every
+ * consumer would re-render at that rate — including whole pages that only care
+ * whether something is playing. Keeping them separate means only the components
+ * that actually display a position pay that cost.
+ *
+ * Read it with `useGlobalAudioProgress()`, and read it as deep in the tree as
+ * possible (see <AudioProgressBar/>).
+ */
+interface GlobalAudioProgressValue {
+  currentTime: number;
+  duration: number;
+}
+
 interface GlobalAudioContextValue {
   track: GlobalAudioTrack | null;
   isPlaying: boolean;
-  currentTime: number;
-  duration: number;
   playbackRate: number;
   isMuted: boolean;
   repeatMode: "off" | "one";
@@ -104,12 +118,33 @@ interface GlobalAudioContextValue {
 }
 
 const GlobalAudioContext = createContext<GlobalAudioContextValue | null>(null);
+const GlobalAudioProgressContext =
+  createContext<GlobalAudioProgressValue | null>(null);
 
-/** Access the global player. Returns null outside the provider. */
+/**
+ * Access the global player (track, playing state, controls).
+ * Deliberately does NOT include the playback position — see
+ * `useGlobalAudioProgress()`.
+ */
 export function useGlobalAudio(): GlobalAudioContextValue {
   const ctx = useContext(GlobalAudioContext);
   if (!ctx) {
     throw new Error("useGlobalAudio must be used within <GlobalAudioProvider>");
+  }
+  return ctx;
+}
+
+/**
+ * Access the live playback position. Updates ~4x/second, so call this from the
+ * smallest component that needs it — never from a page component, or the whole
+ * page re-renders on every tick.
+ */
+export function useGlobalAudioProgress(): GlobalAudioProgressValue {
+  const ctx = useContext(GlobalAudioProgressContext);
+  if (!ctx) {
+    throw new Error(
+      "useGlobalAudioProgress must be used within <GlobalAudioProvider>",
+    );
   }
   return ctx;
 }
@@ -414,12 +449,17 @@ export default function GlobalAudioProvider({
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [isPlaying]);
 
+  // Position lives in its own memo so a `timeupdate` tick invalidates ONLY this
+  // value, not the main one.
+  const progressValue = useMemo<GlobalAudioProgressValue>(
+    () => ({ currentTime, duration }),
+    [currentTime, duration],
+  );
+
   const value = useMemo<GlobalAudioContextValue>(
     () => ({
       track,
       isPlaying,
-      currentTime,
-      duration,
       playbackRate,
       isMuted,
       repeatMode,
@@ -444,8 +484,6 @@ export default function GlobalAudioProvider({
     [
       track,
       isPlaying,
-      currentTime,
-      duration,
       playbackRate,
       isMuted,
       repeatMode,
@@ -511,6 +549,7 @@ export default function GlobalAudioProvider({
 
   return (
     <GlobalAudioContext.Provider value={value}>
+      <GlobalAudioProgressContext.Provider value={progressValue}>
       {children}
 
       {/*
@@ -613,6 +652,34 @@ export default function GlobalAudioProvider({
           onToggleShuffle={toggleShuffle}
         />
       )}
+      </GlobalAudioProgressContext.Provider>
     </GlobalAudioContext.Provider>
+  );
+}
+
+/**
+ * Renders the active track's progress as a fill percentage.
+ *
+ * Exists so pages can show a live progress bar WITHOUT subscribing themselves to
+ * the ~4x/second position updates — only this leaf re-renders. Renders nothing
+ * unless `trackId` is the track currently playing.
+ */
+export function AudioProgressBar({
+  trackId,
+  className = "",
+  fillClassName = "",
+}: {
+  trackId: number | string;
+  className?: string;
+  fillClassName?: string;
+}) {
+  const { isCurrent } = useGlobalAudio();
+  const { currentTime, duration } = useGlobalAudioProgress();
+  if (!isCurrent(trackId)) return null;
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  return (
+    <div className={className}>
+      <div className={fillClassName} style={{ width: `${pct}%` }} />
+    </div>
   );
 }

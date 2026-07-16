@@ -42,6 +42,7 @@ import {
 import NextPartSuggestion from "@/components/media/NextPartSuggestion";
 import {
   useGlobalAudio,
+  useGlobalAudioProgress,
   type GlobalAudioTrack,
 } from "@/components/providers/GlobalAudioProvider";
 
@@ -61,10 +62,14 @@ export default function AudioPlayerClient({
   // navigating away from this page (and the mobile mini-bar takes over). This
   // page keeps its own rich UI and simply reads/drives that element via context.
   const audio = useGlobalAudio();
+  // This page IS the player — it renders a timeline and clock, so it genuinely
+  // needs the ~4x/second position. Pages that only show a thin progress bar
+  // should use <AudioProgressBar/> instead of subscribing here.
+  const progress = useGlobalAudioProgress();
   const isCurrent = audio.isCurrent(sermon.id);
   const isPlaying = isCurrent && audio.isPlaying;
-  const currentTime = isCurrent ? audio.currentTime : 0;
-  const duration = isCurrent ? audio.duration : 0;
+  const currentTime = isCurrent ? progress.currentTime : 0;
+  const duration = isCurrent ? progress.duration : 0;
   const playbackRate = audio.playbackRate;
   const isMuted = audio.isMuted;
   const repeatMode = audio.repeatMode;

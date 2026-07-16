@@ -23,7 +23,10 @@ import { motion, Variants } from "framer-motion";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
-import { useGlobalAudio } from "@/components/providers/GlobalAudioProvider";
+import {
+  useGlobalAudio,
+  AudioProgressBar,
+} from "@/components/providers/GlobalAudioProvider";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -242,17 +245,15 @@ export default function RecentSermons() {
                       </div>
                     )}
 
-                    {/* Active indicator / mini progress on card */}
-                    {isActive && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10">
-                        <motion.div
-                          className="h-full bg-primary"
-                          style={{
-                            width: `${audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0}%`,
-                          }}
-                        />
-                      </div>
-                    )}
+                    {/* Active indicator / mini progress on card.
+                        AudioProgressBar subscribes to the ~4x/second position
+                        itself, so this section doesn't have to — only that leaf
+                        re-renders while audio plays. */}
+                    <AudioProgressBar
+                      trackId={sermon.id}
+                      className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-10"
+                      fillClassName="h-full bg-primary"
+                    />
                   </div>
 
                   <Link href="/sermons">
