@@ -135,12 +135,23 @@ function BankCard({
           <div className="bg-gray-50/50 rounded-[24px] border border-gray-100/50 p-5 space-y-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 shrink-0">
+                {/*
+                  `unoptimized`: load the logo straight from Cloudinary instead
+                  of through Next's /_next/image proxy. These are tiny, fixed
+                  logos on an image CDN that already optimises them, so the proxy
+                  adds nothing — but it's a server-side fetch that can fail in
+                  production (host egress / CDN throttling) even when the source
+                  URL is reachable from the browser, which is exactly the
+                  "logo not displaying" symptom. Direct loads are covered by the
+                  CSP img-src `https:` rule.
+                */}
                 <Image
                   src={option.logo}
                   alt={option.bankName}
                   width={32}
                   height={32}
                   className="object-contain"
+                  unoptimized
                 />
               </div>
               <div>
