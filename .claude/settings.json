@@ -40,7 +40,11 @@
       "Bash(curl -s \"https://bible-api.com/Psalms%2023:1-6?translation=kjv\")",
       "Bash(curl -s \"https://bible-api.com/1%20Corinthians%2013:1-3?translation=kjv\")",
       "Bash(curl -s \"https://bible-api.com/Revelation%2022?translation=kjv\")",
-      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 10; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 5; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\")"
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 10; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 5; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\")",
+      "Bash(grep -vE \"^\\\\S+:\\\\s*\\(//|\\\\*\\)\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx vitest run src/__tests__/scriptureScope.test.ts 2>&1 | Select-Object -Last 14; Write-Output \"=== EXIT: $LASTEXITCODE ===\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 8; Write-Output \"=== TSC DONE ===\"; npx eslint . --quiet 2>&1 | Select-Object -Last 4; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\"; npm test 2>&1 | Select-Object -Last 5; Write-Output \"=== TEST EXIT: $LASTEXITCODE ===\")"
     ]
   }
 }

@@ -209,11 +209,19 @@ export function ScriptureProvider({
     const root = scopeRef ? scopeRef.current : document.body;
     if (!root) return;
 
+    const SCRIPTURE_SELECTOR = ".prose, [data-scripture-content]";
+
     const processScriptureReferences = () => {
-      // Find all text nodes in prose content
-      const proseElements = root.querySelectorAll(
-        ".prose, [data-scripture-content]",
+      // querySelectorAll only matches DESCENDANTS, so the root itself has to be
+      // considered separately — otherwise scoping the ref directly onto the
+      // content element (rather than a wrapper around it) silently matches
+      // nothing and no references get tagged.
+      const proseElements: Element[] = Array.from(
+        root.querySelectorAll(SCRIPTURE_SELECTOR),
       );
+      if (root instanceof Element && root.matches(SCRIPTURE_SELECTOR)) {
+        proseElements.unshift(root);
+      }
 
       proseElements.forEach((prose) => {
         // Skip if already processed
