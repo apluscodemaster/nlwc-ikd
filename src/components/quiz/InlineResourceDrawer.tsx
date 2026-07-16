@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import TranscriptContent from "@/components/shared/TranscriptContent";
-import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
 
 interface AudioSermon {
   id: number;
@@ -117,11 +116,11 @@ export function InlineResourceDrawer({
   }, [open, href, variant]);
 
   // Scripture references inside the transcript are highlighted by the scoped
-  // ScriptureProvider (see the "read" markup below), NOT Logos RefTagger.
-  // RefTagger positions its popup in document space, which breaks inside this
-  // fixed, independently-scrolling drawer; the in-app provider uses a portal
-  // with viewport-relative `fixed` coordinates, so the verse tooltip lands
-  // correctly here.
+  // ScriptureProvider that ScriptureContent carries internally, NOT Logos
+  // RefTagger. RefTagger positions its popup in document space, which breaks
+  // inside this fixed, independently-scrolling drawer; the in-app provider uses
+  // a portal with viewport-relative `fixed` coordinates, so the verse tooltip
+  // lands correctly here.
 
   // For "read" variant, count the resource as reviewed after 2 seconds.
   useEffect(() => {
@@ -389,7 +388,6 @@ export function InlineResourceDrawer({
                 </div>
 
                 {/* Transcript Content */}
-                <ScriptureProvider scopeRef={transcriptScopeRef}>
                 <div
                   ref={transcriptScopeRef}
                   className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]"
@@ -416,7 +414,6 @@ export function InlineResourceDrawer({
                     </div>
                   )}
                 </div>
-                </ScriptureProvider>
               </div>
             )}
           </motion.div>

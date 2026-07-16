@@ -1,10 +1,21 @@
 /**
  * Bible API Service
- * Uses the free Bible API from bible-api.com (World English Bible translation)
- * and API.Bible for additional translations
+ * Uses the free Bible API from bible-api.com, and API.Bible for additional
+ * translations.
  */
 
 const BIBLE_API_BASE = "https://bible-api.com";
+
+/**
+ * Translation for in-app scripture tooltips.
+ *
+ * bible-api.com defaults to the World English Bible when no translation is
+ * requested, which is why these tooltips read "WEB" while the rest of the site
+ * shows KJV (Logos RefTagger is configured with `bibleVersion: "KJV"` in
+ * app/layout.tsx). Pin it so both engines agree — keep this and the RefTagger
+ * setting in sync.
+ */
+const BIBLE_TRANSLATION = "kjv";
 
 // Common book name abbreviations mapping to full names
 const BOOK_ABBREVIATIONS: Record<string, string> = {
@@ -187,7 +198,8 @@ export interface ParsedReference {
   original: string;
   book: string;
   chapter: number;
-  verseStart: number;
+  /** Undefined for chapter-only references ("John 3"). */
+  verseStart?: number;
   verseEnd?: number;
   apiReference: string;
 }
@@ -195,9 +207,43 @@ export interface ParsedReference {
 /**
  * Normalize book name to full name for API
  */
-function normalizeBookName(book: string): string {
+/**
+ * The 66 canonical books. This is the gate that decides whether something is a
+ * scripture reference at all.
+ *
+ * It exists because `normalizeBookName` used to end in `|| book` — falling back
+ * to whatever word preceded the numbers. That meant ordinary prose like
+ * "Service 5:30", "Room 3:16" or "Lesson 12:5" parsed as valid references and
+ * got underlined as scripture. Validating against a real book list fixes that,
+ * and is what makes chapter-only detection ("John 3") safe — without it,
+ * "Part 2" and "Lesson 3" would light up too.
+ */
+const CANONICAL_BOOKS = new Set([
+  "genesis", "exodus", "leviticus", "numbers", "deuteronomy", "joshua",
+  "judges", "ruth", "1 samuel", "2 samuel", "1 kings", "2 kings",
+  "1 chronicles", "2 chronicles", "ezra", "nehemiah", "esther", "job",
+  "psalm", "psalms", "proverbs", "ecclesiastes", "song of solomon", "isaiah",
+  "jeremiah", "lamentations", "ezekiel", "daniel", "hosea", "joel", "amos",
+  "obadiah", "jonah", "micah", "nahum", "habakkuk", "zephaniah", "haggai",
+  "zechariah", "malachi", "matthew", "mark", "luke", "john", "acts", "romans",
+  "1 corinthians", "2 corinthians", "galatians", "ephesians", "philippians",
+  "colossians", "1 thessalonians", "2 thessalonians", "1 timothy", "2 timothy",
+  "titus", "philemon", "hebrews", "james", "1 peter", "2 peter", "1 john",
+  "2 john", "3 john", "jude", "revelation",
+]);
+
+/**
+ * Resolve a book name/abbreviation to its canonical form.
+ * Returns null when it isn't a real book — callers MUST treat that as
+ * "not a scripture reference".
+ */
+function normalizeBookName(book: string): string | null {
   const normalized = book.toLowerCase().trim();
-  return BOOK_ABBREVIATIONS[normalized] || book;
+  const mapped =
+    BOOK_ABBREVIATIONS[normalized] ??
+    BOOK_ABBREVIATIONS[normalized.replace(/\.$/, "")];
+  const candidate = (mapped ?? book).trim();
+  return CANONICAL_BOOKS.has(candidate.toLowerCase()) ? candidate : null;
 }
 
 /**
@@ -206,20 +252,32 @@ function normalizeBookName(book: string): string {
 export function parseScriptureReference(
   reference: string,
 ): ParsedReference | null {
-  // Pattern to match references like:
-  // "John 3:16", "Rom. 8:28-30", "1 Cor. 13:1-3", "(Matt. 5:1)", "Psalm 23:1-6"
-  // Improved to handle:
-  // - Multi-digit numbers for books (1-3 John, etc)
-  // - Multiple spaces
-  // - Optional periods in book names
+  // Matches, in one pass:
+  //   "John 3:16"            verse
+  //   "Rom. 8:28-30"         verse range
+  //   "1 Cor. 13:1-3"        numbered book
+  //   "(Matt. 5:1)"          parenthesised
+  //   "John 3"               chapter only  (RefTagger tags these too)
+  //   "John 3:16-4:2"        cross-chapter range
+  //   "John 3:16,18"         comma list
+  // The verse part is optional; everything is still gated on the book being
+  // real (see normalizeBookName), which is what keeps "Lesson 3" out.
   const pattern =
-    /\(?\s*(\d{1,3}?\s+)?([A-Za-z]+\.?)\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\s*\)?/i;
+    /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*-\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/i;
 
   const match = reference.match(pattern);
   if (!match) return null;
 
-  const [original, bookPrefix, bookSuffix, chapter, verseStart, verseEnd] =
-    match;
+  const [
+    original,
+    bookPrefix,
+    bookSuffix,
+    chapter,
+    verseStart,
+    endChapter,
+    verseEnd,
+    verseList,
+  ] = match;
 
   // Combine prefix and suffix to get full book name
   const fullBookName = bookPrefix
@@ -227,18 +285,24 @@ export function parseScriptureReference(
     : bookSuffix;
 
   const normalizedBook = normalizeBookName(fullBookName);
+  // Not a real book → not a reference. This is the false-positive gate.
+  if (!normalizedBook) return null;
 
-  // Format for bible-api.com: "John 3:16" or "John 3:16-18"
-  let apiReference = `${normalizedBook} ${chapter}:${verseStart}`;
-  if (verseEnd) {
-    apiReference += `-${verseEnd}`;
+  // Format for bible-api.com, which accepts every form below (verified).
+  let apiReference = `${normalizedBook} ${chapter}`;
+  if (verseStart) {
+    apiReference += `:${verseStart}`;
+    if (verseEnd) {
+      apiReference += endChapter ? `-${endChapter}:${verseEnd}` : `-${verseEnd}`;
+    }
+    if (verseList) apiReference += verseList.replace(/\s+/g, "");
   }
 
   return {
     original: original.replace(/[()]/g, "").trim(),
     book: normalizedBook,
     chapter: parseInt(chapter),
-    verseStart: parseInt(verseStart),
+    verseStart: verseStart ? parseInt(verseStart) : undefined,
     verseEnd: verseEnd ? parseInt(verseEnd) : undefined,
     apiReference,
   };
@@ -257,9 +321,11 @@ export async function fetchBibleVerse(
     // Try the primary format
     let data = await tryFetchVerse(parsed.apiReference);
 
-    // If primary format fails, try alternative formats
-    if (!data) {
-      // Try with full book name and verse only
+    // If the primary format fails, retry with the simplest form: book +
+    // chapter (+ single verse). Skipped for chapter-only references, where the
+    // primary form is already that simplest form — building "John 3:undefined"
+    // would just be a guaranteed second miss.
+    if (!data && parsed.verseStart !== undefined) {
       const alternativeRef = `${parsed.book} ${parsed.chapter}:${parsed.verseStart}`;
       data = await tryFetchVerse(alternativeRef);
     }
@@ -272,7 +338,7 @@ export async function fetchBibleVerse(
     return {
       reference: data.reference,
       text: data.text.trim(),
-      translation: data.translation_name || "WEB", // World English Bible
+      translation: data.translation_name || "KJV",
       verses: data.verses || [],
     };
   } catch (error) {
@@ -302,7 +368,7 @@ async function tryFetchVerse(
 ): Promise<BibleApiResponse | null> {
   try {
     const response = await fetch(
-      `${BIBLE_API_BASE}/${encodeURIComponent(reference)}`,
+      `${BIBLE_API_BASE}/${encodeURIComponent(reference)}?translation=${BIBLE_TRANSLATION}`,
       {
         next: { revalidate: 86400 }, // Cache for 24 hours
       },
