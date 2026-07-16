@@ -10,8 +10,24 @@ import {
   updateSpecialService,
   deleteSpecialService,
 } from "@/lib/scheduleService";
+import { requireAuth } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * GET is PUBLIC — the live/schedule pages read it to show service times.
+ *
+ * The write handlers (POST/PUT/DELETE) require an admin token. They previously
+ * had none: the /admin/schedule UI is gated client-side only, so anyone could
+ * create, edit or delete the church's service schedule by calling this route
+ * directly.
+ */
+async function requireAdmin(req: NextRequest) {
+  const authError = await requireAuth(req);
+  if (authError) return authError;
+  return rateLimitMiddleware(req, "authenticated");
+}
 
 // ── Default recurring services (seeded when Firestore is empty) ──
 const DEFAULT_RECURRING = [
@@ -238,6 +254,9 @@ export async function GET() {
 
 // ── POST: Create a schedule entry ──
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     const { type, ...data } = body;
@@ -342,6 +361,9 @@ export async function POST(req: NextRequest) {
 
 // ── PUT: Update an existing schedule entry ──
 export async function PUT(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     const { type, id, ...data } = body;
@@ -386,6 +408,9 @@ export async function PUT(req: NextRequest) {
 
 // ── DELETE: Remove a schedule entry ──
 export async function DELETE(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
+
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type");

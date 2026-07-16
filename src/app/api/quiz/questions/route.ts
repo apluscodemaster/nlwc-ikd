@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchQuizQuestions } from "@/lib/quizService";
 import { getSupabase } from "@/lib/supabase";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import type { QuizCategory } from "@/types/quiz";
 
+/**
+ * Rate limited because this is the most expensive public endpoint in the app:
+ * it does a Supabase read for the session's answered ids, then over-fetches from
+ * Firestore proportionally to that count (see fetchQuizQuestions) — a player
+ * deep into the bank can cost ~1k document reads per question. Unthrottled, an
+ * anonymous caller could loop this and burn the Firestore quota.
+ *
+ * The "public" tier (100/min) is far above real play (~1 question per 10-30s).
+ */
 export async function GET(req: NextRequest) {
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const { searchParams } = req.nextUrl;
     const category = searchParams.get("category") as QuizCategory | null;

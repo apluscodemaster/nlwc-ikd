@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { z } from "zod";
 
 const sessionSchema = z.object({
@@ -10,7 +11,11 @@ const sessionSchema = z.object({
     .max(30, "Username must be under 30 characters"),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Creates a player row — throttle so the sessions table can't be flooded.
+  const limited = rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const result = sessionSchema.safeParse(body);
