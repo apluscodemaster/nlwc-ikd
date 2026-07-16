@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Public signup form — throttle so the list can't be stuffed automatically.
+  const limited = rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   try {
     const { email } = await request.json();
 
