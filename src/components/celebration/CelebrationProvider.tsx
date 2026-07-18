@@ -23,12 +23,18 @@ import React, {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export type CelebrationIntensity = "milestone" | "champion";
 
 interface CelebrateOptions {
   intensity?: CelebrationIntensity;
+  /** Short headline naming the achievement, e.g. "New #1!". */
+  label?: string;
+  /** Optional emoji shown before the label. */
+  emoji?: string;
 }
 
 interface CelebrationContextValue {
@@ -84,6 +90,12 @@ export default function CelebrationProvider({
   const particlesRef = useRef<Ribbon[]>([]);
   const rafRef = useRef<number | null>(null);
   const reducedRef = useRef(false);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [banner, setBanner] = useState<{
+    label: string;
+    emoji?: string;
+    champion: boolean;
+  } | null>(null);
 
   useEffect(() => {
     reducedRef.current =
@@ -206,13 +218,25 @@ export default function CelebrationProvider({
 
   const celebrate = useCallback(
     (opts?: CelebrateOptions) => {
-      if (reducedRef.current) return;
       if (typeof window === "undefined") return;
+      const champion = opts?.intensity === "champion";
+
+      // The label naming the achievement shows even under reduced motion — it's
+      // information, not decoration. Only the particle spray is motion-gated.
+      if (opts?.label) {
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+        setBanner({ label: opts.label, emoji: opts.emoji, champion });
+        bannerTimerRef.current = setTimeout(
+          () => setBanner(null),
+          champion ? 4000 : 3000,
+        );
+      }
+
+      if (reducedRef.current) return;
       sizeCanvas();
 
       const W = window.innerWidth;
       const H = window.innerHeight;
-      const champion = opts?.intensity === "champion";
       const palette = champion ? GOLD : FESTIVE;
 
       if (champion) {
@@ -242,6 +266,7 @@ export default function CelebrationProvider({
   useEffect(() => {
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
     };
   }, []);
 
@@ -253,6 +278,38 @@ export default function CelebrationProvider({
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-[9999]"
       />
+
+      {/* Achievement banner — names what was achieved. Announced politely to
+          assistive tech; never blocks interaction. */}
+      <AnimatePresence>
+        {banner && (
+          <motion.div
+            key={banner.label}
+            initial={{ opacity: 0, y: -24, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.95 }}
+            transition={{ type: "spring", damping: 18, stiffness: 260 }}
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none fixed inset-x-0 top-20 z-[9999] flex justify-center px-4"
+          >
+            <div
+              className={`flex items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-bold shadow-xl backdrop-blur-md sm:text-base ${
+                banner.champion
+                  ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 shadow-amber-500/30"
+                  : "bg-gray-900/90 text-white shadow-black/20"
+              }`}
+            >
+              {banner.emoji && (
+                <span className="text-lg leading-none sm:text-xl">
+                  {banner.emoji}
+                </span>
+              )}
+              <span>{banner.label}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </CelebrationContext.Provider>
   );
 }
