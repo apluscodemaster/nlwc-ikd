@@ -83,8 +83,15 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/nlwcikd-logo-512x512.png",
+    // Square PNG icons (see public/icons) — the apple-touch icon previously
+    // pointed at a 512x221 wordmark, which iOS stretched into a blurry square.
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/favicon-48.png", type: "image/png", sizes: "48x48" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
   },
 };
 
