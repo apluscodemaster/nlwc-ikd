@@ -448,12 +448,18 @@ export default function QuizPlayer({
   const { celebrate } = useCelebration();
   useEffect(() => {
     const hit = checkMilestones(masteryState.review_streak, masteryPercent);
-    if (hit) {
-      celebrate({
-        intensity:
-          hit.kind === "mastery" && hit.value === 100 ? "champion" : "milestone",
-      });
-    }
+    if (!hit) return;
+    const isPerfect = hit.kind === "mastery" && hit.value === 100;
+    celebrate({
+      intensity: isPerfect ? "champion" : "milestone",
+      emoji: hit.kind === "streak" ? "🔥" : isPerfect ? "🏆" : "⭐",
+      label:
+        hit.kind === "streak"
+          ? `${hit.value}-day streak!`
+          : isPerfect
+            ? "100% mastery — perfect!"
+            : `${hit.value}% mastery!`,
+    });
   }, [masteryState.review_streak, masteryPercent, celebrate]);
 
   const handleFinishQuiz = useCallback(async () => {
