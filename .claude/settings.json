@@ -60,7 +60,8 @@
       "Read(//tmp/**)",
       "Bash(curl -s \"https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247836/nlwc-ikd-assets/y87kx4xhn3ul7g8ftyac.png\" -o /tmp/zenith.png)",
       "Bash(node -e \"const b=require\\('fs'\\).readFileSync\\('public/favicon.ico'\\); console.log\\(b.length+' bytes'\\)\")",
-      "Bash(node -e \"console.log\\('sharp', require\\('sharp/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\('sharp', require\\('sharp/package.json'\\).version\\)\")",
+      "PowerShell(cd \"c:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\"; npx tsc --noEmit -p tsconfig.json 2>&1 | Select-String -Pattern \"error TS\" | Select-Object -First 12; Write-Output \"=== TSC DONE ===\"; npx eslint src/lib/quizCelebrations.ts src/components/celebration/CelebrationProvider.tsx src/components/quiz/QuizPlayer.tsx src/app/sermons/quiz/QuizPageClient.tsx 2>&1 | Select-Object -Last 8; Write-Output \"=== LINT EXIT: $LASTEXITCODE ===\")"
     ]
   }
 }

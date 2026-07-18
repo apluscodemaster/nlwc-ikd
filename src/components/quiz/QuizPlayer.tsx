@@ -27,6 +27,8 @@ import {
   computeMasteryPercent,
   type MasteryState,
 } from "@/lib/quizMastery";
+import { useCelebration } from "@/components/celebration/CelebrationProvider";
+import { checkMilestones } from "@/lib/quizCelebrations";
 
 const MASTERY_BATCH_SIZE = 5;
 
@@ -440,6 +442,19 @@ export default function QuizPlayer({
     masteryState.num_correct_reviews,
     correct,
   );
+
+  // Celebrate streak / mastery milestones with a ribbon spray. checkMilestones()
+  // records what it fires so each is celebrated exactly once, never per render.
+  const { celebrate } = useCelebration();
+  useEffect(() => {
+    const hit = checkMilestones(masteryState.review_streak, masteryPercent);
+    if (hit) {
+      celebrate({
+        intensity:
+          hit.kind === "mastery" && hit.value === 100 ? "champion" : "milestone",
+      });
+    }
+  }, [masteryState.review_streak, masteryPercent, celebrate]);
 
   const handleFinishQuiz = useCallback(async () => {
     setSubmitting(true);
