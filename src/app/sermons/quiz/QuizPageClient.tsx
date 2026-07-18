@@ -42,7 +42,11 @@ function TopScoreCelebration({
     const myScore =
       leaderboard.find((e) => e.session_id === sessionId)?.total_score ?? 0;
     if (checkTopScore(isTop, myScore)) {
-      celebrate({ intensity: "champion" });
+      celebrate({
+        intensity: "champion",
+        emoji: "🏆",
+        label: "New #1 on the leaderboard!",
+      });
     }
   }, [active, leaderboard, sessionId, celebrate]);
   return null;
