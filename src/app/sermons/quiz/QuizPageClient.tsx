@@ -12,8 +12,41 @@ import SecurityQuestionModal from "@/components/quiz/SecurityQuestionModal";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { ShieldCheck } from "lucide-react";
 import type { QuizCategory, QuizResult, LeaderboardEntry } from "@/types/quiz";
+import CelebrationProvider, {
+  useCelebration,
+} from "@/components/celebration/CelebrationProvider";
+import { checkTopScore } from "@/lib/quizCelebrations";
 
 type Phase = "launch" | "playing" | "results";
+
+/**
+ * Fires a gold "champion" ribbon burst when the player newly claims the #1
+ * leaderboard spot. Runs only right after a quiz finishes (`active`), so simply
+ * loading the page while already #1 doesn't celebrate; checkTopScore() also
+ * dedupes so holding the top spot never re-fires. Rendered inside
+ * CelebrationProvider so it can use the celebrate() context.
+ */
+function TopScoreCelebration({
+  active,
+  leaderboard,
+  sessionId,
+}: {
+  active: boolean;
+  leaderboard: LeaderboardEntry[];
+  sessionId?: string;
+}) {
+  const { celebrate } = useCelebration();
+  useEffect(() => {
+    if (!active || !sessionId || leaderboard.length === 0) return;
+    const isTop = leaderboard[0].session_id === sessionId;
+    const myScore =
+      leaderboard.find((e) => e.session_id === sessionId)?.total_score ?? 0;
+    if (checkTopScore(isTop, myScore)) {
+      celebrate({ intensity: "champion" });
+    }
+  }, [active, leaderboard, sessionId, celebrate]);
+  return null;
+}
 
 export default function QuizPageClient() {
   const {
@@ -94,7 +127,13 @@ export default function QuizPageClient() {
   }
 
   return (
+    <CelebrationProvider>
     <main>
+      <TopScoreCelebration
+        active={phase === "results"}
+        leaderboard={leaderboard}
+        sessionId={session?.session_id}
+      />
       <PageHeader
         title="Bible Quiz"
         subtitle="Test your knowledge from services and messages. See how you rank on the leaderboard!"
@@ -190,5 +229,6 @@ export default function QuizPageClient() {
         />
       )}
     </main>
+    </CelebrationProvider>
   );
 }
