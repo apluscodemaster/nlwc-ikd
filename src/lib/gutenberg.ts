@@ -65,15 +65,65 @@ const INLINE_WRAPPER_TAGS = new Set([
   "sup",
 ]);
 
+/**
+ * Drop emphasis wrappers that are neutralised by their own inline style.
+ *
+ * Google Docs wraps an entire copied document in
+ * `<b style="font-weight:normal" id="docs-internal-guid-…">` — the tag is a
+ * grouping artifact and the style is the only thing stopping it from rendering
+ * bold. Later cleaning strips inline styles, so leaving the tag in place turns
+ * the WHOLE manual bold. Remove the wrapper (and its matching close) up front,
+ * keeping the content.
+ */
+function unwrapNeutralisedEmphasis(html: string): string {
+  const openRe = /<(b|strong|i|em)((?:\s[^>]*)?)>/gi;
+  let out = html;
+
+  // Each pass removes at most one wrapper, so bound the loop by the number of
+  // candidate tags rather than trusting the rewrite to always shrink the input.
+  for (let guard = 0; guard < 200; guard++) {
+    openRe.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    let handled = false;
+
+    while ((m = openRe.exec(out)) !== null) {
+      const tag = m[1].toLowerCase();
+      const attrs = m[2] || "";
+      const neutralised =
+        tag === "b" || tag === "strong"
+          ? /font-weight\s*:\s*(?:normal|400)\b/i.test(attrs)
+          : /font-style\s*:\s*normal\b/i.test(attrs);
+      if (!neutralised) continue;
+
+      const span = findMatchingCloseSpan(out, m.index, tag);
+      const innerStart = m.index + m[0].length;
+      const inner = span
+        ? out.slice(innerStart, span.closeStart)
+        : out.slice(innerStart);
+      const after = span ? out.slice(span.end) : "";
+      out = out.slice(0, m.index) + inner + after;
+      handled = true;
+      break;
+    }
+
+    if (!handled) break;
+  }
+
+  return out;
+}
+
 /** Normalise legacy/execCommand cruft before scanning for blocks. */
 function preClean(html: string): string {
   return (
-    html
-      .replace(/\r/g, "")
-      // legacy emphasis tags → semantic equivalents
-      .replace(/<\s*b\s*>/gi, "<strong>")
+    unwrapNeutralisedEmphasis(html.replace(/\r/g, ""))
+      // Legacy emphasis tags → semantic equivalents. The open-tag patterns must
+      // accept attributes: matching only the bare `<b>` while always rewriting
+      // `</b>` produced mismatched `<b>…</strong>` pairs, which left an unclosed
+      // <b> that bolded everything after it. `(?=[\s>])` keeps <br>/<blockquote>
+      // and <img>/<input> out of the match.
+      .replace(/<\s*b(?=[\s>])(?:\s[^>]*)?>/gi, "<strong>")
       .replace(/<\s*\/\s*b\s*>/gi, "</strong>")
-      .replace(/<\s*i\s*>/gi, "<em>")
+      .replace(/<\s*i(?=[\s>])(?:\s[^>]*)?>/gi, "<em>")
       .replace(/<\s*\/\s*i\s*>/gi, "</em>")
       // <font> carries only presentational cruft
       .replace(/<\s*font[^>]*>/gi, "")
@@ -85,9 +135,6 @@ function preClean(html: string): string {
       // contentEditable often wraps lines in <div>; treat as paragraphs
       .replace(/<\s*div(\s[^>]*)?>/gi, "<p>")
       .replace(/<\s*\/\s*div\s*>/gi, "</p>")
-      // collapse accidental paragraph nesting produced by the div→p swap
-      .replace(/<p>\s*<p>/gi, "<p>")
-      .replace(/<\/p>\s*<\/p>/gi, "</p>")
   );
 }
 
@@ -112,8 +159,16 @@ function cleanInner(html: string): string {
     .trim();
 }
 
-/** Return the index just past the `</tag>` that matches the one opening at `start`. */
-function findMatchingClose(html: string, start: number, tag: string): number {
+/**
+ * Locate the `</tag>` matching the one opening at `start`.
+ * Returns where that closing tag begins and ends, or null when the element is
+ * never closed.
+ */
+function findMatchingCloseSpan(
+  html: string,
+  start: number,
+  tag: string,
+): { closeStart: number; end: number } | null {
   const re = new RegExp(`<${tag}(?:\\s[^>]*)?>|<\\/${tag}\\s*>`, "gi");
   re.lastIndex = start;
   let depth = 0;
@@ -121,12 +176,46 @@ function findMatchingClose(html: string, start: number, tag: string): number {
   while ((m = re.exec(html)) !== null) {
     if (m[0][1] === "/") {
       depth--;
-      if (depth === 0) return m.index + m[0].length;
+      if (depth === 0) return { closeStart: m.index, end: m.index + m[0].length };
     } else {
       depth++;
     }
   }
-  return -1;
+  return null;
+}
+
+/** Return the index just past the `</tag>` that matches the one opening at `start`. */
+function findMatchingClose(html: string, start: number, tag: string): number {
+  return findMatchingCloseSpan(html, start, tag)?.end ?? -1;
+}
+
+/** Index of the next top-level block-element open tag at or after `from`. */
+function nextBlockOpen(html: string, from: number): number {
+  for (let j = from; j < html.length; j++) {
+    if (html[j] !== "<") continue;
+    const t = /^<([a-zA-Z0-9]+)(?:\s[^>]*)?>/.exec(html.slice(j));
+    if (t && BLOCK_TAGS.has(t[1].toLowerCase())) return j;
+  }
+  return html.length;
+}
+
+/** Drop closing tags in a text/inline run that have no opener inside that run. */
+function dropUnmatchedCloseTags(chunk: string): string {
+  const open = new Map<string, number>();
+  return chunk.replace(
+    /<(\/?)([a-zA-Z0-9]+)(?:\s[^>]*)?>/g,
+    (match, slash: string, rawTag: string) => {
+      const tag = rawTag.toLowerCase();
+      if (!slash) {
+        open.set(tag, (open.get(tag) || 0) + 1);
+        return match;
+      }
+      const depth = open.get(tag) || 0;
+      if (depth === 0) return "";
+      open.set(tag, depth - 1);
+      return match;
+    },
+  );
 }
 
 /** Split the (pre-cleaned) HTML into top-level element / text chunks. */
@@ -158,6 +247,17 @@ function splitTopLevel(html: string): string[] {
           i = close;
           continue;
         }
+
+        // Unclosed element (unbalanced paste, or a wrapper whose partner was
+        // rewritten). Falling through to the text branch below would advance
+        // past the "<" alone and emit the rest as literal text — that is where
+        // the stray "p>" at the top of a manual came from. Instead close it
+        // implicitly before the next block element, as a browser would.
+        const openEnd = i + tagMatch[0].length;
+        const implicitEnd = nextBlockOpen(html, openEnd);
+        nodes.push(`${html.slice(i, implicitEnd)}</${tag}>`);
+        i = implicitEnd;
+        continue;
       }
     }
 
@@ -170,7 +270,7 @@ function splitTopLevel(html: string): string[] {
       }
       j++;
     }
-    const chunk = html.slice(i, j).trim();
+    const chunk = dropUnmatchedCloseTags(html.slice(i, j)).trim();
     if (chunk) nodes.push(chunk);
     i = j > i ? j : i + 1; // guard against zero-width progress
   }
@@ -274,7 +374,17 @@ function serializeNode(node: string): string {
   }
 
   const align = alignFromOpenTag(m[0]);
-  const inner = cleanInner(innerHtml(node, tag));
+  const rawInner = innerHtml(node, tag);
+
+  // <p> cannot legally nest, but the <div> → <p> rewrite above turns nested
+  // contentEditable divs into nested paragraphs. Unwrap them into sibling
+  // blocks instead of emitting <p><p>…</p></p>, which WordPress re-parses into
+  // stray empty paragraphs.
+  if (tag === "p" && BLOCK_OPEN_RE.test(rawInner)) {
+    return splitTopLevel(rawInner).map(serializeNode).filter(Boolean).join("\n\n");
+  }
+
+  const inner = cleanInner(rawInner);
 
   switch (tag) {
     case "p":
@@ -294,6 +404,10 @@ function serializeNode(node: string): string {
       return listBlock(inner, true);
     case "hr":
       return '<!-- wp:separator -->\n<hr class="wp-block-separator has-alpha-channel-opacity"/>\n<!-- /wp:separator -->';
+    case "br":
+      // A <br> that ended up at the top level is just the seam between two
+      // inline runs, which already became separate paragraphs.
+      return "";
     default:
       // Unknown block (table/figure/pre/…): preserve it verbatim in an HTML
       // block so nothing is lost and wpautop still leaves it alone.
