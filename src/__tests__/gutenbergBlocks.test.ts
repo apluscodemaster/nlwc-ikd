@@ -69,6 +69,22 @@ describe("htmlToGutenbergBlocks", () => {
     expect(text(out)).toBe("Body");
   });
 
+  it("confines an unclosed emphasis tag to its own block", () => {
+    const out = htmlToGutenbergBlocks("<p>lead <strong>bold</p><p>after</p>");
+    const second = out.split("<!-- wp:paragraph -->")[2];
+    expect(second).not.toContain("<strong>");
+    expect((out.match(/<strong>/g) || []).length).toBe(
+      (out.match(/<\/strong>/g) || []).length,
+    );
+    expect(text(out)).toBe("lead bold after");
+  });
+
+  it("keeps <pre> as a preformatted block, not raw html", () => {
+    const out = htmlToGutenbergBlocks("<pre>code here</pre>");
+    expect(out).toContain("<!-- wp:preformatted -->");
+    expect(out).not.toContain("<!-- wp:html -->");
+  });
+
   it("preserves genuine emphasis", () => {
     const out = htmlToGutenbergBlocks("<p>plain <strong>bold</strong></p>");
     expect(out).toContain("<strong>bold</strong>");

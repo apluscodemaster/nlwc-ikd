@@ -148,15 +148,17 @@ function alignFromOpenTag(openTag: string): string | null {
 
 /** Strip inline-only cruft from a block's inner HTML, keeping real formatting. */
 function cleanInner(html: string): string {
-  return html
+  const stripped = html
     .replace(/\sstyle="[^"]*"/gi, "")
     .replace(/\salign="[^"]*"/gi, "")
     .replace(/<span(\s[^>]*)?>/gi, "")
     .replace(/<\/span>/gi, "")
     .replace(/ /g, " ")
     .replace(/&nbsp;/gi, " ")
-    .replace(/(?:<br>\s*)+$/gi, "")
-    .trim();
+    .replace(/(?:<br>\s*)+$/gi, "");
+  // Balance last: removing <span> wrappers above can leave orphan closers, and
+  // any tag left open here would bleed its formatting into every later block.
+  return balanceInlineTags(stripped).trim();
 }
 
 /**
@@ -199,22 +201,54 @@ function nextBlockOpen(html: string, from: number): number {
   return html.length;
 }
 
-/** Drop closing tags in a text/inline run that have no opener inside that run. */
-function dropUnmatchedCloseTags(chunk: string): string {
-  const open = new Map<string, number>();
-  return chunk.replace(
-    /<(\/?)([a-zA-Z0-9]+)(?:\s[^>]*)?>/g,
-    (match, slash: string, rawTag: string) => {
+/** Elements with no closing tag — never pushed onto the balancing stack. */
+const VOID_TAGS = new Set([
+  "br",
+  "img",
+  "hr",
+  "input",
+  "wbr",
+  "source",
+  "area",
+  "col",
+  "embed",
+  "track",
+]);
+
+/**
+ * Make a block's inner HTML self-contained: drop closing tags with no opener
+ * and close anything still open at the end.
+ *
+ * An unclosed `<strong>` inside one block bleeds into every block after it —
+ * that is what rendered whole manuals bold. Balancing per block confines any
+ * malformed emphasis to the block it came from.
+ */
+function balanceInlineTags(html: string): string {
+  const stack: string[] = [];
+  const out = html.replace(
+    /<(\/?)([a-zA-Z0-9]+)((?:\s[^>]*)?)(\/?)>/g,
+    (match, slash: string, rawTag: string, _attrs: string, selfClose: string) => {
       const tag = rawTag.toLowerCase();
+      if (VOID_TAGS.has(tag) || selfClose) return match;
+
       if (!slash) {
-        open.set(tag, (open.get(tag) || 0) + 1);
+        stack.push(tag);
         return match;
       }
-      const depth = open.get(tag) || 0;
-      if (depth === 0) return "";
-      open.set(tag, depth - 1);
+
+      const idx = stack.lastIndexOf(tag);
+      if (idx === -1) return ""; // orphan close — drop it
+      stack.length = idx; // also discards tags left open inside
       return match;
     },
+  );
+
+  return (
+    out +
+    stack
+      .reverse()
+      .map((t) => `</${t}>`)
+      .join("")
   );
 }
 
@@ -270,7 +304,8 @@ function splitTopLevel(html: string): string[] {
       }
       j++;
     }
-    const chunk = dropUnmatchedCloseTags(html.slice(i, j)).trim();
+    // Orphan closing tags in this run are dropped downstream by cleanInner().
+    const chunk = html.slice(i, j).trim();
     if (chunk) nodes.push(chunk);
     i = j > i ? j : i + 1; // guard against zero-width progress
   }

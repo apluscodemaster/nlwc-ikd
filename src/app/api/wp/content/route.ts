@@ -71,7 +71,6 @@ export async function GET(request: NextRequest) {
             id: s.id,
             title: s.title,
             date: s.date,
-            dateIso: s.date,
             status: "publish",
             speaker: s.speaker,
             type: "sermon" as const,
