@@ -33,7 +33,6 @@ import {
   AlignLeft,
   AlignCenter,
   AlignJustify,
-  Heading2,
   Link as LinkIcon,
   Quote,
 } from "lucide-react";
@@ -273,6 +272,9 @@ function RichTextEditor({
   // Which block format the caret currently sits in, so the dropdown reflects
   // the selection instead of always showing "Paragraph".
   const [blockFormat, setBlockFormat] = useState("p");
+  // Opening the format dropdown moves focus out of the editor and clears the
+  // selection, so stash it on mousedown and restore it before applying.
+  const pendingSelection = useRef<Range | null>(null);
 
   useEffect(() => {
     if (editorRef.current && !isInternalChange.current) {
@@ -341,18 +343,42 @@ function RichTextEditor({
 
   const focusEditor = () => editorRef.current?.focus();
 
+  /** Read the block format under the caret. Browsers report the default block
+   *  as "div" or "" — both mean "paragraph" here. */
+  const currentBlockFormat = (): string => {
+    let tag = "";
+    try {
+      tag = document.queryCommandValue("formatBlock")?.toLowerCase() ?? "";
+    } catch {
+      /* queryCommandValue can throw when there is no selection */
+    }
+    return BLOCK_FORMAT_TAGS.has(tag) ? tag : "p";
+  };
+
+  const syncBlockFormat = () => setBlockFormat(currentBlockFormat());
+
   // All formatting goes through document.execCommand: it acts on the current
   // selection/cursor (so lists apply to the active line, not the whole doc) and
   // participates in the browser's native undo/redo stack (Ctrl+Z / Ctrl+Y).
   const formatBlock = (tag: string) => {
     focusEditor();
-    const current = document.queryCommandValue("formatBlock")?.toLowerCase();
+    const current = currentBlockFormat();
     document.execCommand(
       "formatBlock",
       false,
       current === tag.toLowerCase() ? "<p>" : `<${tag}>`,
     );
     handleInput();
+    syncBlockFormat();
+  };
+
+  /** Set (never toggle) the block format — the dropdown always states an
+   *  absolute choice, unlike the toggle buttons. */
+  const applyBlockFormat = (tag: string) => {
+    focusEditor();
+    document.execCommand("formatBlock", false, `<${tag}>`);
+    handleInput();
+    syncBlockFormat();
   };
 
   const insertList = (ordered: boolean) => {
@@ -420,7 +446,6 @@ function RichTextEditor({
       title: "Underline",
     },
     { icon: null, action: null, title: "divider" },
-    { icon: Heading2, action: () => formatBlock("h2"), title: "Heading" },
     { icon: Quote, action: () => formatBlock("blockquote"), title: "Quote" },
     { icon: null, action: null, title: "divider" },
     { icon: List, action: () => insertList(false), title: "Bullet List" },
@@ -452,6 +477,30 @@ function RichTextEditor({
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
       <div className="flex flex-wrap items-center gap-1 px-3 py-2 border-b border-gray-100 bg-gray-50/80">
+        <SelectField
+          aria-label="Text format"
+          value={blockFormat}
+          // onMouseDown would otherwise blur the editor and drop the selection
+          // the format is about to be applied to.
+          onMouseDown={() => {
+            pendingSelection.current = saveSelection();
+          }}
+          onChange={(e) => {
+            focusEditor();
+            restoreSelection(pendingSelection.current);
+            applyBlockFormat(e.target.value);
+          }}
+          className="h-9 pl-3 pr-8 text-xs font-medium bg-white"
+          chevronClassName="right-2 w-3.5 h-3.5"
+          wrapperClassName="w-36"
+        >
+          {BLOCK_FORMATS.map((f) => (
+            <option key={f.tag} value={f.tag}>
+              {f.label}
+            </option>
+          ))}
+        </SelectField>
+        <div className="w-px h-5 bg-gray-200 mx-1" />
         {toolbarButtons.map((btn, i) => {
           if (btn.title === "divider") {
             return (
@@ -479,15 +528,28 @@ function RichTextEditor({
       <div
         ref={editorRef}
         contentEditable
-        onInput={handleInput}
+        onInput={() => {
+          handleInput();
+          syncBlockFormat();
+        }}
         onPaste={handlePaste}
+        onKeyUp={syncBlockFormat}
+        onMouseUp={syncBlockFormat}
+        onFocus={syncBlockFormat}
         data-placeholder={placeholder}
         className="min-h-[280px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed focus:outline-none prose prose-sm max-w-none
           [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-gray-400
           [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
           [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600
           [&_p]:leading-relaxed
-          [&_a]:text-blue-600 [&_a]:underline [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2"
+          [&_a]:text-blue-600 [&_a]:underline
+          [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-5 [&_h1]:mb-2
+          [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2
+          [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2
+          [&_h4]:text-base [&_h4]:font-semibold [&_h4]:mt-3 [&_h4]:mb-1.5
+          [&_h5]:text-sm [&_h5]:font-semibold [&_h5]:mt-3 [&_h5]:mb-1.5
+          [&_h6]:text-xs [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-wide [&_h6]:mt-3 [&_h6]:mb-1.5
+          [&_pre]:bg-gray-100 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:whitespace-pre-wrap"
         style={{ wordBreak: "break-word" }}
       />
     </div>

@@ -408,6 +408,10 @@ function serializeNode(node: string): string {
       // A <br> that ended up at the top level is just the seam between two
       // inline runs, which already became separate paragraphs.
       return "";
+    case "pre":
+      return inner
+        ? `<!-- wp:preformatted -->\n<pre class="wp-block-preformatted">${inner}</pre>\n<!-- /wp:preformatted -->`
+        : "";
     default:
       // Unknown block (table/figure/pre/…): preserve it verbatim in an HTML
       // block so nothing is lost and wpautop still leaves it alone.
