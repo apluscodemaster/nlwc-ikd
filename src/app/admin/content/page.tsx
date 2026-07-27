@@ -69,9 +69,29 @@ function combinePublishDate(
  *  parts so the day never shifts by one (toISOString would convert to UTC). */
 function toDateInputValue(value?: string): string {
   if (!value) return "";
+  // A naive WordPress timestamp ("2026-07-28T00:15:00") carries no zone; take
+  // its calendar parts literally instead of letting Date reinterpret them.
+  const naive = /^(\d{4}-\d{2}-\d{2})T/.exec(value);
+  if (naive) return naive[1];
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/** Read the wall-clock time out of a WordPress timestamp.
+ *
+ *  WordPress stores `post.date` as naive site-local time with no offset, so it
+ *  must be read literally — `new Date(...)` would apply the browser's zone and
+ *  shift the hour. Returns hour/minute as the strings the selects expect, with
+ *  the minute snapped down to the nearest 5 to match the available options. */
+function toTimeInputValues(value?: string): { hour: string; minute: string } | null {
+  if (!value) return null;
+  const m = /T(\d{2}):(\d{2})/.exec(value);
+  if (!m) return null;
+  const hour = Number(m[1]);
+  const minute = Number(m[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return { hour: String(hour), minute: String(Math.floor(minute / 5) * 5) };
 }
 
 /**
@@ -169,6 +189,9 @@ interface ContentItem {
   series?: string;
   transcriptType?: string;
   slug?: string;
+  /** Raw WP timestamp ("YYYY-MM-DDTHH:mm:ss", naive site-local). `date` is a
+   *  display label with no time, so editing needs this to keep the schedule. */
+  dateIso?: string;
   /** Manual theme/series (resolved: meta override ?? parsed "THEME:" label). */
   theme?: string;
   /** Manual lesson label parsed from the excerpt. */
@@ -219,6 +242,23 @@ const TABS: {
 ];
 
 // ─── Rich Text Editor ─────────────────────────────────────────────────────────
+
+/** Block formats offered by the editor's format dropdown. Every tag here is
+ *  serialized to a native Gutenberg block by htmlToGutenbergBlocks(). */
+const BLOCK_FORMATS = [
+  { tag: "p", label: "Paragraph" },
+  { tag: "h1", label: "Heading 1" },
+  { tag: "h2", label: "Heading 2" },
+  { tag: "h3", label: "Heading 3" },
+  { tag: "h4", label: "Heading 4" },
+  { tag: "h5", label: "Heading 5" },
+  { tag: "h6", label: "Heading 6" },
+  { tag: "blockquote", label: "Quote" },
+  { tag: "pre", label: "Preformatted" },
+] as const;
+
+const BLOCK_FORMAT_TAGS = new Set(BLOCK_FORMATS.map((f) => f.tag as string));
+
 function RichTextEditor({
   value,
   onChange,
@@ -230,6 +270,9 @@ function RichTextEditor({
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const isInternalChange = useRef(false);
+  // Which block format the caret currently sits in, so the dropdown reflects
+  // the selection instead of always showing "Paragraph".
+  const [blockFormat, setBlockFormat] = useState("p");
 
   useEffect(() => {
     if (editorRef.current && !isInternalChange.current) {
@@ -666,6 +709,8 @@ export default function AdminChurchContentPage() {
   const [editContent, setEditContent] = useState("");
   const [editStatus, setEditStatus] = useState<"draft" | "publish">("draft");
   const [editDate, setEditDate] = useState("");
+  const [editHour, setEditHour] = useState("12");
+  const [editMinute, setEditMinute] = useState("0");
   const [editSpeaker, setEditSpeaker] = useState("");
   const [editSeriesId, setEditSeriesId] = useState("");
   const [editThumbnailPreview, setEditThumbnailPreview] = useState<
@@ -817,8 +862,17 @@ export default function AdminChurchContentPage() {
     setEditingItem(item);
     setEditTitle(item.title);
     setEditContent(item.content || item.excerpt || "");
-    setEditStatus(item.status as "draft" | "publish");
-    setEditDate(toDateInputValue(item.date));
+    // A scheduled post comes back as "future", which matches neither option in
+    // the Status select (it rendered blank). Treat it as "publish" — the future
+    // date below is what re-schedules it on save.
+    setEditStatus(item.status === "draft" ? "draft" : "publish");
+    // Prefer the raw WP timestamp: it is the only source that still has the
+    // time. `item.date` is a formatted label ("Jul 28, 2026") whose time the
+    // save used to replace with a hardcoded noon, silently moving schedules.
+    setEditDate(toDateInputValue(item.dateIso || item.date));
+    const time = toTimeInputValues(item.dateIso);
+    setEditHour(time ? time.hour : "12");
+    setEditMinute(time ? time.minute : "0");
     setEditSpeaker(item.speaker || "");
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
@@ -909,9 +963,23 @@ export default function AdminChurchContentPage() {
         status: editStatus,
         speaker: editSpeaker,
       };
-      // Send a naive local datetime (noon, no timezone) so WordPress keeps the
-      // exact calendar day the admin picked — toISOString() would shift it.
-      if (editDate) payload.date = `${editDate}T12:00:00`;
+      // Send the naive datetime the admin actually chose (no timezone suffix)
+      // so WordPress reads it in the site's timezone and keeps both the day and
+      // the hour. This previously hardcoded noon, which reset the schedule of
+      // any post edited after it was scheduled.
+      const editPublishAt = combinePublishDate(editDate, editHour, editMinute);
+      if (editPublishAt) {
+        payload.date = editPublishAt;
+        // A future moment means "schedule it": WordPress stores the post as
+        // "future" and publishes then. Leaving status "publish" with a future
+        // date would otherwise depend on WP inferring the intent.
+        if (
+          editStatus === "publish" &&
+          new Date(editPublishAt).getTime() > Date.now()
+        ) {
+          payload.status = "future";
+        }
+      }
       if (editUploadedMediaId) payload.featuredMediaId = editUploadedMediaId;
       if (activeTab === "sermon") {
         // Sermons are Series Engine messages: the MP3 and thumbnail are URLs,
@@ -2065,13 +2133,52 @@ export default function AdminChurchContentPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {activeTab === "sermon" ? "Sermon Date" : "Date"}
+                    {activeTab === "sermon" ? "Sermon Date" : "Date & Time"}
                   </label>
-                  <CustomDatePicker
-                    value={editDate}
-                    onChange={setEditDate}
-                    className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-                  />
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <CustomDatePicker
+                      value={editDate}
+                      onChange={setEditDate}
+                      wrapperClassName="w-full sm:flex-1"
+                      className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+                    />
+                    {activeTab !== "sermon" && (
+                      <div className="flex items-center gap-2">
+                        <SelectField
+                          value={editHour}
+                          onChange={(e) => setEditHour(e.target.value)}
+                          className="w-auto h-12 pl-4 pr-9"
+                          chevronClassName="right-3"
+                        >
+                          {Array.from({ length: 24 }, (_, h) => (
+                            <option key={h} value={h}>
+                              {pad2(h)}
+                            </option>
+                          ))}
+                        </SelectField>
+                        <span className="font-bold text-gray-400">:</span>
+                        <SelectField
+                          value={editMinute}
+                          onChange={(e) => setEditMinute(e.target.value)}
+                          className="w-auto h-12 pl-4 pr-9"
+                          chevronClassName="right-3"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i * 5).map(
+                            (m) => (
+                              <option key={m} value={m}>
+                                {pad2(m)}
+                              </option>
+                            ),
+                          )}
+                        </SelectField>
+                      </div>
+                    )}
+                  </div>
+                  {activeTab !== "sermon" && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      24-hour clock — 00:15 is 12:15 AM, 12:15 is 12:15 PM.
+                    </p>
+                  )}
                 </div>
 
                 {activeTab === "sermon" && (

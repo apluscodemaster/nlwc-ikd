@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
             id: s.id,
             title: s.title,
             date: s.date,
+            dateIso: s.date,
             status: "publish",
             speaker: s.speaker,
             type: "sermon" as const,
@@ -105,6 +106,10 @@ export async function GET(request: NextRequest) {
               id: transcript.id,
               title: transcript.title,
               date: transcript.formattedDate,
+              // Raw WP timestamp (naive, site-local "YYYY-MM-DDTHH:mm:ss").
+              // `date` above is a display label with no time, so the edit form
+              // needs this to round-trip the scheduled hour/minute.
+              dateIso: post.date,
               status: post.status,
               speaker: transcript.speaker,
               type: "transcript" as const,
@@ -142,6 +147,8 @@ export async function GET(request: NextRequest) {
               id: manual.id,
               title: manual.title,
               date: manual.formattedDate,
+              // See the transcript branch — carries the time the display label drops.
+              dateIso: post.date,
               status: post.status,
               speaker: extractSpeaker(post.content.rendered),
               type: "manual" as const,
