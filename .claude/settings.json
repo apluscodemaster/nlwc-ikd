@@ -66,7 +66,9 @@
       "Bash(npx vitest *)",
       "Bash(rm -f src/__tests__/gutenbergProbe.test.ts)",
       "Bash(echo \"TSC_EXIT=$?\")",
-      "Bash(echo \"TSC=$?\")"
+      "Bash(echo \"TSC=$?\")",
+      "PowerShell(git -C \"C:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\" status --short)",
+      "PowerShell(git -C \"C:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\" diff --stat HEAD)"
     ]
   }
 }
