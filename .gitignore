@@ -50,3 +50,6 @@ next-env.d.ts
 # Documentation & Setup Guides (local reference only)
 WEBHOOK_SETUP.md
 WORDPRESS_INTEGRATION.md
+# Claude Code: machine-local permissions/settings (never commit — the
+# auto-approved allowlist churns per session and conflicts on every merge)
+.claude/settings.local.json
