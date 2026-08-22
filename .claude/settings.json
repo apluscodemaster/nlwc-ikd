@@ -78,7 +78,10 @@
       "Read(//c/Program Files/Google/Chrome/Application/**)",
       "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/Edge/Application/**)",
       "Bash(curl -s \"http://localhost:3000/api/manuals?per_page=3\" --max-time 90)",
-      "Bash(curl -s \"http://localhost:3000/manuals\" --max-time 120)"
+      "Bash(curl -s \"http://localhost:3000/manuals\" --max-time 120)",
+      "Bash(echo \"COMMIT_EXIT=$?\")",
+      "Bash(git --no-pager log --oneline -3)",
+      "Bash(git --no-pager status --short --branch)"
     ]
   }
 }
