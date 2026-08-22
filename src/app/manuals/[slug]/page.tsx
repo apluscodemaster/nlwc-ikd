@@ -38,6 +38,47 @@ interface Props {
 // ISR: cache rendered pages for 5 minutes, then regenerate in background
 export const revalidate = 300;
 
+/**
+ * Reading treatment for the manual body.
+ *
+ * Block-level selectors are DIRECT-child variants (`&>p`, `&>h2`, …) on
+ * purpose: `formatMemoryTrack` injects its own pre-styled markup (memory track
+ * cards, INTRODUCTION/CONCLUSION headers) as nested elements, so scoping to
+ * direct children leaves those cards untouched and restyles only the raw
+ * WordPress copy around them. List items, emphasis and images use descendant
+ * variants because the injected markup contains none of them.
+ */
+const MANUAL_PROSE = [
+  // Body copy stays justified (the shared default) — only size, leading and
+  // rhythm change here.
+  "[&>p]:text-[1.0625rem] sm:[&>p]:text-[1.125rem] [&>p]:leading-[1.9] [&>p]:text-gray-700 [&>p]:mb-6",
+  // Drop cap opens the lesson. Only fires when the body actually starts with a
+  // paragraph, so manuals that open with a heading or image are unaffected.
+  "[&>p:first-child]:first-letter:float-left [&>p:first-child]:first-letter:mr-3",
+  "[&>p:first-child]:first-letter:mt-1 [&>p:first-child]:first-letter:font-serif",
+  "[&>p:first-child]:first-letter:text-[3.5rem] [&>p:first-child]:first-letter:font-black",
+  "[&>p:first-child]:first-letter:leading-[0.78] [&>p:first-child]:first-letter:text-amber-600",
+  // Headings get an accent rule so sections are scannable
+  "[&>h2]:mt-12 [&>h2]:mb-4 [&>h2]:border-l-4 [&>h2]:border-amber-500 [&>h2]:pl-4",
+  "[&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-black [&>h2]:tracking-tight",
+  "[&>h3]:mt-9 [&>h3]:mb-3 [&>h3]:text-base sm:[&>h3]:text-lg [&>h3]:font-bold",
+  "[&>h3]:uppercase [&>h3]:tracking-wider [&>h3]:text-amber-700",
+  // Quotes read as pull-quotes rather than indented copy
+  "[&>blockquote]:my-8 [&>blockquote]:rounded-2xl [&>blockquote]:border-l-4",
+  "[&>blockquote]:border-amber-500 [&>blockquote]:bg-amber-50/80 [&>blockquote]:px-6 [&>blockquote]:py-5",
+  "[&>blockquote_p]:m-0 [&>blockquote_p]:text-lg [&>blockquote_p]:italic",
+  "[&>blockquote_p]:leading-relaxed [&>blockquote_p]:text-amber-950",
+  // Lists: amber markers, roomier lines
+  "[&_li]:my-2 [&_li]:leading-[1.8] [&_li]:marker:font-bold [&_li]:marker:text-amber-500",
+  // Ornamental section breaks
+  "[&>hr]:my-12 [&>hr]:h-px [&>hr]:border-0 [&>hr]:bg-linear-to-r",
+  "[&>hr]:from-transparent [&>hr]:via-amber-300 [&>hr]:to-transparent",
+  // Figures. Deliberately nothing targeting <strong> or other inline elements:
+  // scripture references are wrapped in-place by ScriptureProvider and often
+  // sit inside bolded text, so this layer stays off inline content entirely.
+  "[&_img]:rounded-2xl [&_img]:shadow-md",
+].join(" ");
+
 // Calculate read time from HTML content (~200 words per minute)
 function calculateReadTime(htmlContent: string): number {
   const textContent = htmlContent
@@ -222,13 +263,32 @@ export default async function ManualPage({ params, searchParams }: Props) {
       </div>
 
       {/* ===== CONTENT ===== */}
+      {/* Narrower than the hero on purpose: max-w-3xl keeps the line length in
+          the comfortable 65–75 character range instead of running the full
+          hero width. */}
       <SectionContainer className="py-8 sm:py-12">
-        <article className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-8 md:p-12 overflow-hidden">
-          <TranscriptContent
-            content={manual.content}
-            accentColor="amber"
-            searchQuery={searchQuery}
-          />
+        <article className="max-w-3xl mx-auto bg-white rounded-2xl sm:rounded-3xl ring-1 ring-amber-100/70 shadow-lg shadow-amber-900/5 overflow-hidden">
+          {/* Accent edge ties the page back to the hero */}
+          <div className="h-1.5 bg-linear-to-r from-amber-600 via-orange-500 to-yellow-400" />
+
+          <div className="p-5 sm:p-8 md:p-12">
+            <TranscriptContent
+              content={manual.content}
+              accentColor="amber"
+              searchQuery={searchQuery}
+              className={MANUAL_PROSE}
+            />
+
+            {/* End-of-lesson ornament — a clear finish line for the reader */}
+            <div
+              className="mt-12 flex items-center justify-center gap-3 text-amber-400"
+              aria-hidden="true"
+            >
+              <span className="h-px w-12 bg-linear-to-r from-transparent to-amber-200" />
+              <BookMarked className="w-4 h-4" />
+              <span className="h-px w-12 bg-linear-to-l from-transparent to-amber-200" />
+            </div>
+          </div>
         </article>
       </SectionContainer>
 
