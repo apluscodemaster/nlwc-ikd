@@ -68,7 +68,25 @@
       "Bash(echo \"TSC_EXIT=$?\")",
       "Bash(echo \"TSC=$?\")",
       "PowerShell(git -C \"C:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\" status --short)",
-      "PowerShell(git -C \"C:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\" diff --stat HEAD)"
+      "PowerShell(git -C \"C:\\\\Users\\\\adebanjo.adeniji\\\\Documents\\\\personal-files\\\\nlwc-ikd\" diff --stat HEAD)",
+      "Bash(grep -n 'h2\\\\\\\\\\\\]' tw.css)",
+      "Bash(grep '\\\\\\\\\\\\]')",
+      "Bash(git --no-pager diff --stat)",
+      "Bash(git --no-pager diff src/components/shared/TranscriptContent.tsx)",
+      "Bash(git --no-pager status --porcelain)",
+      "Bash(git --no-pager diff --cached --stat)",
+      "Bash(git --no-pager log --oneline -5)",
+      "Bash(git --no-pager show HEAD --stat)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/Edge/Application/**)",
+      "Bash(curl -s \"http://localhost:3000/api/manuals?per_page=3\" --max-time 90)",
+      "Bash(curl -s \"http://localhost:3000/manuals\" --max-time 120)",
+      "Bash(git --no-pager *)",
+      "Bash(node -e \"const j=require\\('./.claude/settings.json'\\); console.log\\('OK — allow entries:', j.permissions.allow.length\\); const s=new Set\\(j.permissions.allow\\); console.log\\('duplicates:', j.permissions.allow.length - s.size\\);\")",
+      "Bash(git --no-pager log --oneline -1 MERGE_HEAD)",
+      "Bash(node -e \"const j=require\\('./.claude/settings.json'\\);console.log\\('OK, allow entries:',j.permissions.allow.length\\)\")",
+      "Bash(git --no-pager status --short)",
+      "Bash(git --no-pager diff --cached --stat HEAD)"
     ]
   }
 }
