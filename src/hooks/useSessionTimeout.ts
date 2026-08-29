@@ -8,6 +8,12 @@ import {
 } from "@/lib/adminSession";
 
 /**
+ * Minimum gap between activity writes. High-frequency events (mousemove,
+ * scroll) are collapsed to at most one storage write + reschedule per interval.
+ */
+const ACTIVITY_WRITE_INTERVAL_MS = 30 * 1000;
+
+/**
  * Idle-timeout enforcement for the admin area.
  *
  * The last-activity timestamp lives in sessionStorage (see `adminSession`), not
@@ -22,6 +28,7 @@ export function useSessionTimeout(
 ) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastWriteRef = useRef(0);
 
   // Kept in a ref so the activity listeners don't need re-binding every time the
   // caller passes a new inline callback.
@@ -63,8 +70,27 @@ export function useSessionTimeout(
 
   const resetTimeout = useCallback(() => {
     markActivity();
+    lastWriteRef.current = Date.now();
     scheduleFromStore();
   }, [scheduleFromStore]);
+
+  /**
+   * Throttled activity handler.
+   *
+   * `mousemove` and `scroll` fire at roughly display refresh rate. Doing a
+   * synchronous sessionStorage write plus two clearTimeout/setTimeout pairs on
+   * every one of those events burns main-thread time for no benefit: against a
+   * 30-minute deadline, refreshing more than twice a minute changes nothing.
+   *
+   * Cost of throttling is bounded and harmless — the stored stamp is at most
+   * ACTIVITY_WRITE_INTERVAL_MS stale, so the session can expire up to 30s early
+   * in the worst case, never late.
+   */
+  const handleActivityThrottled = useCallback(() => {
+    const now = Date.now();
+    if (now - lastWriteRef.current < ACTIVITY_WRITE_INTERVAL_MS) return;
+    resetTimeout();
+  }, [resetTimeout]);
 
   useEffect(() => {
     if (!isActive) {
@@ -76,9 +102,7 @@ export function useSessionTimeout(
     // or simply mounting the layout would forgive an expired idle period.
     scheduleFromStore();
 
-    const handleActivity = () => {
-      resetTimeout();
-    };
+    const handleActivity = handleActivityThrottled;
 
     // A throttled background tab can miss its timer entirely; re-validate
     // against the wall clock whenever the tab comes back to the foreground.
@@ -100,8 +124,10 @@ export function useSessionTimeout(
       "mousemove",
     ];
 
+    // passive: these never call preventDefault, so the browser can keep
+    // scrolling on the compositor instead of waiting on the handler.
     events.forEach((event) => {
-      document.addEventListener(event, handleActivity);
+      document.addEventListener(event, handleActivity, { passive: true });
     });
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("focus", handleVisibility);
@@ -114,7 +140,7 @@ export function useSessionTimeout(
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("focus", handleVisibility);
     };
-  }, [isActive, resetTimeout, scheduleFromStore, clearAllTimeouts]);
+  }, [isActive, handleActivityThrottled, scheduleFromStore, clearAllTimeouts]);
 
   return { clearTimeout: clearAllTimeouts, resetTimeout, IDLE_TIMEOUT_MS };
 }
