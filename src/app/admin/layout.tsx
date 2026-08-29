@@ -6,11 +6,18 @@ import { usePathname } from "next/navigation";
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
+  setPersistence,
+  browserSessionPersistence,
   signOut,
   User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import {
+  beginTabSession,
+  endTabSession,
+  checkSession,
+} from "@/lib/adminSession";
 import {
   BookOpen,
   Calendar,
@@ -152,7 +159,30 @@ export default function AdminLayout({
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
+    // Keep the credential in sessionStorage rather than localStorage, so closing
+    // the tab ends the session instead of parking it on disk indefinitely.
+    // Fire-and-forget: the tab-marker check below is the real guarantee, and it
+    // holds even if this call loses a race with onAuthStateChanged.
+    setPersistence(auth, browserSessionPersistence).catch(() => {
+      // Non-fatal — a browser that refuses sessionStorage still gets the
+      // marker check, which fails closed when storage is unavailable.
+    });
+
     const unsub = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        // A user here did NOT necessarily just sign in — Firebase also replays
+        // a credential restored from storage. Only a sign-in in this tab writes
+        // the marker, so anything without one is a stale restore and is
+        // rejected. This is what stops "close the tab, come back, still in".
+        const check = checkSession();
+        if (!check.ok) {
+          endTabSession();
+          void signOut(auth);
+          setUser(null);
+          setChecking(false);
+          return;
+        }
+      }
       setUser(u);
       setChecking(false);
     });
@@ -164,8 +194,14 @@ export default function AdminLayout({
     setLoginError("");
     setLoggingIn(true);
     try {
+      // Claim the tab session BEFORE signing in: onAuthStateChanged fires
+      // synchronously off the sign-in and would otherwise find no marker and
+      // immediately reject the credential we just obtained.
+      beginTabSession();
       await signInWithEmailAndPassword(auth, email, password);
+      setSessionExpired(false);
     } catch (err: unknown) {
+      endTabSession();
       setLoginError(getFriendlyErrorMessage(err as FirebaseAuthError));
     } finally {
       setLoggingIn(false);
@@ -173,6 +209,7 @@ export default function AdminLayout({
   };
 
   const logout = async () => {
+    endTabSession();
     await signOut(auth);
   };
 
