@@ -4,7 +4,8 @@ import {
   publishToWordPress,
   createSermonInSeriesEngine,
 } from "@/services/wp-service";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
@@ -49,8 +50,8 @@ async function safeRevalidate(
  */
 export async function POST(request: NextRequest) {
   // ── Auth guard ────────────────────────────────────────────────────────────
-  const authError = await requireAuth(request);
-  if (authError) return authError;
+  const auth = await requireAuthActor(request);
+  if (auth.response) return auth.response;
 
   // ── Rate limiting ─────────────────────────────────────────────────────────
   const rateLimitError = rateLimitMiddleware(request, "authenticated");
@@ -96,6 +97,15 @@ export async function POST(request: NextRequest) {
       { path: "/sermons" },
       { path: "/sermons/audio/[id]", kind: "page" },
     ]);
+    void recordAudit({
+      actor: auth.actor,
+      action: "publish",
+      resource: "content",
+      target: parsedSermon.data.title,
+      status: "success",
+      detail: { type: "sermon" },
+      request,
+    });
     return NextResponse.json(sermonResult, { status: 201 });
   }
 
@@ -155,6 +165,15 @@ export async function POST(request: NextRequest) {
     );
   }
   await safeRevalidate(targets);
+
+  void recordAudit({
+    actor: auth.actor,
+    action: "publish",
+    resource: "content",
+    target: parsed.data.title,
+    detail: { type },
+    request,
+  });
 
   return NextResponse.json(result, { status: 201 });
 }

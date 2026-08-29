@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import crypto from "crypto";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
@@ -9,9 +10,9 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 export async function POST(request: NextRequest) {
   // Verify authentication
-  const authError = await requireAuth(request);
-  if (authError) {
-    return authError;
+  const auth = await requireAuthActor(request);
+  if (auth.response) {
+    return auth.response;
   }
 
   // Apply rate limiting
@@ -95,6 +96,16 @@ export async function POST(request: NextRequest) {
         { status: response.status },
       );
     }
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "upload",
+      resource: "media",
+      target: data.secure_url,
+      targetId: data.public_id,
+      detail: { context: "devotional" },
+      request,
+    });
 
     return NextResponse.json({
       url: data.secure_url,

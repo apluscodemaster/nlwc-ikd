@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 
 /**
  * NOTE: GET is deliberately PUBLIC — the player-facing QuizLauncher reads this
@@ -30,8 +31,8 @@ export async function GET() {
 
 // ── POST: Create a new category ──
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const body = await req.json();
@@ -74,6 +75,16 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "create",
+      resource: "quiz-category",
+      target: name,
+      targetId: (data as { id?: string | number })?.id ?? null,
+      request: req,
+    });
+
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Failed to create category:", error);
@@ -86,8 +97,8 @@ export async function POST(req: NextRequest) {
 
 // ── DELETE: Remove a category ──
 export async function DELETE(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const { searchParams } = req.nextUrl;
@@ -104,6 +115,16 @@ export async function DELETE(req: NextRequest) {
     const { error } = await sb.from("quiz_categories").delete().eq("id", id);
 
     if (error) throw error;
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "delete",
+      resource: "quiz-category",
+      target: `Category #${id}`,
+      targetId: id,
+      request: req,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete category:", error);
