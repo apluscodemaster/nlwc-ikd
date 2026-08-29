@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 const WP_URL =
@@ -18,9 +19,9 @@ const WP_APP_PASSWORD = process.env.WP_APPLICATION_PASSWORD || "";
  */
 export async function POST(request: NextRequest) {
   // Verify authentication
-  const authError = await requireAuth(request);
-  if (authError) {
-    return authError;
+  const auth = await requireAuthActor(request);
+  if (auth.response) {
+    return auth.response;
   }
 
   // Apply rate limiting
@@ -86,6 +87,15 @@ export async function POST(request: NextRequest) {
         };
       };
     };
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "upload",
+      resource: "media",
+      target: data.source_url,
+      targetId: data.id,
+      request,
+    });
 
     return NextResponse.json({
       id: data.id,

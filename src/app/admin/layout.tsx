@@ -18,6 +18,7 @@ import {
   endTabSession,
   checkSession,
 } from "@/lib/adminSession";
+import { reportAudit } from "@/lib/auditClient";
 import {
   BookOpen,
   Calendar,
@@ -35,6 +36,7 @@ import {
   EyeOff,
   MessageCircleHeart,
   BrainCircuit,
+  ScrollText,
   Timer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,6 +93,12 @@ const NAV_ITEMS = [
     href: "/admin/schedule",
     icon: Calendar,
     description: "Manage Live Service Schedule",
+  },
+  {
+    label: "Audit Log",
+    href: "/admin/audit-log",
+    icon: ScrollText,
+    description: "Who changed what, and when",
   },
 ];
 
@@ -200,6 +208,7 @@ export default function AdminLayout({
       beginTabSession();
       await signInWithEmailAndPassword(auth, email, password);
       setSessionExpired(false);
+      void reportAudit({ action: "login", resource: "session" });
     } catch (err: unknown) {
       endTabSession();
       setLoginError(getFriendlyErrorMessage(err as FirebaseAuthError));
@@ -209,6 +218,9 @@ export default function AdminLayout({
   };
 
   const logout = async () => {
+    // Report before signing out — reportAudit needs a live token to prove who
+    // is leaving, and auth.currentUser is null the moment signOut resolves.
+    await reportAudit({ action: "logout", resource: "session" });
     endTabSession();
     await signOut(auth);
   };

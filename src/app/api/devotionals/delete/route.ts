@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import crypto from "crypto";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
@@ -9,9 +10,9 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 export async function DELETE(request: NextRequest) {
   // Verify authentication
-  const authError = await requireAuth(request);
-  if (authError) {
-    return authError;
+  const auth = await requireAuthActor(request);
+  if (auth.response) {
+    return auth.response;
   }
 
   // Apply rate limiting
@@ -61,11 +62,30 @@ export async function DELETE(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok || data.result !== "ok") {
+      void recordAudit({
+        actor: auth.actor,
+        action: "delete",
+        resource: "media",
+        target: publicId,
+        targetId: publicId,
+        status: "failure",
+        detail: { error: data.error?.message || "Cloudinary deletion failed" },
+        request,
+      });
       return NextResponse.json(
         { error: data.error?.message || "Cloudinary deletion failed" },
         { status: response.status || 500 },
       );
     }
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "delete",
+      resource: "media",
+      target: publicId,
+      targetId: publicId,
+      request,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

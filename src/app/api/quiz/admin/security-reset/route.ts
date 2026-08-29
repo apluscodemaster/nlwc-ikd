@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 
 export const runtime = "nodejs";
 
@@ -18,8 +19,8 @@ export const runtime = "nodejs";
  * Body: { session_id }
  */
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   const limited = rateLimitMiddleware(req, "authenticated");
   if (limited) return limited;
@@ -57,6 +58,15 @@ export async function POST(req: NextRequest) {
     .from("sessions")
     .update({ security_set: false })
     .eq("session_id", sessionId);
+
+  void recordAudit({
+    actor: auth.actor,
+    action: "reset",
+    resource: "quiz-stats",
+    target: `Security question for session ${sessionId}`,
+    targetId: sessionId,
+    request: req,
+  });
 
   return NextResponse.json({ success: true });
 }

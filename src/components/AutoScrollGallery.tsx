@@ -154,6 +154,7 @@ export default function AutoScrollGallery() {
   const [hovering, setHovering] = React.useState(false);
   const [lightbox, setLightbox] = React.useState<string | null>(null);
   const [dragX, setDragX] = React.useState(0);
+  const [dragging, setDragging] = React.useState(false);
   // Natural aspect ratios, keyed by URL and learned from the images we already
   // render — no extra probing requests.
   const [ratios, setRatios] = React.useState<Record<string, number>>({});
@@ -175,7 +176,12 @@ export default function AutoScrollGallery() {
   }, [count]);
 
   const autoplayOn =
-    playing && !hovering && !lightbox && !reducedMotion && count > 1;
+    playing &&
+    !hovering &&
+    !dragging &&
+    !lightbox &&
+    !reducedMotion &&
+    count > 1;
 
   React.useEffect(() => {
     if (!autoplayOn) return;
@@ -221,6 +227,7 @@ export default function AutoScrollGallery() {
     if (count < 2) return;
     dragStart.current = e.clientX;
     dragged.current = false;
+    setDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -235,6 +242,7 @@ export default function AutoScrollGallery() {
     if (dragStart.current === null) return;
     const dx = e.clientX - dragStart.current;
     dragStart.current = null;
+    setDragging(false);
     setDragX(0);
     if (Math.abs(dx) > 55) step(dx < 0 ? 1 : -1);
   };
@@ -263,15 +271,20 @@ export default function AutoScrollGallery() {
           <Skeleton className="mx-auto h-4 w-40 bg-white/10" />
           <Skeleton className="mx-auto h-12 w-3/4 rounded-2xl bg-white/10" />
         </div>
-        <div className="mt-16 flex items-end justify-center gap-6 px-4">
-          {[0.62, 0.82, 1, 0.82, 0.62].map((scale, i) => (
+        <div className="mt-14 flex items-end justify-center gap-3 overflow-hidden px-4 sm:gap-6 md:mt-20">
+          {[0.6, 0.8, 1, 0.8, 0.6].map((scale, i) => (
             <Skeleton
               key={i}
-              className="hidden shrink-0 rounded-[28px] bg-white/10 sm:block"
-              style={{ height: 420 * scale, width: 300 * scale }}
+              className={cn(
+                "aspect-[3/2] shrink-0 rounded-[18px] bg-white/10 md:rounded-[26px]",
+                // Only the focused card is guaranteed on-screen at phone widths.
+                i === 2 ? "block" : i === 1 || i === 3 ? "hidden sm:block" : "hidden lg:block",
+              )}
+              style={{
+                height: `clamp(${150 * scale}px, ${22 * scale}vw, ${480 * scale}px)`,
+              }}
             />
           ))}
-          <Skeleton className="h-[300px] w-full max-w-[420px] rounded-[28px] bg-white/10 sm:hidden" />
         </div>
       </section>
     );
@@ -287,6 +300,11 @@ export default function AutoScrollGallery() {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(45%_35%_at_50%_100%,rgba(255,255,255,0.06),transparent_70%)]"
+      />
+      {/* Hand back to the white page gap above the footer without a hard seam. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-white md:h-28"
       />
 
       <div className="relative mx-auto mb-14 max-w-7xl space-y-4 px-6 text-center md:mb-20">
@@ -396,7 +414,10 @@ export default function AutoScrollGallery() {
                     ].join(" "),
                     transition: reducedMotion
                       ? "none"
-                      : "transform 900ms cubic-bezier(0.16,1,0.3,1), opacity 700ms ease, width 500ms ease, height 500ms ease",
+                      : dragging
+                        ? // Track the finger 1:1 while dragging, then ease back.
+                          "opacity 700ms ease"
+                        : "transform 900ms cubic-bezier(0.16,1,0.3,1), opacity 700ms ease, width 500ms ease, height 500ms ease",
                   }}
                 >
                   {/* The photo */}
@@ -472,16 +493,16 @@ export default function AutoScrollGallery() {
           {/* Floor line + edge fades sit above the 3D stage */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 z-[60] h-px bg-[linear-gradient(to_right,transparent,rgba(255,255,255,0.16),transparent)]"
+            className="pointer-events-none absolute inset-x-0 z-60 h-px bg-[linear-gradient(to_right,transparent,rgba(255,255,255,0.16),transparent)]"
             style={{ bottom: reflectionSpace }}
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-[60] w-8 bg-linear-to-r from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
+            className="pointer-events-none absolute inset-y-0 left-0 z-60 w-8 bg-linear-to-r from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-[60] w-8 bg-linear-to-l from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
+            className="pointer-events-none absolute inset-y-0 right-0 z-60 w-8 bg-linear-to-l from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
           />
 
           {/* Controls */}
@@ -491,7 +512,7 @@ export default function AutoScrollGallery() {
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous image"
-                className="absolute left-1 top-1/2 z-[70] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:left-3 sm:h-12 sm:w-12 md:left-8 md:h-14 md:w-14"
+                className="absolute left-1 top-1/2 z-70 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:left-3 sm:h-12 sm:w-12 md:left-8 md:h-14 md:w-14"
               >
                 <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
@@ -499,7 +520,7 @@ export default function AutoScrollGallery() {
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next image"
-                className="absolute right-1 top-1/2 z-[70] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:right-3 sm:h-12 sm:w-12 md:right-8 md:h-14 md:w-14"
+                className="absolute right-1 top-1/2 z-70 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:right-3 sm:h-12 sm:w-12 md:right-8 md:h-14 md:w-14"
               >
                 <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
