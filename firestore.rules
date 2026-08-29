@@ -77,6 +77,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // The audit log is append-only from the server (lib/auditLog.ts) and is
+    // read back through /api/admin/audit-log. Denying clients outright is the
+    // point: an admin who could write here could forge entries, and one who
+    // could delete here could erase their own trail. The Admin SDK bypasses
+    // these rules, so the server is unaffected.
+    match /admin_audit_logs/{entryId} {
+      allow read, write: if false;
+    }
+
     // ── Default deny ────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
