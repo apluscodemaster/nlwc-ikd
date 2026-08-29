@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import type { QuizCategory } from "@/types/quiz";
 
 /**
@@ -12,8 +13,8 @@ import type { QuizCategory } from "@/types/quiz";
 
 // ── GET: List all questions (admin only — no answer stripping) ──
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const adminDb = getAdminDb();
@@ -39,8 +40,8 @@ export async function GET(req: NextRequest) {
 
 // ── POST: Create a new question ──
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const body = await req.json();
@@ -114,6 +115,16 @@ export async function POST(req: NextRequest) {
     const adminDb = getAdminDb();
     const docRef = await adminDb.collection("quiz_questions").add(docData);
 
+    void recordAudit({
+      actor: auth.actor,
+      action: "create",
+      resource: "quiz-question",
+      target: question.trim(),
+      targetId: docRef.id,
+      detail: { category },
+      request: req,
+    });
+
     return NextResponse.json({ id: docRef.id, ...docData }, { status: 201 });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -127,8 +138,8 @@ export async function POST(req: NextRequest) {
 
 // ── PUT: Update a question ──
 export async function PUT(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const body = await req.json();
@@ -174,6 +185,16 @@ export async function PUT(req: NextRequest) {
     const ref = adminDb.collection("quiz_questions").doc(id);
     await ref.update(updates);
 
+    void recordAudit({
+      actor: auth.actor,
+      action: "update",
+      resource: "quiz-question",
+      target: typeof updates.question === "string" ? updates.question : id,
+      targetId: id,
+      detail: { fields: Object.keys(updates).join(", ") || "none" },
+      request: req,
+    });
+
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("Failed to update question:", error);
@@ -186,8 +207,8 @@ export async function PUT(req: NextRequest) {
 
 // ── DELETE: Remove a question ──
 export async function DELETE(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const { searchParams } = req.nextUrl;
@@ -202,7 +223,20 @@ export async function DELETE(req: NextRequest) {
 
     const adminDb = getAdminDb();
     const ref = adminDb.collection("quiz_questions").doc(id);
+    // Read before delete so the log records WHICH question went, not just an id.
+    const snap = await ref.get();
+    const deletedText = (snap.data() as { question?: string } | undefined)
+      ?.question;
     await ref.delete();
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "delete",
+      resource: "quiz-question",
+      target: deletedText ?? id,
+      targetId: id,
+      request: req,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

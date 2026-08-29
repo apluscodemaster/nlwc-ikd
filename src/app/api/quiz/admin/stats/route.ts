@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 
 // ── GET: Quiz stats for admin dashboard ──
 // Auth required: this returns every player's session_id, username and scores.
 // The /admin UI is gated client-side only, which never protected this route.
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const supabase = getSupabase();
@@ -91,8 +92,8 @@ export async function GET(req: NextRequest) {
 // Auth required: this is destructive and irreversible (`?target=all` wipes every
 // session and attempt).
 export async function DELETE(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
+  const auth = await requireAuthActor(req);
+  if (auth.response) return auth.response;
 
   try {
     const { searchParams } = req.nextUrl;
@@ -130,6 +131,15 @@ export async function DELETE(req: NextRequest) {
           { status: 500 },
         );
       }
+
+      void recordAudit({
+        actor: auth.actor,
+        action: "delete",
+        resource: "quiz-stats",
+        target: `Player session ${sessionId}`,
+        targetId: sessionId,
+        request: req,
+      });
 
       return NextResponse.json({ success: true, deleted: sessionId });
     }
@@ -173,6 +183,15 @@ export async function DELETE(req: NextRequest) {
         );
       }
     }
+
+    void recordAudit({
+      actor: auth.actor,
+      action: "reset",
+      resource: "quiz-stats",
+      target: `Bulk reset: ${target}`,
+      detail: { target },
+      request: req,
+    });
 
     return NextResponse.json({ success: true, target });
   } catch (error) {

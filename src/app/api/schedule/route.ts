@@ -10,7 +10,8 @@ import {
   updateSpecialService,
   deleteSpecialService,
 } from "@/lib/scheduleService";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor, type AuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +24,24 @@ export const dynamic = "force-dynamic";
  * create, edit or delete the church's service schedule by calling this route
  * directly.
  */
-async function requireAdmin(req: NextRequest) {
-  const authError = await requireAuth(req);
-  if (authError) return authError;
-  return rateLimitMiddleware(req, "authenticated");
+/**
+ * Auth + rate limit for the write handlers.
+ *
+ * Returns `{ denied }` to short-circuit, or `{ actor }` — the verified identity,
+ * which the handlers attribute their audit entries to.
+ */
+async function requireAdmin(
+  req: NextRequest,
+): Promise<
+  { denied: NextResponse; actor?: undefined } | { denied?: undefined; actor: AuthActor }
+> {
+  const auth = await requireAuthActor(req);
+  if (auth.response) return { denied: auth.response };
+
+  const limited = rateLimitMiddleware(req, "authenticated");
+  if (limited) return { denied: limited };
+
+  return { actor: auth.actor };
 }
 
 // ── Default recurring services (seeded when Firestore is empty) ──
@@ -254,7 +269,7 @@ export async function GET() {
 
 // ── POST: Create a schedule entry ──
 export async function POST(req: NextRequest) {
-  const denied = await requireAdmin(req);
+  const { denied, actor } = await requireAdmin(req);
   if (denied) return denied;
 
   try {
@@ -318,6 +333,15 @@ export async function POST(req: NextRequest) {
         active: data.active !== false,
       });
       revalidatePath("/api/schedule");
+      void recordAudit({
+        actor,
+        action: "create",
+        resource: "schedule",
+        target: data.label,
+        targetId: (result as { id?: string })?.id ?? null,
+        detail: { type: "recurring", dayOfWeek: data.dayOfWeek },
+        request: req,
+      });
       return NextResponse.json(result, { status: 201 });
     }
 
@@ -343,6 +367,15 @@ export async function POST(req: NextRequest) {
         active: data.active !== false,
       });
       revalidatePath("/api/schedule");
+      void recordAudit({
+        actor,
+        action: "create",
+        resource: "schedule",
+        target: data.label,
+        targetId: (result as { id?: string })?.id ?? null,
+        detail: { type: "special", date: data.date },
+        request: req,
+      });
       return NextResponse.json(result, { status: 201 });
     }
 
@@ -361,7 +394,7 @@ export async function POST(req: NextRequest) {
 
 // ── PUT: Update an existing schedule entry ──
 export async function PUT(req: NextRequest) {
-  const denied = await requireAdmin(req);
+  const { denied, actor } = await requireAdmin(req);
   if (denied) return denied;
 
   try {
@@ -396,6 +429,15 @@ export async function PUT(req: NextRequest) {
     }
 
     revalidatePath("/api/schedule");
+    void recordAudit({
+      actor,
+      action: "update",
+      resource: "schedule",
+      target: typeof data?.label === "string" ? data.label : `${type} #${id}`,
+      targetId: id,
+      detail: { type },
+      request: req,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to update schedule:", error);
@@ -408,7 +450,7 @@ export async function PUT(req: NextRequest) {
 
 // ── DELETE: Remove a schedule entry ──
 export async function DELETE(req: NextRequest) {
-  const denied = await requireAdmin(req);
+  const { denied, actor } = await requireAdmin(req);
   if (denied) return denied;
 
   try {
@@ -435,6 +477,15 @@ export async function DELETE(req: NextRequest) {
     }
 
     revalidatePath("/api/schedule");
+    void recordAudit({
+      actor,
+      action: "delete",
+      resource: "schedule",
+      target: `${type} #${id}`,
+      targetId: id,
+      detail: { type },
+      request: req,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete schedule:", error);

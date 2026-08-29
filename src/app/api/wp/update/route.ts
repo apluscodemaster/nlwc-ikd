@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthActor } from "@/lib/auth";
+import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 
@@ -147,9 +148,9 @@ async function updateSESermon(
 // =============================================================================
 
 export async function PUT(request: NextRequest) {
-  // ── 1. Auth — MUST be awaited; requireAuth is async in auth.ts ──────────
-  const authError = await requireAuth(request);
-  if (authError) return authError;
+  // ── 1. Auth — MUST be awaited; requireAuthActor is async in auth.ts ──────
+  const auth = await requireAuthActor(request);
+  if (auth.response) return auth.response;
 
   // ── 2. Rate limiting ──────────────────────────────────────────────────────
   const rateLimitError = rateLimitMiddleware(request, "authenticated");
@@ -231,6 +232,15 @@ export async function PUT(request: NextRequest) {
       { path: "/sermons/audio/[id]", kind: "page" },
       { path: "/admin/content" },
     ]);
+    void recordAudit({
+      actor: auth.actor,
+      action: "update",
+      resource: "content",
+      target: title ?? `Sermon #${id}`,
+      targetId: result.data!.id,
+      detail: { type: type ?? "sermon", fields: changedFields(body) },
+      request,
+    });
     return NextResponse.json({ success: true, postId: result.data!.id });
   }
 
@@ -279,9 +289,32 @@ export async function PUT(request: NextRequest) {
     { path: "/sermons" },
     { path: "/admin/content" },
   ]);
+  void recordAudit({
+    actor: auth.actor,
+    action: "update",
+    resource: "content",
+    target: title ?? `Post #${id}`,
+    targetId: result.data!.id,
+    detail: { type: type ?? "post", fields: changedFields(body) },
+    request,
+  });
   return NextResponse.json({
     success: true,
     postId: result.data!.id,
     postUrl: result.data!.link,
   });
+}
+
+/**
+ * Comma-separated list of the field names present in an update payload.
+ *
+ * Names only — never values. Post bodies routinely run to tens of kilobytes,
+ * and the audit log is for "who touched what", not a content archive.
+ */
+function changedFields(body: Record<string, unknown>): string {
+  return (
+    Object.keys(body)
+      .filter((k) => k !== "id" && k !== "type" && body[k] !== undefined)
+      .join(", ") || "none"
+  );
 }

@@ -1,1 +1,8 @@
-{}
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(echo \"ESLINT_EXIT=$?\")"
+    ]
+  }
+}

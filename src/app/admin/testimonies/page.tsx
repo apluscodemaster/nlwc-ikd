@@ -29,6 +29,7 @@ import {
   type Testimony,
   type TestimonyStatus,
 } from "@/lib/testimonyService";
+import { reportAudit } from "@/lib/auditClient";
 
 // ──────────────────────────────────────────────
 // Filter types
@@ -261,6 +262,17 @@ export default function AdminTestimoniesPage() {
     } else {
       toast.error("Failed to approve testimony.");
     }
+    void reportAudit({
+      action: "update",
+      resource: "testimony",
+      target: (() => {
+        const name = testimonies.find((t) => t.id === id)?.name;
+        return name ? `Testimony from ${name}` : `Testimony ${id}`;
+      })(),
+      targetId: id,
+      status: success ? "success" : "failure",
+      detail: { status: "verified" },
+    });
     setActing(null);
   };
 
@@ -272,6 +284,17 @@ export default function AdminTestimoniesPage() {
     } else {
       toast.error("Failed to reject testimony.");
     }
+    void reportAudit({
+      action: "update",
+      resource: "testimony",
+      target: (() => {
+        const name = testimonies.find((t) => t.id === id)?.name;
+        return name ? `Testimony from ${name}` : `Testimony ${id}`;
+      })(),
+      targetId: id,
+      status: success ? "success" : "failure",
+      detail: { status: "rejected" },
+    });
     setActing(null);
   };
 
