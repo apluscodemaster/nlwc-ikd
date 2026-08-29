@@ -141,7 +141,8 @@ export default function AuditLogPage() {
   const load = useCallback(
     async (before?: number) => {
       if (!user) return;
-      before ? setLoadingMore(true) : setLoading(true);
+      if (before) setLoadingMore(true);
+      else setLoading(true);
       setError("");
 
       try {
