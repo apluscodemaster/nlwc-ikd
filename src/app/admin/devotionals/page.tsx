@@ -35,6 +35,7 @@ import {
   replaceDevotionalPdf,
   Devotional,
 } from "@/lib/devotionals";
+import { reportAudit } from "@/lib/auditClient";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -175,6 +176,12 @@ export default function AdminDevotionalsPage() {
           (progress) => updateQueueItem(index, { progress }),
         );
         updateQueueItem(index, { status: "done", progress: 100 });
+        void reportAudit({
+          action: "create",
+          resource: "devotional",
+          target: item.title,
+          detail: { scheduledDate: item.scheduledDate },
+        });
       } catch (err) {
         updateQueueItem(index, {
           status: "error",
@@ -203,6 +210,13 @@ export default function AdminDevotionalsPage() {
       await updateDevotional(editingId, {
         title: editTitle,
         scheduledDate: new Date(editDate + "T00:00:00"),
+      });
+      void reportAudit({
+        action: "update",
+        resource: "devotional",
+        target: editTitle,
+        targetId: editingId,
+        detail: { scheduledDate: editDate },
       });
       setEditingId(null);
       await refresh();
@@ -244,6 +258,12 @@ export default function AdminDevotionalsPage() {
     setDeletingId(id);
     try {
       await deleteDevotional(id);
+      void reportAudit({
+        action: "delete",
+        resource: "devotional",
+        target: devotionals.find((d) => d.id === id)?.title ?? id,
+        targetId: id,
+      });
       await refresh();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to delete.");
