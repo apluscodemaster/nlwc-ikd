@@ -1,64 +1,120 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from "react";
+import {
+  IDLE_TIMEOUT_MS,
+  IDLE_WARNING_MS,
+  checkSession,
+  markActivity,
+  msUntilIdleTimeout,
+} from "@/lib/adminSession";
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
-const WARNING_TIME = 5 * 60 * 1000; // Show warning 5 minutes before timeout
-
-export function useSessionTimeout(onTimeout: () => void, isActive: boolean = true) {
+/**
+ * Idle-timeout enforcement for the admin area.
+ *
+ * The last-activity timestamp lives in sessionStorage (see `adminSession`), not
+ * in this hook's closure. That matters twice over: a reload no longer resets the
+ * idle clock, and a tab that was backgrounded — where browsers throttle or defer
+ * timers — is re-checked against the wall clock the moment it becomes visible
+ * again, rather than trusting a countdown that may never have fired.
+ */
+export function useSessionTimeout(
+  onTimeout: () => void,
+  isActive: boolean = true,
+) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+
+  // Kept in a ref so the activity listeners don't need re-binding every time the
+  // caller passes a new inline callback.
+  const onTimeoutRef = useRef(onTimeout);
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout;
+  }, [onTimeout]);
 
   const clearAllTimeouts = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    timeoutRef.current = null;
+    warningTimeoutRef.current = null;
   }, []);
 
-  const resetTimeout = useCallback(() => {
+  /** Re-arm both timers against the *stored* deadline. */
+  const scheduleFromStore = useCallback(() => {
     clearAllTimeouts();
-    lastActivityRef.current = Date.now();
 
-    // Set warning timeout
-    warningTimeoutRef.current = setTimeout(() => {
-      // You can dispatch a warning event here if needed
-      console.warn('Session will expire in 5 minutes due to inactivity');
-    }, INACTIVITY_TIMEOUT - WARNING_TIME);
+    const remaining = msUntilIdleTimeout();
+    if (remaining <= 0) {
+      onTimeoutRef.current();
+      return;
+    }
 
-    // Set logout timeout
+    const untilWarning = remaining - IDLE_WARNING_MS;
+    if (untilWarning > 0) {
+      warningTimeoutRef.current = setTimeout(() => {
+        console.warn(
+          `Admin session expires in ${Math.round(IDLE_WARNING_MS / 60000)} minutes due to inactivity`,
+        );
+      }, untilWarning);
+    }
+
     timeoutRef.current = setTimeout(() => {
-      onTimeout();
-    }, INACTIVITY_TIMEOUT);
-  }, [clearAllTimeouts, onTimeout]);
+      onTimeoutRef.current();
+    }, remaining);
+  }, [clearAllTimeouts]);
+
+  const resetTimeout = useCallback(() => {
+    markActivity();
+    scheduleFromStore();
+  }, [scheduleFromStore]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      clearAllTimeouts();
+      return;
+    }
 
-    resetTimeout();
+    // Arm against whatever is already stored — do NOT stamp fresh activity here,
+    // or simply mounting the layout would forgive an expired idle period.
+    scheduleFromStore();
 
-    // Track user activity
     const handleActivity = () => {
       resetTimeout();
     };
 
+    // A throttled background tab can miss its timer entirely; re-validate
+    // against the wall clock whenever the tab comes back to the foreground.
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!checkSession().ok) {
+        onTimeoutRef.current();
+        return;
+      }
+      scheduleFromStore();
+    };
+
     const events = [
-      'mousedown',
-      'keydown',
-      'scroll',
-      'touchstart',
-      'click',
-      'mousemove',
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+      "mousemove",
     ];
 
     events.forEach((event) => {
       document.addEventListener(event, handleActivity);
     });
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
 
     return () => {
       clearAllTimeouts();
       events.forEach((event) => {
         document.removeEventListener(event, handleActivity);
       });
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
     };
-  }, [isActive, resetTimeout, clearAllTimeouts]);
+  }, [isActive, resetTimeout, scheduleFromStore, clearAllTimeouts]);
 
-  return { clearTimeout: clearAllTimeouts, resetTimeout };
+  return { clearTimeout: clearAllTimeouts, resetTimeout, IDLE_TIMEOUT_MS };
 }
