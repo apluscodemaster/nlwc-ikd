@@ -23,6 +23,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAdminAuth } from "../layout";
+import { resolveAdminIdentity } from "@/lib/adminProfile";
 import type { AuditEntry } from "@/lib/auditLog";
 
 const ACTION_OPTIONS = [
@@ -383,7 +384,10 @@ export default function AuditLogPage() {
                           </p>
                         </td>
                         <td className="px-5 py-3.5 align-top max-w-[220px]">
-                          <p className="text-gray-700 truncate">
+                          <p className="text-gray-900 font-medium truncate">
+                            {resolveAdminIdentity({ email: entry.actorEmail }).name}
+                          </p>
+                          <p className="text-[11px] text-gray-400 truncate">
                             {entry.actorEmail ?? "unknown"}
                           </p>
                         </td>
@@ -517,7 +521,10 @@ function EntryCard({ entry }: { entry: AuditEntry }) {
       <div className="space-y-1.5 pt-3 border-t border-gray-50 text-[11px] text-gray-500">
         <p className="flex items-center gap-1.5 min-w-0">
           <User className="w-3.5 h-3.5 shrink-0 text-primary/60" />
-          <span className="truncate">{entry.actorEmail ?? "unknown"}</span>
+          <span className="truncate">
+            {resolveAdminIdentity({ email: entry.actorEmail }).name}
+            {entry.actorEmail ? ` · ${entry.actorEmail}` : ""}
+          </span>
         </p>
         <p className="flex items-center gap-1.5">
           <Globe className="w-3.5 h-3.5 shrink-0 text-primary/60" />

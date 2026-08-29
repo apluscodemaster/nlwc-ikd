@@ -19,6 +19,7 @@ import {
   checkSession,
 } from "@/lib/adminSession";
 import { reportAudit } from "@/lib/auditClient";
+import { resolveAdminIdentity } from "@/lib/adminProfile";
 import {
   BookOpen,
   Calendar,
@@ -240,6 +241,13 @@ export default function AdminLayout({
     return pathname.startsWith(href);
   };
 
+  // Name shown in the sidebar. Falls back to a name derived from the email when
+  // the account has no displayName, so this reads as a person either way.
+  const identity = resolveAdminIdentity({
+    displayName: user?.displayName,
+    email: user?.email,
+  });
+
   // ════════════════════════════════════════════
   // Loading State
   // ════════════════════════════════════════════
@@ -425,14 +433,31 @@ export default function AdminLayout({
           <div className="p-4 border-t border-gray-100 space-y-3">
             {/* Logged-in user */}
             <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                {user.email?.charAt(0).toUpperCase() || "A"}
-              </div>
+              {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element -- avatar
+                // comes from an arbitrary provider host; not worth a
+                // next.config remotePatterns entry for one 32px image.
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[11px]">
+                  {identity.initials}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-700 truncate">
+                <p className="text-xs font-semibold text-gray-800 truncate">
+                  {identity.name}
+                </p>
+                <p
+                  className="text-[10px] text-gray-400 truncate"
+                  title={user.email ?? undefined}
+                >
                   {user.email}
                 </p>
-                <p className="text-[10px] text-gray-400">Administrator</p>
               </div>
               <button
                 onClick={logout}
@@ -540,9 +565,29 @@ export default function AdminLayout({
                   })}
                 </nav>
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 space-y-2">
-                  <p className="text-xs text-gray-400 truncate px-1">
-                    {user.email}
-                  </p>
+                  <div className="flex items-center gap-2.5 px-1 min-w-0">
+                    {user.photoURL ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- see desktop sidebar
+                      <img
+                        src={user.photoURL}
+                        alt=""
+                        className="w-7 h-7 rounded-full object-cover shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                        {identity.initials}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 truncate">
+                        {identity.name}
+                      </p>
+                      <p className="text-[10px] text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
                   <Link
                     href="/"
                     className="text-xs text-gray-500 hover:text-primary transition-colors"
