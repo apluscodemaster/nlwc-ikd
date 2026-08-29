@@ -18,6 +18,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthActor } from "@/lib/auth";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 import {
   recordAudit,
   listAudit,
@@ -56,6 +57,11 @@ const RESOURCES: readonly AuditResource[] = [
 export async function GET(request: NextRequest) {
   const auth = await requireAuthActor(request);
   if (auth.response) return auth.response;
+
+  // Each page is a Firestore read that can scan up to 500 docs when filters are
+  // applied, so this endpoint is worth bounding like the other authed routes.
+  const limited = rateLimitMiddleware(request, "authenticated");
+  if (limited) return limited;
 
   try {
     const params = request.nextUrl.searchParams;
@@ -97,6 +103,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await requireAuthActor(request);
   if (auth.response) return auth.response;
+
+  const limited = rateLimitMiddleware(request, "authenticated");
+  if (limited) return limited;
 
   try {
     const body = await request.json();
