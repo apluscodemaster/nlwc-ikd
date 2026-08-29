@@ -59,15 +59,32 @@ const VISIBLE = 3; // cards shown on each side of the focused one
 const PRELOAD = 4; // mounted (but transparent) so they are warm on arrival
 const AUTOPLAY_MS = 4200;
 const DEFAULT_RATIO = 3 / 2;
-const PERSPECTIVE = 1800;
-const STEP_Z = 180;
 const STEP_ROTATION = 42;
 
-function baseHeightFor(stageWidth: number) {
-  if (stageWidth < 480) return 250;
-  if (stageWidth < 768) return 330;
-  if (stageWidth < 1280) return 420;
-  return 480;
+/**
+ * Every dimension below is derived from the measured stage width rather than a
+ * media query, so the carousel stays proportional at any viewport — including
+ * the awkward sizes between breakpoints.
+ */
+function stageMetrics(stageWidth: number) {
+  const compact = stageWidth < 480;
+  return {
+    baseHeight:
+      stageWidth < 480
+        ? 250
+        : stageWidth < 768
+          ? 330
+          : stageWidth < 1280
+            ? 420
+            : 480,
+    // A shallower perspective on narrow screens keeps the angled cards from
+    // stretching into unreadable slivers.
+    perspective: Math.round(Math.max(1000, Math.min(stageWidth * 1.5, 2000))),
+    stepZ: compact ? 110 : 180,
+    // Fraction of the stage width a card may occupy before it is shortened
+    // instead of cropped.
+    widthCap: Math.min(stageWidth * (compact ? 0.86 : 0.92), 760),
+  };
 }
 
 /** Signed distance from `active` to `i`, wrapping the short way around. */
@@ -79,11 +96,16 @@ function relativeIndex(i: number, active: number, count: number) {
   return d;
 }
 
+// Measure before paint on the client so the stage never flashes at the wrong
+// size, while staying SSR-safe.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 function useStageWidth() {
   const ref = React.useRef<HTMLDivElement>(null);
   const [width, setWidth] = React.useState(0);
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     setWidth(el.getBoundingClientRect().width);
@@ -173,23 +195,26 @@ export default function AutoScrollGallery() {
   );
 
   /* ── Geometry ─────────────────────────────────────────────────────────── */
-  const baseHeight = baseHeightFor(stageWidth || 1280);
-  const maxCardWidth = Math.min((stageWidth || 1280) * 0.92, 760);
-  const reflectionSpace = Math.round(baseHeight * 0.34);
+  const measuredWidth = stageWidth || 1280;
+  const { baseHeight, perspective, stepZ, widthCap } =
+    stageMetrics(measuredWidth);
+  const reflectionSpace = Math.round(baseHeight * 0.4);
 
   const sizeFor = React.useCallback(
     (url: string) => {
       const ratio = ratios[url] ?? DEFAULT_RATIO;
       // Very wide panoramas get shorter rather than cropped: every card keeps
       // its true aspect ratio, and they all sit on the same floor line.
-      const height = Math.min(baseHeight, maxCardWidth / ratio);
+      const height = Math.min(baseHeight, widthCap / ratio);
       return { width: height * ratio, height };
     },
-    [ratios, baseHeight, maxCardWidth],
+    [ratios, baseHeight, widthCap],
   );
 
+  // The gap between cards follows the focused card's real width, so a portrait
+  // shot pulls its neighbours in and a panorama pushes them out.
   const activeWidth = count > 0 ? sizeFor(images[active]).width : baseHeight;
-  const stepX = activeWidth * 0.55 + Math.min((stageWidth || 1280) * 0.05, 44);
+  const stepX = activeWidth * 0.55 + Math.min(measuredWidth * 0.05, 44);
 
   /* ── Pointer drag ─────────────────────────────────────────────────────── */
   const onPointerDown = (e: React.PointerEvent) => {
@@ -295,7 +320,7 @@ export default function AutoScrollGallery() {
             tabIndex={0}
             className="relative touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             style={{
-              perspective: `${PERSPECTIVE}px`,
+              perspective: `${perspective}px`,
               height: baseHeight + reflectionSpace,
             }}
             onMouseEnter={() => setHovering(true)}
@@ -365,7 +390,7 @@ export default function AutoScrollGallery() {
                     transform: [
                       `translateX(-50%)`,
                       `translateX(${x + dragX}px)`,
-                      `translateZ(${-depth * STEP_Z}px)`,
+                      `translateZ(${-depth * stepZ}px)`,
                       `rotateY(${direction * STEP_ROTATION}deg)`,
                       `scale(${1 - depth * 0.05})`,
                     ].join(" "),
@@ -410,8 +435,8 @@ export default function AutoScrollGallery() {
                     />
 
                     {depth === 0 && (
-                      <span className="pointer-events-none absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-white/25">
-                        <Expand className="h-4 w-4" />
+                      <span className="pointer-events-none absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-white/25 sm:bottom-4 sm:right-4 sm:h-11 sm:w-11">
+                        <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </span>
                     )}
                   </div>
@@ -452,11 +477,11 @@ export default function AutoScrollGallery() {
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-[60] w-16 bg-linear-to-r from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent md:w-40"
+            className="pointer-events-none absolute inset-y-0 left-0 z-[60] w-8 bg-linear-to-r from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-[60] w-16 bg-linear-to-l from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent md:w-40"
+            className="pointer-events-none absolute inset-y-0 right-0 z-[60] w-8 bg-linear-to-l from-[#0b0b0f] via-[#0b0b0f]/70 to-transparent sm:w-16 md:w-40"
           />
 
           {/* Controls */}
@@ -466,17 +491,17 @@ export default function AutoScrollGallery() {
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous image"
-                className="absolute left-3 top-1/2 z-[70] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 md:left-8 md:h-14 md:w-14"
+                className="absolute left-1 top-1/2 z-[70] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:left-3 sm:h-12 sm:w-12 md:left-8 md:h-14 md:w-14"
               >
-                <ChevronLeft className="h-6 w-6" />
+                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
               <button
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next image"
-                className="absolute right-3 top-1/2 z-[70] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 md:right-8 md:h-14 md:w-14"
+                className="absolute right-1 top-1/2 z-[70] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/20 active:scale-95 sm:right-3 sm:h-12 sm:w-12 md:right-8 md:h-14 md:w-14"
               >
-                <ChevronRight className="h-6 w-6" />
+                <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </>
           )}
@@ -485,22 +510,22 @@ export default function AutoScrollGallery() {
 
       {/* Counter, progress, playback */}
       {count > 0 && (
-        <div className="relative mx-auto mt-12 flex max-w-md items-center gap-5 px-6 md:mt-16">
+        <div className="relative mx-auto mt-12 flex max-w-md items-center gap-3 px-6 sm:gap-5 md:mt-16">
           <span
             aria-live="polite"
-            className="w-14 shrink-0 text-sm font-black tabular-nums tracking-widest text-white"
+            className="shrink-0 text-xs font-black tabular-nums tracking-widest text-white sm:text-sm"
           >
             {String(active + 1).padStart(2, "0")}
           </span>
 
-          <div className="h-px flex-1 bg-white/15">
+          <div className="h-px min-w-0 flex-1 bg-white/15">
             <div
               className="h-px bg-primary transition-[width] duration-700 ease-out"
               style={{ width: `${((active + 1) / count) * 100}%` }}
             />
           </div>
 
-          <span className="w-14 shrink-0 text-right text-sm font-black tabular-nums tracking-widest text-white/40">
+          <span className="shrink-0 text-right text-xs font-black tabular-nums tracking-widest text-white/40 sm:text-sm">
             {String(count).padStart(2, "0")}
           </span>
 
@@ -509,7 +534,7 @@ export default function AutoScrollGallery() {
               type="button"
               onClick={() => setPlaying((p) => !p)}
               aria-label={playing ? "Pause slideshow" : "Play slideshow"}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition-colors hover:bg-white/15"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition-colors hover:bg-white/15 sm:h-10 sm:w-10"
             >
               {playing ? (
                 <Pause className="h-4 w-4" />
@@ -534,37 +559,37 @@ export default function AutoScrollGallery() {
               full resolution version.
             </DialogDescription>
           </VisuallyHidden>
-          <div className="relative flex h-[95vh] w-full items-center justify-center p-4">
+          <div className="relative flex h-[92vh] w-full items-center justify-center p-3 sm:h-[95vh] sm:p-4">
             {lightbox && (
-              <Image
-                src={sizedGoogleImage(lightbox, FULL_RENDITION)}
-                alt="Full resolution gallery image"
-                width={1920}
-                height={1280}
-                className="max-h-full max-w-full rounded-xl object-contain shadow-2xl duration-500 animate-in zoom-in-95"
-                unoptimized
-              />
-            )}
+              <>
+                <Image
+                  src={sizedGoogleImage(lightbox, FULL_RENDITION)}
+                  alt="Full resolution gallery image"
+                  width={1920}
+                  height={1280}
+                  className="max-h-[calc(100%-4.5rem)] w-auto max-w-full rounded-xl object-contain shadow-2xl duration-500 animate-in zoom-in-95 sm:max-h-[calc(100%-5.5rem)]"
+                  unoptimized
+                />
 
-            {lightbox && (
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                <Button
-                  asChild
-                  variant="secondary"
-                  size="lg"
-                  className="h-14 gap-3 rounded-full border border-white/20 bg-white/10 px-8 font-bold text-white shadow-2xl backdrop-blur-xl transition-all hover:bg-white/20 active:scale-95"
-                >
-                  <a
-                    href={originalGoogleImage(lightbox)}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div className="absolute bottom-4 left-1/2 w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2 sm:bottom-8 sm:w-auto">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    size="lg"
+                    className="h-12 w-full gap-2 rounded-full border border-white/20 bg-white/10 px-6 text-sm font-bold text-white shadow-2xl backdrop-blur-xl transition-all hover:bg-white/20 active:scale-95 sm:h-14 sm:w-auto sm:gap-3 sm:px-8 sm:text-base"
                   >
-                    <Download className="h-5 w-5" />
-                    <span>Save High Resolution Image</span>
-                  </a>
-                </Button>
-              </div>
+                    <a
+                      href={originalGoogleImage(lightbox)}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span>Save High Resolution Image</span>
+                    </a>
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </DialogContent>

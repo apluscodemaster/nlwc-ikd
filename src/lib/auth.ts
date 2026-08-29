@@ -18,6 +18,12 @@ const GOOGLE_CERTS_URL =
 let certCache: { certs: Record<string, string>; expiresAt: number } | null =
   null;
 
+/** The verified identity behind an authenticated request. */
+export interface AuthActor {
+  uid: string;
+  email: string | null;
+}
+
 async function getGoogleSigningCerts(): Promise<Record<string, string>> {
   if (certCache && certCache.expiresAt > Date.now()) return certCache.certs;
 
@@ -62,12 +68,15 @@ function hasValidSignature(token: string, certPem: string): boolean {
  * bypassable whenever the Admin SDK failed to initialise. Never accept a token
  * here without verifying its signature.
  */
-async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; error?: string }> {
+async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; error?: string; actor?: AuthActor }> {
   // ── Primary: Firebase Admin SDK ───────────────────────────────────────────
   try {
     const auth = getAdminAuth();
-    await auth.verifyIdToken(token);
-    return { valid: true };
+    const decoded = await auth.verifyIdToken(token);
+    return {
+      valid: true,
+      actor: { uid: decoded.uid, email: decoded.email ?? null },
+    };
   } catch (adminError) {
     const msg = adminError instanceof Error ? adminError.message : String(adminError);
     // If the token itself is invalid/expired, don't fall through
@@ -137,7 +146,16 @@ async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; err
     if (!payload.sub || typeof payload.sub !== "string") {
       return { valid: false, error: "Missing subject claim" };
     }
-    return { valid: true };
+    // Only read identity AFTER the signature and every claim check above have
+    // passed — these values become the actor recorded in the audit log, so a
+    // forged token must never be able to put someone else's name on an action.
+    return {
+      valid: true,
+      actor: {
+        uid: payload.sub,
+        email: typeof payload.email === "string" ? payload.email : null,
+      },
+    };
   } catch {
     return { valid: false, error: "Failed to decode token" };
   }
@@ -146,8 +164,12 @@ async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; err
 /**
  * Verify Authorization header contains a valid Firebase ID token.
  * Supports Bearer token format: Authorization: Bearer <token>
+ *
+ * On success also returns `actor` — the verified identity behind the request.
+ * Audit entries must take the actor from here and never from a client-supplied
+ * body field, otherwise any admin could write another admin's name into the log.
  */
-export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid: boolean; error?: string }> {
+export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid: boolean; error?: string; actor?: AuthActor }> {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader) {
@@ -165,7 +187,7 @@ export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid:
   }
 
   const result = await verifyFirebaseToken(token);
-  return { isValid: result.valid, error: result.error };
+  return { isValid: result.valid, error: result.error, actor: result.actor };
 }
 
 /**
@@ -183,6 +205,31 @@ export async function requireAuth(request: NextRequest): Promise<NextResponse | 
   }
 
   return null;
+}
+
+/**
+ * Like requireAuth(), but hands back the verified actor so the caller can
+ * attribute the action in the audit log.
+ *
+ * Returns either `{ response }` to short-circuit with a 401, or `{ actor }`.
+ * Kept separate from requireAuth() so the existing call sites — and the
+ * forged-token tests covering them — keep their exact current behaviour.
+ */
+export async function requireAuthActor(
+  request: NextRequest,
+): Promise<{ response: NextResponse; actor?: undefined } | { response?: undefined; actor: AuthActor }> {
+  const authCheck = await verifyAuthHeader(request);
+
+  if (!authCheck.isValid || !authCheck.actor) {
+    return {
+      response: NextResponse.json(
+        { error: authCheck.error || "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  return { actor: authCheck.actor };
 }
 
 /**
