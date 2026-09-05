@@ -174,6 +174,16 @@ export interface SundaySchoolManual {
   lesson?: string;
   /** Memory verse parsed from the body (detail transform only). */
   memoryVerse?: string;
+  /** WordPress post status — "publish" for live manuals, "future" for scheduled. */
+  status?: string;
+  /**
+   * True while WordPress still holds the post as scheduled. WordPress flips
+   * `future` → `publish` on its own cron at the scheduled moment, so the status
+   * — not a clock comparison here — is the authority on whether a manual has
+   * been released: one whose date has passed but that WP has not published yet
+   * is still unreadable, and its detail page would 404.
+   */
+  isScheduled?: boolean;
 }
 
 // =============================================================================
@@ -662,6 +672,8 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     theme: resolveManualTheme(post, excerpt),
     lesson: extractManualLesson(excerpt),
     memoryVerse: extractMemoryVerse(post.content.rendered),
+    status: post.status,
+    isScheduled: post.status === "future",
   };
 }
 
@@ -685,6 +697,8 @@ export function transformToManualListing(post: WPPost): SundaySchoolManual {
     readingTime: calculateReadingTime(post.content.rendered),
     theme: resolveManualTheme(post, excerpt),
     lesson: extractManualLesson(excerpt),
+    status: post.status,
+    isScheduled: post.status === "future",
   };
 }
 
@@ -770,13 +784,25 @@ export async function getTranscriptsByCategory(
  * Get Sunday School Manuals
  */
 export async function getSundaySchoolManuals(
-  options: { page?: number; perPage?: number; search?: string } = {},
+  options: {
+    page?: number;
+    perPage?: number;
+    search?: string;
+    /**
+     * Comma list of WP statuses, e.g. "publish,future". Anything beyond
+     * "publish" needs `authHeader` — WordPress rejects the request otherwise.
+     */
+    status?: string;
+    authHeader?: string;
+  } = {},
 ) {
   const { posts, totalPages, total } = await fetchWPPosts({
     categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
     page: options.page || 1,
     perPage: options.perPage || 10,
     search: options.search,
+    status: options.status,
+    authHeader: options.authHeader,
     // Short Data Cache window so a newly published manual reaches the frontend
     // listing (incl. the "This Week's Lesson" hero) within ~1 minute instead of
     // waiting out the default 5-minute window.

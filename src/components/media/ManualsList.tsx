@@ -160,10 +160,19 @@ export default function ManualsList({
   // Feature the most-recent manual as a hero card, but only on the unfiltered
   // first page (mirrors the devotionals "Latest" treatment). When filtering or
   // paging, every result stays an equal grid card.
+  //
+  // A scheduled manual can never be the hero — "This Week's Lesson" has to be
+  // something a visitor can actually open — so the hero takes the newest
+  // PUBLISHED manual and anything still scheduled stays in the grid, where it
+  // renders greyed out and unclickable.
   const isFiltering = !!debouncedSearch || !!selectedSeries;
-  const showFeatured = !isFiltering && page === 1 && manuals.length > 0;
-  const featuredManual = showFeatured ? manuals[0] : null;
-  const gridManuals = showFeatured ? manuals.slice(1) : manuals;
+  const featuredManual =
+    !isFiltering && page === 1
+      ? manuals.find((m) => !m.isScheduled) || null
+      : null;
+  const gridManuals = featuredManual
+    ? manuals.filter((m) => m.id !== featuredManual.id)
+    : manuals;
 
   // Group the grid manuals by their parsed theme so lessons in the same series
   // sit together under one heading. Order follows first appearance (newest
