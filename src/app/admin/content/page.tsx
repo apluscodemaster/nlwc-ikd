@@ -44,6 +44,7 @@ import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
 import ManualThemeBoard from "@/components/admin/ManualThemeBoard";
 import { cleanInlineStyles } from "@/utils/sanitizeWP";
+import { manualPublishDateTime } from "@/utils/manualSchedule";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,8 +63,7 @@ const pad2 = (n: number | string) => String(n).padStart(2, "0");
  * first visitor of the day. The 30-minute margin absorbs that, and the lesson
  * is still live many hours before Sunday morning.
  */
-const MANUAL_RELEASE_HOUR = "0";
-const MANUAL_RELEASE_MINUTE = "30";
+// Manual publish-time rules (date-only scheduling) live in utils/manualSchedule.
 
 /** Combine a YYYY-MM-DD date with hour/minute into a local naive datetime
  *  string (YYYY-MM-DDTHH:mm:00) for the WordPress `date` field. */
@@ -672,7 +672,7 @@ function ContentListItem({
 // ─── Publish date & time (with scheduling) ──────────────────────────────────
 function PublishScheduleField({
   form,
-  /** Manuals pick a date only — they always release at MANUAL_RELEASE_*. */
+  /** Manuals pick a date only — the time comes from manualPublishDateTime. */
   dateOnly = false,
 }: {
   form: UseFormReturn<TextFormData>;
@@ -683,11 +683,9 @@ function PublishScheduleField({
   const publishHour = watch("publishHour");
   const publishMinute = watch("publishMinute");
 
-  const combined = combinePublishDate(
-    publishDate,
-    dateOnly ? MANUAL_RELEASE_HOUR : publishHour,
-    dateOnly ? MANUAL_RELEASE_MINUTE : publishMinute,
-  );
+  const combined = dateOnly
+    ? manualPublishDateTime(publishDate)
+    : combinePublishDate(publishDate, publishHour, publishMinute);
   const scheduledAt = combined ? new Date(combined) : null;
   const isFuture = scheduledAt ? scheduledAt.getTime() > Date.now() : false;
 
@@ -972,16 +970,12 @@ export default function AdminChurchContentPage() {
     // time. `item.date` is a formatted label ("Jul 28, 2026") whose time the
     // save used to replace with a hardcoded noon, silently moving schedules.
     setEditDate(toDateInputValue(item.dateIso || item.date));
-    if (activeTab === "manual") {
-      // Manuals have no time picker: they always release at 12:30 AM on their
-      // date, so the stored hour/minute is not round-tripped.
-      setEditHour(MANUAL_RELEASE_HOUR);
-      setEditMinute(MANUAL_RELEASE_MINUTE);
-    } else {
-      const time = toTimeInputValues(item.dateIso);
-      setEditHour(time ? time.hour : "12");
-      setEditMinute(time ? time.minute : "0");
-    }
+    // Only the transcript form reads these — the manual form has no time
+    // picker and derives its timestamp from the date via manualPublishDateTime,
+    // which reads the original off `dateIso` unsnapped.
+    const time = toTimeInputValues(item.dateIso);
+    setEditHour(time ? time.hour : "12");
+    setEditMinute(time ? time.minute : "0");
     setEditSpeaker(item.speaker || "");
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
@@ -1074,11 +1068,13 @@ export default function AdminChurchContentPage() {
       // so WordPress reads it in the site's timezone and keeps both the day and
       // the hour. This previously hardcoded noon, which reset the schedule of
       // any post edited after it was scheduled.
-      const editPublishAt = combinePublishDate(
-        editDate,
-        activeTab === "manual" ? MANUAL_RELEASE_HOUR : editHour,
-        activeTab === "manual" ? MANUAL_RELEASE_MINUTE : editMinute,
-      );
+      // Manuals have no time picker: a future date takes the 12:30 AM release
+      // slot, while an already-published manual keeps the exact time it went
+      // out. Transcripts and sermons use the hour/minute selects as before.
+      const editPublishAt =
+        activeTab === "manual"
+          ? manualPublishDateTime(editDate, editingItem.dateIso)
+          : combinePublishDate(editDate, editHour, editMinute);
       if (editPublishAt) {
         payload.date = editPublishAt;
         // A future moment means "schedule it": WordPress stores the post as
@@ -1273,12 +1269,16 @@ export default function AdminChurchContentPage() {
     // left on the default "Draft" toggle just saves a draft, which is
     // surprising for something explicitly given a later publish date.)
     // Manuals ignore the hour/minute form values entirely — their picker is
-    // date-only and they always release at 12:30 AM on the chosen day.
-    const publishAt = combinePublishDate(
-      data.publishDate,
-      activeTab === "manual" ? MANUAL_RELEASE_HOUR : data.publishHour,
-      activeTab === "manual" ? MANUAL_RELEASE_MINUTE : data.publishMinute,
-    );
+    // date-only. A new manual has no earlier timestamp to preserve, so this
+    // always resolves to the 12:30 AM release slot.
+    const publishAt =
+      activeTab === "manual"
+        ? manualPublishDateTime(data.publishDate)
+        : combinePublishDate(
+            data.publishDate,
+            data.publishHour,
+            data.publishMinute,
+          );
     const isScheduled =
       !!publishAt && new Date(publishAt).getTime() > Date.now();
     if (publishAt) payload.date = publishAt;
@@ -2304,10 +2304,11 @@ export default function AdminChurchContentPage() {
                   )}
                   {activeTab === "manual" && (
                     <p className="mt-2 text-xs text-gray-500">
-                      Manuals release at 12:30 AM on the chosen date. A future
-                      date shows the lesson greyed out on the Manuals page until
-                      then; it goes live a few minutes after 12:30 AM, once the
-                      listing caches refresh.
+                      A future date schedules the manual for 12:30 AM that day —
+                      it shows greyed out on the Manuals page until then, going
+                      live a few minutes after 12:30 AM once the listing caches
+                      refresh. A manual that is already published keeps the time
+                      it originally went out.
                     </p>
                   )}
                 </div>
