@@ -153,9 +153,24 @@ export interface TranscriptPost {
   speaker?: string;
   thumbnail?: string;
   categories: string[];
-  type: "sunday-message" | "sunday-school";
+  /**
+   * Which transcript category the post actually sits in. All five are
+   * represented: this used to be a "sunday-school or else sunday-message"
+   * boolean, which silently reported Bible Study, Other Meetings and Season of
+   * the Spirit transcripts as Sunday Message — and the admin edit form wrote
+   * that wrong value straight back as the post's category on save.
+   */
+  type: TranscriptType;
   readingTime: number;
 }
+
+/** Slugs for the five transcript categories, as used by the admin selector. */
+export type TranscriptType =
+  | "sunday-message"
+  | "sunday-school"
+  | "bible-study"
+  | "other-meetings"
+  | "season-of-the-spirit";
 
 export interface SundaySchoolManual {
   id: number;
@@ -551,11 +566,37 @@ function getCategoryNames(post: WPPost): string[] {
 /**
  * Transform WP post to Transcript format (full — for detail pages)
  */
-export function transformToTranscript(post: WPPost): TranscriptPost {
-  const isSundaySchool = post.categories.includes(
-    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-  );
+/**
+ * WP category id → transcript type slug, in the order they are checked.
+ *
+ * Keyed off WP_CATEGORIES rather than repeating the raw ids, so a category
+ * renumbering can't leave the mapping behind. The order matters only for the
+ * rare post filed under two transcript categories: the first match wins.
+ */
+const TRANSCRIPT_CATEGORY_TO_TYPE: ReadonlyArray<[number, TranscriptType]> = [
+  [WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS, "sunday-message"],
+  [WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS, "sunday-school"],
+  [WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS, "bible-study"],
+  [WP_CATEGORIES.OTHER_MEETINGS, "other-meetings"],
+  [WP_CATEGORIES.SEASON_OF_THE_SPIRIT, "season-of-the-spirit"],
+];
 
+/**
+ * The transcript type a post actually belongs to, from its WP categories.
+ *
+ * Falls back to "sunday-message" only for a post in none of the five
+ * transcript categories — which `getTranscriptBySlug` and the admin query both
+ * exclude already, so in practice every transcript resolves to its real type.
+ */
+export function resolveTranscriptType(post: WPPost): TranscriptType {
+  const ids = post.categories || [];
+  for (const [categoryId, type] of TRANSCRIPT_CATEGORY_TO_TYPE) {
+    if (ids.includes(categoryId)) return type;
+  }
+  return "sunday-message";
+}
+
+export function transformToTranscript(post: WPPost): TranscriptPost {
   return {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
@@ -570,7 +611,7 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
     speaker: extractSpeaker(post.content.rendered),
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
-    type: isSundaySchool ? "sunday-school" : "sunday-message",
+    type: resolveTranscriptType(post),
     readingTime: calculateReadingTime(post.content.rendered),
   };
 }
@@ -580,10 +621,6 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
  * and heavy HTML processing to reduce CPU time on listings.
  */
 export function transformToTranscriptListing(post: WPPost): TranscriptPost {
-  const isSundaySchool = post.categories.includes(
-    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-  );
-
   return {
     id: post.id,
     title: sanitizeWPText(post.title.rendered),
@@ -598,7 +635,7 @@ export function transformToTranscriptListing(post: WPPost): TranscriptPost {
     speaker: extractSpeaker(post.content.rendered),
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
-    type: isSundaySchool ? "sunday-school" : "sunday-message",
+    type: resolveTranscriptType(post),
     readingTime: calculateReadingTime(post.content.rendered),
   };
 }

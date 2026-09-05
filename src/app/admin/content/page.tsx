@@ -52,6 +52,19 @@ type ViewMode = "create" | "list";
 
 const pad2 = (n: number | string) => String(n).padStart(2, "0");
 
+/**
+ * Sunday School manuals always release at 00:30 (12:30 AM) on their chosen
+ * date, so the manual forms offer a date picker only — no hour/minute selects.
+ *
+ * Half past midnight rather than midnight on purpose: WordPress publishes
+ * scheduled posts from wp-cron, which fires on incoming traffic rather than on
+ * a real timer, so a post dated exactly 00:00 can sit unpublished until the
+ * first visitor of the day. The 30-minute margin absorbs that, and the lesson
+ * is still live many hours before Sunday morning.
+ */
+const MANUAL_RELEASE_HOUR = "0";
+const MANUAL_RELEASE_MINUTE = "30";
+
 /** Combine a YYYY-MM-DD date with hour/minute into a local naive datetime
  *  string (YYYY-MM-DDTHH:mm:00) for the WordPress `date` field. */
 function combinePublishDate(
@@ -151,14 +164,12 @@ const TRANSCRIPT_TYPE_TO_CATEGORY: Record<TranscriptType, number> = {
   "season-of-the-spirit": 22,
 };
 
-// Map WP category IDs back to transcript type slugs
-const CATEGORY_TO_TRANSCRIPT_TYPE: Record<number, TranscriptType> = {
-  20: "sunday-message",
-  31: "sunday-school",
-  33: "bible-study",
-  21: "other-meetings",
-  22: "season-of-the-spirit",
-};
+// The reverse map (category id → type slug) deliberately does NOT live here.
+// Resolving a post's type from its categories is `resolveTranscriptType` in
+// lib/wordpress.ts, which the admin list already applies before the item
+// reaches this page. A second copy here went unused and drifted out of sight,
+// which is how transcripts outside Sunday School came to be reported — and
+// re-saved — as Sunday Message.
 
 interface TextFormData {
   title: string;
@@ -659,20 +670,31 @@ function ContentListItem({
 }
 
 // ─── Publish date & time (with scheduling) ──────────────────────────────────
-function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
+function PublishScheduleField({
+  form,
+  /** Manuals pick a date only — they always release at MANUAL_RELEASE_*. */
+  dateOnly = false,
+}: {
+  form: UseFormReturn<TextFormData>;
+  dateOnly?: boolean;
+}) {
   const { control, register, watch } = form;
   const publishDate = watch("publishDate");
   const publishHour = watch("publishHour");
   const publishMinute = watch("publishMinute");
 
-  const combined = combinePublishDate(publishDate, publishHour, publishMinute);
+  const combined = combinePublishDate(
+    publishDate,
+    dateOnly ? MANUAL_RELEASE_HOUR : publishHour,
+    dateOnly ? MANUAL_RELEASE_MINUTE : publishMinute,
+  );
   const scheduledAt = combined ? new Date(combined) : null;
   const isFuture = scheduledAt ? scheduledAt.getTime() > Date.now() : false;
 
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-2">
-        Publish Date &amp; Time
+        {dateOnly ? "Publish Date" : "Publish Date & Time"}
       </label>
       <div className="flex flex-col sm:flex-row gap-3">
         <Controller
@@ -687,31 +709,33 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
             />
           )}
         />
-        <div className="flex items-center gap-2">
-          <SelectField
-            {...register("publishHour")}
-            className="w-auto h-12 pl-4 pr-9"
-            chevronClassName="right-3"
-          >
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h} value={h}>
-                {pad2(h)}
-              </option>
-            ))}
-          </SelectField>
-          <span className="font-bold text-gray-400">:</span>
-          <SelectField
-            {...register("publishMinute")}
-            className="w-auto h-12 pl-4 pr-9"
-            chevronClassName="right-3"
-          >
-            {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
-              <option key={m} value={m}>
-                {pad2(m)}
-              </option>
-            ))}
-          </SelectField>
-        </div>
+        {!dateOnly && (
+          <div className="flex items-center gap-2">
+            <SelectField
+              {...register("publishHour")}
+              className="w-auto h-12 pl-4 pr-9"
+              chevronClassName="right-3"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {pad2(h)}
+                </option>
+              ))}
+            </SelectField>
+            <span className="font-bold text-gray-400">:</span>
+            <SelectField
+              {...register("publishMinute")}
+              className="w-auto h-12 pl-4 pr-9"
+              chevronClassName="right-3"
+            >
+              {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                <option key={m} value={m}>
+                  {pad2(m)}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+        )}
       </div>
       <p className="mt-2 text-xs text-gray-500 flex items-start gap-1.5">
         {isFuture ? (
@@ -726,10 +750,21 @@ function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
                 })}
               </span>
               .
+              {dateOnly && (
+                <>
+                  {" "}
+                  It shows on the Manuals page as a greyed-out card until then,
+                  and goes live a few minutes after 12:30 AM once the listing
+                  caches refresh.
+                </>
+              )}
             </span>
           </>
         ) : (
-          <span>Publishes immediately when status is set to Publish.</span>
+          <span>
+            Publishes immediately when status is set to Publish.
+            {dateOnly && " Pick a future date to schedule it for 12:30 AM that day."}
+          </span>
         )}
       </p>
     </div>
@@ -792,6 +827,11 @@ export default function AdminChurchContentPage() {
   const [editAudioUrl, setEditAudioUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editTranscriptType, setEditTranscriptType] =
+    useState<TranscriptType>("sunday-message");
+  // The type the post had when the modal opened. Saving only writes a category
+  // back when this differs from the selector, so opening a transcript and
+  // editing (say) its title can never silently re-file it.
+  const [editOriginalTranscriptType, setEditOriginalTranscriptType] =
     useState<TranscriptType>("sunday-message");
 
   const sermonForm = useForm<SermonFormData>({
@@ -932,9 +972,16 @@ export default function AdminChurchContentPage() {
     // time. `item.date` is a formatted label ("Jul 28, 2026") whose time the
     // save used to replace with a hardcoded noon, silently moving schedules.
     setEditDate(toDateInputValue(item.dateIso || item.date));
-    const time = toTimeInputValues(item.dateIso);
-    setEditHour(time ? time.hour : "12");
-    setEditMinute(time ? time.minute : "0");
+    if (activeTab === "manual") {
+      // Manuals have no time picker: they always release at 12:30 AM on their
+      // date, so the stored hour/minute is not round-tripped.
+      setEditHour(MANUAL_RELEASE_HOUR);
+      setEditMinute(MANUAL_RELEASE_MINUTE);
+    } else {
+      const time = toTimeInputValues(item.dateIso);
+      setEditHour(time ? time.hour : "12");
+      setEditMinute(time ? time.minute : "0");
+    }
     setEditSpeaker(item.speaker || "");
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
@@ -944,11 +991,9 @@ export default function AdminChurchContentPage() {
     setEditUploadingThumbnail(false);
     // Prefill with the existing MP3 URL (real audio_url when the message has one).
     setEditAudioUrl(item.audioUrl || "");
-    if (item.transcriptType) {
-      setEditTranscriptType(item.transcriptType as TranscriptType);
-    } else {
-      setEditTranscriptType("sunday-message");
-    }
+    const currentType = (item.transcriptType as TranscriptType) ?? "sunday-message";
+    setEditTranscriptType(currentType);
+    setEditOriginalTranscriptType(currentType);
   };
 
   // ── Edit thumbnail upload ───────────────────────────────────────────────────
@@ -1029,7 +1074,11 @@ export default function AdminChurchContentPage() {
       // so WordPress reads it in the site's timezone and keeps both the day and
       // the hour. This previously hardcoded noon, which reset the schedule of
       // any post edited after it was scheduled.
-      const editPublishAt = combinePublishDate(editDate, editHour, editMinute);
+      const editPublishAt = combinePublishDate(
+        editDate,
+        activeTab === "manual" ? MANUAL_RELEASE_HOUR : editHour,
+        activeTab === "manual" ? MANUAL_RELEASE_MINUTE : editMinute,
+      );
       if (editPublishAt) {
         payload.date = editPublishAt;
         // A future moment means "schedule it": WordPress stores the post as
@@ -1051,10 +1100,16 @@ export default function AdminChurchContentPage() {
         if (editAudioUrl) payload.audioUrl = editAudioUrl;
         if (editUploadedMediaUrl) payload.thumbnailUrl = editUploadedMediaUrl;
         if (editSeriesId) payload.seriesId = Number(editSeriesId);
-      } else if (activeTab === "transcript") {
-        // Write the transcript type back as its WP category. Without this, the
-        // "Transcript Type" select in the edit modal was a no-op — the value
-        // never reached the update payload (only sermons sent categories).
+      } else if (
+        activeTab === "transcript" &&
+        editTranscriptType !== editOriginalTranscriptType
+      ) {
+        // Write the transcript type back as its WP category — but ONLY when the
+        // selector actually changed. Sending it unconditionally re-filed every
+        // edited transcript under whatever the selector happened to show, which
+        // (before the type was resolved correctly) meant editing a Bible Study
+        // or Other Meetings transcript silently moved it to Sunday Message.
+        // Omitting the key entirely leaves the post's categories untouched.
         payload.categories = [TRANSCRIPT_TYPE_TO_CATEGORY[editTranscriptType]];
       }
 
@@ -1217,10 +1272,12 @@ export default function AdminChurchContentPage() {
     // as "future" and auto-publishes at that time. (Otherwise a future date
     // left on the default "Draft" toggle just saves a draft, which is
     // surprising for something explicitly given a later publish date.)
+    // Manuals ignore the hour/minute form values entirely — their picker is
+    // date-only and they always release at 12:30 AM on the chosen day.
     const publishAt = combinePublishDate(
       data.publishDate,
-      data.publishHour,
-      data.publishMinute,
+      activeTab === "manual" ? MANUAL_RELEASE_HOUR : data.publishHour,
+      activeTab === "manual" ? MANUAL_RELEASE_MINUTE : data.publishMinute,
     );
     const isScheduled =
       !!publishAt && new Date(publishAt).getTime() > Date.now();
@@ -1986,7 +2043,7 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  <PublishScheduleField form={textForm} />
+                  <PublishScheduleField form={textForm} dateOnly />
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
@@ -2195,7 +2252,11 @@ export default function AdminChurchContentPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {activeTab === "sermon" ? "Sermon Date" : "Date & Time"}
+                    {activeTab === "sermon"
+                      ? "Sermon Date"
+                      : activeTab === "manual"
+                        ? "Publish Date"
+                        : "Date & Time"}
                   </label>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <CustomDatePicker
@@ -2204,7 +2265,7 @@ export default function AdminChurchContentPage() {
                       wrapperClassName="w-full sm:flex-1"
                       className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
                     />
-                    {activeTab !== "sermon" && (
+                    {activeTab === "transcript" && (
                       <div className="flex items-center gap-2">
                         <SelectField
                           value={editHour}
@@ -2236,9 +2297,17 @@ export default function AdminChurchContentPage() {
                       </div>
                     )}
                   </div>
-                  {activeTab !== "sermon" && (
+                  {activeTab === "transcript" && (
                     <p className="mt-2 text-xs text-gray-500">
                       24-hour clock — 00:15 is 12:15 AM, 12:15 is 12:15 PM.
+                    </p>
+                  )}
+                  {activeTab === "manual" && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Manuals release at 12:30 AM on the chosen date. A future
+                      date shows the lesson greyed out on the Manuals page until
+                      then; it goes live a few minutes after 12:30 AM, once the
+                      listing caches refresh.
                     </p>
                   )}
                 </div>
