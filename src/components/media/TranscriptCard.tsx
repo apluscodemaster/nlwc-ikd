@@ -92,6 +92,27 @@ export default function TranscriptCard({
       icon: BookOpen,
       label: "Sunday School Manuals",
     },
+    // The remaining three used to be unreachable: every transcript outside
+    // Sunday School was reported as "sunday-message". Colours match the badge
+    // treatment on the transcript detail page.
+    "bible-study": {
+      bg: "bg-green-500/10",
+      text: "text-green-600",
+      icon: BookOpen,
+      label: "Bible Study",
+    },
+    "other-meetings": {
+      bg: "bg-violet-500/10",
+      text: "text-violet-600",
+      icon: BookOpen,
+      label: "Other Meetings",
+    },
+    "season-of-the-spirit": {
+      bg: "bg-orange-500/10",
+      text: "text-orange-600",
+      icon: BookOpen,
+      label: "Season of the Spirit",
+    },
   };
 
   const style = typeStyles[transcript.type] || typeStyles["sunday-message"];
