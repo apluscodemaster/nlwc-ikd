@@ -38,6 +38,17 @@ function getAdminAuth(): string | undefined {
  * Fetches existing WordPress content for the admin dashboard.
  */
 export async function GET(request: NextRequest) {
+  const res = await handleGet(request);
+  // `dynamic = "force-dynamic"` only stops Next from caching this on the
+  // server — it sends no Cache-Control, which leaves the BROWSER free to reuse
+  // a previous response heuristically. That is how the admin list kept showing
+  // pre-edit values (a stale transcript type, say) after WordPress had already
+  // been updated. Admin reads must always be fresh.
+  res.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  return res;
+}
+
+async function handleGet(request: NextRequest): Promise<NextResponse> {
   // Rate limited: proxies WordPress.
   const limited = rateLimitMiddleware(request, "public");
   if (limited) return limited;
