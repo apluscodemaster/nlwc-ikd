@@ -807,6 +807,10 @@ export default function AdminChurchContentPage() {
         const perPage = type === "manual" && manualGroupMode ? 48 : 6;
         const res = await fetch(
           `/api/wp/content?type=${type}&page=${page}&per_page=${perPage}${searchParam}`,
+          // The edit modal prefills straight from these items, so a stale
+          // response would silently reopen a post with out-of-date content or
+          // category. Never serve this list from the browser cache.
+          { cache: "no-store" },
         );
         const data = await res.json();
         if (data.items) {
@@ -2166,11 +2170,7 @@ export default function AdminChurchContentPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {activeTab === "sermon"
-                      ? "Sermon Date"
-                      : activeTab === "manual"
-                        ? "Publish Date"
-                        : "Date & Time"}
+                    {activeTab === "sermon" ? "Sermon Date" : "Publish Date"}
                   </label>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <CustomDatePicker
