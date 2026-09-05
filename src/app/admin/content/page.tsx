@@ -44,7 +44,7 @@ import { SelectField } from "@/components/shared/SelectField";
 import { Button } from "@/components/ui/button";
 import ManualThemeBoard from "@/components/admin/ManualThemeBoard";
 import { cleanInlineStyles } from "@/utils/sanitizeWP";
-import { manualPublishDateTime } from "@/utils/manualSchedule";
+import { scheduledPublishDateTime } from "@/utils/publishSchedule";
 import { getAuthorizationHeader } from "@/lib/authClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -63,18 +63,8 @@ const pad2 = (n: number | string) => String(n).padStart(2, "0");
  * first visitor of the day. The 30-minute margin absorbs that, and the lesson
  * is still live many hours before Sunday morning.
  */
-// Manual publish-time rules (date-only scheduling) live in utils/manualSchedule.
-
-/** Combine a YYYY-MM-DD date with hour/minute into a local naive datetime
- *  string (YYYY-MM-DDTHH:mm:00) for the WordPress `date` field. */
-function combinePublishDate(
-  date: string,
-  hour: string,
-  minute: string,
-): string | null {
-  if (!date) return null;
-  return `${date}T${pad2(hour)}:${pad2(minute)}:00`;
-}
+// Publish-time rules (date-only scheduling, fixed release slot) live in
+// utils/publishSchedule — nothing in the admin picks a time of day any more.
 
 /** Convert any date string (a formatted label like "January 5, 2025" or an ISO
  *  string) to a YYYY-MM-DD value for the date picker, using LOCAL calendar
@@ -88,22 +78,6 @@ function toDateInputValue(value?: string): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-/** Read the wall-clock time out of a WordPress timestamp.
- *
- *  WordPress stores `post.date` as naive site-local time with no offset, so it
- *  must be read literally — `new Date(...)` would apply the browser's zone and
- *  shift the hour. Returns hour/minute as the strings the selects expect, with
- *  the minute snapped down to the nearest 5 to match the available options. */
-function toTimeInputValues(value?: string): { hour: string; minute: string } | null {
-  if (!value) return null;
-  const m = /T(\d{2}):(\d{2})/.exec(value);
-  if (!m) return null;
-  const hour = Number(m[1]);
-  const minute = Number(m[2]);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
-  return { hour: String(hour), minute: String(Math.floor(minute / 5) * 5) };
 }
 
 /**
@@ -177,12 +151,11 @@ interface TextFormData {
   status: "draft" | "publish";
   speaker: string;
   transcriptType: TranscriptType;
-  /** Scheduling: when publishDate+time is in the future and status is
-   *  "publish", WordPress stores the post as "future" (scheduled) and
-   *  auto-publishes at the chosen moment. */
+  /** Scheduling: a future publishDate with status "publish" makes WordPress
+   *  store the post as "future" (scheduled) and auto-publish it at the fixed
+   *  release slot (see utils/publishSchedule). The admin picks a date only —
+   *  there is no time of day to choose. */
   publishDate: string; // YYYY-MM-DD
-  publishHour: string; // "0".."23"
-  publishMinute: string; // "0", "5", ... "55"
 }
 
 interface ContentItem {
@@ -670,29 +643,20 @@ function ContentListItem({
 }
 
 // ─── Publish date & time (with scheduling) ──────────────────────────────────
-function PublishScheduleField({
-  form,
-  /** Manuals pick a date only — the time comes from manualPublishDateTime. */
-  dateOnly = false,
-}: {
-  form: UseFormReturn<TextFormData>;
-  dateOnly?: boolean;
-}) {
-  const { control, register, watch } = form;
+function PublishScheduleField({ form }: { form: UseFormReturn<TextFormData> }) {
+  const { control, watch } = form;
   const publishDate = watch("publishDate");
-  const publishHour = watch("publishHour");
-  const publishMinute = watch("publishMinute");
 
-  const combined = dateOnly
-    ? manualPublishDateTime(publishDate)
-    : combinePublishDate(publishDate, publishHour, publishMinute);
+  // Date only — no time of day is chosen anywhere in the admin. New content
+  // scheduled for a future date goes live at the fixed release slot.
+  const combined = scheduledPublishDateTime(publishDate);
   const scheduledAt = combined ? new Date(combined) : null;
   const isFuture = scheduledAt ? scheduledAt.getTime() > Date.now() : false;
 
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-2">
-        {dateOnly ? "Publish Date" : "Publish Date & Time"}
+        Publish Date
       </label>
       <div className="flex flex-col sm:flex-row gap-3">
         <Controller
@@ -707,33 +671,6 @@ function PublishScheduleField({
             />
           )}
         />
-        {!dateOnly && (
-          <div className="flex items-center gap-2">
-            <SelectField
-              {...register("publishHour")}
-              className="w-auto h-12 pl-4 pr-9"
-              chevronClassName="right-3"
-            >
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={h}>
-                  {pad2(h)}
-                </option>
-              ))}
-            </SelectField>
-            <span className="font-bold text-gray-400">:</span>
-            <SelectField
-              {...register("publishMinute")}
-              className="w-auto h-12 pl-4 pr-9"
-              chevronClassName="right-3"
-            >
-              {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
-                <option key={m} value={m}>
-                  {pad2(m)}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-        )}
       </div>
       <p className="mt-2 text-xs text-gray-500 flex items-start gap-1.5">
         {isFuture ? (
@@ -747,21 +684,14 @@ function PublishScheduleField({
                   timeStyle: "short",
                 })}
               </span>
-              .
-              {dateOnly && (
-                <>
-                  {" "}
-                  It shows on the Manuals page as a greyed-out card until then,
-                  and goes live a few minutes after 12:30 AM once the listing
-                  caches refresh.
-                </>
-              )}
+              . It goes live a few minutes after 12:30 AM, once the listing
+              caches refresh.
             </span>
           </>
         ) : (
           <span>
-            Publishes immediately when status is set to Publish.
-            {dateOnly && " Pick a future date to schedule it for 12:30 AM that day."}
+            Publishes immediately when status is set to Publish. Pick a future
+            date to schedule it for 12:30 AM that day.
           </span>
         )}
       </p>
@@ -804,8 +734,6 @@ export default function AdminChurchContentPage() {
   const [editContent, setEditContent] = useState("");
   const [editStatus, setEditStatus] = useState<"draft" | "publish">("draft");
   const [editDate, setEditDate] = useState("");
-  const [editHour, setEditHour] = useState("12");
-  const [editMinute, setEditMinute] = useState("0");
   const [editSpeaker, setEditSpeaker] = useState("");
   const [editSeriesId, setEditSeriesId] = useState("");
   const [editThumbnailPreview, setEditThumbnailPreview] = useState<
@@ -856,8 +784,6 @@ export default function AdminChurchContentPage() {
       // Default to "now" (minute rounded down to 5) so leaving it untouched
       // publishes immediately; choosing a later moment schedules it.
       publishDate: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
-      publishHour: String(now.getHours()),
-      publishMinute: String(Math.floor(now.getMinutes() / 5) * 5),
     },
   });
 
@@ -970,12 +896,8 @@ export default function AdminChurchContentPage() {
     // time. `item.date` is a formatted label ("Jul 28, 2026") whose time the
     // save used to replace with a hardcoded noon, silently moving schedules.
     setEditDate(toDateInputValue(item.dateIso || item.date));
-    // Only the transcript form reads these — the manual form has no time
-    // picker and derives its timestamp from the date via manualPublishDateTime,
-    // which reads the original off `dateIso` unsnapped.
-    const time = toTimeInputValues(item.dateIso);
-    setEditHour(time ? time.hour : "12");
-    setEditMinute(time ? time.minute : "0");
+    // No hour/minute to prefill: the save derives the timestamp from the date
+    // via scheduledPublishDateTime, reading the original off `dateIso` exactly.
     setEditSpeaker(item.speaker || "");
     const matchedSeries = seriesList.find((s) => s.title === item.series);
     setEditSeriesId(matchedSeries ? String(matchedSeries.id) : "");
@@ -1068,13 +990,13 @@ export default function AdminChurchContentPage() {
       // so WordPress reads it in the site's timezone and keeps both the day and
       // the hour. This previously hardcoded noon, which reset the schedule of
       // any post edited after it was scheduled.
-      // Manuals have no time picker: a future date takes the 12:30 AM release
-      // slot, while an already-published manual keeps the exact time it went
-      // out. Transcripts and sermons use the hour/minute selects as before.
-      const editPublishAt =
-        activeTab === "manual"
-          ? manualPublishDateTime(editDate, editingItem.dateIso)
-          : combinePublishDate(editDate, editHour, editMinute);
+      // No time picker anywhere: a future date takes the 12:30 AM release slot,
+      // while anything already published keeps the exact time it went out —
+      // passing the post's own timestamp is what preserves it.
+      const editPublishAt = scheduledPublishDateTime(
+        editDate,
+        editingItem.dateIso,
+      );
       if (editPublishAt) {
         payload.date = editPublishAt;
         // A future moment means "schedule it": WordPress stores the post as
@@ -1268,17 +1190,9 @@ export default function AdminChurchContentPage() {
     // as "future" and auto-publishes at that time. (Otherwise a future date
     // left on the default "Draft" toggle just saves a draft, which is
     // surprising for something explicitly given a later publish date.)
-    // Manuals ignore the hour/minute form values entirely — their picker is
-    // date-only. A new manual has no earlier timestamp to preserve, so this
-    // always resolves to the 12:30 AM release slot.
-    const publishAt =
-      activeTab === "manual"
-        ? manualPublishDateTime(data.publishDate)
-        : combinePublishDate(
-            data.publishDate,
-            data.publishHour,
-            data.publishMinute,
-          );
+    // Date-only scheduling. New content has no earlier timestamp to preserve,
+    // so a future date always resolves to the 12:30 AM release slot.
+    const publishAt = scheduledPublishDateTime(data.publishDate);
     const isScheduled =
       !!publishAt && new Date(publishAt).getTime() > Date.now();
     if (publishAt) payload.date = publishAt;
@@ -2043,7 +1957,7 @@ export default function AdminChurchContentPage() {
                     )}
                   </div>
 
-                  <PublishScheduleField form={textForm} dateOnly />
+                  <PublishScheduleField form={textForm} />
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
@@ -2265,50 +2179,15 @@ export default function AdminChurchContentPage() {
                       wrapperClassName="w-full sm:flex-1"
                       className="w-full h-12 flex items-center justify-between gap-2 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
                     />
-                    {activeTab === "transcript" && (
-                      <div className="flex items-center gap-2">
-                        <SelectField
-                          value={editHour}
-                          onChange={(e) => setEditHour(e.target.value)}
-                          className="w-auto h-12 pl-4 pr-9"
-                          chevronClassName="right-3"
-                        >
-                          {Array.from({ length: 24 }, (_, h) => (
-                            <option key={h} value={h}>
-                              {pad2(h)}
-                            </option>
-                          ))}
-                        </SelectField>
-                        <span className="font-bold text-gray-400">:</span>
-                        <SelectField
-                          value={editMinute}
-                          onChange={(e) => setEditMinute(e.target.value)}
-                          className="w-auto h-12 pl-4 pr-9"
-                          chevronClassName="right-3"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i * 5).map(
-                            (m) => (
-                              <option key={m} value={m}>
-                                {pad2(m)}
-                              </option>
-                            ),
-                          )}
-                        </SelectField>
-                      </div>
-                    )}
                   </div>
-                  {activeTab === "transcript" && (
+                  {activeTab !== "sermon" && (
                     <p className="mt-2 text-xs text-gray-500">
-                      24-hour clock — 00:15 is 12:15 AM, 12:15 is 12:15 PM.
-                    </p>
-                  )}
-                  {activeTab === "manual" && (
-                    <p className="mt-2 text-xs text-gray-500">
-                      A future date schedules the manual for 12:30 AM that day —
-                      it shows greyed out on the Manuals page until then, going
-                      live a few minutes after 12:30 AM once the listing caches
-                      refresh. A manual that is already published keeps the time
-                      it originally went out.
+                      A future date schedules this for 12:30 AM that day, going
+                      live a few minutes later once the listing caches refresh
+                      {activeTab === "manual" &&
+                        " — until then it shows greyed out on the Manuals page"}
+                      . Something already published keeps the time it originally
+                      went out.
                     </p>
                   )}
                 </div>
