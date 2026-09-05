@@ -18,6 +18,15 @@ interface FeaturedManualProps {
 }
 
 /**
+ * Open-Bible photograph used when a manual carries no featured image — which is
+ * the norm, since manuals are published from Word documents without one. It sits
+ * on the same Cloudinary account as the ManualThumbnail backgrounds, so it is
+ * already covered by the `res.cloudinary.com` entry in next.config.ts.
+ */
+const BIBLE_IMAGE =
+  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247571/nlwc-ikd-assets/xebxdhjcdfayfvunrps6.png";
+
+/**
  * "This Week's Lesson" hero — gives the most-recent manual a large, engaging
  * treatment (mirrors FeaturedDevotional on the devotionals page). Surfaces the
  * parsed theme and lesson so the newest study reads as a curated lesson, not
@@ -44,19 +53,16 @@ export default function FeaturedManual({ manual }: FeaturedManualProps) {
         <div className="relative flex flex-col md:flex-row items-stretch">
           {/* Visual side */}
           <div className="md:w-2/5 relative min-h-[220px] md:min-h-[340px] overflow-hidden bg-linear-to-br from-amber-600 via-orange-500 to-yellow-500">
-            {manual.thumbnail ? (
-              <Image
-                src={manual.thumbnail}
-                alt={plainTitle}
-                fill
-                sizes="(max-width: 768px) 100vw, 40vw"
-                className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <BookMarked className="w-24 h-24 text-white/20" />
-              </div>
-            )}
+            <Image
+              src={manual.thumbnail || BIBLE_IMAGE}
+              /* The Bible photo is decorative — the lesson title sits beside it
+                 in the content column — so it takes an empty alt. A real
+                 featured image is content and keeps the title as its alt. */
+              alt={manual.thumbnail ? plainTitle : ""}
+              fill
+              sizes="(max-width: 768px) 100vw, 40vw"
+              className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"
+            />
 
             <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent md:bg-linear-to-r" />
 
