@@ -61,6 +61,9 @@ export default function FeaturedManual({ manual }: FeaturedManualProps) {
               alt={manual.thumbnail ? plainTitle : ""}
               fill
               sizes="(max-width: 768px) 100vw, 40vw"
+              /* The hero sits above the fold and is now always an image, so it
+                 is the page's LCP element — load it eagerly. */
+              priority
               className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"
             />
 
