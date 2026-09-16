@@ -75,7 +75,13 @@ export default function SermonCard({
               src={sermon.thumbnailUrl}
               alt={sermon.title}
               fill
-              sizes="96px"
+              // Deliberately ~2× the rendered box (88px / 96px). Sermon art is
+              // mostly title slides, and a 96px rendition of a text-heavy slide
+              // reads as a blur. Over-requesting makes the browser downscale a
+              // sharp source instead: 256w at 1× DPR, 384w at 2×, 640w at 3×.
+              sizes="(max-width: 640px) 176px, 192px"
+              // Compression artefacts are far more visible at thumbnail size.
+              quality={90}
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             />
           ) : (
