@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(python -c ' *)",
-      "Bash(echo \"ESLINT_EXIT=$?\")"
+      "Bash(echo \"ESLINT_EXIT=$?\")",
+      "Bash(git --no-pager show dbb4634:src/components/media/SermonCard.tsx)",
+      "Bash(node -p \"require\\('./node_modules/next/package.json'\\).version\")",
+      "Bash(echo \"next $\\(node -p \"require\\('./node_modules/next/package.json'\\).version\"\\)\")",
+      "Bash(grep -rhoE 'qualities[^;]{0,80}' node_modules/next/dist/shared/lib/image-config.js)"
     ]
   }
 }

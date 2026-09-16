@@ -115,6 +115,10 @@ const nextConfig: NextConfig = {
         hostname: "nlwc-ikorodu.s3.us-east-2.amazonaws.com",
       },
     ],
+    // Next 16 only allows `quality` values listed here (default is just 75).
+    // 90 is used for small thumbnails — sermon artwork is mostly title slides,
+    // and compression softness is far more visible once they're downscaled.
+    qualities: [75, 90],
   },
 
   // Security headers including Content Security Policy
