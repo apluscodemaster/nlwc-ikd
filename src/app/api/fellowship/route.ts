@@ -88,6 +88,17 @@ function validationError(error: z.ZodError) {
   );
 }
 
+/**
+ * One-shot guard for the migration seed.
+ *
+ * Without it, every request that finds no centers re-runs the seed: a burst of
+ * traffic on an empty collection means N concurrent batch writes, and a
+ * collection that is legitimately empty (all centers deleted, or all inactive)
+ * would retry the write on every single request forever. Seeding is a
+ * one-time migration, so attempt it at most once per server instance.
+ */
+let seedAttempted = false;
+
 // ── GET: list centers (public) — auto-seeds the static list when empty ──
 export async function GET(req: NextRequest) {
   try {
@@ -98,13 +109,19 @@ export async function GET(req: NextRequest) {
     if (includeInactive) {
       const { denied } = await requireAdmin(req);
       if (denied) return denied;
+    } else {
+      // Public read still hits Firestore, so throttle it like any other
+      // public endpoint. (The CDN cache below absorbs most of the traffic.)
+      const limited = rateLimitMiddleware(req, "public");
+      if (limited) return limited;
     }
 
     let centers = await getFellowshipCenters({ includeInactive });
-    if (centers.length === 0) {
+    if (centers.length === 0 && !seedAttempted) {
+      seedAttempted = true;
       const seeded = await seedFellowshipCentersIfEmpty();
       if (seeded.length > 0) {
-        centers = await getFellowshipCenters({ includeInactive });
+        centers = includeInactive ? seeded : seeded.filter((c) => c.active);
       }
     }
 

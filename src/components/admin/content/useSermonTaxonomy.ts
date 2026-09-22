@@ -30,36 +30,55 @@ export function useSermonTaxonomy() {
   const [loadingSpeakers, setLoadingSpeakers] = useState(false);
   const [loadingSeries, setLoadingSeries] = useState(false);
 
-  const fetchSpeakers = useCallback(async (fresh = false) => {
-    setLoadingSpeakers(true);
-    try {
-      const res = await fetch(`/api/wp/speakers${fresh ? "?fresh=1" : ""}`, {
-        cache: fresh ? "no-store" : "default",
-      });
-      const data = await res.json();
-      if (data.speakers) setSpeakers(data.speakers);
-    } catch {
-      console.error("Failed to load speakers");
-    } finally {
-      setLoadingSpeakers(false);
-    }
-  }, []);
+  /**
+   * `fresh` skips every cache layer so a just-created entry shows up. The
+   * server only honours it for an authenticated caller (it reaches WordPress
+   * on every call), so those go through authFetch; the ordinary cached read
+   * stays a plain fetch and can be served from the CDN.
+   */
+  const fetchList = useCallback(
+    async (kind: TaxonomyKind, fresh: boolean) => {
+      const params = new URLSearchParams();
+      if (kind === "series") params.set("type", "series");
+      if (fresh) params.set("fresh", "1");
+      const url = `/api/wp/speakers${params.size ? `?${params}` : ""}`;
+      const init: RequestInit = fresh ? { cache: "no-store" } : {};
+      return fresh ? authFetch(url, init) : fetch(url, init);
+    },
+    [],
+  );
 
-  const fetchSeries = useCallback(async (fresh = false) => {
-    setLoadingSeries(true);
-    try {
-      const res = await fetch(
-        `/api/wp/speakers?type=series${fresh ? "&fresh=1" : ""}`,
-        { cache: fresh ? "no-store" : "default" },
-      );
-      const data = await res.json();
-      if (data.series) setSeriesList(data.series);
-    } catch {
-      console.error("Failed to load series");
-    } finally {
-      setLoadingSeries(false);
-    }
-  }, []);
+  const fetchSpeakers = useCallback(
+    async (fresh = false) => {
+      setLoadingSpeakers(true);
+      try {
+        const res = await fetchList("speaker", fresh);
+        const data = await res.json();
+        if (data.speakers) setSpeakers(data.speakers);
+      } catch {
+        console.error("Failed to load speakers");
+      } finally {
+        setLoadingSpeakers(false);
+      }
+    },
+    [fetchList],
+  );
+
+  const fetchSeries = useCallback(
+    async (fresh = false) => {
+      setLoadingSeries(true);
+      try {
+        const res = await fetchList("series", fresh);
+        const data = await res.json();
+        if (data.series) setSeriesList(data.series);
+      } catch {
+        console.error("Failed to load series");
+      } finally {
+        setLoadingSeries(false);
+      }
+    },
+    [fetchList],
+  );
 
   useEffect(() => {
     fetchSpeakers();

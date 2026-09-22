@@ -35,11 +35,32 @@ function getClientIp(request: NextRequest): string {
 }
 
 /**
+ * Opportunistic sweep of the in-memory store.
+ *
+ * `cleanupRateLimitStore` was exported for "a cron job" that never existed, so
+ * every distinct `ip:path` key stayed in memory for the life of the instance —
+ * an unbounded leak on a long-lived server, and wasted work per request as the
+ * filter below walked ever-larger arrays. Sweeping lazily (at most once a
+ * minute, on a request that is already doing this work) keeps it bounded
+ * without a timer, which a serverless runtime would not honour anyway.
+ */
+let lastSweep = Date.now();
+const SWEEP_INTERVAL_MS = 60_000;
+
+function maybeSweep(now: number): void {
+  if (now - lastSweep < SWEEP_INTERVAL_MS) return;
+  lastSweep = now;
+  // Longest window in DEFAULT_CONFIGS; anything older can never matter.
+  cleanupRateLimitStore(SWEEP_INTERVAL_MS);
+}
+
+/**
  * Check if request is within rate limit
  */
 function isWithinRateLimit(key: string, config: RateLimitConfig): boolean {
   const now = Date.now();
   const windowStart = now - config.windowMs;
+  maybeSweep(now);
 
   // Initialize if not exists
   if (!rateLimitStore[key]) {

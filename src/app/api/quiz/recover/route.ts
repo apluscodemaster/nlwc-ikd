@@ -31,7 +31,9 @@ async function findSessionByUsername(username: string) {
  * 404 when neither exists — the message says to ask the admin for a code.
  */
 export async function GET(req: NextRequest) {
-  const limited = rateLimitMiddleware(req, "authenticated");
+  // Public endpoint: it resolves a username against the DB, so it takes the
+  // public tier (100/min), not the 1000/min authenticated one it had.
+  const limited = rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   const username = (req.nextUrl.searchParams.get("username") || "").trim();
