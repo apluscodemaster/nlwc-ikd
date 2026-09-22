@@ -39,30 +39,9 @@ import {
   downloadFile,
   setValidCategories,
 } from "@/lib/quizImportExport";
-import { getAuthorizationHeader } from "@/lib/authClient";
-
-/**
- * The /api/quiz/admin/* routes now require a valid admin token. This page's
- * fetches previously sent none — they relied on the /admin layout's login gate,
- * which is client-side only and never protected the endpoints.
- *
- * Every admin call goes through here so the Firebase ID token is always
- * attached. (A failure to mint a token still issues the request, which the
- * server rejects with 401 — the existing error handling surfaces that.)
- */
-async function authFetch(
-  input: string,
-  init: RequestInit = {},
-): Promise<Response> {
-  const authHeader = await getAuthorizationHeader().catch(() => "");
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...(init.headers || {}),
-      ...(authHeader ? { Authorization: authHeader } : {}),
-    },
-  });
-}
+// The /api/quiz/admin/* routes require a valid admin token — every admin call
+// goes through authFetch so the Firebase ID token is always attached.
+import { authFetch } from "@/lib/authClient";
 
 // ──────────────────────────────────────────────
 // Types

@@ -45,6 +45,9 @@ const RESOURCE_OPTIONS = [
   "quiz-category",
   "quiz-stats",
   "schedule",
+  "fellowship",
+  "speaker",
+  "series",
   "media",
   "session",
 ] as const;

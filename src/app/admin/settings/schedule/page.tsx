@@ -25,26 +25,9 @@ import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { StatCard } from "@/components/shared/StatCard";
 import { ModalShell } from "@/components/shared/ModalShell";
 import type { RecurringService, SpecialService } from "@/lib/scheduleService";
-import { getAuthorizationHeader } from "@/lib/authClient";
-
-/**
- * The schedule write endpoints require an admin token. This page's fetches sent
- * none — they relied on the /admin layout's login gate, which is client-side
- * only and never protected the API. (GET stays public for the live pages.)
- */
-async function authFetch(
-  input: string,
-  init: RequestInit = {},
-): Promise<Response> {
-  const authHeader = await getAuthorizationHeader().catch(() => "");
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...(init.headers || {}),
-      ...(authHeader ? { Authorization: authHeader } : {}),
-    },
-  });
-}
+// The write endpoints require an admin token (GET stays public for the live
+// pages) — authFetch attaches it on every call.
+import { authFetch } from "@/lib/authClient";
 
 // ──────────────────────────────────────────────
 // Constants
