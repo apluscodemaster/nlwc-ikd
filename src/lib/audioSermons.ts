@@ -638,15 +638,23 @@ export async function getAudioSermonDetail(
 // FILTER OPTIONS (Series, Speakers, Topics)
 // =============================================================================
 
+/** Series/speaker lists: cached for public reads, uncached when `fresh`. */
+function taxonomyFetch(path: "series" | "speakers", fresh: boolean) {
+  const url = `${WP_API_URL}/sermons/${path}`;
+  return fresh
+    ? fetch(url, getFetchOptions(true))
+    : deduplicatedFetch(url, getFetchOptions());
+}
+
 /**
- * Fetch all series/categories for the filter dropdown
+ * Fetch all series/categories for the filter dropdown.
+ *
+ * `fresh` bypasses both the in-process dedupe cache and the Next Data Cache —
+ * the admin passes it right after creating a series so the new row shows up.
  */
-export async function getSeriesList(): Promise<SeriesItem[]> {
+export async function getSeriesList(fresh = false): Promise<SeriesItem[]> {
   try {
-    const response = await deduplicatedFetch(
-      `${WP_API_URL}/sermons/series`,
-      getFetchOptions(),
-    );
+    const response = await taxonomyFetch("series", fresh);
     if (!response.ok) return [];
     const data = await response.json();
     return (data || []).map((item: Record<string, unknown>) => ({
@@ -663,14 +671,11 @@ export async function getSeriesList(): Promise<SeriesItem[]> {
 }
 
 /**
- * Fetch all speakers for the filter dropdown
+ * Fetch all speakers for the filter dropdown (see getSeriesList for `fresh`).
  */
-export async function getSpeakersList(): Promise<SpeakerItem[]> {
+export async function getSpeakersList(fresh = false): Promise<SpeakerItem[]> {
   try {
-    const response = await deduplicatedFetch(
-      `${WP_API_URL}/sermons/speakers`,
-      getFetchOptions(),
-    );
+    const response = await taxonomyFetch("speakers", fresh);
     if (!response.ok) return [];
     const data = await response.json();
     return (data || []).map((item: Record<string, unknown>) => ({

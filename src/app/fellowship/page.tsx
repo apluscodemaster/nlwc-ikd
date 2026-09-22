@@ -3,7 +3,7 @@
 import React from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import { fellowshipCenters } from "@/data/centers";
+import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
 import { motion } from "framer-motion";
 import {
   MapPin,
@@ -18,6 +18,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function FellowshipPage() {
+  // Admin-managed list (Firestore via /api/fellowship); the static centers
+  // render immediately as placeholder until it arrives.
+  const { centers } = useFellowshipCenters();
+
   return (
     <main>
       <PageHeader
@@ -42,7 +46,7 @@ export default function FellowshipPage() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-          {fellowshipCenters.map((center, index) => (
+          {centers.map((center, index) => (
             <motion.div
               key={center.id}
               initial={{ opacity: 0, y: 20 }}

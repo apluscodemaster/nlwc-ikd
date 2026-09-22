@@ -17,7 +17,8 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { fellowshipCenters, type FellowshipCenter } from "@/data/centers";
+import type { FellowshipCenter } from "@/data/centers";
+import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = "nlwc-fellowship-prompt-dismissed";
@@ -44,11 +45,12 @@ function haversineKm(
 }
 
 function findNearestCenters(
+  centers: FellowshipCenter[],
   lat: number,
   lng: number,
   count = 2,
 ): { center: FellowshipCenter; distanceKm: number }[] {
-  return fellowshipCenters
+  return centers
     .map((center) => ({
       center,
       distanceKm: haversineKm(lat, lng, center.lat, center.lng),
@@ -69,6 +71,9 @@ export default function FellowshipPrompt() {
     { center: FellowshipCenter; distanceKm: number }[]
   >([]);
   const [locationError, setLocationError] = useState<string | null>(null);
+  // Only fetch the admin-managed list once the prompt is actually showing —
+  // this component mounts on every page.
+  const { centers } = useFellowshipCenters({ enabled: visible });
 
   // Check if prompt should be shown
   useEffect(() => {
@@ -118,7 +123,7 @@ export default function FellowshipPrompt() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        const results = findNearestCenters(latitude, longitude, 2);
+        const results = findNearestCenters(centers, latitude, longitude, 2);
         if (results.length > 0) {
           setNearestCenters(results);
           setStep("result");
@@ -146,7 +151,7 @@ export default function FellowshipPrompt() {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     );
-  }, []);
+  }, [centers]);
 
   if (!visible) return null;
 

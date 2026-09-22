@@ -181,6 +181,7 @@ export async function PUT(request: NextRequest) {
     categories,
     speaker,
     seriesId,
+    speakerId,
     audioUrl,
     thumbnailUrl,
     manualTheme,
@@ -195,6 +196,7 @@ export async function PUT(request: NextRequest) {
     categories?: (number | string)[];
     speaker?: string;
     seriesId?: number;
+    speakerId?: number;
     audioUrl?: string;
     thumbnailUrl?: string;
     manualTheme?: string;
@@ -213,6 +215,8 @@ export async function PUT(request: NextRequest) {
     if (speaker) seBody.speaker = speaker;
     if (date) seBody.date = date;
     if (seriesId) seBody.series_id = seriesId;
+    // Junction-table link so speaker filters/counts stay right (v1.6.0+).
+    if (speakerId) seBody.speaker_id = speakerId;
     if (content) seBody.description = content;
     // Audio & thumbnail are URLs in Series Engine, not WP media attachments.
     if (audioUrl) seBody.audio_url = audioUrl;

@@ -7,7 +7,13 @@
 
 import { WP_CATEGORIES } from "@/lib/wordpress";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
-import type { WPPublishPayload, WPSermonCreatePayload } from "@/types/wp-types";
+import type {
+  WPPublishPayload,
+  WPSermonCreatePayload,
+  WPSpeakerCreatePayload,
+  WPSeriesCreatePayload,
+} from "@/types/wp-types";
+import type { SpeakerItem, SeriesItem } from "@/lib/audioSermons";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -197,6 +203,7 @@ export async function createSermonInSeriesEngine(
     audio_url: payload.audioUrl,
   };
   if (payload.speaker) body.speaker = payload.speaker;
+  if (payload.speakerId) body.speaker_id = payload.speakerId;
   if (payload.description) body.description = payload.description;
   if (payload.seriesId) body.series_id = payload.seriesId;
   if (payload.date) body.date = payload.date;
@@ -247,4 +254,96 @@ export async function createSermonInSeriesEngine(
       error: err instanceof Error ? err.message : "Unknown error",
     };
   }
+}
+
+// =============================================================================
+// SERMON TAXONOMY (Series Engine speakers & series)
+// =============================================================================
+
+export type WPTaxonomyResult<T> =
+  | { success: true; item: T }
+  | { success: false; error: string; existing?: T; status?: number };
+
+/**
+ * Shared POST against the nlwc/v1 taxonomy endpoints. Both return the created
+ * row in the same shape the GET lists use, so the admin can drop it straight
+ * into its dropdown without a refetch. A 409 carries the pre-existing row so
+ * the caller can select that instead of failing.
+ */
+async function createSeriesEngineRow<T>(
+  path: "speakers" | "series",
+  body: Record<string, unknown>,
+  context: string,
+): Promise<WPTaxonomyResult<T>> {
+  if (!WP_APP_PASSWORD) {
+    return {
+      success: false,
+      error: "WP_APPLICATION_PASSWORD is not configured on the server.",
+    };
+  }
+
+  try {
+    const response = await fetch(`${WP_URL}/wp-json/nlwc/v1/sermons/${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getAuthHeader(),
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 404) {
+      return {
+        success: false,
+        status: 404,
+        error:
+          `The Series Engine ${context} endpoint is not registered. Ensure ` +
+          "nlwc-sermons-api.php v1.6.0+ is deployed to wp-content/mu-plugins/.",
+      };
+    }
+
+    const data = (await response.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    > & { message?: string; error?: string; existing?: T };
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: response.status,
+        error:
+          data.message ||
+          data.error ||
+          `Series Engine API returned ${response.status}`,
+        existing: data.existing,
+      };
+    }
+
+    return { success: true, item: data as unknown as T };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+}
+
+/** Create a minister in `se_speakers` (wp-admin → Series Engine → Speakers). */
+export function createSpeakerInSeriesEngine(
+  payload: WPSpeakerCreatePayload,
+): Promise<WPTaxonomyResult<SpeakerItem>> {
+  return createSeriesEngineRow<SpeakerItem>(
+    "speakers",
+    { name: payload.name },
+    "speaker",
+  );
+}
+
+/** Create a series in `se_series` (wp-admin → Series Engine → Series). */
+export function createSeriesInSeriesEngine(
+  payload: WPSeriesCreatePayload,
+): Promise<WPTaxonomyResult<SeriesItem>> {
+  const body: Record<string, unknown> = { title: payload.title };
+  if (payload.description) body.description = payload.description;
+  return createSeriesEngineRow<SeriesItem>("series", body, "series");
 }
