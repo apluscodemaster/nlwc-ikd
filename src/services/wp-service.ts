@@ -14,6 +14,7 @@ import type {
   WPSeriesCreatePayload,
 } from "@/types/wp-types";
 import type { SpeakerItem, SeriesItem } from "@/lib/audioSermons";
+import { toStreamableAudioUrl } from "@/utils/audioUrl";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -200,7 +201,9 @@ export async function createSermonInSeriesEngine(
 
   const body: Record<string, unknown> = {
     title: payload.title,
-    audio_url: payload.audioUrl,
+    // Store the streamable form: a Drive "/view" link would be saved as-is
+    // and fail to play for anyone reading it straight from the DB.
+    audio_url: toStreamableAudioUrl(payload.audioUrl),
   };
   if (payload.speaker) body.speaker = payload.speaker;
   if (payload.speakerId) body.speaker_id = payload.speakerId;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
+import { toStreamableAudioUrl } from "@/utils/audioUrl";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 
@@ -219,7 +220,7 @@ export async function PUT(request: NextRequest) {
     if (speakerId) seBody.speaker_id = speakerId;
     if (content) seBody.description = content;
     // Audio & thumbnail are URLs in Series Engine, not WP media attachments.
-    if (audioUrl) seBody.audio_url = audioUrl;
+    if (audioUrl) seBody.audio_url = toStreamableAudioUrl(audioUrl);
     if (thumbnailUrl) seBody.message_thumbnail = thumbnailUrl;
 
     const result = await updateSESermon(id, seBody);
