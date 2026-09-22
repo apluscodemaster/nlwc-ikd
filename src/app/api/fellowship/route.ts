@@ -40,8 +40,7 @@ const httpUrl = z
   .trim()
   .regex(/^https?:\/\/.+/i, "Must be a URL starting with http(s)://");
 
-/** Full document shape for create; `.partial()` covers update. */
-const centerSchema = z.object({
+const centerFields = {
   name: z.string().trim().min(1, "Name is required"),
   address: z.string().trim().min(1, "Address is required"),
   coordinator: z.string().trim().min(1, "Coordinator is required"),
@@ -52,11 +51,29 @@ const centerSchema = z.object({
   lng: z.coerce.number().min(-180).max(180),
   areaKeywords: z
     .array(z.string().trim().min(1))
+    .transform((list) => list.map((k) => k.toLowerCase())),
+  active: z.boolean(),
+  order: z.coerce.number().int().min(0),
+};
+
+/** Full document for create — optional housekeeping fields get defaults. */
+const createSchema = z.object({
+  ...centerFields,
+  areaKeywords: z
+    .array(z.string().trim().min(1))
     .default([])
     .transform((list) => list.map((k) => k.toLowerCase())),
   active: z.boolean().default(true),
   order: z.coerce.number().int().min(0).default(0),
 });
+
+/**
+ * Update accepts any subset. Deliberately built from the default-free fields:
+ * Zod 4's `.partial()` still fills `.default()`s, which would turn a toggle
+ * like `{ active: false }` into a write that also reset `order` and
+ * `areaKeywords`.
+ */
+const updateSchema = z.object(centerFields).partial();
 
 function validationError(error: z.ZodError) {
   return NextResponse.json(
@@ -114,7 +131,7 @@ export async function POST(req: NextRequest) {
   if (denied) return denied;
 
   try {
-    const parsed = centerSchema.safeParse(await req.json());
+    const parsed = createSchema.safeParse(await req.json());
     if (!parsed.success) return validationError(parsed.error);
 
     const result = await createFellowshipCenter(parsed.data);
@@ -149,8 +166,9 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
-    const { id: _, ...rest } = body;
-    const parsed = centerSchema.partial().safeParse(rest);
+    const rest: Record<string, unknown> = { ...body };
+    delete rest.id;
+    const parsed = updateSchema.safeParse(rest);
     if (!parsed.success) return validationError(parsed.error);
     if (Object.keys(parsed.data).length === 0) {
       return NextResponse.json(
