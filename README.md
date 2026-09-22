@@ -335,6 +335,7 @@ Directory of house fellowship centers:
 - **Service Leaders** - Information about who leads each center
 - **Map Integration** - Visual location reference
 - **Navigation Links** - Easy connection to center leaders
+- **Admin-managed** - Centers live in Firestore (`fellowship_centers`) and are edited at `/admin/fellowship`; the page and the "find a center near me" prompt read them from `GET /api/fellowship`, with the former static list (`src/data/centers.ts`) as the instant fallback. The static list is seeded into Firestore automatically the first time the API finds the collection empty.
 
 ### 🎙️ Live Pages
 
@@ -550,6 +551,7 @@ The app integrates with WordPress at `https://ikdadmin.nlwc.church` as a headles
 - **111+ Sunday School Manuals** with series/theme filtering
 - **Adjacent navigation** — Previous/Next links on each detail page
 - **ISR + on-demand revalidation** — Pages cached server-side and revalidated instantly when content changes: WordPress fires a typed webhook (`POST /api/revalidate?type=transcript|manual|sermon`) on publish/update via the `nlwc-nextjs-revalidate` mu-plugin, so changes appear within seconds without polling. Time-based revalidation remains as a fallback.
+- **Sermon taxonomy from the admin** — "＋ New minister" / "＋ New series" in the Church Content forms write straight to the Series Engine tables via `POST /wp-json/nlwc/v1/sermons/speakers|series` (`nlwc-sermons-api.php` v1.6.0+), so entries added here appear in wp-admin → Series Engine as if added there.
 - **Smart caching** — React Query client-side + Next.js server-side
 - **URL-synced state** — Page, search, and filter state persisted in URL query params
 - **Back navigation** — `BackToListLink` component preserves pagination via `sessionStorage`
@@ -627,6 +629,8 @@ const response = await fetch("/api/wp/publish", {
 
 - `/api/wp/publish`
 - `/api/wp/upload-media`
+- `/api/wp/speakers` (POST — creates a Series Engine speaker or series; GET stays public)
+- `/api/fellowship` (POST/PUT/DELETE; GET stays public)
 - `/api/devotionals/upload`
 - `/api/devotionals/delete`
 
@@ -774,6 +778,7 @@ Admin Login (Bearer token via ADMIN_API_KEY)
 | Quiz Recovery   | Supabase               | `session_security` (hashed)      | None                   |
 | Leaderboard     | Supabase               | `sessions` (aggregated)          | React Query            |
 | Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
+| Fellowship      | Firebase Firestore     | `fellowship_centers` collection  | s-maxage 60 + React Query |
 | Gallery Images  | Google Sheets          | Spreadsheet rows                 | API route cache        |
 | Audio Sermons   | External audio host    | None                             | React Query            |
 | Devotionals     | Cloudinary + metadata  | Cloud storage                    | ISR                    |
