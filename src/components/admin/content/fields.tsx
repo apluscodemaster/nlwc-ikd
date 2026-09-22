@@ -13,6 +13,7 @@ import {
 import { SelectField } from "@/components/shared/SelectField";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { scheduledPublishDateTime } from "@/utils/publishSchedule";
+import { isGoogleDriveUrl } from "@/utils/audioUrl";
 import { RichTextEditor } from "./RichTextEditor";
 import {
   TRANSCRIPT_TYPE_OPTIONS,
@@ -532,6 +533,19 @@ export function AudioUrlField({
         {hint ??
           "Paste the link to the hosted MP3 (e.g. AWS S3). The audio is not uploaded to WordPress."}
       </p>
+      {isGoogleDriveUrl(value) && (
+        <p className="mt-1.5 text-xs text-amber-600 flex items-start gap-1.5">
+          <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>
+            Google Drive link detected — it will be converted to a streamable
+            URL automatically. Make sure the file is shared as{" "}
+            <span className="font-semibold">
+              &ldquo;Anyone with the link&rdquo;
+            </span>
+            , otherwise it won&apos;t play for visitors.
+          </span>
+        </p>
+      )}
       <FieldError message={error} />
     </div>
   );
