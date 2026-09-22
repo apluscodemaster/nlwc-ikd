@@ -20,3 +20,28 @@ export const SELF_RESET_COOLDOWN_DAYS = 30;
 export function normalizeSecurityAnswer(answer: string): string {
   return answer.trim().toLowerCase().replace(/\s+/g, " ");
 }
+
+// ── Admin-issued recovery codes ─────────────────────────────────────────────
+// For players locked out of their progress (typically those who chose a name
+// before security questions existed). The admin issues a code or a link from
+// /admin/quiz; both carry the same single-use credential.
+
+/** How long an issued recovery code (and its link) stays valid. */
+export const RECOVERY_CODE_TTL_HOURS = 24;
+
+/** Query param a recovery link uses on /sermons/quiz. */
+export const RECOVERY_LINK_PARAM = "recover";
+
+/**
+ * Normalise a typed recovery code before hashing/comparing: case-insensitive,
+ * and dashes/spaces are only there for readability.
+ */
+export function normalizeRecoveryCode(code: string): string {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+/** "KJ7Q4PXW" → "KJ7Q-4PXW" for display. */
+export function formatRecoveryCode(code: string): string {
+  const c = normalizeRecoveryCode(code);
+  return c.length > 4 ? `${c.slice(0, 4)}-${c.slice(4)}` : c;
+}

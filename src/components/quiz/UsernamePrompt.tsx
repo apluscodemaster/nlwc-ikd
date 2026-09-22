@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import { User, ArrowRight, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSupabase } from "@/lib/supabase";
-import RecoverProgressModal from "./RecoverProgressModal";
+import RecoverProgressModal, {
+  type RecoveredSession,
+} from "./RecoverProgressModal";
 
 interface UsernamePromptProps {
   onSubmit: (username: string) => Promise<unknown>;
-  onRecovered: (session: { session_id: string; username: string }) => void;
+  onRecovered: (session: RecoveredSession) => void;
 }
 
 export default function UsernamePrompt({
