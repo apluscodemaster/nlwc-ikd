@@ -36,7 +36,7 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 
 - Timed multiple-choice quiz with configurable question count
 - Username-based session tracking (no account required)
-- **Progress recovery** — set a security question to restore your username and score on a new device or after clearing your browser (self-change limited to once / 30 days; admins can reset a locked-out player)
+- **Progress recovery** — set a security question to restore your username and score on a new device or after clearing your browser (self-change limited to once / 30 days). A player with no question set (or who forgot the answer) is not stuck: an admin issues a single-use recovery code or link from `/admin/quiz`
 - Real-time scoring with leaderboard (powered by Supabase)
 - Admin dashboard for question management (CRUD)
 - CSV/JSON import/export for bulk question management
@@ -700,6 +700,7 @@ fetch("/api/revalidate?path=/page", {
 - **Multiple-choice questions** stored in Firebase Firestore
 - **Leaderboard** powered by Supabase with top scores
 - **Progress recovery** via a per-user security question (answer hashed in a server-only `session_security` table; verified through `/api/quiz/recover`), so progress survives a new device or cleared history without accounts
+- **Admin recovery codes** for locked-out players — chiefly those who picked a name before security questions shipped, who have no question to answer. An admin issues a code + signed link from the Players tab (`POST /api/quiz/admin/recovery-code`); only its hash is stored (`session_recovery_codes`), it works once, expires after 24h, and redeeming it clears any stale question so the player sets a fresh one immediately. Opening the link (`/sermons/quiz?recover=<token>`) restores progress automatically
 - **CSV/JSON import/export** for bulk question management
 - **Failed question review** with correct answer display
 - **Scripture recommendations** based on quiz performance
@@ -776,6 +777,7 @@ Admin Login (Bearer token via ADMIN_API_KEY)
 | Quiz Questions  | Firebase Firestore     | `quiz_questions` collection      | None (real-time)       |
 | Quiz Sessions   | Supabase               | `sessions`, `quiz_attempts`      | None                   |
 | Quiz Recovery   | Supabase               | `session_security` (hashed)      | None                   |
+| Quiz Recovery Codes | Supabase           | `session_recovery_codes` (hashed) | None                  |
 | Leaderboard     | Supabase               | `sessions` (aggregated)          | React Query            |
 | Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
 | Fellowship      | Firebase Firestore     | `fellowship_centers` collection  | s-maxage 60 + React Query |
