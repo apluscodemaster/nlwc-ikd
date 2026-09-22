@@ -22,7 +22,17 @@ export async function GET(request: NextRequest) {
   if (limited) return limited;
 
   const type = request.nextUrl.searchParams.get("type") || "speakers";
-  const fresh = request.nextUrl.searchParams.get("fresh") === "1";
+
+  // `fresh=1` bypasses BOTH the dedupe cache and the Next Data Cache, so every
+  // call reaches WordPress. That is a load amplifier if left open to the
+  // public — it is only needed by the admin right after creating an entry, so
+  // require a token for it and silently fall back to the cached read.
+  let fresh = request.nextUrl.searchParams.get("fresh") === "1";
+  if (fresh) {
+    const auth = await requireAuthActor(request);
+    if (auth.response) fresh = false;
+  }
+
   const headers = fresh
     ? { "Cache-Control": "no-store" }
     : { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" };

@@ -55,33 +55,38 @@ export function MediaLibraryPicker({
     return () => clearTimeout(timer);
   }, [search]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        per_page: "24",
-      });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      const res = await authFetch(`/api/wp/media?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Could not load the media library.");
+  /** `refresh` bypasses the route's short cache — the Refresh button only. */
+  const load = useCallback(
+    async (refresh = false) => {
+      setLoading(true);
+      setError("");
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          per_page: "24",
+        });
+        if (debouncedSearch) params.set("search", debouncedSearch);
+        if (refresh) params.set("refresh", "1");
+        const res = await authFetch(`/api/wp/media?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Could not load the media library.");
+          setItems([]);
+          return;
+        }
+        setItems(data.items || []);
+        setTotalPages(data.totalPages || 1);
+      } catch {
+        setError("Network error. Please try again.");
         setItems([]);
-        return;
+      } finally {
+        setLoading(false);
       }
-      setItems(data.items || []);
-      setTotalPages(data.totalPages || 1);
-    } catch {
-      setError("Network error. Please try again.");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch]);
+    },
+    [page, debouncedSearch],
+  );
 
   useEffect(() => {
     load();
@@ -108,7 +113,7 @@ export function MediaLibraryPicker({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={load}
+            onClick={() => load(true)}
             className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
             title="Refresh"
           >
@@ -144,7 +149,7 @@ export function MediaLibraryPicker({
             <p className="text-sm text-red-500 font-medium">{error}</p>
             <button
               type="button"
-              onClick={load}
+              onClick={() => load(true)}
               className="text-xs mt-2 text-primary font-medium hover:underline cursor-pointer"
             >
               Try again

@@ -56,6 +56,10 @@ export async function GET(request: NextRequest) {
     Math.max(1, Number(searchParams.get("per_page")) || 24),
   );
   const search = (searchParams.get("search") || "").trim();
+  // Paging back and forth through the picker would otherwise re-hit WordPress
+  // for every click. A short Data Cache window absorbs that; the picker's
+  // Refresh button sets refresh=1 to bypass it after a new upload.
+  const refresh = searchParams.get("refresh") === "1";
 
   const params = new URLSearchParams({
     media_type: "image",
@@ -76,8 +80,7 @@ export async function GET(request: NextRequest) {
       `${WP_URL}/wp-json/wp/v2/media?${params.toString()}`,
       {
         headers: { Authorization: `Basic ${token}` },
-        // The library changes whenever anyone uploads; never serve a stale page.
-        cache: "no-store",
+        ...(refresh ? { cache: "no-store" as const } : { next: { revalidate: 30 } }),
       },
     );
 
