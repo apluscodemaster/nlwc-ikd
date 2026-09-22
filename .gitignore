@@ -44,12 +44,20 @@ next-env.d.ts
 /src/app/api/sheet/.env.local
 /src/app/api/sheet/.env.development
 
-# WordPress mu-plugins (server-side, contains DB schema details)
-/wordpress/mu-plugins/
+# WordPress mu-plugins (server-side, contains DB schema details).
+# Deployed by hand to wp-content/mu-plugins/ — keep local copies.
+/wordpress/
+
+# Supabase migrations (DB schema + table layouts).
+# Run by hand in the Supabase SQL editor — keep local copies.
+/supabase/
 
 # Documentation & Setup Guides (local reference only)
 WEBHOOK_SETUP.md
 WORDPRESS_INTEGRATION.md
+# Architecture reference — kept local; it names internal hosts, table
+# layouts and known gaps that don't belong in the pushed repo.
+/docs/
 # Claude Code: machine-local permissions/settings (never commit — the
 # auto-approved allowlist churns per session and conflicts on every merge)
 .claude/settings.local.json

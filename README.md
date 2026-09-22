@@ -115,7 +115,10 @@ src/
 │   │   ├── page.tsx            # Church Content (publish sermons/transcripts/manuals)
 │   │   ├── quiz/               # Quiz question & category management
 │   │   ├── devotionals/        # Devotional uploads
-│   │   ├── schedule/           # Service schedule (recurring + special events)
+│   │   ├── fellowship/         # House fellowship centers (Firestore)
+│   │   ├── settings/           # Settings hub
+│   │   │   ├── schedule/       # Service schedule (recurring + special events)
+│   │   │   └── audit-log/      # Who changed what, and when
 │   │   └── testimonies/        # Testimony moderation
 │   ├── api/                    # API routes
 │   │   ├── audio-sermons/      # Audio sermon proxy
@@ -777,7 +780,7 @@ Admin Login (Bearer token via ADMIN_API_KEY)
 | Quiz Questions  | Firebase Firestore     | `quiz_questions` collection      | None (real-time)       |
 | Quiz Sessions   | Supabase               | `sessions`, `quiz_attempts`      | None                   |
 | Quiz Recovery   | Supabase               | `session_security` (hashed)      | None                   |
-| Quiz Recovery Codes | Supabase           | `session_recovery_codes` (hashed) | None                  |
+| Recovery Codes  | Supabase               | `session_recovery_codes` (hashed) | None                  |
 | Leaderboard     | Supabase               | `sessions` (aggregated)          | React Query            |
 | Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
 | Fellowship      | Firebase Firestore     | `fellowship_centers` collection  | s-maxage 60 + React Query |
