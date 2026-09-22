@@ -34,6 +34,7 @@ import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
+import { useAutoScrollTo } from "@/hooks/useAutoScrollTo";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
@@ -75,6 +76,11 @@ export default function ListenLivePage() {
   const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Land visitors on the live player rather than the hero — on every screen
+  // size. The wrapper's scroll-mt clears the fixed navbar.
+  const playerSectionRef = useRef<HTMLDivElement | null>(null);
+  useAutoScrollTo(playerSectionRef);
 
   const handlePlay = useCallback(
     async (sermon: AudioSermon) => {
@@ -251,8 +257,10 @@ export default function ListenLivePage() {
         backgroundImage="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=2070&auto=format&fit=crop"
       />
 
-      <SectionContainer className="pb-10">
-        <AudioLivePlayer />
+      <SectionContainer id="audio-player" className="pb-10">
+        <div ref={playerSectionRef} className="scroll-mt-24">
+          <AudioLivePlayer />
+        </div>
       </SectionContainer>
 
       <SectionContainer className="bg-gray-50 overflow-hidden">
