@@ -10,6 +10,9 @@ import QuizResults from "@/components/quiz/QuizResults";
 import Leaderboard from "@/components/quiz/Leaderboard";
 import SecurityQuestionModal from "@/components/quiz/SecurityQuestionModal";
 import { useQuizSession } from "@/hooks/useQuizSession";
+import type { RecoveredSession } from "@/components/quiz/RecoverProgressModal";
+import { RECOVERY_LINK_PARAM } from "@/lib/quizSecurity";
+import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 import type { QuizCategory, QuizResult, LeaderboardEntry } from "@/types/quiz";
 import CelebrationProvider, {
@@ -79,6 +82,64 @@ export default function QuizPageClient() {
     },
     [createSession],
   );
+
+  // Progress recovered on this device. A code/link redemption clears the old
+  // security question server-side, so prompt for a fresh one straight away.
+  const handleRecovered = useCallback(
+    async (s: RecoveredSession) => {
+      await adoptSession(s.session_id, s.username);
+      if (s.mustSetSecurity) {
+        setSecurityMode("set");
+        setShowSecurity(true);
+      }
+    },
+    [adoptSession],
+  );
+
+  // Admin-issued recovery link (/sermons/quiz?recover=<token>). Redeem it once,
+  // then scrub the token from the URL so a reload or share can't replay it.
+  // Read from window rather than useSearchParams: this page is statically
+  // rendered and that hook would demand a Suspense boundary around the tree.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get(RECOVERY_LINK_PARAM);
+    if (!token) return;
+
+    params.delete(RECOVERY_LINK_PARAM);
+    const clean = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", clean);
+
+    (async () => {
+      try {
+        const res = await fetch("/api/quiz/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error("Recovery link didn't work", {
+            description: data.error || "Ask the admin for a new one.",
+          });
+          return;
+        }
+        await handleRecovered({
+          session_id: data.session_id,
+          username: data.username,
+          mustSetSecurity: Boolean(data.mustSetSecurity),
+        });
+        toast.success(`Welcome back, ${data.username}!`, {
+          description: "Your progress is restored on this device.",
+        });
+      } catch {
+        toast.error("Recovery link didn't work", {
+          description: "Network error. Please try again.",
+        });
+      }
+    })();
+    // Mount-only: the token is consumed exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch leaderboard on mount
   useEffect(() => {
@@ -150,7 +211,7 @@ export default function QuizPageClient() {
           {needsUsername ? (
             <UsernamePrompt
               onSubmit={handleCreateSession}
-              onRecovered={(s) => adoptSession(s.session_id, s.username)}
+              onRecovered={handleRecovered}
             />
           ) : (
             <>

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { hashSecurityAnswer } from "@/lib/quizSecurity.server";
+import {
+  hasActiveRecoveryCode,
+  redeemRecoveryCode,
+  verifyClaimToken,
+} from "@/lib/quizRecovery.server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
@@ -19,7 +24,11 @@ async function findSessionByUsername(username: string) {
 
 /**
  * GET /api/quiz/recover?username=...
- * Returns the security question for a username so the user can answer it.
+ * Tells the client how this name can be recovered:
+ *   { question }                       — answer the security question
+ *   { question, hasRecoveryCode: true} — either that, or an admin-issued code
+ *   { question: null, hasRecoveryCode: true } — code only (no question set)
+ * 404 when neither exists — the message says to ask the admin for a code.
  */
 export async function GET(req: NextRequest) {
   const limited = rateLimitMiddleware(req, "authenticated");
@@ -38,31 +47,42 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const { data: sec } = await getSupabaseAdmin()
-    .from("session_security")
-    .select("question")
-    .eq("session_id", session.session_id)
-    .maybeSingle();
+  const [{ data: sec }, hasRecoveryCode] = await Promise.all([
+    getSupabaseAdmin()
+      .from("session_security")
+      .select("question")
+      .eq("session_id", session.session_id)
+      .maybeSingle(),
+    hasActiveRecoveryCode(session.session_id),
+  ]);
 
-  if (!sec) {
+  if (!sec && !hasRecoveryCode) {
     return NextResponse.json(
       {
         error:
-          "This name has no security question set, so it can't be recovered. Please contact the church admin.",
+          "This name has no security question set. Ask the church admin for a recovery code — it lets you continue with your score and set a question.",
+        needsAdminCode: true,
       },
       { status: 404 },
     );
   }
 
-  return NextResponse.json({ question: sec.question });
+  return NextResponse.json({
+    question: sec?.question ?? null,
+    hasRecoveryCode,
+  });
 }
 
 /**
  * POST /api/quiz/recover
- * Verify the security answer for a username and, on success, return its
- * session_id so the new device can adopt the existing progress.
+ * Verify one of three credentials and, on success, return the session_id so
+ * the new device can adopt the existing progress:
+ *   { username, answer } — security question answer
+ *   { username, code }   — admin-issued recovery code
+ *   { token }            — signed recovery link (carries the same code)
  *
- * Body: { username, answer }
+ * Redeeming a code/link also clears the old security question, so the reply
+ * carries `mustSetSecurity: true` and the client prompts for a fresh one.
  */
 export async function POST(req: NextRequest) {
   const limited = rateLimitMiddleware(req, "strict");
@@ -75,24 +95,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  // Generic message on failure to avoid leaking which usernames exist.
+  const genericFail = NextResponse.json(
+    { error: "Could not verify. Check your details and try again." },
+    { status: 401 },
+  );
+  const db = getSupabaseAdmin();
+
+  // ── Signed link ────────────────────────────────────────────────────────
+  const token = typeof body.token === "string" ? body.token.trim() : "";
+  if (token) {
+    const claim = verifyClaimToken(token);
+    if (!claim) {
+      return NextResponse.json(
+        { error: "This recovery link is invalid or has expired. Ask the admin for a new one." },
+        { status: 401 },
+      );
+    }
+    const { data: session } = await db
+      .from("sessions")
+      .select("session_id, username")
+      .eq("session_id", claim.sid)
+      .maybeSingle();
+    if (!session) return genericFail;
+    if (!(await redeemRecoveryCode(session.session_id, claim.code))) {
+      return NextResponse.json(
+        { error: "This recovery link has already been used or has expired. Ask the admin for a new one." },
+        { status: 401 },
+      );
+    }
+    return NextResponse.json({
+      session_id: session.session_id,
+      username: session.username,
+      mustSetSecurity: true,
+    });
+  }
+
   const username = typeof body.username === "string" ? body.username.trim() : "";
   const answer = typeof body.answer === "string" ? body.answer : "";
-  if (!username || !answer) {
+  const code = typeof body.code === "string" ? body.code.trim() : "";
+  if (!username || (!answer && !code)) {
     return NextResponse.json(
-      { error: "Username and answer are required" },
+      { error: "Username and an answer or recovery code are required" },
       { status: 400 },
     );
   }
 
   const session = await findSessionByUsername(username);
-  // Generic message on failure to avoid leaking which usernames exist.
-  const genericFail = NextResponse.json(
-    { error: "Could not verify. Check your name and answer and try again." },
-    { status: 401 },
-  );
   if (!session) return genericFail;
 
-  const { data: sec } = await getSupabaseAdmin()
+  // ── Admin-issued code ──────────────────────────────────────────────────
+  if (code) {
+    if (!(await redeemRecoveryCode(session.session_id, code))) return genericFail;
+    return NextResponse.json({
+      session_id: session.session_id,
+      username: session.username,
+      mustSetSecurity: true,
+    });
+  }
+
+  // ── Security question ──────────────────────────────────────────────────
+  const { data: sec } = await db
     .from("session_security")
     .select("answer_hash")
     .eq("session_id", session.session_id)
@@ -104,5 +167,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     session_id: session.session_id,
     username: session.username,
+    mustSetSecurity: false,
   });
 }
