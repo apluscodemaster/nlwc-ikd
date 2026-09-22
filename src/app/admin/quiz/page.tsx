@@ -610,6 +610,7 @@ export default function AdminQuizPage() {
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
   const [resettingSecId, setResettingSecId] = useState<string | null>(null);
   // Recovery codes for locked-out players (no security question, or forgot it)
+  const [playerSearch, setPlayerSearch] = useState("");
   const [issuingCodeId, setIssuingCodeId] = useState<string | null>(null);
   const [issuedRecovery, setIssuedRecovery] = useState<IssuedRecovery | null>(
     null,
@@ -784,10 +785,14 @@ export default function AdminQuizPage() {
     });
   };
 
+  /**
+   * Select-all covers exactly the rows on screen — the search filter included.
+   * Selecting players hidden by a search and then bulk-deleting them is the
+   * kind of surprise this page cannot afford, so `shownPlayers` (already
+   * filtered) is the source rather than the raw session list.
+   */
   const toggleSelectAllPlayers = () => {
-    const list =
-      (playerView === "all" ? stats?.allSessions : stats?.recentSessions) ?? [];
-    const all = list.map((s) => s.session_id);
+    const all = shownPlayers.map((s) => s.session_id);
     setSelectedPlayerIds((prev) =>
       prev.size === all.length && all.length > 0 ? new Set() : new Set(all),
     );
@@ -1094,10 +1099,25 @@ export default function AdminQuizPage() {
     categoryCounts[q.category] = (categoryCounts[q.category] || 0) + 1;
   }
 
-  // ── Players shown in the Players tab (Recent vs All) ──
+  // ── Players shown in the Players tab (Recent vs All, then search) ──
+  // Both lists arrive with the stats payload, so this filters in memory —
+  // no request per keystroke, same as the Questions tab.
   const allPlayers = stats?.allSessions ?? stats?.recentSessions ?? [];
   const recentPlayers = stats?.recentSessions ?? [];
-  const shownPlayers = playerView === "all" ? allPlayers : recentPlayers;
+  const playersInView = playerView === "all" ? allPlayers : recentPlayers;
+  const playerQuery = playerSearch.trim().toLowerCase();
+  const shownPlayers = playerQuery
+    ? playersInView.filter(
+        (p) =>
+          p.username.toLowerCase().includes(playerQuery) ||
+          // Session id too: the recovery-code and audit-log flows surface ids.
+          p.session_id.toLowerCase().includes(playerQuery),
+      )
+    : playersInView;
+  // Rank (the trophy badge) is a property of the player's standing, not of
+  // their position in a filtered view — searching must not hand the first
+  // three matches a gold trophy.
+  const playerRank = new Map(playersInView.map((p, i) => [p.session_id, i]));
 
   // ══════════════════════════════════════════════
   // Tabs
@@ -1582,6 +1602,27 @@ export default function AdminQuizPage() {
                 </button>
               </div>
 
+              {/* Search — filters the loaded list in memory, no refetch */}
+              <div className="px-5 py-3 border-b border-gray-100">
+                <SearchInput
+                  value={playerSearch}
+                  onChange={(v) => {
+                    setPlayerSearch(v);
+                    // A narrowed list must not keep hidden rows selected.
+                    setSelectedPlayerIds(new Set());
+                  }}
+                  placeholder="Search players by name or session ID…"
+                  className="h-10 pl-11 pr-4 bg-gray-50 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+                {playerQuery && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {shownPlayers.length} of {playersInView.length}{" "}
+                    {playersInView.length === 1 ? "player" : "players"} match
+                    &ldquo;{playerSearch.trim()}&rdquo;
+                  </p>
+                )}
+              </div>
+
               {/* Bulk action toolbar — shown when one or more players selected */}
               <AnimatePresence>
                 {selectedPlayerIds.size > 0 && (
@@ -1668,7 +1709,28 @@ export default function AdminQuizPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {shownPlayers.map((s, idx) => (
+                    {shownPlayers.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-14">
+                          <div className="flex flex-col items-center justify-center text-gray-400">
+                            <Users className="w-10 h-10 mb-3 opacity-30" />
+                            <p className="text-sm font-medium">
+                              No players match &ldquo;{playerSearch.trim()}
+                              &rdquo;
+                            </p>
+                            <button
+                              onClick={() => setPlayerSearch("")}
+                              className="text-xs mt-1 text-primary font-medium hover:underline cursor-pointer"
+                            >
+                              Clear search
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {shownPlayers.map((s) => {
+                      const idx = playerRank.get(s.session_id) ?? 0;
+                      return (
                       <tr
                         key={s.session_id}
                         className={`transition-colors ${
@@ -1839,7 +1901,8 @@ export default function AdminQuizPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
