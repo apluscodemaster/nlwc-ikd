@@ -2,6 +2,11 @@
 
 import { useEffect, type RefObject } from "react";
 
+/** Where to scroll: a ref, or a resolver so the target can depend on viewport. */
+export type AutoScrollTarget =
+  | RefObject<HTMLElement | null>
+  | (() => HTMLElement | null);
+
 interface AutoScrollOptions {
   /**
    * Milliseconds to wait before scrolling. Long enough for Next.js scroll
@@ -15,17 +20,20 @@ interface AutoScrollOptions {
 }
 
 /**
- * Bring `ref` into view once on mount — used by the streaming pages so a
+ * Bring a target into view once on mount — used by the streaming pages so a
  * visitor lands straight on the player instead of scrolling past the hero.
  *
- * Works the same on phones and desktops: `scrollIntoView` honours the
- * element's `scroll-margin-top`, so give the target a `scroll-mt-*` class to
- * clear the fixed navbar. Respects `prefers-reduced-motion` (jumps instead of
- * gliding) and stays out of the way when the URL already carries a `#hash`
- * that the browser is scrolling to.
+ * `scrollIntoView` honours the element's `scroll-margin-top`, so give the
+ * target a `scroll-mt-*` class to clear the fixed navbar. Respects
+ * `prefers-reduced-motion` (jumps instead of gliding) and stays out of the
+ * way when the URL already carries a `#hash` the browser is scrolling to.
+ *
+ * Pass a resolver function when the right target depends on the viewport
+ * (e.g. the whole player card on desktop, but the embed itself on a phone,
+ * where the card's header would otherwise fill the screen).
  */
 export function useAutoScrollTo(
-  ref: RefObject<HTMLElement | null>,
+  target: AutoScrollTarget,
   { delay = 450, enabled = true }: AutoScrollOptions = {},
 ) {
   useEffect(() => {
@@ -33,7 +41,7 @@ export function useAutoScrollTo(
     if (window.location.hash) return;
 
     const timeout = setTimeout(() => {
-      const el = ref.current;
+      const el = typeof target === "function" ? target() : target.current;
       if (!el) return;
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",

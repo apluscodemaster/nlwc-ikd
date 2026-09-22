@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 
+/** DOM id of the Waystream embed wrapper — the auto-scroll target on phones. */
+export const AUDIO_EMBED_ID = "audio-live-embed";
+
 const WAYSTREAM_EMBED_URL =
   process.env.NEXT_PUBLIC_WAYSTREAM_EMBED_URL ||
   "https://app.waystream.io/embed/nlwcikorodu?orientation=portrait";
@@ -121,8 +124,11 @@ export default function AudioLivePlayer() {
           className="overflow-hidden"
         >
           <div
+            id={AUDIO_EMBED_ID}
             className={cn(
-              "rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50",
+              // scroll-mt clears the fixed navbar when the page auto-scrolls
+              // straight to the embed on phones (see listen-live/page.tsx).
+              "rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 scroll-mt-20",
               isExpanded ? "block" : "hidden",
             )}
           >
