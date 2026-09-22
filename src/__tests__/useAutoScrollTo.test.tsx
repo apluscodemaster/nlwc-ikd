@@ -36,6 +36,22 @@ describe("useAutoScrollTo", () => {
     });
   });
 
+  it("accepts a resolver so the target can depend on the viewport", () => {
+    const phoneTarget = makeRef();
+    const desktopTarget = makeRef();
+    let isPhone = true;
+    renderHook(() =>
+      useAutoScrollTo(
+        () => (isPhone ? phoneTarget.current : desktopTarget.current),
+        { delay: 0 },
+      ),
+    );
+    isPhone = true;
+    vi.advanceTimersByTime(0);
+    expect(phoneTarget.current.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(desktopTarget.current.scrollIntoView).not.toHaveBeenCalled();
+  });
+
   it("jumps instead of gliding when the user prefers reduced motion", () => {
     (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({
       matches: true,

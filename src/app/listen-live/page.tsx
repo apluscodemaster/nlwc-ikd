@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import AudioLivePlayer from "@/components/live/AudioLivePlayer";
+import AudioLivePlayer, { AUDIO_EMBED_ID } from "@/components/live/AudioLivePlayer";
 import ServiceCountdown from "@/components/live/ServiceCountdown";
 import Image from "next/image";
 import {
@@ -77,10 +77,19 @@ export default function ListenLivePage() {
   const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Land visitors on the live player rather than the hero — on every screen
-  // size. The wrapper's scroll-mt clears the fixed navbar.
+  // Land visitors on the live player rather than the hero. On desktop the
+  // whole player card fits, so scroll to it; on a phone the card's header
+  // (status tile + waveform) would fill the screen with the actual stream
+  // still below the fold, so go straight to the Waystream embed instead.
+  // Both targets carry a scroll-mt that clears the fixed navbar.
   const playerSectionRef = useRef<HTMLDivElement | null>(null);
-  useAutoScrollTo(playerSectionRef);
+  useAutoScrollTo(() => {
+    const isPhone = window.matchMedia("(max-width: 767px)").matches;
+    return (
+      (isPhone && document.getElementById(AUDIO_EMBED_ID)) ||
+      playerSectionRef.current
+    );
+  });
 
   const handlePlay = useCallback(
     async (sermon: AudioSermon) => {
