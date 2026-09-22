@@ -423,7 +423,8 @@ Management interface (restricted access via Firebase Authentication — admin AP
 - **Church Content** (`/admin`) — Publish and edit WordPress sermons, transcripts, and manuals: rich-text editor (paste-cleaning of external fonts), media uploads, future-date scheduling, and live search across content
 - **Quiz Management** (`/admin/quiz`) — CRUD for quiz questions and categories, CSV/JSON import/export, player stats
 - **Devotional Management** (`/admin/devotionals`) — Upload, edit, and delete daily devotionals
-- **Service Schedule** (`/admin/schedule`) — Manage recurring services and special events
+- **House Fellowship** (`/admin/fellowship`) — Firestore-backed CRUD for the fellowship centers shown on `/fellowship` (seeded from the former static list on first load)
+- **Settings** (`/admin/settings`) — Service schedule (`/admin/settings/schedule`: recurring services and special events) and the audit log (`/admin/settings/audit-log`)
 - **Testimony Moderation** (`/admin/testimonies`) — Approve or reject submitted testimonies
 - Session timeout with automatic logout
 
@@ -672,7 +673,8 @@ fetch("/api/revalidate?path=/page", {
 | Admin (Church Content) | `/admin`        | Publish/edit sermons, transcripts & manuals       |
 | Admin Quiz        | `/admin/quiz`        | Quiz question & category management               |
 | Admin Devotionals | `/admin/devotionals` | Devotional content management                     |
-| Admin Schedule    | `/admin/schedule`    | Recurring services & special events               |
+| Admin Fellowship  | `/admin/fellowship`  | House fellowship center management                |
+| Admin Settings    | `/admin/settings`    | Schedule & audit log                              |
 | Admin Testimonies | `/admin/testimonies` | Testimony moderation                              |
 
 ## 🎯 Key Features Breakdown
