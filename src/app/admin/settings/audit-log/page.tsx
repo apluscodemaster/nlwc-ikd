@@ -22,7 +22,7 @@ import {
   LogIn,
   LogOut,
 } from "lucide-react";
-import { useAdminAuth } from "../layout";
+import { useAdminAuth } from "@/app/admin/layout";
 import { resolveAdminIdentity } from "@/lib/adminProfile";
 import type { AuditEntry } from "@/lib/auditLog";
 
