@@ -108,7 +108,7 @@ function getFetchOptions(noStore = false): RequestInit {
  * Image component fetches external URLs directly (bypassing Next rewrites),
  * so we need to rewrite the hostname.
  */
-function fixThumbnailUrl(url: string | undefined | null): string | undefined {
+export function fixThumbnailUrl(url: string | undefined | null): string | undefined {
   if (!url) return undefined;
   return url.replace(
     "://ikorodu.nlwc.church/wp-content/",
