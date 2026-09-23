@@ -37,6 +37,8 @@ export interface AudioSermon {
   series?: string;
   seriesId?: number;
   duration?: string;
+  /** Series Engine `description` column -- admin-authored notes. */
+  description?: string;
 }
 
 export interface AudioSermonsResponse {
@@ -175,6 +177,7 @@ async function fetchFromWpApi(
         series: (item.seriesTitle as string) || undefined,
         seriesId: item.seriesId as number,
         duration: (item.duration as string) || undefined,
+        description: (item.description as string) || undefined,
       }),
     );
 
@@ -241,6 +244,7 @@ async function fetchDetailFromWpApi(
         downloadUrl: toStreamableAudioUrl(item.audioUrl) || undefined,
         thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
         series: item.seriesTitle || undefined,
+        description: item.description || undefined,
       };
     } catch (error) {
       lastError = error as Error;

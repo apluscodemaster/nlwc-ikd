@@ -88,4 +88,20 @@ describe("withSpeakerLine", () => {
   it("just strips when no speaker is selected", () => {
     expect(withSpeakerLine("Minister: Old\nBody", "", "manual")).toBe("Body");
   });
+
+  // Series Engine stores the speaker in its own column. Injecting it into the
+  // description is redundant, and used to replace the whole description with
+  // just that line when the edit modal opened empty.
+  it("never injects the Minister line into a sermon description", () => {
+    expect(withSpeakerLine("Real description", "Pst. A", "sermon")).toBe(
+      "Real description",
+    );
+  });
+
+  it("strips a stray Minister line left on a sermon by the old behaviour", () => {
+    expect(withSpeakerLine("Minister: Pst. A\n", "Pst. A", "sermon")).toBe("");
+    expect(
+      withSpeakerLine("Minister: Pst. A\nKept text", "Pst. A", "sermon"),
+    ).toBe("Kept text");
+  });
 });

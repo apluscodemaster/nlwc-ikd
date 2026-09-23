@@ -57,6 +57,14 @@ export function stripLeadingSpeakerLine(html: string): string {
 /**
  * Re-prepend the Minister line from the speaker dropdown. Transcripts get a
  * paragraph (they are rich HTML); manuals get a bare text line.
+ *
+ * Sermons get NOTHING prepended. They are Series Engine messages with a
+ * first-class `speaker` column, so naming the minister inside the description
+ * is redundant — and actively harmful: combined with the description not being
+ * read back into the edit modal, saving a sermon used to replace its whole
+ * description with the single line "Minister: <name>". Live rows were found in
+ * exactly that state. The body is still stripped, so re-saving one of those
+ * clears the stray line.
  */
 export function withSpeakerLine(
   html: string,
@@ -64,7 +72,7 @@ export function withSpeakerLine(
   type: "transcript" | "manual" | "sermon",
 ): string {
   const body = stripLeadingSpeakerLine(html);
-  if (!speaker) return body;
+  if (!speaker || type === "sermon") return body;
   return type === "transcript"
     ? `<p><strong>Minister:</strong> ${speaker}</p>\n${body}`
     : `Minister: ${speaker}\n${body}`;
