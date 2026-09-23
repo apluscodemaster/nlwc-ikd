@@ -37,6 +37,7 @@ import {
   todayInputValue,
   toDateInputValue,
   withSpeakerLine,
+  stripLeadingSpeakerLine,
 } from "@/components/admin/content/contentHelpers";
 import { ContentListItem } from "@/components/admin/content/ContentListItem";
 import { useSermonTaxonomy } from "@/components/admin/content/useSermonTaxonomy";
@@ -231,10 +232,15 @@ export default function AdminChurchContentPage() {
     const matchedSeries = taxonomy.seriesList.find(
       (s) => s.title === item.series,
     );
+    const rawContent = item.content || item.excerpt || "";
     setEditingItem(item);
     setEdit({
       title: item.title,
-      content: item.content || item.excerpt || "",
+      // Sermons: drop any stray leading "Minister: …" line so the admin sees
+      // the real description. Rows written before that injection was removed
+      // still carry it; not re-adding it on save cleans them up.
+      content:
+        activeTab === "sermon" ? stripLeadingSpeakerLine(rawContent) : rawContent,
       // A scheduled post comes back as "future", which matches neither option
       // in the Status select (it rendered blank). Treat it as "publish" — the
       // future date below is what re-schedules it on save.
