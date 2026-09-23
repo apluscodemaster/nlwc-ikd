@@ -29,6 +29,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
+import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
 import {
   getMediaProgress,
   clearMediaProgress,
@@ -54,6 +55,16 @@ export default function AudioPlayerClient({
   initialSermon,
 }: AudioPlayerClientProps) {
   const [sermon] = useState<AudioSermon>(initialSermon);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
+  // Legacy rows can carry a stray leading "Minister: <name>" line, written by
+  // an earlier version of the admin save. The speaker is already shown above,
+  // so drop it rather than printing the name twice.
+  const description = stripLeadingSpeakerLine(sermon.description ?? "").trim();
+  // Heuristic rather than measuring the DOM: roughly the point where the text
+  // exceeds the three-line clamp at this width.
+  const isLongDescription =
+    description.length > 180 || description.split("\n").length > 3;
 
   const [copied, setCopied] = useState(false);
 
@@ -545,6 +556,30 @@ export default function AudioPlayerClient({
             </span>
           )}
         </div>
+
+        {/* Description — plain text from the admin's Description box, so it is
+            rendered as text (never as HTML) and keeps its line breaks. A long
+            one collapses so it can't push the player controls off-screen. */}
+        {description && (
+          <div className="mt-5 text-left sm:text-center">
+            <p
+              className={`text-white/70 text-sm leading-relaxed whitespace-pre-line ${
+                descriptionExpanded ? "" : "line-clamp-3"
+              }`}
+            >
+              {description}
+            </p>
+            {isLongDescription && (
+              <button
+                type="button"
+                onClick={() => setDescriptionExpanded((v) => !v)}
+                className="mt-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+              >
+                {descriptionExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        )}
       </motion.div>
 
       {/* Player Controls */}

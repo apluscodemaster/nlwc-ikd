@@ -2,9 +2,15 @@ import { describe, it, expect } from "vitest";
 import {
   toDateInputValue,
   todayInputValue,
+} from "@/components/admin/content/contentHelpers";
+// Canonical location — the admin re-exports these, but the public audio
+// message page imports them from here.
+import {
   stripLeadingSpeakerLine,
   withSpeakerLine,
-} from "@/components/admin/content/contentHelpers";
+} from "@/utils/speakerLine";
+// The admin's re-export must keep working for its single-import convenience.
+import * as contentHelpers from "@/components/admin/content/contentHelpers";
 
 describe("toDateInputValue", () => {
   it("returns '' for empty input", () => {
@@ -103,5 +109,12 @@ describe("withSpeakerLine", () => {
     expect(
       withSpeakerLine("Minister: Pst. A\nKept text", "Pst. A", "sermon"),
     ).toBe("Kept text");
+  });
+});
+
+describe("contentHelpers re-export", () => {
+  it("still exposes the speaker-line helpers after they moved to utils", () => {
+    expect(contentHelpers.stripLeadingSpeakerLine).toBe(stripLeadingSpeakerLine);
+    expect(contentHelpers.withSpeakerLine).toBe(withSpeakerLine);
   });
 });
