@@ -18,6 +18,7 @@ import {
   Share2,
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
+import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
 import { findTranscriptSlug, type TranscriptStub } from "@/utils/transcriptSlug";
 
 interface SermonCardProps {
@@ -50,6 +51,15 @@ export default function SermonCard({
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`
     : "/transcripts";
+  // Legacy rows can carry a stray leading "Minister: <name>" line; the speaker
+  // is already shown on the card, so drop it rather than repeating the name.
+  const cardDescription = useMemo(
+    () =>
+      stripLeadingSpeakerLine(sermon.description ?? "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    [sermon.description],
+  );
 
   return (
     <motion.div
@@ -157,6 +167,15 @@ export default function SermonCard({
           </div>
         </div>
       </div>
+
+      {/* Description — full width so the excerpt has room to read. Newlines are
+          collapsed to spaces: stored descriptions are often several short
+          metadata lines, which would eat the two-line clamp immediately. */}
+      {cardDescription && (
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {cardDescription}
+        </p>
+      )}
 
       {/* ===== Action bar ===== */}
       <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3">
