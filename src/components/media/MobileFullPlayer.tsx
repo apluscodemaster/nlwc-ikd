@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
+import { MarqueeText } from "./MarqueeText";
 import {
   Play,
   Pause,
@@ -170,7 +171,12 @@ export default function MobileFullPlayer({
 
           {/* Song Info */}
           <div className="px-8 mb-4">
-            <h3 className="text-white text-xl font-bold truncate">{title}</h3>
+            {/* Sweeps while playing so a long title can be read in full. */}
+            <MarqueeText
+              text={title}
+              active={isPlaying}
+              className="text-white text-xl font-bold"
+            />
             <p className="text-white/50 text-sm mt-1 truncate">
               {speaker}
               {series && ` • ${series}`}

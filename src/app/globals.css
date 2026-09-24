@@ -281,3 +281,39 @@ a.rtTag,
 .scripture-reference:hover {
   border-bottom-color: #ff7c18 !important;
 }
+
+/* ── Player title marquee ──────────────────────────────────────────────────
+   Used by <MarqueeText/> for player titles that overflow on narrow screens.
+   The hold-sweep-hold-sweep-back shape is deliberate: a title that scrolls
+   without pause is tiring to read and never settles long enough to take in.
+   The distance comes from --marquee-shift (measured in JS, since it depends
+   on the rendered text width) and the duration is set inline so the apparent
+   speed stays constant for short and long titles alike. */
+@keyframes marquee-sweep {
+  0%,
+  10% {
+    transform: translateX(0);
+  }
+  45%,
+  55% {
+    transform: translateX(var(--marquee-shift, 0));
+  }
+  90%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-sweep {
+  animation-name: marquee-sweep;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  /* animation-duration is supplied inline, scaled to the overflow distance. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-sweep {
+    animation: none;
+    transform: none;
+  }
+}
