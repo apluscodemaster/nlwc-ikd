@@ -1384,6 +1384,14 @@ function SermonCard({
         </p>
       )}
 
+      {/* Grows to absorb spare height when a neighbour in the same grid row is
+          taller (e.g. it has a description). Without it the extra space pooled
+          under the action bar; with it the bars line up across the row and the
+          gap sits between content and controls, where it reads as breathing
+          room. On mobile (single column) cards are never stretched, so this is
+          zero-height there. */}
+      <div aria-hidden className="grow" />
+
       {/* ===== Action bar ===== */}
       <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3">
         <button
