@@ -28,7 +28,6 @@ import {
   ChevronDown,
   Clock,
   Music,
-  Tag,
   SortAsc,
   SortDesc,
   RotateCcw,
@@ -51,6 +50,15 @@ import {
 } from "@/utils/sermonProgress";
 import { logWarn, logError } from "@/lib/devLog";
 import { normalizeSearchQuery } from "@/lib/utils";
+
+/**
+ * Earliest year offered in the Year filter.
+ *
+ * The dropdown previously ran back to 2008, but the audio catalogue does not
+ * reach that far, so most of those options returned an empty list. Anything
+ * before this year is simply not selectable.
+ */
+const EARLIEST_SERMON_YEAR = 2021;
 
 // Transcript slug lookup
 // Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
@@ -430,9 +438,6 @@ export default function SermonsPageContent() {
       ? Number(searchParams.get("speaker"))
       : undefined,
   );
-  const [selectedTopic, setSelectedTopic] = useState<number | undefined>(
-    searchParams.get("topic") ? Number(searchParams.get("topic")) : undefined,
-  );
   const [selectedYear, setSelectedYear] = useState<number | undefined>(
     searchParams.get("year") ? Number(searchParams.get("year")) : undefined,
   );
@@ -447,7 +452,6 @@ export default function SermonsPageContent() {
     return !!(
       searchParams.get("speaker") ||
       searchParams.get("series") ||
-      searchParams.get("topic") ||
       searchParams.get("year")
     );
   });
@@ -509,7 +513,6 @@ export default function SermonsPageContent() {
     search: debouncedSearch || undefined,
     seriesId: selectedSeries,
     speakerId: selectedSpeaker,
-    topicId: selectedTopic,
     year: selectedYear,
     order: sortOrder,
   });
@@ -517,7 +520,6 @@ export default function SermonsPageContent() {
   const {
     series,
     speakers,
-    topics,
     isLoading: filtersLoading,
   } = useFilterOptions();
 
@@ -537,7 +539,7 @@ export default function SermonsPageContent() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [selectedSeries, selectedSpeaker, selectedTopic, selectedYear, sortOrder]);
+  }, [selectedSeries, selectedSpeaker, selectedYear, sortOrder]);
 
   // ========================================================================
   // Sync filter state → URL query params (shareable links)
@@ -547,7 +549,6 @@ export default function SermonsPageContent() {
     if (debouncedSearch) params.set("q", debouncedSearch);
     if (selectedSpeaker) params.set("speaker", String(selectedSpeaker));
     if (selectedSeries) params.set("series", String(selectedSeries));
-    if (selectedTopic) params.set("topic", String(selectedTopic));
     if (selectedYear) params.set("year", String(selectedYear));
     if (sortOrder !== "DESC") params.set("sort", sortOrder);
     if (page > 1) params.set("page", String(page));
@@ -564,7 +565,6 @@ export default function SermonsPageContent() {
     debouncedSearch,
     selectedSpeaker,
     selectedSeries,
-    selectedTopic,
     selectedYear,
     sortOrder,
     page,
@@ -575,7 +575,6 @@ export default function SermonsPageContent() {
   const activeFilterCount = [
     selectedSeries,
     selectedSpeaker,
-    selectedTopic,
     selectedYear,
   ].filter(Boolean).length;
 
@@ -585,7 +584,6 @@ export default function SermonsPageContent() {
     setDebouncedSearch("");
     setSelectedSeries(undefined);
     setSelectedSpeaker(undefined);
-    setSelectedTopic(undefined);
     setSelectedYear(undefined);
     setSortOrder("DESC");
     setPage(1);
@@ -593,7 +591,7 @@ export default function SermonsPageContent() {
 
   const currentYear = new Date().getFullYear();
   const years = Array.from(
-    { length: currentYear - 2007 },
+    { length: currentYear - EARLIEST_SERMON_YEAR + 1 },
     (_, i) => currentYear - i,
   );
 
@@ -907,21 +905,6 @@ export default function SermonsPageContent() {
                   id="filter-category"
                 />
 
-                {/* Topic Filter */}
-                <FilterDropdown
-                  icon={<Tag className="w-4 h-4" />}
-                  label="Topic"
-                  value={selectedTopic}
-                  options={topics.map((t) => ({
-                    value: t.id,
-                    label: t.name,
-                    count: t.messageCount,
-                  }))}
-                  onChange={(v) => setSelectedTopic(v || undefined)}
-                  isLoading={filtersLoading}
-                  id="filter-topic"
-                />
-
                 {/* Year Filter */}
                 <FilterDropdown
                   icon={<Calendar className="w-4 h-4" />}
@@ -978,14 +961,6 @@ export default function SermonsPageContent() {
                 onRemove={() => setSelectedSeries(undefined)}
               />
             )}
-            {selectedTopic && (
-              <FilterTag
-                label={
-                  topics.find((t) => t.id === selectedTopic)?.name || "Topic"
-                }
-                onRemove={() => setSelectedTopic(undefined)}
-              />
-            )}
             {selectedYear && (
               <FilterTag
                 label={selectedYear.toString()}
@@ -1028,7 +1003,7 @@ export default function SermonsPageContent() {
       {!isLoading && !error && (
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${page}-${debouncedSearch}-${selectedSeries}-${selectedSpeaker}-${selectedTopic}-${sortOrder}`}
+            key={`${page}-${debouncedSearch}-${selectedSeries}-${selectedSpeaker}-${sortOrder}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
