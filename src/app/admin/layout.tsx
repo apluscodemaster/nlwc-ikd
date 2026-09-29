@@ -22,8 +22,8 @@ import { reportAudit } from "@/lib/auditClient";
 import { resolveAdminIdentity } from "@/lib/adminProfile";
 import {
   BookOpen,
-  Calendar,
   Church,
+  Home,
   Menu,
   X,
   LayoutDashboard,
@@ -37,7 +37,7 @@ import {
   EyeOff,
   MessageCircleHeart,
   BrainCircuit,
-  ScrollText,
+  Settings,
   Timer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,16 +90,16 @@ const NAV_ITEMS = [
     description: "Manage Quiz Questions & Stats",
   },
   {
-    label: "Schedule",
-    href: "/admin/schedule",
-    icon: Calendar,
-    description: "Manage Live Service Schedule",
+    label: "House Fellowship",
+    href: "/admin/fellowship",
+    icon: Home,
+    description: "Fellowship centers & coordinators",
   },
   {
-    label: "Audit Log",
-    href: "/admin/audit-log",
-    icon: ScrollText,
-    description: "Who changed what, and when",
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+    description: "Schedule & Audit Log",
   },
 ];
 

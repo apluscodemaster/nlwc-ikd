@@ -2,22 +2,38 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { KeyRound, Loader2, ArrowRight, X } from "lucide-react";
+import { KeyRound, Loader2, ArrowRight, X, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatRecoveryCode } from "@/lib/quizSecurity";
+
+export interface RecoveredSession {
+  session_id: string;
+  username: string;
+  /** True after a code/link redemption — the old question was cleared, so
+   *  the player should set a fresh one right away. */
+  mustSetSecurity?: boolean;
+}
 
 interface RecoverProgressModalProps {
   onClose: () => void;
-  onRecovered: (session: { session_id: string; username: string }) => void;
+  onRecovered: (session: RecoveredSession) => void;
 }
+
+type Step = "username" | "answer" | "code";
+
+const inputClass =
+  "w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all";
 
 export default function RecoverProgressModal({
   onClose,
   onRecovered,
 }: RecoverProgressModalProps) {
-  const [step, setStep] = useState<"username" | "answer">("username");
+  const [step, setStep] = useState<Step>("username");
   const [username, setUsername] = useState("");
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState<string | null>(null);
+  const [hasRecoveryCode, setHasRecoveryCode] = useState(false);
   const [answer, setAnswer] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,8 +55,11 @@ export default function RecoverProgressModal({
         setLoading(false);
         return;
       }
-      setQuestion(data.question);
-      setStep("answer");
+      setQuestion(data.question ?? null);
+      setHasRecoveryCode(Boolean(data.hasRecoveryCode));
+      // No question on file (pre-security-question player) → straight to the
+      // admin-issued code the lookup confirmed exists.
+      setStep(data.question ? "answer" : "code");
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -49,8 +68,10 @@ export default function RecoverProgressModal({
   };
 
   const verify = async () => {
-    if (!answer.trim()) {
-      setError("Enter your answer.");
+    const credential =
+      step === "code" ? { code: code.trim() } : { answer };
+    if (step === "code" ? !code.trim() : !answer.trim()) {
+      setError(step === "code" ? "Enter your recovery code." : "Enter your answer.");
       return;
     }
     setLoading(true);
@@ -59,19 +80,28 @@ export default function RecoverProgressModal({
       const res = await fetch("/api/quiz/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), answer }),
+        body: JSON.stringify({ username: username.trim(), ...credential }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Incorrect answer.");
+        setError(data.error || "Could not verify.");
         setLoading(false);
         return;
       }
-      onRecovered({ session_id: data.session_id, username: data.username });
+      onRecovered({
+        session_id: data.session_id,
+        username: data.username,
+        mustSetSecurity: Boolean(data.mustSetSecurity),
+      });
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
     }
+  };
+
+  const switchStep = (next: Step) => {
+    setStep(next);
+    setError("");
   };
 
   return (
@@ -96,17 +126,22 @@ export default function RecoverProgressModal({
           </button>
 
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <KeyRound className="w-7 h-7 text-primary" />
+            {step === "code" ? (
+              <LifeBuoy className="w-7 h-7 text-primary" />
+            ) : (
+              <KeyRound className="w-7 h-7 text-primary" />
+            )}
           </div>
           <h3 className="text-lg font-bold text-gray-900 text-center mb-1">
             Recover your progress
           </h3>
           <p className="text-sm text-muted-foreground text-center mb-5">
-            Answer your security question to continue with your existing name and
-            score on this device.
+            {step === "code"
+              ? "Enter the recovery code the church admin gave you to continue with your existing name and score."
+              : "Answer your security question to continue with your existing name and score on this device."}
           </p>
 
-          {step === "username" ? (
+          {step === "username" && (
             <>
               <input
                 type="text"
@@ -116,7 +151,7 @@ export default function RecoverProgressModal({
                 autoFocus
                 maxLength={30}
                 onKeyDown={(e) => e.key === "Enter" && lookUp()}
-                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                className={`${inputClass} text-center`}
               />
               {error && (
                 <p className="mt-3 text-xs text-red-500 font-medium text-center">
@@ -137,7 +172,9 @@ export default function RecoverProgressModal({
                 )}
               </Button>
             </>
-          ) : (
+          )}
+
+          {step === "answer" && (
             <>
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 mb-3">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
@@ -152,7 +189,7 @@ export default function RecoverProgressModal({
                 placeholder="Your answer"
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && verify()}
-                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                className={inputClass}
               />
               {error && (
                 <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>
@@ -168,6 +205,65 @@ export default function RecoverProgressModal({
                   "Recover progress"
                 )}
               </Button>
+              {hasRecoveryCode && (
+                <p className="mt-4 text-center text-xs text-muted-foreground">
+                  Forgot the answer?{" "}
+                  <button
+                    type="button"
+                    onClick={() => switchStep("code")}
+                    className="font-medium text-primary hover:underline cursor-pointer"
+                  >
+                    Use the recovery code from the admin
+                  </button>
+                </p>
+              )}
+            </>
+          )}
+
+          {step === "code" && (
+            <>
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(formatRecoveryCode(e.target.value))}
+                placeholder="e.g. KJ7Q-4PXW"
+                autoFocus
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={9}
+                onKeyDown={(e) => e.key === "Enter" && verify()}
+                className={`${inputClass} text-center font-mono tracking-[0.3em] uppercase`}
+              />
+              {error && (
+                <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>
+              )}
+              <Button
+                onClick={verify}
+                disabled={loading}
+                className="w-full h-12 rounded-full font-bold cursor-pointer mt-5"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Recover progress"
+                )}
+              </Button>
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Codes work once and expire after a day.
+                {question && (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={() => switchStep("answer")}
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      Answer the question instead
+                    </button>
+                  </>
+                )}
+              </p>
             </>
           )}
         </div>

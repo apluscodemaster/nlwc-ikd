@@ -38,6 +38,9 @@ export type AuditResource =
   | "quiz-category"
   | "quiz-stats"
   | "schedule"
+  | "fellowship"
+  | "speaker"
+  | "series"
   | "media"
   | "session";
 

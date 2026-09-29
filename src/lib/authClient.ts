@@ -21,3 +21,25 @@ export async function getAuthorizationHeader(): Promise<string> {
   const idToken = await user.getIdToken(true);
   return `Bearer ${idToken}`;
 }
+
+/**
+ * `fetch` with the admin's Firebase ID token attached as a Bearer header.
+ *
+ * Every admin write goes through here so the token is never forgotten — the
+ * /admin layout's login gate is client-side only and never protected the API.
+ * A failure to mint a token still issues the request, which the server rejects
+ * with 401; the caller's normal error handling surfaces that.
+ */
+export async function authFetch(
+  input: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const authHeader = await getAuthorizationHeader().catch(() => "");
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      ...(authHeader ? { Authorization: authHeader } : {}),
+    },
+  });
+}

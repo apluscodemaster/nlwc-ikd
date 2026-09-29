@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import AudioLivePlayer from "@/components/live/AudioLivePlayer";
+import AudioLivePlayer, { AUDIO_EMBED_ID } from "@/components/live/AudioLivePlayer";
 import ServiceCountdown from "@/components/live/ServiceCountdown";
 import Image from "next/image";
 import {
@@ -34,6 +34,7 @@ import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
+import { useAutoScrollTo } from "@/hooks/useAutoScrollTo";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";
@@ -75,6 +76,20 @@ export default function ListenLivePage() {
   const [repeatMode, setRepeatMode] = useState<"off" | "one">("off");
   const [isShuffled, setIsShuffled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Land visitors on the live player rather than the hero. On desktop the
+  // whole player card fits, so scroll to it; on a phone the card's header
+  // (status tile + waveform) would fill the screen with the actual stream
+  // still below the fold, so go straight to the Waystream embed instead.
+  // Both targets carry a scroll-mt that clears the fixed navbar.
+  const playerSectionRef = useRef<HTMLDivElement | null>(null);
+  useAutoScrollTo(() => {
+    const isPhone = window.matchMedia("(max-width: 767px)").matches;
+    return (
+      (isPhone && document.getElementById(AUDIO_EMBED_ID)) ||
+      playerSectionRef.current
+    );
+  });
 
   const handlePlay = useCallback(
     async (sermon: AudioSermon) => {
@@ -251,8 +266,10 @@ export default function ListenLivePage() {
         backgroundImage="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=2070&auto=format&fit=crop"
       />
 
-      <SectionContainer className="pb-10">
-        <AudioLivePlayer />
+      <SectionContainer id="audio-player" className="pb-10">
+        <div ref={playerSectionRef} className="scroll-mt-24">
+          <AudioLivePlayer />
+        </div>
       </SectionContainer>
 
       <SectionContainer className="bg-gray-50 overflow-hidden">

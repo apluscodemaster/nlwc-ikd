@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
   // These patterns are common on WordPress sites at this domain. Google will credit the new URLs.
   async redirects() {
     return [
+      // Admin: Schedule and Audit Log moved under /admin/settings. Keep the old
+      // bookmarks working.
+      {
+        source: "/admin/schedule",
+        destination: "/admin/settings/schedule",
+        permanent: true,
+      },
+      {
+        source: "/admin/audit-log",
+        destination: "/admin/settings/audit-log",
+        permanent: true,
+      },
       // NOTE: Old WP "/messages/<slug>" permalinks are handled by the dynamic
       // resolver at src/app/messages/[slug]/page.tsx — it looks the slug up and
       // 301s to the correct new URL (audio → /sermons/audio/<id>, otherwise the

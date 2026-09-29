@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  FileText,
-  BookOpen,
-  Music,
-  Calendar,
-  User,
-  Pencil,
-} from "lucide-react";
+import React from "react";
+import { FileText, BookOpen, Music, Calendar, User, Pencil } from "lucide-react";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { ContentItem, ContentType } from "./types";
 
 export function ContentListItem({
@@ -91,15 +86,21 @@ export function ContentListItem({
             <Pencil className="w-3.5 h-3.5" />
           </button>
         )}
-        <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+        <StatusBadge
+          className={`text-[10px] uppercase tracking-wider px-2 py-0.5 ${
             item.status === "publish"
               ? "bg-emerald-50 text-emerald-600"
-              : "bg-amber-50 text-amber-600"
+              : item.status === "future"
+                ? "bg-blue-50 text-blue-600"
+                : "bg-amber-50 text-amber-600"
           }`}
         >
-          {item.status === "publish" ? "Live" : "Draft"}
-        </span>
+          {item.status === "publish"
+            ? "Live"
+            : item.status === "future"
+              ? "Scheduled"
+              : "Draft"}
+        </StatusBadge>
       </div>
     </div>
   );

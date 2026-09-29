@@ -86,6 +86,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // House fellowship centers are read through /api/fellowship (public GET)
+    // and written only by the admin API with a verified token, both via the
+    // Admin SDK — so, like the schedule collections, clients get nothing.
+    match /fellowship_centers/{centerId} {
+      allow read, write: if false;
+    }
+
     // ── Default deny ────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
