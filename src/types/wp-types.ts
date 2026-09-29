@@ -65,11 +65,38 @@ export const wpSermonCreateSchema = z.object({
   speaker: z.string().optional(),
   description: z.string().optional(),
   seriesId: z.coerce.number().int().positive().optional(),
+  /** Series Engine speaker id — links the message in the speaker junction
+   *  table so speaker filters and counts include it. */
+  speakerId: z.coerce.number().int().positive().optional(),
   date: z.string().optional(),
   thumbnailUrl: z.string().url("Thumbnail URL must be a valid URL").optional(),
 });
 
 export type WPSermonCreatePayload = z.infer<typeof wpSermonCreateSchema>;
+
+/**
+ * Sermon taxonomy creation — new ministers and series are Series Engine rows
+ * (`se_speakers` / `se_series`), created through the nlwc/v1 endpoints so they
+ * show up in wp-admin → Series Engine exactly as if added there.
+ */
+export const wpSpeakerCreateSchema = z.object({
+  type: z.literal("speaker"),
+  name: z.string().trim().min(2, "Enter the minister's name"),
+});
+
+export const wpSeriesCreateSchema = z.object({
+  type: z.literal("series"),
+  title: z.string().trim().min(2, "Enter the series title"),
+  description: z.string().trim().optional(),
+});
+
+export const wpTaxonomyCreateSchema = z.discriminatedUnion("type", [
+  wpSpeakerCreateSchema,
+  wpSeriesCreateSchema,
+]);
+
+export type WPSpeakerCreatePayload = z.infer<typeof wpSpeakerCreateSchema>;
+export type WPSeriesCreatePayload = z.infer<typeof wpSeriesCreateSchema>;
 
 export const wpTranscriptSchema = z.object({
   type: z.literal("transcript"),

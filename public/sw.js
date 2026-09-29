@@ -1,5 +1,8 @@
 // Service Worker for offline support
-const CACHE_NAME = "nlwc-gallery-v2";
+// Bumped to v3: the activate handler deletes every cache whose name differs,
+// which clears any opaque/partial media responses v2 may have stored before
+// the media bail-out below existed.
+const CACHE_NAME = "nlwc-gallery-v3";
 const OFFLINE_PAGE = "/offline";
 const OFFLINE_FALLBACK = "/offline-fallback.html";
 
@@ -63,6 +66,32 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  // ── Never intercept media or range requests ──────────────────────────────
+  // <audio>/<video> stream with `Range` headers so the browser can seek and
+  // pull a large file in pieces. A service worker that answers a range request
+  // with a whole-file (or, cross-origin, an opaque) response breaks playback —
+  // Chrome reports it as "403 Forbidden (from service worker)" even though the
+  // origin served a perfectly good 206. Returning early (no respondWith) hands
+  // the request back to the browser, which handles ranges natively.
+  //
+  // This matters for sermon audio hosted off-site (S3, Google Drive): those
+  // responses are opaque here, can't be inspected or usefully cached, and
+  // caching them would silently fill the storage quota with 50 MB blobs.
+  if (
+    event.request.headers.has("range") ||
+    event.request.destination === "audio" ||
+    event.request.destination === "video"
+  ) {
+    return;
+  }
+
+  // Cross-origin requests go straight to the network too. They yield opaque
+  // responses, which cache-first would store and then replay without being
+  // able to tell success from failure.
+  if (new URL(event.request.url).origin !== self.location.origin) {
     return;
   }
 

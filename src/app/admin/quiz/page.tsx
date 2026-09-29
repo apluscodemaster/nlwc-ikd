@@ -24,6 +24,10 @@ import {
   Upload,
   Tags,
   KeyRound,
+  LifeBuoy,
+  Copy,
+  MessageCircle,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";
@@ -39,30 +43,9 @@ import {
   downloadFile,
   setValidCategories,
 } from "@/lib/quizImportExport";
-import { getAuthorizationHeader } from "@/lib/authClient";
-
-/**
- * The /api/quiz/admin/* routes now require a valid admin token. This page's
- * fetches previously sent none — they relied on the /admin layout's login gate,
- * which is client-side only and never protected the endpoints.
- *
- * Every admin call goes through here so the Firebase ID token is always
- * attached. (A failure to mint a token still issues the request, which the
- * server rejects with 401 — the existing error handling surfaces that.)
- */
-async function authFetch(
-  input: string,
-  init: RequestInit = {},
-): Promise<Response> {
-  const authHeader = await getAuthorizationHeader().catch(() => "");
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...(init.headers || {}),
-      ...(authHeader ? { Authorization: authHeader } : {}),
-    },
-  });
-}
+// The /api/quiz/admin/* routes require a valid admin token — every admin call
+// goes through authFetch so the Firebase ID token is always attached.
+import { authFetch } from "@/lib/authClient";
 
 // ──────────────────────────────────────────────
 // Types
@@ -90,6 +73,145 @@ interface PlayerSession {
 
 type ActiveTab = "questions" | "stats" | "players" | "categories";
 type ModalMode = "create" | "edit" | null;
+
+/** What /api/quiz/admin/recovery-code hands back — shown to the admin once. */
+interface IssuedRecovery {
+  username: string;
+  code: string;
+  link: string;
+  expiresAt: string;
+}
+
+// ──────────────────────────────────────────────
+// Recovery Code Modal — the code/link is displayed exactly once
+// ──────────────────────────────────────────────
+
+function RecoveryCodeModal({
+  issued,
+  onClose,
+}: {
+  issued: IssuedRecovery;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+
+  const copy = async (what: "code" | "link") => {
+    try {
+      await navigator.clipboard.writeText(
+        what === "code" ? issued.code : issued.link,
+      );
+      setCopied(what);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast.error("Couldn't copy — select the text and copy it manually.");
+    }
+  };
+
+  const expires = new Date(issued.expiresAt).toLocaleString("en-NG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const shareText =
+    `Hi ${issued.username}, here's your NLWC quiz recovery link — open it on the device you want to continue on: ${issued.link}\n\n` +
+    `If the link doesn't work, tap "Recover your progress" on the quiz page and enter this code: ${issued.code}. ` +
+    `It works once and expires ${expires}.`;
+
+  return (
+    <ModalShell onClose={onClose} className="max-w-lg">
+      <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <LifeBuoy className="w-5 h-5 text-primary" />
+          Recovery code for {issued.username}
+        </h2>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+        >
+          <X className="w-4 h-4 text-gray-500" />
+        </button>
+      </div>
+
+      <div className="p-6 space-y-5">
+        <p className="text-sm text-gray-600">
+          Pass one of these to the player. Either works once and expires on{" "}
+          <span className="font-semibold text-gray-900">{expires}</span>. This
+          is the only time it will be shown — issuing again replaces it.
+        </p>
+
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+            Code — they type it under &ldquo;Recover your progress&rdquo;
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 h-12 flex items-center justify-center rounded-xl bg-gray-900 text-white font-mono text-xl tracking-[0.3em] select-all">
+              {issued.code}
+            </code>
+            <button
+              onClick={() => copy("code")}
+              className="h-12 px-4 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              {copied === "code" ? (
+                <Check className="w-4 h-4 text-green-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+            Link — opening it restores progress automatically
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={issued.link}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 h-12 px-3 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-700 truncate"
+            />
+            <button
+              onClick={() => copy("link")}
+              className="h-12 px-4 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              {copied === "link" ? (
+                <Check className="w-4 h-4 text-green-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 h-11 rounded-xl bg-green-600 text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Share via WhatsApp
+          </a>
+          <button
+            onClick={onClose}
+            className="h-11 px-5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+
+        <p className="text-[11px] text-gray-400">
+          Redeeming clears any old security question, and the player is asked
+          to set a new one immediately. Use this for players who chose a name
+          before security questions existed, or who forgot their answer.
+        </p>
+      </div>
+    </ModalShell>
+  );
+}
 
 const DEFAULT_CATEGORIES: QuizCategory[] = [
   "Sunday Message",
@@ -487,6 +609,12 @@ export default function AdminQuizPage() {
   // Player management state
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
   const [resettingSecId, setResettingSecId] = useState<string | null>(null);
+  // Recovery codes for locked-out players (no security question, or forgot it)
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [issuingCodeId, setIssuingCodeId] = useState<string | null>(null);
+  const [issuedRecovery, setIssuedRecovery] = useState<IssuedRecovery | null>(
+    null,
+  );
   // Bulk-action state (Players tab)
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(
     new Set(),
@@ -657,10 +785,14 @@ export default function AdminQuizPage() {
     });
   };
 
+  /**
+   * Select-all covers exactly the rows on screen — the search filter included.
+   * Selecting players hidden by a search and then bulk-deleting them is the
+   * kind of surprise this page cannot afford, so `shownPlayers` (already
+   * filtered) is the source rather than the raw session list.
+   */
   const toggleSelectAllPlayers = () => {
-    const list =
-      (playerView === "all" ? stats?.allSessions : stats?.recentSessions) ?? [];
-    const all = list.map((s) => s.session_id);
+    const all = shownPlayers.map((s) => s.session_id);
     setSelectedPlayerIds((prev) =>
       prev.size === all.length && all.length > 0 ? new Set() : new Set(all),
     );
@@ -699,6 +831,34 @@ export default function AdminQuizPage() {
     if (fail > 0)
       toast.error(`Failed to remove ${fail} player${fail !== 1 ? "s" : ""}`);
     fetchStats();
+  };
+
+  // Issue a single-use recovery code + link for a locked-out player. The
+  // plaintext comes back once and is shown in RecoveryCodeModal.
+  const handleIssueRecoveryCode = async (player: PlayerSession) => {
+    setIssuingCodeId(player.session_id);
+    try {
+      const res = await authFetch("/api/quiz/admin/recovery-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: player.session_id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.code) {
+        toast.error(data?.error || "Failed to issue recovery code");
+        return;
+      }
+      setIssuedRecovery({
+        username: data.username,
+        code: data.code,
+        link: data.link,
+        expiresAt: data.expiresAt,
+      });
+    } catch {
+      toast.error("Failed to issue recovery code");
+    } finally {
+      setIssuingCodeId(null);
+    }
   };
 
   const handleBulkResetSecurity = async () => {
@@ -939,10 +1099,25 @@ export default function AdminQuizPage() {
     categoryCounts[q.category] = (categoryCounts[q.category] || 0) + 1;
   }
 
-  // ── Players shown in the Players tab (Recent vs All) ──
+  // ── Players shown in the Players tab (Recent vs All, then search) ──
+  // Both lists arrive with the stats payload, so this filters in memory —
+  // no request per keystroke, same as the Questions tab.
   const allPlayers = stats?.allSessions ?? stats?.recentSessions ?? [];
   const recentPlayers = stats?.recentSessions ?? [];
-  const shownPlayers = playerView === "all" ? allPlayers : recentPlayers;
+  const playersInView = playerView === "all" ? allPlayers : recentPlayers;
+  const playerQuery = playerSearch.trim().toLowerCase();
+  const shownPlayers = playerQuery
+    ? playersInView.filter(
+        (p) =>
+          p.username.toLowerCase().includes(playerQuery) ||
+          // Session id too: the recovery-code and audit-log flows surface ids.
+          p.session_id.toLowerCase().includes(playerQuery),
+      )
+    : playersInView;
+  // Rank (the trophy badge) is a property of the player's standing, not of
+  // their position in a filtered view — searching must not hand the first
+  // three matches a gold trophy.
+  const playerRank = new Map(playersInView.map((p, i) => [p.session_id, i]));
 
   // ══════════════════════════════════════════════
   // Tabs
@@ -1427,6 +1602,27 @@ export default function AdminQuizPage() {
                 </button>
               </div>
 
+              {/* Search — filters the loaded list in memory, no refetch */}
+              <div className="px-5 py-3 border-b border-gray-100">
+                <SearchInput
+                  value={playerSearch}
+                  onChange={(v) => {
+                    setPlayerSearch(v);
+                    // A narrowed list must not keep hidden rows selected.
+                    setSelectedPlayerIds(new Set());
+                  }}
+                  placeholder="Search players by name or session ID…"
+                  className="h-10 pl-11 pr-4 bg-gray-50 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+                {playerQuery && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {shownPlayers.length} of {playersInView.length}{" "}
+                    {playersInView.length === 1 ? "player" : "players"} match
+                    &ldquo;{playerSearch.trim()}&rdquo;
+                  </p>
+                )}
+              </div>
+
               {/* Bulk action toolbar — shown when one or more players selected */}
               <AnimatePresence>
                 {selectedPlayerIds.size > 0 && (
@@ -1513,7 +1709,28 @@ export default function AdminQuizPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {shownPlayers.map((s, idx) => (
+                    {shownPlayers.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-14">
+                          <div className="flex flex-col items-center justify-center text-gray-400">
+                            <Users className="w-10 h-10 mb-3 opacity-30" />
+                            <p className="text-sm font-medium">
+                              No players match &ldquo;{playerSearch.trim()}
+                              &rdquo;
+                            </p>
+                            <button
+                              onClick={() => setPlayerSearch("")}
+                              className="text-xs mt-1 text-primary font-medium hover:underline cursor-pointer"
+                            >
+                              Clear search
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {shownPlayers.map((s) => {
+                      const idx = playerRank.get(s.session_id) ?? 0;
+                      return (
                       <tr
                         key={s.session_id}
                         className={`transition-colors ${
@@ -1577,10 +1794,22 @@ export default function AdminQuizPage() {
                         <td className="text-center px-3 py-3">
                           <div className="flex items-center justify-center gap-1">
                           <button
+                            disabled={issuingCodeId === s.session_id}
+                            onClick={() => handleIssueRecoveryCode(s)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={`Issue a recovery code for ${s.username} (locked out / no security question)`}
+                          >
+                            {issuingCodeId === s.session_id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <LifeBuoy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <button
                             disabled={resettingSecId === s.session_id}
                             onClick={async () => {
                               const confirmed = await showConfirm(
-                                `Reset the security question for "${s.username}"? They'll be asked to set a new one, and the 30-day change limit is bypassed. Use this when a player is locked out.`,
+                                `Clear the security question for "${s.username}"? Next time they open the quiz on their current device they'll be asked to set a new one (the 30-day change limit is bypassed). If they're locked out of a new device, issue a recovery code instead.`,
                                 {
                                   title: "Reset Security Question",
                                   confirmLabel: "Reset",
@@ -1618,7 +1847,7 @@ export default function AdminQuizPage() {
                               }
                             }}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={`Reset security question for ${s.username}`}
+                            title={`Clear security question for ${s.username}`}
                           >
                             {resettingSecId === s.session_id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1672,7 +1901,8 @@ export default function AdminQuizPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1856,6 +2086,16 @@ export default function AdminQuizPage() {
             onSave={handleSave}
             saving={saving}
             categories={categories}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Recovery Code Modal (shown once per issue) ── */}
+      <AnimatePresence>
+        {issuedRecovery && (
+          <RecoveryCodeModal
+            issued={issuedRecovery}
+            onClose={() => setIssuedRecovery(null)}
           />
         )}
       </AnimatePresence>
