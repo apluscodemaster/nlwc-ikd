@@ -185,3 +185,65 @@ describe("SermonCard", () => {
     expect(shareLink).toHaveAttribute("href", "/sermons/audio/1");
   });
 });
+
+describe("SermonCard description", () => {
+  const props = {
+    index: 0,
+    isActive: false,
+    isPlaying: false,
+    isLoadingDetail: false,
+    onPlay: vi.fn(),
+    onPause: vi.fn(),
+    transcriptSlugs: transcripts,
+    onTranscriptClick: vi.fn(),
+  };
+
+  it("renders the sermon description", () => {
+    render(
+      <SermonCard
+        {...props}
+        sermon={{ ...baseSemon, description: "A study on unmerited favour." }}
+      />,
+    );
+    expect(screen.getByText("A study on unmerited favour.")).toBeInTheDocument();
+  });
+
+  it("collapses newlines so the two-line clamp shows real content", () => {
+    render(
+      <SermonCard
+        {...props}
+        sermon={{ ...baseSemon, description: "Location: Ikorodu\nYear: 2026" }}
+      />,
+    );
+    expect(screen.getByText("Location: Ikorodu Year: 2026")).toBeInTheDocument();
+  });
+
+  it("drops a stray leading Minister line rather than repeating the speaker", () => {
+    render(
+      <SermonCard
+        {...props}
+        sermon={{
+          ...baseSemon,
+          description: "Minister: Pastor John\nThe real summary.",
+        }}
+      />,
+    );
+    expect(screen.getByText("The real summary.")).toBeInTheDocument();
+    expect(screen.queryByText(/Minister:/)).not.toBeInTheDocument();
+  });
+
+  it("renders nothing when the description is absent or only a Minister line", () => {
+    const { container, rerender } = render(
+      <SermonCard {...props} sermon={{ ...baseSemon, description: undefined }} />,
+    );
+    expect(container.textContent).not.toContain("Minister:");
+
+    rerender(
+      <SermonCard
+        {...props}
+        sermon={{ ...baseSemon, description: "Minister: Pastor John\n" }}
+      />,
+    );
+    expect(screen.queryByText(/Minister:/)).not.toBeInTheDocument();
+  });
+});

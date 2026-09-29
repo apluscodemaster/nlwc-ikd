@@ -32,6 +32,7 @@ import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
+import { MarqueeText } from "@/components/media/MarqueeText";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import { useAutoScrollTo } from "@/hooks/useAutoScrollTo";
@@ -550,9 +551,11 @@ export default function ListenLivePage() {
                   onClick={() => setShowMobilePlayer(true)}
                   aria-label="Open full player"
                 >
-                  <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                    {activeSermon.title}
-                  </h4>
+                  <MarqueeText
+                    text={activeSermon.title}
+                    active={isPlaying}
+                    className="font-bold text-gray-900 text-sm sm:text-base"
+                  />
                   <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {activeSermon.speaker}
                   </p>
