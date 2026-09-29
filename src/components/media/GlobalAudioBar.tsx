@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { MarqueeText } from "./MarqueeText";
 import {
   Play,
   Pause,
@@ -136,7 +137,13 @@ export default function GlobalAudioBar({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">{title}</p>
+            {/* A long title is unreadable when clipped to a phone-width bar, so
+                it sweeps while the audio is playing and holds still when paused. */}
+            <MarqueeText
+              text={title}
+              active={isPlaying}
+              className="text-sm font-semibold text-white"
+            />
             <p className="truncate text-[11px] text-white/50">
               {speaker || "NLWC Ikorodu"}
             </p>

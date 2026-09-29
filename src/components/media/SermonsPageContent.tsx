@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
 import TranscriptOverlay from "./TranscriptOverlay";
 import {
   Search,
@@ -1258,6 +1259,15 @@ function SermonCard({
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`
     : "/transcripts";
+  // Legacy rows can carry a stray leading "Minister: <name>" line; the speaker
+  // is already shown on the card, so drop it rather than repeating the name.
+  const cardDescription = useMemo(
+    () =>
+      stripLeadingSpeakerLine(sermon.description ?? "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    [sermon.description],
+  );
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -1364,6 +1374,23 @@ function SermonCard({
           </div>
         </div>
       </div>
+
+      {/* Description — full width so the excerpt has room to read. Newlines are
+          collapsed to spaces: stored descriptions are often several short
+          metadata lines, which would eat the two-line clamp immediately. */}
+      {cardDescription && (
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {cardDescription}
+        </p>
+      )}
+
+      {/* Grows to absorb spare height when a neighbour in the same grid row is
+          taller (e.g. it has a description). Without it the extra space pooled
+          under the action bar; with it the bars line up across the row and the
+          gap sits between content and controls, where it reads as breathing
+          room. On mobile (single column) cards are never stretched, so this is
+          zero-height there. */}
+      <div aria-hidden className="grow" />
 
       {/* ===== Action bar ===== */}
       <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3">

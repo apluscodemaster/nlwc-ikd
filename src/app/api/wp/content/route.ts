@@ -88,6 +88,11 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
             audioUrl: s.downloadUrl || s.listenUrl,
             thumbnail: s.thumbnailUrl,
             series: s.series,
+            // The edit modal prefills its Description box from `content`.
+            // Without this it opened empty and the save wrote that emptiness
+            // back, wiping the stored description.
+            content: s.description,
+            excerpt: s.description,
           })),
           pagination: result.pagination,
         });

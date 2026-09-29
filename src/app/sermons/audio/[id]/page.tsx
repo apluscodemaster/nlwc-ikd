@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Headphones } from "lucide-react";
 import { getAudioSermonDetail } from "@/lib/audioSermons";
 import AudioPlayerClient from "./AudioPlayerClient";
+import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   SITE_URL,
@@ -38,7 +39,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const hasTitle = sermon.title && !sermon.title.includes("Message #");
   const title = hasTitle ? sermon.title : `Audio Message ${sermon.id}`;
 
-  // Build description from available metadata
+  // Prefer the admin-authored description — real prose beats a synthesised
+  // "By X • Series: Y • date" string for both search results and link
+  // previews. The stray leading "Minister:" line some legacy rows carry is
+  // dropped first (the speaker already appears elsewhere in the metadata).
+  const authored = metaDescription(
+    stripLeadingSpeakerLine(sermon.description ?? "").replace(/\s+/g, " "),
+  );
+
+  // Fall back to assembled metadata when there is no description.
   const descriptionParts = [
     sermon.speaker && `By ${sermon.speaker}`,
     sermon.series && `Series: ${sermon.series}`,
@@ -46,9 +55,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ].filter(Boolean);
 
   const description =
-    descriptionParts.length > 0
+    authored ||
+    (descriptionParts.length > 0
       ? descriptionParts.join(" • ")
-      : `Listen to message #${sermon.id} from NLWC Ikorodu`;
+      : `Listen to message #${sermon.id} from NLWC Ikorodu`);
 
   const url = `${SITE_URL}/sermons/audio/${sermon.id}`;
 
@@ -121,15 +131,21 @@ export default async function AudioSermonPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "AudioObject",
     name: ldTitle,
-    description: metaDescription(
-      [
-        sermon.speaker && `By ${sermon.speaker}`,
-        sermon.series && `Series: ${sermon.series}`,
-        sermon.date,
-      ]
-        .filter(Boolean)
-        .join(" • ") || `Listen to "${ldTitle}" from NLWC Ikorodu.`,
-    ),
+    // Same precedence as the page metadata above: the authored description
+    // first, assembled metadata only as a fallback.
+    description:
+      metaDescription(
+        stripLeadingSpeakerLine(sermon.description ?? "").replace(/\s+/g, " "),
+      ) ||
+      metaDescription(
+        [
+          sermon.speaker && `By ${sermon.speaker}`,
+          sermon.series && `Series: ${sermon.series}`,
+          sermon.date,
+        ]
+          .filter(Boolean)
+          .join(" • ") || `Listen to "${ldTitle}" from NLWC Ikorodu.`,
+      ),
     contentUrl: sermon.listenUrl,
     uploadDate: toIsoDate(sermon.date),
     duration: parseDurationToISO(sermon.duration),
