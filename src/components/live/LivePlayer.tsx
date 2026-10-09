@@ -229,7 +229,7 @@ export default function LivePlayer() {
       {/* Chat / Sidebar — wrapped in a relative container so the chat
          can be absolutely positioned and never push the grid row taller */}
       <div className="relative h-[600px] lg:h-auto lg:self-stretch">
-        <div className="lg:absolute lg:inset-0">
+        <div className="h-full lg:absolute lg:inset-0">
           <LiveChat />
         </div>
       </div>
@@ -293,16 +293,17 @@ function LiveChat() {
     return () => unsubscribe();
   }, []);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive. Scroll the container
+  // itself rather than using scrollIntoView, which also scrolls the window
+  // and yanks the whole page down for viewers.
   useEffect(() => {
-    if (chatEndRef.current && chatContainerRef.current) {
-      const container = chatContainerRef.current;
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight <
-        120;
-      if (isNearBottom) {
-        chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-      }
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      120;
+    if (isNearBottom) {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     }
   }, [chatMessages]);
 
@@ -385,7 +386,7 @@ function LiveChat() {
       {/* Messages Area */}
       <div
         ref={chatContainerRef}
-        className="flex-1 p-5 overflow-y-auto space-y-3"
+        className="flex-1 min-h-0 p-5 overflow-y-auto overscroll-contain space-y-3"
       >
         {chatMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
