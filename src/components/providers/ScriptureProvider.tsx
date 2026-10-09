@@ -247,9 +247,10 @@ export function ScriptureProvider({
           //
           // This pattern is deliberately loose; parseScriptureReference() is the
           // authority and rejects anything whose book isn't canonical, so prose
-          // like "Lesson 3" or "Service 5:30" never becomes a link.
+          // like "Lesson 3" or "Service 5:30" never becomes a link. Ranges
+          // accept en/em dashes too ("Ephesians 4:4–6"), as typeset copy uses.
           const pattern =
-            /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*-\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/gi;
+            /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*[-–—]\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/gi;
           const matches = [...text.matchAll(pattern)];
 
           if (matches.length === 0) return;

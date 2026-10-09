@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
+import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, BookOpen, Sparkles } from "lucide-react";
 
@@ -154,6 +155,27 @@ export default function BeliefsAccordion() {
   );
 }
 
+/**
+ * Scripture line with the same in-app KJV tooltips as transcripts. Logos
+ * RefTagger only scans once on page load, so it never sees accordion content
+ * that mounts on toggle; a scoped ScriptureProvider tags it as it appears.
+ */
+function ScriptureReferences({ scripture }: { scripture: string }) {
+  const scopeRef = useRef<HTMLSpanElement>(null);
+
+  return (
+    <ScriptureProvider scopeRef={scopeRef}>
+      <span
+        ref={scopeRef}
+        className="no-reftagger text-xs font-bold text-primary tracking-widest uppercase"
+        data-scripture-content
+      >
+        {scripture}
+      </span>
+    </ScriptureProvider>
+  );
+}
+
 function AccordionItem({
   belief,
   isOpen,
@@ -225,12 +247,7 @@ function AccordionItem({
                   <div className="p-2 bg-primary/5 rounded-xl border border-primary/10">
                     <BookOpen className="w-4 h-4 text-primary" />
                   </div>
-                  <span
-                    className="text-xs font-bold text-primary tracking-widest uppercase"
-                    data-scripture-content
-                  >
-                    {belief.scripture}
-                  </span>
+                  <ScriptureReferences scripture={belief.scripture} />
                 </div>
               </div>
             </div>

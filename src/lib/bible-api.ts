@@ -263,7 +263,7 @@ export function parseScriptureReference(
   // The verse part is optional; everything is still gated on the book being
   // real (see normalizeBookName), which is what keeps "Lesson 3" out.
   const pattern =
-    /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*-\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/i;
+    /\(?\s*(\d{1,3}\s+)?([A-Za-z]+\.?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*[-–—]\s*(?:(\d{1,3}):)?(\d{1,3}))?((?:\s*,\s*\d{1,3})+)?)?\s*\)?/i;
 
   const match = reference.match(pattern);
   if (!match) return null;
