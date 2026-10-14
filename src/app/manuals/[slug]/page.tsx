@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import BackToListLink from "@/components/shared/BackToListLink";
 import JsonLd from "@/components/seo/JsonLd";
+import { sharpShareImage } from "@/services/shareImageUpscale";
 import {
   SITE_URL,
   manualShareImage,
@@ -106,7 +107,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   );
   const url = `${SITE_URL}/manuals/${slug}`;
   // The image the manual's card shows on /manuals (featured or placeholder).
-  const image = manualShareImage(slug, manual.shareImage);
+  const image = manualShareImage(
+    slug,
+    manual.shareImage && (await sharpShareImage(manual.shareImage)),
+  );
 
   return {
     title: `${title} | Sunday School Manuals`,
@@ -168,7 +172,10 @@ export default async function ManualPage({ params, searchParams }: Props) {
     inLanguage: "en",
     author: PUBLISHER,
     publisher: PUBLISHER,
-    image: manualShareImage(slug, manual.shareImage).url,
+    image: manualShareImage(
+      slug,
+      manual.shareImage && (await sharpShareImage(manual.shareImage)),
+    ).url,
     articleSection: "Sunday School Manual",
     mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
     url: pageUrl,
