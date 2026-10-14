@@ -1,19 +1,15 @@
 import { MetadataRoute } from "next";
-import { fetchWPPosts, WP_CATEGORIES } from "@/lib/wordpress";
+import {
+  fetchWPPosts,
+  getTranscriptCategoryIds,
+  WP_CATEGORIES,
+} from "@/lib/wordpress";
 import { getAudioSermons } from "@/lib/audioSermons";
 import { getPublishedDevotionals } from "@/lib/devotionals";
 
 // Regenerate the sitemap at most once a day, so WordPress is queried daily (not
 // per crawler hit) when collecting transcript/manual URLs.
 export const revalidate = 86400;
-
-const TRANSCRIPT_CATEGORIES = [
-  WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
-  WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-  WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
-  WP_CATEGORIES.OTHER_MEETINGS,
-  WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
-];
 
 // Collect detail-page URLs for a set of WordPress categories. Bounded and
 // wrapped in try/catch so the sitemap can never fail the build/request.
@@ -145,7 +141,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [transcripts, manuals, audioSermons, devotionals] = await Promise.all([
-    collectEntries(baseUrl, "/transcripts", TRANSCRIPT_CATEGORIES),
+    // Every transcript category, including ones added from the admin.
+    getTranscriptCategoryIds().then((ids) =>
+      collectEntries(baseUrl, "/transcripts", ids),
+    ),
     collectEntries(baseUrl, "/manuals", [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL]),
     collectAudioSermons(baseUrl),
     collectDevotionals(baseUrl),

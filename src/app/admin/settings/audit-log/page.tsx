@@ -48,6 +48,7 @@ const RESOURCE_OPTIONS = [
   "fellowship",
   "speaker",
   "series",
+  "transcript-category",
   "media",
   "session",
 ] as const;

@@ -42,6 +42,34 @@ export default function TranscriptsList({
   const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Filter tabs: start from the built-in five so they render immediately, then
+  // swap in the live list so categories added from the admin get a tab too.
+  const [categoryEntries, setCategoryEntries] = useState<
+    [string, { name: string }][]
+  >(() =>
+    Object.entries(TRANSCRIPT_CATEGORIES).map(([id, c]) => [
+      id,
+      { name: c.name },
+    ]),
+  );
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/wp/transcript-categories")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { categories?: { id: number; name: string }[] } | null) => {
+        if (cancelled || !data?.categories?.length) return;
+        setCategoryEntries(
+          data.categories.map((c) => [String(c.id), { name: c.name }]),
+        );
+      })
+      .catch(() => {
+        // Keep the built-in tabs.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Track previous values to detect real user-driven changes (not initial mount)
   const prevDebouncedSearch = useRef(debouncedSearch);
   const prevSelectedCategory = useRef(selectedCategory);
@@ -194,7 +222,7 @@ export default function TranscriptsList({
                   >
                     All Transcripts
                   </button>
-                  {Object.entries(TRANSCRIPT_CATEGORIES).map(
+                  {categoryEntries.map(
                     ([catId, category]) => (
                       <motion.button
                         key={catId}
@@ -231,7 +259,7 @@ export default function TranscriptsList({
                 >
                   All Transcripts
                 </button>
-                {Object.entries(TRANSCRIPT_CATEGORIES).map(
+                {categoryEntries.map(
                   ([catId, category]) => (
                     <motion.button
                       key={catId}

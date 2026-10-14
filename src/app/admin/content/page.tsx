@@ -33,6 +33,11 @@ import {
   type TranscriptType,
   type ViewMode,
 } from "@/components/admin/content/types";
+
+/** Default transcript category for new posts (Sunday Message Transcripts). */
+const DEFAULT_TRANSCRIPT_CATEGORY = String(
+  TRANSCRIPT_TYPE_TO_CATEGORY["sunday-message"],
+);
 import {
   todayInputValue,
   toDateInputValue,
@@ -41,6 +46,7 @@ import {
 } from "@/components/admin/content/contentHelpers";
 import { ContentListItem } from "@/components/admin/content/ContentListItem";
 import { useSermonTaxonomy } from "@/components/admin/content/useSermonTaxonomy";
+import { useTranscriptCategories } from "@/components/admin/content/useTranscriptCategories";
 import {
   ThumbnailField,
   useThumbnailUpload,
@@ -54,7 +60,7 @@ import {
   SeriesField,
   StatusField,
   TitleField,
-  TranscriptTypeField,
+  TranscriptCategoryField,
 } from "@/components/admin/content/fields";
 
 // ─── Edit modal state ─────────────────────────────────────────────────────────
@@ -66,11 +72,12 @@ interface EditState {
   speaker: string;
   seriesId: string;
   audioUrl: string;
-  transcriptType: TranscriptType;
-  /** The type the post had when the modal opened. Saving only writes a
+  /** Transcript category id (string, "" when unknown). */
+  categoryId: string;
+  /** The category the post had when the modal opened. Saving only writes a
    *  category back when this differs from the selector, so opening a
    *  transcript and editing (say) its title can never silently re-file it. */
-  originalTranscriptType: TranscriptType;
+  originalCategoryId: string;
 }
 
 /** Status pill + submit button that closes every create form. */
@@ -126,6 +133,8 @@ export default function AdminChurchContentPage() {
 
   // Ministers & series — one loader and one "add new" path for every form.
   const taxonomy = useSermonTaxonomy();
+  // Transcript categories (WordPress children of "Transcripts"), addable inline.
+  const transcriptCategories = useTranscriptCategories();
 
   // Create-form thumbnail (sermons) and edit-modal thumbnail share one hook.
   const createThumb = useThumbnailUpload();
@@ -155,7 +164,7 @@ export default function AdminChurchContentPage() {
       content: "",
       status: "draft",
       speaker: "",
-      transcriptType: "sunday-message",
+      categoryId: DEFAULT_TRANSCRIPT_CATEGORY,
       // Default to today so leaving it untouched publishes immediately;
       // choosing a later date schedules it.
       publishDate: todayInputValue(),
@@ -227,8 +236,15 @@ export default function AdminChurchContentPage() {
 
   // ── Edit item ───────────────────────────────────────────────────────────────
   const handleEditItem = (item: ContentItem) => {
-    const currentType =
-      (item.transcriptType as TranscriptType) ?? "sunday-message";
+    // Older list rows (or a post in no transcript category) carry no id; fall
+    // back to the category its resolved type maps to.
+    const currentCategory = item.transcriptCategoryId
+      ? String(item.transcriptCategoryId)
+      : String(
+          TRANSCRIPT_TYPE_TO_CATEGORY[
+            (item.transcriptType as TranscriptType) ?? "sunday-message"
+          ] ?? DEFAULT_TRANSCRIPT_CATEGORY,
+        );
     const matchedSeries = taxonomy.seriesList.find(
       (s) => s.title === item.series,
     );
@@ -253,8 +269,8 @@ export default function AdminChurchContentPage() {
       seriesId: matchedSeries ? String(matchedSeries.id) : "",
       // Prefill with the existing MP3 URL (real audio_url when the message has one).
       audioUrl: item.audioUrl || "",
-      transcriptType: currentType,
-      originalTranscriptType: currentType,
+      categoryId: currentCategory,
+      originalCategoryId: currentCategory,
     });
     editThumb.reset(item.thumbnail || null);
   };
@@ -320,13 +336,14 @@ export default function AdminChurchContentPage() {
         if (speakerId) payload.speakerId = speakerId;
       } else if (
         activeTab === "transcript" &&
-        edit.transcriptType !== edit.originalTranscriptType
+        edit.categoryId &&
+        edit.categoryId !== edit.originalCategoryId
       ) {
-        // Write the transcript type back as its WP category — but ONLY when the
-        // selector actually changed. Sending it unconditionally re-filed every
-        // edited transcript under whatever the selector happened to show.
-        // Omitting the key entirely leaves the post's categories untouched.
-        payload.categories = [TRANSCRIPT_TYPE_TO_CATEGORY[edit.transcriptType]];
+        // Write the category back — but ONLY when the selector actually
+        // changed. Sending it unconditionally re-filed every edited transcript
+        // under whatever the selector happened to show. Omitting the key
+        // entirely leaves the post's categories untouched.
+        payload.categories = [Number(edit.categoryId)];
       }
 
       const res = await fetch("/api/wp/update", {
@@ -429,7 +446,10 @@ export default function AdminChurchContentPage() {
 
     if (activeTab === "transcript") {
       if (data.speaker) payload.speaker = data.speaker;
-      payload.transcriptType = data.transcriptType || "sunday-message";
+      // Any transcript category, including one just added from this form.
+      payload.categoryId = Number(
+        data.categoryId || DEFAULT_TRANSCRIPT_CATEGORY,
+      );
     }
 
     // Date-only scheduling. A future date means the user wants the post
@@ -503,6 +523,11 @@ export default function AdminChurchContentPage() {
     series: taxonomy.seriesList,
     loading: taxonomy.loadingSeries,
     onAdd: taxonomy.addSeries,
+  };
+  const categoryProps = {
+    categories: transcriptCategories.categories,
+    loading: transcriptCategories.loading,
+    onAdd: transcriptCategories.addCategory,
   };
 
   return (
@@ -907,13 +932,13 @@ export default function AdminChurchContentPage() {
                   {activeTab === "transcript" && (
                     <>
                       <Controller
-                        name="transcriptType"
+                        name="categoryId"
                         control={textForm.control}
                         render={({ field }) => (
-                          <TranscriptTypeField
-                            required
+                          <TranscriptCategoryField
                             value={field.value}
                             onChange={field.onChange}
+                            {...categoryProps}
                           />
                         )}
                       />
@@ -1044,9 +1069,10 @@ export default function AdminChurchContentPage() {
                 )}
 
                 {activeTab === "transcript" && (
-                  <TranscriptTypeField
-                    value={edit.transcriptType}
-                    onChange={(transcriptType) => patchEdit({ transcriptType })}
+                  <TranscriptCategoryField
+                    value={edit.categoryId}
+                    onChange={(categoryId) => patchEdit({ categoryId })}
+                    {...categoryProps}
                   />
                 )}
 

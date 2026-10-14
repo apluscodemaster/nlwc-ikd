@@ -16,12 +16,11 @@ import { scheduledPublishDateTime } from "@/utils/publishSchedule";
 import { isGoogleDriveUrl } from "@/utils/audioUrl";
 import { RichTextEditor } from "./RichTextEditor";
 import {
-  TRANSCRIPT_TYPE_OPTIONS,
   type ContentType,
   type PostStatus,
   type SeriesItem,
   type SpeakerItem,
-  type TranscriptType,
+  type TranscriptCategoryItem,
 } from "./types";
 
 /**
@@ -275,32 +274,46 @@ export function SeriesField({
   );
 }
 
-// ─── Transcript type ──────────────────────────────────────────────────────────
+// ─── Transcript category ──────────────────────────────────────────────────────
 
-export function TranscriptTypeField({
+export function TranscriptCategoryField({
   value,
   onChange,
-  required,
+  categories,
+  loading,
+  onAdd,
 }: {
-  value: TranscriptType;
-  onChange: (value: TranscriptType) => void;
-  required?: boolean;
+  /** The WP category id as a string. */
+  value: string;
+  onChange: (categoryId: string) => void;
+  categories: TranscriptCategoryItem[];
+  loading?: boolean;
+  /** From useTranscriptCategories — creates the category in WordPress. */
+  onAdd?: (name: string) => Promise<TranscriptCategoryItem | null>;
 }) {
   return (
-    <div>
-      <FieldLabel required={required}>Transcript Type</FieldLabel>
-      <SelectField
-        value={value}
-        onChange={(e) => onChange(e.target.value as TranscriptType)}
-        className="h-12 px-4 pr-10"
-      >
-        {TRANSCRIPT_TYPE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </SelectField>
-    </div>
+    <TaxonomySelect
+      label="Transcript Category"
+      value={value}
+      onChange={onChange}
+      options={categories.map((c) => ({
+        value: String(c.id),
+        label: `${c.name} (${c.count} transcripts)`,
+      }))}
+      loading={loading}
+      placeholder="Select a category…"
+      loadingText="Loading categories…"
+      addLabel="New category"
+      addPlaceholder="e.g. Youth Conference Transcripts"
+      onAdd={
+        onAdd
+          ? async (name) => {
+              const item = await onAdd(name);
+              return item ? String(item.id) : null;
+            }
+          : undefined
+      }
+    />
   );
 }
 

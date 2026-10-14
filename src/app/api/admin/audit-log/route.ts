@@ -53,6 +53,7 @@ const RESOURCES: readonly AuditResource[] = [
   "fellowship",
   "speaker",
   "series",
+  "transcript-category",
   "media",
   "session",
 ];

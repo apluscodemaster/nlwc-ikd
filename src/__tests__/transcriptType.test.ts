@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  resolveTranscriptCategoryId,
   resolveTranscriptType,
   transformToTranscriptListing,
   WP_CATEGORIES,
@@ -87,5 +88,34 @@ describe("resolveTranscriptType", () => {
     expect(transformToTranscriptListing(post).type).toBe(
       "season-of-the-spirit",
     );
+  });
+});
+
+describe("resolveTranscriptCategoryId", () => {
+  it("returns the built-in category a post is filed under", () => {
+    const post = postInCategories([
+      WP_CATEGORIES.POST,
+      WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+    ]);
+    expect(resolveTranscriptCategoryId(post)).toBe(
+      WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
+    );
+  });
+
+  // A category added from the admin has an id the code has never seen; it must
+  // still be reported so the edit form prefills it instead of re-filing.
+  it("returns a category added after the built-in five", () => {
+    const post = postInCategories([WP_CATEGORIES.TRANSCRIPTS, 57]);
+    expect(resolveTranscriptCategoryId(post)).toBe(57);
+    expect(transformToTranscriptListing(post).categoryId).toBe(57);
+  });
+
+  it("ignores Uncategorized, Manual and the Transcripts parent", () => {
+    const post = postInCategories([
+      WP_CATEGORIES.POST,
+      WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL,
+      WP_CATEGORIES.TRANSCRIPTS,
+    ]);
+    expect(resolveTranscriptCategoryId(post)).toBeUndefined();
   });
 });
