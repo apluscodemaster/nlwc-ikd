@@ -143,6 +143,13 @@ export interface WPCategory {
   parent: number;
 }
 
+/** An image with its pixel size — width 0 when WordPress didn't report one. */
+export interface ShareImage {
+  url: string;
+  width: number;
+  height: number;
+}
+
 // Transformed types for frontend use
 export interface TranscriptPost {
   id: number;
@@ -190,6 +197,9 @@ export interface SundaySchoolManual {
   slug: string;
   link: string;
   thumbnail?: string;
+  /** Sharpest suitable rendition of the featured image, for link previews
+   *  (detail only). */
+  shareImage?: ShareImage;
   readingTime: number;
   /** Series/theme parsed from the "THEME:" label in the excerpt. */
   theme?: string;
@@ -618,6 +628,51 @@ function getFeaturedImage(post: WPPost): string | undefined {
   );
 }
 
+/** Width link previews are displayed at (Facebook/LinkedIn/X large cards). */
+const SHARE_IMAGE_WIDTH = 1200;
+
+/**
+ * The same featured image at a size fit for a social-share preview. The
+ * medium rendition the cards use (~300px) shows up blurry in link previews,
+ * and even "large" is only 1024px — so take the smallest rendition that is at
+ * least 1200px wide, or else the original upload (the biggest there is).
+ */
+function getFeaturedShareImage(post: WPPost): ShareImage | undefined {
+  const media = post._embedded?.["wp:featuredmedia"]?.[0];
+  if (!media) return undefined;
+
+  const original: ShareImage | undefined = media.media_details?.width
+    ? {
+        url: media.source_url,
+        width: media.media_details.width,
+        height: media.media_details.height,
+      }
+    : undefined;
+  const renditions = Object.values(
+    (media.media_details?.sizes ?? {}) as Record<
+      string,
+      { source_url: string; width?: number; height?: number }
+    >,
+  )
+    .filter((s) => s.width && s.height)
+    .map((s) => ({ url: s.source_url, width: s.width!, height: s.height! }));
+
+  const bigEnough = [...renditions, ...(original ? [original] : [])]
+    .filter((s) => s.width >= SHARE_IMAGE_WIDTH)
+    .sort((a, b) => a.width - b.width)[0];
+  if (bigEnough) return bigEnough;
+
+  // Nothing reaches 1200px: the original is the sharpest available.
+  return (
+    original ??
+    renditions.sort((a, b) => b.width - a.width)[0] ?? {
+      url: media.source_url,
+      width: 0,
+      height: 0,
+    }
+  );
+}
+
 /**
  * Get category names from embedded data
  */
@@ -796,6 +851,7 @@ export function transformToManual(post: WPPost): SundaySchoolManual {
     slug: post.slug,
     link: normalizeWPLink(post.link),
     thumbnail: getFeaturedImage(post) || undefined,
+    shareImage: getFeaturedShareImage(post),
     readingTime: calculateReadingTime(post.content.rendered),
     theme: resolveManualTheme(post, excerpt),
     lesson: extractManualLesson(excerpt),

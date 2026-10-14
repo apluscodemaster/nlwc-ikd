@@ -23,7 +23,8 @@ import BackToListLink from "@/components/shared/BackToListLink";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   SITE_URL,
-  OG_IMAGE,
+  manualShareImage,
+  ogImageEntry,
   PUBLISHER,
   stripHtml,
   metaDescription,
@@ -104,6 +105,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     manual.excerpt || `Read the Sunday School manual "${title}" from NLWC Ikorodu.`,
   );
   const url = `${SITE_URL}/manuals/${slug}`;
+  // The image the manual's card shows on /manuals (featured or placeholder).
+  const image = manualShareImage(slug, manual.shareImage);
 
   return {
     title: `${title} | Sunday School Manuals`,
@@ -115,13 +118,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       publishedTime: manual.date,
-      images: [{ url: OG_IMAGE, alt: title }],
+      images: [ogImageEntry(image, title)],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [OG_IMAGE],
+      images: [image.url],
     },
   };
 }
@@ -165,7 +168,7 @@ export default async function ManualPage({ params, searchParams }: Props) {
     inLanguage: "en",
     author: PUBLISHER,
     publisher: PUBLISHER,
-    image: OG_IMAGE,
+    image: manualShareImage(slug, manual.shareImage).url,
     articleSection: "Sunday School Manual",
     mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
     url: pageUrl,

@@ -3,25 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { BookOpen } from "lucide-react";
-
-// Deterministic hash from title to pick a background image
-function hashTitle(title: string): number {
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) {
-    hash = (hash << 5) - hash + title.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-// Background images — warm, editorial-quality photographs
-const BACKGROUNDS = [
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247571/nlwc-ikd-assets/xebxdhjcdfayfvunrps6.png",
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247584/nlwc-ikd-assets/tz3n3x9h037eaic8gr5d.png",
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247589/nlwc-ikd-assets/yp4zkve02wdprhaqkwzl.png",
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247598/nlwc-ikd-assets/pmefke827pbgssp3zvy8.png",
-  "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247602/nlwc-ikd-assets/iwa9dccmroxtosppxcdm.png",
-];
+import { manualBackgroundFor } from "@/utils/manualThumbnail";
 
 interface ManualThumbnailProps {
   title: string;
@@ -32,8 +14,7 @@ export default function ManualThumbnail({
   title,
   className = "",
 }: ManualThumbnailProps) {
-  const hash = hashTitle(title);
-  const bgImage = BACKGROUNDS[hash % BACKGROUNDS.length];
+  const bgImage = manualBackgroundFor(title);
 
   return (
     <div className={`relative aspect-video overflow-hidden ${className}`}>
