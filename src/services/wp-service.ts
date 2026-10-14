@@ -5,13 +5,14 @@
  * and creates posts in the correct categories.
  */
 
-import { WP_CATEGORIES } from "@/lib/wordpress";
+import { WP_CATEGORIES, type TranscriptCategory } from "@/lib/wordpress";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 import type {
   WPPublishPayload,
   WPSermonCreatePayload,
   WPSpeakerCreatePayload,
   WPSeriesCreatePayload,
+  WPTranscriptCategoryCreatePayload,
 } from "@/types/wp-types";
 import type { SpeakerItem, SeriesItem } from "@/lib/audioSermons";
 import { toStreamableAudioUrl } from "@/utils/audioUrl";
@@ -44,6 +45,7 @@ function getCategoryIds(payload: WPPublishPayload): number[] {
         "other-meetings": WP_CATEGORIES.OTHER_MEETINGS,
         "season-of-the-spirit": WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
       };
+      if (payload.categoryId) return [payload.categoryId];
       return [typeToCategory[payload.transcriptType] || WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS];
     }
     case "manual":
@@ -340,6 +342,93 @@ export function createSpeakerInSeriesEngine(
     { name: payload.name },
     "speaker",
   );
+}
+
+// =============================================================================
+// TRANSCRIPT CATEGORIES (WordPress categories under "Transcripts")
+// =============================================================================
+
+/**
+ * Create a transcript category: a real WordPress category, child of the
+ * "Transcripts" parent, so it shows in wp-admin → Posts → Categories and every
+ * transcript listing (which reads the parent's children) includes it.
+ *
+ * WordPress refuses a duplicate name under the same parent with `term_exists`
+ * and the existing term's id; that comes back as a 409 carrying the existing
+ * category, mirroring the minister/series flow.
+ */
+export async function createTranscriptCategory(
+  payload: WPTranscriptCategoryCreatePayload,
+): Promise<WPTaxonomyResult<TranscriptCategory>> {
+  if (!WP_APP_PASSWORD) {
+    return {
+      success: false,
+      error: "WP_APPLICATION_PASSWORD is not configured on the server.",
+    };
+  }
+
+  const toCategory = (c: TranscriptCategory): TranscriptCategory => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    count: c.count ?? 0,
+  });
+
+  try {
+    const response = await fetch(`${WP_URL}/wp-json/wp/v2/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getAuthHeader(),
+      },
+      body: JSON.stringify({
+        name: payload.name,
+        parent: WP_CATEGORIES.TRANSCRIPTS,
+      }),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    > & {
+      code?: string;
+      message?: string;
+      data?: { term_id?: number };
+    };
+
+    if (data.code === "term_exists" && data.data?.term_id) {
+      const existing = await fetch(
+        `${WP_URL}/wp-json/wp/v2/categories/${data.data.term_id}?_fields=id,name,slug,count`,
+        { cache: "no-store" },
+      )
+        .then((r) => (r.ok ? (r.json() as Promise<TranscriptCategory>) : null))
+        .catch(() => null);
+      return {
+        success: false,
+        status: 409,
+        error: "A transcript category with this name already exists.",
+        existing: existing ? toCategory(existing) : undefined,
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: response.status,
+        error: data.message || `WordPress API returned ${response.status}`,
+      };
+    }
+
+    return {
+      success: true,
+      item: toCategory(data as unknown as TranscriptCategory),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
 }
 
 /** Create a series in `se_series` (wp-admin → Series Engine → Series). */

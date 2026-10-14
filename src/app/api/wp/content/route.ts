@@ -3,6 +3,7 @@ import { rateLimitMiddleware } from "@/lib/rateLimit";
 import {
   WP_CATEGORIES,
   fetchWPPosts,
+  getTranscriptCategories,
   transformToTranscript,
   transformToManual,
   extractSpeaker,
@@ -13,16 +14,6 @@ import { getAudioSermons } from "@/lib/audioSermons";
 // (Buffer is used to build the WP Basic-auth header).
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-// All five transcript categories, so the admin list shows every transcript
-// type (not just Sunday Message + Sunday School).
-const ALL_TRANSCRIPT_CATEGORIES = [
-  WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
-  WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-  WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
-  WP_CATEGORIES.OTHER_MEETINGS,
-  WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
-];
 
 /** Basic-auth header so the admin list can read drafts/scheduled posts. */
 function getAdminAuth(): string | undefined {
@@ -101,8 +92,13 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
       case "transcript": {
         // One query across all transcript categories (fewer API calls), with
         // unpublished statuses so drafts/scheduled transcripts also appear.
+        // Read fresh so a category added moments ago is already included.
+        const transcriptCategories = await getTranscriptCategories(true);
+        const categoryNames = new Map(
+          transcriptCategories.map((c) => [c.id, c.name]),
+        );
         const result = await fetchWPPosts({
-          categories: ALL_TRANSCRIPT_CATEGORIES,
+          categories: transcriptCategories.map((c) => c.id),
           page,
           perPage,
           search,
@@ -129,6 +125,11 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
               speaker: transcript.speaker,
               type: "transcript" as const,
               transcriptType: transcript.type,
+              transcriptCategoryId: transcript.categoryId,
+              transcriptCategory:
+                transcript.categoryId !== undefined
+                  ? categoryNames.get(transcript.categoryId)
+                  : undefined,
               content: transcript.content,
               excerpt: transcript.excerpt,
               slug: transcript.slug,

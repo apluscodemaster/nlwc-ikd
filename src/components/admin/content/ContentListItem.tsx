@@ -63,10 +63,16 @@ export function ContentListItem({
               {item.series}
             </span>
           )}
-          {item.transcriptType && (
-            <span className="text-xs text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full capitalize">
-              {item.transcriptType.replace("-", " ")}
+          {item.transcriptCategory ? (
+            <span className="text-xs text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full">
+              {item.transcriptCategory}
             </span>
+          ) : (
+            item.transcriptType && (
+              <span className="text-xs text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full capitalize">
+                {item.transcriptType.replace("-", " ")}
+              </span>
+            )
           )}
         </div>
         {item.excerpt && (

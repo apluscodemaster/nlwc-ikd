@@ -25,6 +25,9 @@ export interface WPTranscript extends WPContentBase {
   type: "transcript";
   speaker?: string;
   transcriptType: "sunday-message" | "sunday-school" | "bible-study" | "other-meetings" | "season-of-the-spirit";
+  /** WP transcript category id. Takes precedence over `transcriptType`, and is
+   *  the only way to file under a category added after the original five. */
+  categoryId?: number;
 }
 
 export interface WPManual extends WPContentBase {
@@ -104,8 +107,24 @@ export const wpTranscriptSchema = z.object({
   content: z.string().min(1, "Content is required"),
   status: statusSchema,
   speaker: z.string().optional(),
-  transcriptType: z.enum(["sunday-message", "sunday-school", "bible-study", "other-meetings", "season-of-the-spirit"]),
+  transcriptType: z
+    .enum(["sunday-message", "sunday-school", "bible-study", "other-meetings", "season-of-the-spirit"])
+    .default("sunday-message"),
+  categoryId: z.coerce.number().int().positive().optional(),
 });
+
+/**
+ * New transcript category — a WordPress category created as a child of the
+ * "Transcripts" parent, so it appears in wp-admin → Posts → Categories and is
+ * picked up by every transcript listing automatically.
+ */
+export const wpTranscriptCategoryCreateSchema = z.object({
+  name: z.string().trim().min(2, "Enter the category name").max(100),
+});
+
+export type WPTranscriptCategoryCreatePayload = z.infer<
+  typeof wpTranscriptCategoryCreateSchema
+>;
 
 export const wpManualSchema = z.object({
   type: z.literal("manual"),

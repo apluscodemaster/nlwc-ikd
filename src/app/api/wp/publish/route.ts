@@ -7,6 +7,7 @@ import {
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { getTranscriptCategoryIds } from "@/lib/wordpress";
 
 /**
  * Safely call revalidatePath without crashing in dev/Turbopack.
@@ -131,6 +132,19 @@ export async function POST(request: NextRequest) {
           message: i.message,
         })),
       },
+      { status: 400 },
+    );
+  }
+
+  // A transcript may only be filed under a transcript category (a child of
+  // "Transcripts") — read fresh so one created moments ago is accepted.
+  if (
+    parsed.data.type === "transcript" &&
+    parsed.data.categoryId &&
+    !(await getTranscriptCategoryIds(true)).includes(parsed.data.categoryId)
+  ) {
+    return NextResponse.json(
+      { success: false, error: "That is not a transcript category." },
       { status: 400 },
     );
   }

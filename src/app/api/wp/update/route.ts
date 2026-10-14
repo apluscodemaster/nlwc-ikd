@@ -4,6 +4,7 @@ import { recordAudit } from "@/lib/auditLog";
 import { toStreamableAudioUrl } from "@/utils/audioUrl";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
+import { getTranscriptCategoryIds } from "@/lib/wordpress";
 
 const WP_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -260,9 +261,21 @@ export async function PUT(request: NextRequest) {
     wpBody.featured_media = Number(featuredMediaId);
   if (date !== undefined) wpBody.date = date;
   if (Array.isArray(categories) && categories.length > 0) {
-    wpBody.categories = categories.map((c) =>
+    const categoryIds = categories.map((c) =>
       typeof c === "string" ? parseInt(c, 10) : c,
     );
+    // Re-filing a transcript: only into transcript categories (children of
+    // "Transcripts"), read fresh so one created moments ago is accepted.
+    if (type === "transcript") {
+      const allowed = await getTranscriptCategoryIds(true);
+      if (!categoryIds.every((c) => allowed.includes(c))) {
+        return NextResponse.json(
+          { error: "That is not a transcript category." },
+          { status: 400 },
+        );
+      }
+    }
+    wpBody.categories = categoryIds;
   }
   // Manual theme override — stored as post meta (nlwc-manual-theme mu-plugin),
   // set by the admin drag-and-drop grouping. Empty string clears the override.

@@ -61,7 +61,9 @@ export interface TextFormData {
   content: string;
   status: PostStatus;
   speaker: string;
-  transcriptType: TranscriptType;
+  /** WP transcript category id as a string — any child of "Transcripts",
+   *  including ones added from the form. Ignored for manuals. */
+  categoryId: string;
   /** Scheduling: a future publishDate with status "publish" makes WordPress
    *  store the post as "future" (scheduled) and auto-publish it at the fixed
    *  release slot (see utils/publishSchedule). The admin picks a date only —
@@ -82,6 +84,10 @@ export interface ContentItem {
   thumbnail?: string;
   series?: string;
   transcriptType?: string;
+  /** WP id of the transcript category the post is filed under. */
+  transcriptCategoryId?: number;
+  /** That category's name, for the list badge. */
+  transcriptCategory?: string;
   slug?: string;
   /** Raw WP timestamp ("YYYY-MM-DDTHH:mm:ss", naive site-local). `date` is a
    *  display label with no time, so editing needs this to keep the schedule. */
@@ -102,6 +108,14 @@ export interface SeriesItem {
   id: number;
   title: string;
   messageCount: number;
+}
+
+/** A WordPress transcript category (child of "Transcripts"). */
+export interface TranscriptCategoryItem {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
 }
 
 export const TABS: {

@@ -17,6 +17,9 @@ export const WP_CATEGORIES = {
   SEASON_OF_THE_SPIRIT: 22,
   OTHER_MEETINGS: 21,
   BIBLE_STUDY_TRANSCRIPTS: 33,
+  /** Parent of every transcript category (the five above and any the admin
+   *  adds). Posts are filed under the children, never under this directly. */
+  TRANSCRIPTS: 34,
   POST: 1,
 } as const;
 
@@ -161,6 +164,11 @@ export interface TranscriptPost {
    * that wrong value straight back as the post's category on save.
    */
   type: TranscriptType;
+  /**
+   * WP id of the transcript category the post is filed under. Unlike `type`,
+   * this also covers categories added from the admin after the original five.
+   */
+  categoryId?: number;
   readingTime: number;
 }
 
@@ -399,6 +407,66 @@ export async function fetchWPCategories(): Promise<WPCategory[]> {
   return response.json();
 }
 
+/** A child of the "Transcripts" parent category — one transcript category. */
+export interface TranscriptCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+/** The original five, in display order — also the fallback when WP is down. */
+const BUILT_IN_TRANSCRIPT_CATEGORIES: TranscriptCategory[] = Object.entries(
+  TRANSCRIPT_CATEGORIES,
+).map(([id, c]) => ({ id: Number(id), name: c.name, slug: c.slug, count: 0 }));
+
+/**
+ * Every transcript category, read live from WordPress as the children of the
+ * "Transcripts" parent. That is what lets the admin add a category without a
+ * code change: the listing, detail-page guard, sitemap and filter tabs all go
+ * through this, so a new child shows up everywhere on its own.
+ *
+ * The built-in five keep their usual order; newer ones follow alphabetically.
+ * `fresh` skips the Data Cache — used right after a category is created, and
+ * when validating a category id on save.
+ */
+export async function getTranscriptCategories(
+  fresh = false,
+): Promise<TranscriptCategory[]> {
+  try {
+    const response = await fetch(
+      `${WP_API_BASE}/categories?parent=${WP_CATEGORIES.TRANSCRIPTS}&per_page=100&hide_empty=false&_fields=id,name,slug,count`,
+      fresh ? { cache: "no-store" } : { next: { revalidate: 300 } },
+    );
+    if (!response.ok) throw new Error(response.statusText);
+    const live = (await response.json()) as TranscriptCategory[];
+    if (!Array.isArray(live) || live.length === 0) {
+      return BUILT_IN_TRANSCRIPT_CATEGORIES;
+    }
+
+    const builtInOrder = BUILT_IN_TRANSCRIPT_CATEGORIES.map((c) => c.id);
+    const rank = (id: number) => {
+      const i = builtInOrder.indexOf(id);
+      return i === -1 ? builtInOrder.length : i;
+    };
+    return live
+      .map((c) => ({ ...c, name: sanitizeWPText(c.name) }))
+      .sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
+  } catch (error) {
+    logError("Failed to fetch transcript categories", error, {
+      tag: "WordPress",
+    });
+    return BUILT_IN_TRANSCRIPT_CATEGORIES;
+  }
+}
+
+/** Ids of every transcript category (see getTranscriptCategories). */
+export async function getTranscriptCategoryIds(
+  fresh = false,
+): Promise<number[]> {
+  return (await getTranscriptCategories(fresh)).map((c) => c.id);
+}
+
 // WordPress Custom Post Type endpoints
 export const WP_CUSTOM_POST_TYPES = {
   MESSAGE_TRANSCRIPTS: "message-transcripts",
@@ -596,6 +664,27 @@ export function resolveTranscriptType(post: WPPost): TranscriptType {
   return "sunday-message";
 }
 
+/** Categories a transcript can carry that are NOT its transcript category. */
+const NON_TRANSCRIPT_CATEGORY_IDS: number[] = [
+  WP_CATEGORIES.POST,
+  WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL,
+  WP_CATEGORIES.TRANSCRIPTS,
+];
+
+/**
+ * The transcript category a post is filed under: one of the built-in five if
+ * it has one (same precedence as resolveTranscriptType), otherwise the first
+ * category that isn't Uncategorized/Manual/the parent — i.e. one the admin
+ * created later.
+ */
+export function resolveTranscriptCategoryId(post: WPPost): number | undefined {
+  const ids = post.categories || [];
+  for (const [categoryId] of TRANSCRIPT_CATEGORY_TO_TYPE) {
+    if (ids.includes(categoryId)) return categoryId;
+  }
+  return ids.find((id) => !NON_TRANSCRIPT_CATEGORY_IDS.includes(id));
+}
+
 export function transformToTranscript(post: WPPost): TranscriptPost {
   return {
     id: post.id,
@@ -612,6 +701,7 @@ export function transformToTranscript(post: WPPost): TranscriptPost {
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
     type: resolveTranscriptType(post),
+    categoryId: resolveTranscriptCategoryId(post),
     readingTime: calculateReadingTime(post.content.rendered),
   };
 }
@@ -636,6 +726,7 @@ export function transformToTranscriptListing(post: WPPost): TranscriptPost {
     thumbnail: getFeaturedImage(post),
     categories: getCategoryNames(post),
     type: resolveTranscriptType(post),
+    categoryId: resolveTranscriptCategoryId(post),
     readingTime: calculateReadingTime(post.content.rendered),
   };
 }
@@ -771,13 +862,7 @@ export async function getSundayMessageTranscripts(
 export async function getAllTranscripts(
   options: { page?: number; perPage?: number; search?: string } = {},
 ) {
-  const transcriptCategoryIds = [
-    WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
-    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-    WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
-    WP_CATEGORIES.OTHER_MEETINGS,
-    WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
-  ];
+  const transcriptCategoryIds = await getTranscriptCategoryIds();
 
   const { posts, totalPages, total } = await fetchWPPosts({
     categories: transcriptCategoryIds,
@@ -920,15 +1005,8 @@ export async function getAdjacentTranscripts(
   previous: { title: string; slug: string } | null;
   next: { title: string; slug: string } | null;
 }> {
-  const transcriptCategoryIds = [
-    WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
-    WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-    WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
-    WP_CATEGORIES.OTHER_MEETINGS,
-    WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
-  ];
-
   try {
+    const transcriptCategoryIds = await getTranscriptCategoryIds();
     const [{ posts: olderPosts }, { posts: newerPosts }] = await Promise.all([
       fetchWPPosts({
         categories: transcriptCategoryIds,
@@ -1010,15 +1088,6 @@ export async function getFeaturedContent(limit = 6) {
   };
 }
 
-/** Category IDs that legitimately represent a transcript. */
-const TRANSCRIPT_CATEGORY_IDS: number[] = [
-  WP_CATEGORIES.SUNDAY_MESSAGE_TRANSCRIPTS,
-  WP_CATEGORIES.SUNDAY_SCHOOL_TRANSCRIPTS,
-  WP_CATEGORIES.BIBLE_STUDY_TRANSCRIPTS,
-  WP_CATEGORIES.OTHER_MEETINGS,
-  WP_CATEGORIES.SEASON_OF_THE_SPIRIT,
-];
-
 /**
  * Get a single transcript by slug.
  *
@@ -1034,7 +1103,14 @@ export async function getTranscriptBySlug(
 ): Promise<TranscriptPost | null> {
   const post = await fetchWPPost(slug);
   if (!post) return null;
-  if (!post.categories?.some((c) => TRANSCRIPT_CATEGORY_IDS.includes(c))) {
+  const isTranscript = (ids: number[]) =>
+    post.categories?.some((c) => ids.includes(c)) ?? false;
+  // The cached list can lag a category created in the last few minutes, so
+  // only a miss pays for a fresh read before answering "not a transcript".
+  if (
+    !isTranscript(await getTranscriptCategoryIds()) &&
+    !isTranscript(await getTranscriptCategoryIds(true))
+  ) {
     return null;
   }
   return transformToTranscript(post);
