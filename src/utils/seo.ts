@@ -6,7 +6,49 @@ export const SITE_URL =
 // for broad scraper support). Keep in sync with OG_IMAGE in src/app/layout.tsx.
 export const OG_IMAGE =
   "https://res.cloudinary.com/dj7rh8h6r/image/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/v1774247833/nlwc-ikd-assets/ygkueoffnv3wvqy4d7ir.jpg";
-export const SITE_NAME = "The New & Living Way Church, Ikorodu";
+/** A link-preview image with its real pixel size (0 = unknown). */
+export interface OgImage {
+  url: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * Open Graph image entry. Declaring the real size lets Facebook/LinkedIn/X
+ * render the large preview straight away instead of guessing (or shrinking
+ * it to a small thumbnail); an unknown size is simply left out.
+ */
+export function ogImageEntry(image: OgImage, alt: string) {
+  return image.width && image.height
+    ? { url: image.url, width: image.width, height: image.height, alt }
+    : { url: image.url, alt };
+}
+
+// 1200×630 labelled card used as the link preview for every transcript
+// (public/nlwc-transcript-meta-labeled.jpg). Transcripts have no per-post image.
+// Served as-is — exactly the preview size, so nothing is scaled.
+export const TRANSCRIPT_OG_IMAGE: OgImage = {
+  url: `${SITE_URL}/nlwc-transcript-meta-labeled.jpg`,
+  width: 1200,
+  height: 630,
+};
+
+/**
+ * Link-preview image for a manual: its own featured image when it has one,
+ * otherwise a generated 1200×630 recreation of its placeholder card (see
+ * /api/manuals/[slug]/og) — either way, what its card on /manuals shows.
+ */
+export function manualShareImage(slug: string, featured?: OgImage): OgImage {
+  return (
+    featured ?? {
+      url: `${SITE_URL}/api/manuals/${encodeURIComponent(slug)}/og`,
+      width: 1200,
+      height: 630,
+    }
+  );
+}
+
+export const SITE_NAME ="The New & Living Way Church, Ikorodu";
 
 /** Organization/publisher node reused across structured data. */
 export const PUBLISHER = {

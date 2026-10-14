@@ -15,7 +15,8 @@ import BackToListLink from "@/components/shared/BackToListLink";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   SITE_URL,
-  OG_IMAGE,
+  TRANSCRIPT_OG_IMAGE,
+  ogImageEntry,
   PUBLISHER,
   stripHtml,
   metaDescription,
@@ -45,7 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     transcript.excerpt || `Read the full transcript of "${title}" from NLWC Ikorodu.`,
   );
   const url = `${SITE_URL}/transcripts/${slug}`;
-  const image = transcript.thumbnail || OG_IMAGE;
+  // Every transcript shares the same labelled preview card.
+  const image = TRANSCRIPT_OG_IMAGE;
 
   return {
     title,
@@ -67,13 +69,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: transcript.date,
       modifiedTime: transcript.date,
       authors: transcript.speaker ? [transcript.speaker] : undefined,
-      images: [{ url: image, alt: title }],
+      images: [ogImageEntry(image, title)],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [image.url],
     },
   };
 }
@@ -120,7 +122,7 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
       ? { "@type": "Person", name: transcript.speaker }
       : PUBLISHER,
     publisher: PUBLISHER,
-    image: transcript.thumbnail || OG_IMAGE,
+    image: TRANSCRIPT_OG_IMAGE.url,
     articleSection: transcript.categories?.[0],
     mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
     url: pageUrl,
