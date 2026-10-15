@@ -204,10 +204,15 @@ export default function WelcomeSection() {
             </Button>
           </motion.div> */}
 
-          {/* Next Service Countdown */}
+          {/* Next Service Countdown. It mounts only once the admin schedule
+              has loaded — after the column's one-time whileInView reveal has
+              already run — so it animates itself in. Relying on the parent's
+              variants left it stuck in the hidden state (opacity 0). */}
           {(nextService || isLive) && (
             <motion.div
               variants={itemVariants}
+              initial="hidden"
+              animate="visible"
               className="pt-8 border-t border-gray-100"
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 justify-between">
