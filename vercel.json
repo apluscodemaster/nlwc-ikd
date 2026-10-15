@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/release-refresh",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/purge-live-chat",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/special-services",
+      "schedule": "0 7 15 * *"
+    }
+  ]
+}
