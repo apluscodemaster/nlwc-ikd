@@ -78,23 +78,29 @@ export function subscribeToChatMessages(
     return () => {};
   }
 
+  // Newest-first so the limit keeps the LATEST messages. Ascending + limit
+  // kept the oldest 200 instead, so once a busy service passed 200 messages
+  // every new one silently stopped appearing.
   const q = query(
     collection(db, CHAT_COLLECTION),
     where("timestamp", ">=", serviceStart),
-    orderBy("timestamp", "asc"),
+    orderBy("timestamp", "desc"),
     limit(MAX_MESSAGES),
   );
 
   const unsubscribe = onSnapshot(
     q,
     (snapshot) => {
-      const messages: ChatMessage[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-        message: doc.data().message,
-        timestamp: doc.data().timestamp,
-        color: doc.data().color,
-      }));
+      const messages: ChatMessage[] = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+          message: doc.data().message,
+          timestamp: doc.data().timestamp,
+          color: doc.data().color,
+        }))
+        // Back to oldest-first for display (newest at the bottom).
+        .reverse();
       onMessages(messages);
     },
     (error) => {
