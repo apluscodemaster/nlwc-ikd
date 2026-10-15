@@ -12,7 +12,7 @@ import {
 import { motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getUpcomingEvents, generateGoogleCalendarUrl } from "@/data/events";
+import { generateGoogleCalendarUrl } from "@/data/events";
 import type { ChurchEvent } from "@/data/events";
 import type { RecurringService, SpecialService } from "@/lib/scheduleService";
 
@@ -211,14 +211,17 @@ function fetchScheduleOnce(): Promise<ChurchEvent[]> {
       return res.json();
     })
     .then((data) => {
-      const converted = apiToChurchEvents(data);
-      cachedEvents = converted.length > 0 ? converted : null;
+      // The admin Schedule page is the only source: an empty schedule shows
+      // as empty. (It used to fall back to a hardcoded list, so events an
+      // admin deactivated or deleted kept appearing.)
+      cachedEvents = apiToChurchEvents(data);
       cacheTimestamp = Date.now();
-      return cachedEvents || getUpcomingEvents();
+      return cachedEvents;
     })
-    .catch(() => {
+    .catch((err) => {
       cachePromise = null; // allow retry on error
-      return cachedEvents || getUpcomingEvents();
+      if (cachedEvents) return cachedEvents;
+      throw err;
     });
 
   return cachePromise;
@@ -322,15 +325,19 @@ function EventCard({ event }: { event: ChurchEvent }) {
 }
 
 export default function UpcomingEvents() {
-  const [events, setEvents] = useState<ChurchEvent[]>(() =>
-    getUpcomingEvents().slice(0, 6),
-  );
+  // null while loading; then exactly what the admin schedule contains.
+  const [events, setEvents] = useState<ChurchEvent[] | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetchScheduleOnce().then((result) => {
-      if (!cancelled && result.length > 0) setEvents(result.slice(0, 6));
-    });
+    fetchScheduleOnce()
+      .then((result) => {
+        if (!cancelled) setEvents(result.slice(0, 6));
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -369,17 +376,39 @@ export default function UpcomingEvents() {
           </p>
         </motion.div>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          variants={containerVariants}
-          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-        >
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </motion.div>
+        {events === null && !failed ? (
+          // Loading placeholder, sized like the cards to avoid layout shift.
+          <div
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+            aria-busy="true"
+            aria-label="Loading upcoming gatherings"
+          >
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-72 rounded-3xl bg-white/5 border border-white/10 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : events && events.length > 0 ? (
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={containerVariants}
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+          >
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </motion.div>
+        ) : (
+          <p className="text-center text-gray-400 py-12">
+            {failed
+              ? "We couldn't load the schedule right now. Please check back shortly."
+              : "No upcoming gatherings are scheduled yet. Please check back soon."}
+          </p>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

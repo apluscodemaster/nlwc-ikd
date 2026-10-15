@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { rejectUnlessCron } from "@/lib/cronAuth";
 import {
   createSpecialService,
+  getScheduleSettings,
   getSpecialServices,
 } from "@/lib/scheduleService";
 import { specialEventsForMonth } from "@/lib/specialEvents";
@@ -24,6 +25,9 @@ export const maxDuration = 60;
  * edits for the current month is never re-created. Entries that already exist
  * (same date and title, active or not) are skipped, so a re-run or a manually
  * added entry never produces duplicates.
+ *
+ * Does nothing when "Auto-add monthly special services" is switched off on
+ * the admin Schedule page.
  */
 export async function GET(request: NextRequest) {
   const denied = rejectUnlessCron(request);
@@ -36,6 +40,14 @@ export async function GET(request: NextRequest) {
   const target = { year: month > 11 ? year + 1 : year, month: month % 12 };
 
   try {
+    // Admins can switch this off on the Schedule page and enter every event
+    // by hand instead.
+    const settings = await getScheduleSettings();
+    if (!settings.autoAddSpecials) {
+      console.log("[cron/special-services] auto-add is switched off; skipped");
+      return NextResponse.json({ skipped: "auto-add is switched off" });
+    }
+
     const existing = await getSpecialServices();
     const seen = new Set(existing.map((s) => `${s.date}|${s.label}`));
 

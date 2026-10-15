@@ -1,18 +1,63 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import {
   isCurrentlyLive,
   getCurrentServiceStartTime,
   getNextService,
   getCurrentMeetingTitle,
+  loadScheduleFromApi,
 } from "@/lib/liveSchedule";
 
 /*
  * Service times are Lagos (WAT, UTC+1) wall-clock times. Every instant below is
  * given in UTC so the expectations hold whatever zone the test machine — or a
- * viewer's browser — is in. Uses the built-in fallback schedule: Sunday 8–15,
- * Wednesday 18–21, Friday 18–22.
+ * viewer's browser — is in. The schedule is loaded the way the site loads it,
+ * from the admin-managed /api/schedule: Sunday 8–15, Wednesday 18–21,
+ * Friday 18–22.
  */
 const utc = (iso: string) => new Date(`${iso}Z`);
+
+const ADMIN_SCHEDULE = {
+  recurring: [
+    { dayOfWeek: 0, startHour: 8, endHour: 15, label: "Sunday Service", active: true },
+    { dayOfWeek: 3, startHour: 18, endHour: 21, label: "Prayer Meeting", active: true },
+    { dayOfWeek: 5, startHour: 18, endHour: 22, label: "Bible Study", active: true },
+    // Deactivated in admin — must never count.
+    { dayOfWeek: 6, startHour: 0, endHour: 24, label: "Old Vigil", active: false },
+  ],
+  special: [],
+};
+
+function mockScheduleResponse(body: unknown) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify(body), { status: 200 })),
+  );
+}
+
+beforeAll(async () => {
+  mockScheduleResponse(ADMIN_SCHEDULE);
+  await loadScheduleFromApi();
+  vi.unstubAllGlobals();
+});
+
+describe("liveSchedule with an empty admin schedule", () => {
+  it("is never live — no hardcoded services take over", async () => {
+    vi.resetModules();
+    mockScheduleResponse({ recurring: [], special: [] });
+    const fresh = await import("@/lib/liveSchedule");
+    await fresh.loadScheduleFromApi();
+    vi.unstubAllGlobals();
+
+    // Sunday 09:00 Lagos — the old hardcoded Sunday Service window
+    expect(fresh.isCurrentlyLive(utc("2026-10-18T08:00:00"))).toBe(false);
+    expect(fresh.getCurrentServiceStartTime(utc("2026-10-18T08:00:00"))).toBeNull();
+  });
+
+  it("ignores services deactivated in admin", () => {
+    // Saturday 12:00 Lagos — only the inactive "Old Vigil" covers it
+    expect(isCurrentlyLive(utc("2026-10-17T11:00:00"))).toBe(false);
+  });
+});
 
 // Viewers' zones to run every case under. Set at runtime because the TZ
 // environment variable is ignored on some platforms (e.g. Node on Windows).

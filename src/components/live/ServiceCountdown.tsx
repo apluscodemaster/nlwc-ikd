@@ -8,6 +8,7 @@ import {
   isCurrentlyLive,
   getNextService,
   loadScheduleFromApi,
+  isScheduleLoaded,
   type NextServiceInfo,
 } from "@/lib/liveSchedule";
 
@@ -33,6 +34,11 @@ export default function ServiceCountdown() {
     loadScheduleFromApi();
 
     const calculateTimeLeft = () => {
+      // Wait for the admin schedule rather than counting down to nothing.
+      if (!isScheduleLoaded()) {
+        void loadScheduleFromApi();
+        return;
+      }
       const now = new Date();
 
       // Check if currently in a live service window

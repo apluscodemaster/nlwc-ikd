@@ -66,8 +66,51 @@ export interface SpecialService {
   updatedAt: string;
 }
 
+/** Schedule-wide settings, stored as one Firestore document. */
+export interface ScheduleSettings {
+  /**
+   * Whether the monthly job (/api/cron/special-services) adds next month's
+   * Sithrah and Season of the Spirit entries. Toggled from the admin Schedule
+   * page; on by default.
+   */
+  autoAddSpecials: boolean;
+  /**
+   * Set once the default services have been seeded (or the schedule was found
+   * already populated). After that the defaults are never seeded again, so an
+   * admin who removes every entry gets an empty schedule, not the defaults.
+   */
+  seeded: boolean;
+}
+
 const RECURRING_COLLECTION = "schedule_recurring";
 const SPECIAL_COLLECTION = "schedule_special";
+const SETTINGS_DOC = { collection: "schedule_meta", id: "settings" };
+
+const DEFAULT_SETTINGS: ScheduleSettings = {
+  autoAddSpecials: true,
+  seeded: false,
+};
+
+// ── Settings ──
+
+export async function getScheduleSettings(): Promise<ScheduleSettings> {
+  const db = getAdminDb();
+  const snap = await db
+    .collection(SETTINGS_DOC.collection)
+    .doc(SETTINGS_DOC.id)
+    .get();
+  return { ...DEFAULT_SETTINGS, ...(snap.data() as Partial<ScheduleSettings>) };
+}
+
+export async function updateScheduleSettings(
+  data: Partial<ScheduleSettings>,
+): Promise<void> {
+  const db = getAdminDb();
+  await db
+    .collection(SETTINGS_DOC.collection)
+    .doc(SETTINGS_DOC.id)
+    .set({ ...data, updatedAt: new Date().toISOString() }, { merge: true });
+}
 
 // ── Recurring Services ──
 

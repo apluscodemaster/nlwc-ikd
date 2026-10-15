@@ -9,6 +9,8 @@ import {
   createSpecialService,
   updateSpecialService,
   deleteSpecialService,
+  getScheduleSettings,
+  updateScheduleSettings,
 } from "@/lib/scheduleService";
 import { requireAuthActor, type AuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
@@ -194,34 +196,37 @@ function getDefaultSpecialEvents() {
 // ── GET: Fetch all schedules (public) — auto-seeds defaults if empty ──
 export async function GET() {
   try {
-    const [fetchedRecurring, fetchedSpecial] = await Promise.all([
+    const [fetchedRecurring, fetchedSpecial, settings] = await Promise.all([
       getRecurringServices(),
       getSpecialServices(),
+      getScheduleSettings(),
     ]);
 
-    // Auto-seed default recurring services if Firestore is empty
+    // The admin Schedule page is the source of truth. The defaults below are
+    // only a starting point for a brand-new site: they are seeded ONCE, the
+    // first time the schedule is ever read. They used to be re-seeded whenever
+    // a list was empty, so deleting every event brought the defaults back.
     let recurring = fetchedRecurring;
-    if (recurring.length === 0) {
-      const seeded = await Promise.all(
-        DEFAULT_RECURRING.map((svc) => createRecurringService(svc)),
-      );
-      recurring = seeded;
-    }
-
-    // Auto-seed default special events if Firestore is empty
     let special = fetchedSpecial;
-    if (special.length === 0) {
-      const defaults = getDefaultSpecialEvents();
-      if (defaults.length > 0) {
-        const seeded = await Promise.all(
-          defaults.map((evt) => createSpecialService(evt)),
+    if (!settings.seeded) {
+      if (recurring.length === 0 && special.length === 0) {
+        recurring = await Promise.all(
+          DEFAULT_RECURRING.map((svc) => createRecurringService(svc)),
         );
-        special = seeded;
+        special = await Promise.all(
+          getDefaultSpecialEvents().map((evt) => createSpecialService(evt)),
+        );
       }
+      // Also marks an already-populated schedule, so it is never seeded.
+      await updateScheduleSettings({ seeded: true });
     }
 
     return NextResponse.json(
-      { recurring, special },
+      {
+        recurring,
+        special,
+        settings: { autoAddSpecials: settings.autoAddSpecials },
+      },
       {
         headers: {
           "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
@@ -370,6 +375,27 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const { type, id, ...data } = body;
+
+    // Schedule-wide settings (no id): currently the monthly auto-add switch.
+    if (type === "settings") {
+      if (typeof data.autoAddSpecials !== "boolean") {
+        return NextResponse.json(
+          { error: "autoAddSpecials (boolean) is required" },
+          { status: 400 },
+        );
+      }
+      await updateScheduleSettings({ autoAddSpecials: data.autoAddSpecials });
+      revalidatePath("/api/schedule");
+      void recordAudit({
+        actor,
+        action: "update",
+        resource: "schedule",
+        target: "Auto-add monthly special services",
+        detail: { type: "settings", autoAddSpecials: data.autoAddSpecials },
+        request: req,
+      });
+      return NextResponse.json({ success: true });
+    }
 
     if (!type || !id) {
       return NextResponse.json(
