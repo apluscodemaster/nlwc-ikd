@@ -276,8 +276,8 @@ function LiveChat() {
       setIsServiceHours(isCurrentlyLive());
     };
 
-    // Check immediately
-    checkServiceHours();
+    // Check as soon as the admin schedule has loaded
+    loadScheduleFromApi().then(checkServiceHours);
 
     // Check every minute (60000ms)
     const interval = setInterval(checkServiceHours, 60_000);

@@ -12,6 +12,7 @@ import {
   getNextService,
   getCurrentMeetingTitle,
   loadScheduleFromApi,
+  isScheduleLoaded,
   type NextServiceInfo,
 } from "@/lib/liveSchedule";
 
@@ -58,6 +59,11 @@ function useNextServiceCountdown() {
     loadScheduleFromApi();
 
     const tick = () => {
+      // Wait for the admin schedule rather than counting down to nothing.
+      if (!isScheduleLoaded()) {
+        void loadScheduleFromApi();
+        return;
+      }
       const now = new Date();
 
       if (isCurrentlyLive(now)) {

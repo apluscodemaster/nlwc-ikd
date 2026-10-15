@@ -738,6 +738,9 @@ export default function ScheduleAdminPage() {
   const [special, setSpecial] = useState<SpecialService[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // null until loaded, so the switch never shows a guessed state.
+  const [autoAddSpecials, setAutoAddSpecials] = useState<boolean | null>(null);
+  const [savingAutoAdd, setSavingAutoAdd] = useState(false);
 
   // Recurring modal state
   const [recurringModalMode, setRecurringModalMode] = useState<ModalMode>(null);
@@ -758,6 +761,7 @@ export default function ScheduleAdminPage() {
       const data = await res.json();
       setRecurring(data.recurring || []);
       setSpecial(data.special || []);
+      setAutoAddSpecials(data.settings?.autoAddSpecials !== false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load schedules");
@@ -769,6 +773,32 @@ export default function ScheduleAdminPage() {
   useEffect(() => {
     fetchSchedules();
   }, [fetchSchedules]);
+
+  // ── Monthly auto-add switch ──
+  const handleToggleAutoAdd = async () => {
+    if (autoAddSpecials === null) return;
+    const next = !autoAddSpecials;
+    setSavingAutoAdd(true);
+    setAutoAddSpecials(next);
+    try {
+      const res = await authFetch("/api/schedule", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "settings", autoAddSpecials: next }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      toast.success(
+        next
+          ? "Monthly special services will be added automatically"
+          : "Auto-add switched off — add special events by hand",
+      );
+    } catch {
+      setAutoAddSpecials(!next);
+      toast.error("Failed to update the auto-add setting");
+    } finally {
+      setSavingAutoAdd(false);
+    }
+  };
 
   // ── Save Recurring ──
   const handleSaveRecurring = async (
@@ -1161,6 +1191,37 @@ export default function ScheduleAdminPage() {
       {/* Special Events Tab */}
       {activeTab === "special" && (
         <div className="space-y-4">
+          {/* Monthly auto-add switch (drives /api/cron/special-services) */}
+          <div className="flex items-center justify-between gap-4 p-4 bg-white rounded-xl border border-gray-100">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Auto-add monthly special services
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                On the 15th of each month, adds next month&apos;s Sithrah,
+                its Thursday &amp; Friday prep prayers, and the Season of the
+                Spirit Sundays (Feb – early Mar). Added events can be edited or
+                deleted here like any other. Turn off to add every event by
+                hand.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoAddSpecials === true}
+              aria-label="Auto-add monthly special services"
+              onClick={() => void handleToggleAutoAdd()}
+              disabled={autoAddSpecials === null || savingAutoAdd}
+              className="shrink-0 focus:outline-none disabled:opacity-50 cursor-pointer"
+            >
+              {autoAddSpecials ? (
+                <ToggleRight className="w-9 h-9 text-green-500" />
+              ) : (
+                <ToggleLeft className="w-9 h-9 text-gray-400" />
+              )}
+            </button>
+          </div>
+
           <div className="flex justify-end">
             <button
               onClick={() => {

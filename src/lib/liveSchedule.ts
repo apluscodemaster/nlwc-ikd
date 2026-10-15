@@ -2,11 +2,13 @@
  * Service schedule definitions and helper utilities.
  *
  * Data flow:
- * 1. Hardcoded FALLBACK schedules are used by default (zero-latency).
- * 2. `loadScheduleFromApi()` fetches Firestore-backed data via /api/schedule.
- * 3. Once loaded, all helper functions use the dynamic data.
- * 4. Components call `loadScheduleFromApi()` once on mount; the module
- *    caches the result so subsequent calls are free.
+ * 1. `loadScheduleFromApi()` fetches the admin-managed schedule (Firestore,
+ *    via /api/schedule). There is no hardcoded fallback: until it loads, or
+ *    if the admin has no services, nothing is live.
+ * 2. Once loaded, all helper functions use that data.
+ * 3. Components call `loadScheduleFromApi()` once on mount; the module
+ *    caches the result so subsequent calls are free. A failed load is
+ *    retried on the next call.
  */
 
 export interface ScheduledService {
@@ -20,15 +22,13 @@ export interface ScheduledService {
   label: string;
 }
 
-/** Hardcoded fallback — used until Firestore data is loaded. */
-const FALLBACK_RECURRING: ScheduledService[] = [
-  { dayOfWeek: 0, startHour: 8, endHour: 15, label: "Sunday Service" },
-  { dayOfWeek: 3, startHour: 18, endHour: 21, label: "Prayer Meeting" },
-  { dayOfWeek: 5, startHour: 18, endHour: 22, label: "Bible Study" },
-];
-
-/** Exported for backward compatibility — points to the active list. */
-export let LIVE_SERVICES: ScheduledService[] = [...FALLBACK_RECURRING];
+/**
+ * The active weekly services, exactly as set on the admin Schedule page.
+ * Empty until `loadScheduleFromApi()` resolves — there is deliberately no
+ * hardcoded fallback, so a service an admin removes or deactivates can never
+ * keep driving the live pages, chat window or countdown.
+ */
+export let LIVE_SERVICES: ScheduledService[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  SPECIAL ONE-OFF SERVICES                                           */
@@ -104,9 +104,8 @@ export async function loadScheduleFromApi(): Promise<void> {
           }),
         );
 
-      if (recurring.length > 0) {
-        LIVE_SERVICES = recurring;
-      }
+      // Taken as-is, even when empty: the admin schedule is the only source.
+      LIVE_SERVICES = recurring;
 
       specialServices = (data.special || [])
         .filter((s: { active?: boolean }) => s.active !== false)
@@ -114,15 +113,20 @@ export async function loadScheduleFromApi(): Promise<void> {
 
       loaded = true;
     } catch (err) {
-      console.warn(
-        "[liveSchedule] Failed to load from API, using fallbacks:",
-        err,
-      );
-      loaded = true; // Don't retry on failure — use fallbacks
+      console.warn("[liveSchedule] Failed to load the schedule:", err);
+      // Not marked loaded, so the next call tries again rather than running
+      // on a schedule the admin never set.
+      loadPromise = null;
     }
   })();
 
   return loadPromise;
+}
+
+/** True once the admin schedule has loaded (helpers return "nothing live" and
+ *  no next service until then). */
+export function isScheduleLoaded(): boolean {
+  return loaded;
 }
 
 /* ------------------------------------------------------------------ */

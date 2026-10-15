@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getTranscriptCategoryIds } from "@/lib/wordpress";
 
 /**
  * GET /api/wp/transcript-slugs
@@ -14,12 +15,12 @@ export const revalidate = 3600;
 
 const WP_API =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
-// All transcript categories, so a sermon can match its transcript even when the
-// transcript was filed under Sunday School / Bible Study / Other Meetings /
-// Season of the Spirit rather than Sunday Message. The matcher still prefers
-// exact/closest title matches, so widening the pool improves recall without
-// overriding good matches.
-const CATEGORY_IDS = [20, 31, 33, 21, 22].join(",");
+// Every transcript category — read live from WordPress (children of
+// "Transcripts"), so a sermon matches its transcript whichever category it was
+// filed under, including ones added from the admin (e.g. "Family Life
+// Festival"). A hardcoded list here left those transcripts unmatched. The
+// matcher still prefers exact/closest title matches, so widening the pool
+// improves recall without overriding good matches.
 const PER_PAGE = 100;
 // Safety bound; the real page count comes from WordPress's X-WP-TotalPages.
 const MAX_PAGES = 30;
@@ -31,16 +32,17 @@ type WPTranscriptPost = {
   categories: number[];
 };
 
-const buildUrl = (page: number) =>
-  `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_IDS}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
-
-// Each WP fetch is itself cached for an hour, so even if this handler re-runs
-// it serves from the Data Cache instead of hitting WordPress.
-const fetchPage = (page: number) =>
-  fetch(buildUrl(page), { next: { revalidate: 3600 } });
+const buildUrl = (categoryIds: string, page: number) =>
+  `${WP_API}/wp-json/wp/v2/posts?categories=${categoryIds}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
 
 export async function GET() {
   try {
+    const categoryIds = (await getTranscriptCategoryIds()).join(",");
+    // Each WP fetch is itself cached for an hour, so even if this handler
+    // re-runs it serves from the Data Cache instead of hitting WordPress.
+    const fetchPage = (page: number) =>
+      fetch(buildUrl(categoryIds, page), { next: { revalidate: 3600 } });
+
     const firstRes = await fetchPage(1);
     if (!firstRes.ok) {
       return NextResponse.json({ items: [] });
