@@ -3,6 +3,30 @@ import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 
+/** Rows per request — Supabase (PostgREST) returns at most 1000 by default. */
+const PAGE_SIZE = 1000;
+
+/**
+ * Read EVERY row of a query, a page at a time. A plain select stops silently
+ * at Supabase's 1000-row cap, which made the dashboard totals and category
+ * breakdown wrong once quiz_attempts passed 1000 rows. `page` must apply a
+ * stable order (e.g. by primary key) so pages neither overlap nor skip rows.
+ */
+async function fetchAllRows<T>(
+  page: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<{ data: T[]; error: unknown }> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) return { data: rows, error };
+    rows.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) return { data: rows, error: null };
+  }
+}
+
 // ── GET: Quiz stats for admin dashboard ──
 // Auth required: this returns every player's session_id, username and scores.
 // The /admin UI is gated client-side only, which never protected this route.
@@ -14,11 +38,22 @@ export async function GET(req: NextRequest) {
     const supabase = getSupabase();
 
     // Fetch sessions count and aggregate stats
-    const { data: sessions, error: sessErr } = await supabase
-      .from("sessions")
-      .select(
-        "session_id, username, total_score, quizzes_taken, last_active, created_at",
-      );
+    const { data: sessions, error: sessErr } = await fetchAllRows<{
+      session_id: string;
+      username: string;
+      total_score: number;
+      quizzes_taken: number;
+      last_active: string;
+      created_at: string;
+    }>((from, to) =>
+      supabase
+        .from("sessions")
+        .select(
+          "session_id, username, total_score, quizzes_taken, last_active, created_at",
+        )
+        .order("id")
+        .range(from, to),
+    );
 
     if (sessErr) {
       console.error("Sessions fetch error:", sessErr);
@@ -29,9 +64,16 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch attempts aggregate by category
-    const { data: attempts, error: attErr } = await supabase
-      .from("quiz_attempts")
-      .select("category, is_correct");
+    const { data: attempts, error: attErr } = await fetchAllRows<{
+      category: string;
+      is_correct: boolean;
+    }>((from, to) =>
+      supabase
+        .from("quiz_attempts")
+        .select("category, is_correct")
+        .order("id")
+        .range(from, to),
+    );
 
     if (attErr) {
       console.error("Attempts fetch error:", attErr);

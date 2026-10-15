@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { verifyWebhookSecret } from "@/lib/auth";
+import {
+  TARGETS_BY_TYPE,
+  revalidateTargets,
+  type RevalidateTarget,
+} from "@/lib/revalidateTargets";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
@@ -20,26 +24,7 @@ import { rateLimitMiddleware } from "@/lib/rateLimit";
  *   Header: Authorization: Bearer <WEBHOOK_SECRET>
  */
 
-type Target = { path: string; kind?: "page" | "layout" };
-
-// The set of cached surfaces affected by each content type. Detail routes use
-// the "[slug]"/"[id]" form so every cached detail page is refreshed.
-const TARGETS_BY_TYPE: Record<string, Target[]> = {
-  transcript: [
-    { path: "/transcripts" },
-    { path: "/transcripts/[slug]", kind: "page" },
-    { path: "/sermons" }, // sermon ↔ transcript matching surface
-    { path: "/api/wp/transcript-slugs" }, // cached matching data
-  ],
-  manual: [
-    { path: "/manuals" },
-    { path: "/manuals/[slug]", kind: "page" },
-  ],
-  sermon: [
-    { path: "/sermons" },
-    { path: "/sermons/audio/[id]", kind: "page" },
-  ],
-};
+type Target = RevalidateTarget;
 
 export async function POST(request: NextRequest) {
   // Strict rate limiting (this is a webhook, not a high-frequency endpoint).
@@ -79,18 +64,7 @@ export async function POST(request: NextRequest) {
   }
   if (path) targets.push({ path });
 
-  const revalidated: string[] = [];
-  for (const t of targets) {
-    try {
-      if (t.kind) revalidatePath(t.path, t.kind);
-      else revalidatePath(t.path);
-      revalidated.push(t.path);
-    } catch (err) {
-      // A single path failing (e.g. under Turbopack in dev) must not fail the
-      // whole webhook — keep going.
-      console.warn(`[Revalidate] Failed for ${t.path}:`, err);
-    }
-  }
+  const revalidated = revalidateTargets(targets);
 
   console.log(`[Revalidate] type=${type ?? "-"} →`, revalidated.join(", "));
   return NextResponse.json({ message: "Revalidation triggered", revalidated });

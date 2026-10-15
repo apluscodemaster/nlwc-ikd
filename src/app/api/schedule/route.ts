@@ -13,6 +13,12 @@ import {
 import { requireAuthActor, type AuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import {
+  SITHRAH,
+  SITHRAH_PREP_THURSDAY,
+  SITHRAH_PREP_FRIDAY,
+  SEASON_OF_THE_SPIRIT,
+} from "@/lib/specialEvents";
 
 export const dynamic = "force-dynamic";
 
@@ -130,18 +136,9 @@ function getDefaultSpecialEvents() {
   }
 
   events.push({
+    ...SITHRAH,
     date: fmt(sithrahDate),
-    startHour: 12,
-    endHour: 18,
-    label: "Sithrah",
-    description:
-      "A special monthly time of prayer and spiritual refreshing before the Lord.",
-    imageUrl: "",
-    location: "Church Auditorium, Ikorodu",
-    category: "Special",
-    icon: "🕊️",
     recurrenceLabel: "Every 2nd Saturday",
-    active: true,
   });
 
   // Sithrah Preparatory Prayer — Thursday before Sithrah
@@ -150,18 +147,9 @@ function getDefaultSpecialEvents() {
   sithrahThu.setHours(18, 0, 0, 0);
   if (sithrahThu > now) {
     events.push({
+      ...SITHRAH_PREP_THURSDAY,
       date: fmt(sithrahThu),
-      startHour: 18,
-      endHour: 21,
-      label: "Sithrah Preparatory Prayer",
-      description:
-        "Prayer meeting in preparation for the upcoming Sithrah Saturday.",
-      imageUrl: "",
-      location: "Online",
-      category: "Prayer",
-      icon: "🔥",
       recurrenceLabel: "Thursday before Sithrah",
-      active: true,
     });
   }
 
@@ -171,18 +159,9 @@ function getDefaultSpecialEvents() {
   sithrahFri.setHours(18, 0, 0, 0);
   if (sithrahFri > now) {
     events.push({
+      ...SITHRAH_PREP_FRIDAY,
       date: fmt(sithrahFri),
-      startHour: 18,
-      endHour: 21,
-      label: "Sithrah Preparatory Prayer",
-      description:
-        "Continuing prayer meeting in preparation for the upcoming Sithrah Saturday.",
-      imageUrl: "",
-      location: "Online",
-      category: "Prayer",
-      icon: "🔥",
       recurrenceLabel: "Friday before Sithrah",
-      active: true,
     });
   }
 
@@ -203,18 +182,9 @@ function getDefaultSpecialEvents() {
   for (const sosDate of futureSos) {
     sosDate.setHours(8, 0, 0, 0);
     events.push({
+      ...SEASON_OF_THE_SPIRIT,
       date: fmt(sosDate),
-      startHour: 8,
-      endHour: 15,
-      label: "Season of the Spirit",
-      description:
-        "Annual conference — a special season of the outpouring of the Holy Spirit.",
-      imageUrl: "",
-      location: "Church Auditorium, Ikorodu",
-      category: "Conference",
-      icon: "✨",
       recurrenceLabel: `${futureSos.length} Sunday${futureSos.length > 1 ? "s" : ""} remaining`,
-      active: true,
     });
   }
 
