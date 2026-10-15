@@ -126,55 +126,90 @@ export async function loadScheduleFromApi(): Promise<void> {
 }
 
 /* ------------------------------------------------------------------ */
+/*  LAGOS TIME                                                         */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Every service time (startHour, dayOfWeek, special dates) is Lagos wall-clock
+ * time. These helpers used to read the VIEWER's clock (getHours/getDay), so
+ * anyone outside Nigeria saw the wrong live window, chat window and countdown.
+ * Everything below now works in Lagos time regardless of the viewer's zone.
+ *
+ * WAT is UTC+1 all year (Nigeria has no daylight saving), so a fixed offset is
+ * exact and avoids Intl time-zone parsing on every tick.
+ */
+const LAGOS_OFFSET_MS = 60 * 60 * 1000;
+const LAGOS_TZ = "Africa/Lagos";
+
+interface LagosClock {
+  year: number;
+  /** 0-indexed, like Date#getMonth */
+  month: number;
+  day: number;
+  /** 0 = Sun … 6 = Sat */
+  dayOfWeek: number;
+  hour: number;
+  /** Minutes since Lagos midnight */
+  minutes: number;
+}
+
+/** What a wall clock in Lagos reads at `now`. */
+function lagosClock(now: Date): LagosClock {
+  const t = new Date(now.getTime() + LAGOS_OFFSET_MS);
+  return {
+    year: t.getUTCFullYear(),
+    month: t.getUTCMonth(),
+    day: t.getUTCDate(),
+    dayOfWeek: t.getUTCDay(),
+    hour: t.getUTCHours(),
+    minutes: t.getUTCHours() * 60 + t.getUTCMinutes(),
+  };
+}
+
+/**
+ * The instant at which Lagos clocks read `hour`:00 on the given date. Day
+ * overflow (e.g. day + 7) rolls into the next month, as with Date.UTC.
+ */
+function lagosInstant(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+): Date {
+  return new Date(Date.UTC(year, month, day, hour) - LAGOS_OFFSET_MS);
+}
+
+/* ------------------------------------------------------------------ */
 /*  HELPER FUNCTIONS (unchanged API, now use dynamic data)             */
 /* ------------------------------------------------------------------ */
 
-function toMinutes(now: Date): number {
-  return now.getHours() * 60 + now.getMinutes();
-}
-
-function isSpecialServiceLive(now: Date): boolean {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
-  const nowMins = toMinutes(now);
-  return specialServices.some(
+/** The special service running at `now` (Lagos time), if any. */
+function findLiveSpecial(now: Date): ParsedSpecial | undefined {
+  const c = lagosClock(now);
+  return specialServices.find(
     (s) =>
-      s.year === y &&
-      s.month === m &&
-      s.day === d &&
-      nowMins >= s.startHour * 60 &&
-      nowMins < s.endHour * 60,
+      s.year === c.year &&
+      s.month === c.month &&
+      s.day === c.day &&
+      c.minutes >= s.startHour * 60 &&
+      c.minutes < s.endHour * 60,
   );
 }
 
-function getSpecialServiceLabel(now: Date): string | null {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
-  const nowMins = toMinutes(now);
-  const match = specialServices.find(
+/** The weekly service running at `now` (Lagos time), if any. */
+function findLiveRecurring(now: Date): ScheduledService | undefined {
+  const c = lagosClock(now);
+  return LIVE_SERVICES.find(
     (s) =>
-      s.year === y &&
-      s.month === m &&
-      s.day === d &&
-      nowMins >= s.startHour * 60 &&
-      nowMins < s.endHour * 60,
+      s.dayOfWeek === c.dayOfWeek && c.hour >= s.startHour && c.hour < s.endHour,
   );
-  return match?.label ?? null;
 }
 
 /* ------------------------------------------------------------------ */
 
 /** Returns `true` when the current time falls inside any live window. */
 export function isCurrentlyLive(now = new Date()): boolean {
-  if (isSpecialServiceLive(now)) return true;
-
-  const day = now.getDay();
-  const hour = now.getHours();
-  return LIVE_SERVICES.some(
-    (s) => s.dayOfWeek === day && hour >= s.startHour && hour < s.endHour,
-  );
+  return !!findLiveSpecial(now) || !!findLiveRecurring(now);
 }
 
 /**
@@ -182,32 +217,18 @@ export function isCurrentlyLive(now = new Date()): boolean {
  * or `null` if no service is live right now.
  */
 export function getCurrentServiceStartTime(now = new Date()): number | null {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
-  const nowMins = toMinutes(now);
+  const c = lagosClock(now);
 
   // Check special services first
-  const special = specialServices.find(
-    (s) =>
-      s.year === y &&
-      s.month === m &&
-      s.day === d &&
-      nowMins >= s.startHour * 60 &&
-      nowMins < s.endHour * 60,
-  );
+  const special = findLiveSpecial(now);
   if (special) {
-    return new Date(y, m, d, special.startHour, 0, 0, 0).getTime();
+    return lagosInstant(c.year, c.month, c.day, special.startHour).getTime();
   }
 
   // Check recurring services
-  const day = now.getDay();
-  const hour = now.getHours();
-  const recurring = LIVE_SERVICES.find(
-    (s) => s.dayOfWeek === day && hour >= s.startHour && hour < s.endHour,
-  );
+  const recurring = findLiveRecurring(now);
   if (recurring) {
-    return new Date(y, m, d, recurring.startHour, 0, 0, 0).getTime();
+    return lagosInstant(c.year, c.month, c.day, recurring.startHour).getTime();
   }
 
   return null;
@@ -230,16 +251,13 @@ export interface NextServiceInfo {
  * *next* service (i.e. "what comes after the one running now").
  */
 export function getNextService(now = new Date()): NextServiceInfo {
-  const day = now.getDay();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  const currentMinutes = hour * 60 + minute;
+  const c = lagosClock(now);
 
   let best: { date: Date; label: string } | null = null;
 
   // --- Check special one-off services ---
   for (const sp of specialServices) {
-    const spDate = new Date(sp.year, sp.month, sp.day, sp.startHour, 0, 0, 0);
+    const spDate = lagosInstant(sp.year, sp.month, sp.day, sp.startHour);
     if (spDate.getTime() > now.getTime()) {
       if (!best || spDate.getTime() < best.date.getTime()) {
         best = { date: spDate, label: sp.label };
@@ -249,18 +267,18 @@ export function getNextService(now = new Date()): NextServiceInfo {
 
   // --- Check recurring weekly services ---
   for (const service of LIVE_SERVICES) {
-    let daysAhead = (service.dayOfWeek - day + 7) % 7;
+    let daysAhead = (service.dayOfWeek - c.dayOfWeek + 7) % 7;
 
-    if (daysAhead === 0) {
-      const serviceStart = service.startHour * 60;
-      if (currentMinutes >= serviceStart) {
-        daysAhead = 7;
-      }
+    if (daysAhead === 0 && c.minutes >= service.startHour * 60) {
+      daysAhead = 7;
     }
 
-    const candidate = new Date(now);
-    candidate.setDate(candidate.getDate() + daysAhead);
-    candidate.setHours(service.startHour, 0, 0, 0);
+    const candidate = lagosInstant(
+      c.year,
+      c.month,
+      c.day + daysAhead,
+      service.startHour,
+    );
 
     if (!best || candidate.getTime() < best.date.getTime()) {
       best = { date: candidate, label: service.label };
@@ -268,9 +286,10 @@ export function getNextService(now = new Date()): NextServiceInfo {
   }
 
   if (!best) {
-    const fallback = new Date(now);
-    fallback.setDate(fallback.getDate() + 7);
-    best = { date: fallback, label: "Service" };
+    best = {
+      date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      label: "Service",
+    };
   }
 
   return {
@@ -282,11 +301,17 @@ export function getNextService(now = new Date()): NextServiceInfo {
 
 /* ------------------------------------------------------------------ */
 
+/** "Sunday, 01 March" — the date as it falls in Lagos. */
 function formatServiceDate(date: Date): string {
-  const dayName = date.toLocaleDateString("en-GB", { weekday: "long" });
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleDateString("en-GB", { month: "long" });
-  return `${dayName}, ${day} ${month}`;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: LAGOS_TZ,
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("weekday")}, ${part("day")} ${part("month")}`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -300,12 +325,10 @@ function formatServiceDate(date: Date): string {
  *    and show its label.
  */
 export function getCurrentMeetingTitle(now = new Date()): string {
-  const specialLabel = getSpecialServiceLabel(now);
-  if (specialLabel) return specialLabel;
+  const liveSpecial = findLiveSpecial(now);
+  if (liveSpecial) return liveSpecial.label;
 
-  const day = now.getDay();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
+  const c = lagosClock(now);
 
   // Build a map from recurring services for meeting titles
   const dayTitles: Record<number, string> = {};
@@ -316,7 +339,7 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   // ── Find the most recent past SPECIAL service ──
   let mostRecentSpecial: { time: number; label: string } | null = null;
   for (const sp of specialServices) {
-    const spEnd = new Date(sp.year, sp.month, sp.day, sp.endHour, 0, 0, 0);
+    const spEnd = lagosInstant(sp.year, sp.month, sp.day, sp.endHour);
     if (spEnd.getTime() <= now.getTime()) {
       if (!mostRecentSpecial || spEnd.getTime() > mostRecentSpecial.time) {
         mostRecentSpecial = { time: spEnd.getTime(), label: sp.label };
@@ -327,17 +350,14 @@ export function getCurrentMeetingTitle(now = new Date()): string {
   // ── Find the most recent past REGULAR weekly meeting ──
   let mostRecentRegular: { time: number; label: string } | null = null;
   for (let offset = 0; offset <= 7; offset++) {
-    const checkDay = (day - offset + 7) % 7;
+    const checkDay = (c.dayOfWeek - offset + 7) % 7;
     if (!dayTitles[checkDay]) continue;
 
     if (offset === 0) {
       const svc = LIVE_SERVICES.find((s) => s.dayOfWeek === checkDay);
       if (svc) {
-        const startMinutes = svc.startHour * 60;
-        const currentMinutes = hour * 60 + minute;
-        if (currentMinutes < startMinutes) continue;
-        const regEnd = new Date(now);
-        regEnd.setHours(svc.endHour, 0, 0, 0);
+        if (c.minutes < svc.startHour * 60) continue;
+        const regEnd = lagosInstant(c.year, c.month, c.day, svc.endHour);
         mostRecentRegular = {
           time: Math.min(regEnd.getTime(), now.getTime()),
           label: dayTitles[checkDay],
@@ -346,11 +366,8 @@ export function getCurrentMeetingTitle(now = new Date()): string {
     } else {
       const svc = LIVE_SERVICES.find((s) => s.dayOfWeek === checkDay);
       const endHour = svc?.endHour ?? 21;
-      const pastDate = new Date(now);
-      pastDate.setDate(pastDate.getDate() - offset);
-      pastDate.setHours(endHour, 0, 0, 0);
       mostRecentRegular = {
-        time: pastDate.getTime(),
+        time: lagosInstant(c.year, c.month, c.day - offset, endHour).getTime(),
         label: dayTitles[checkDay],
       };
     }

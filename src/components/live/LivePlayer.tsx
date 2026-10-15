@@ -284,14 +284,16 @@ function LiveChat() {
     return () => clearInterval(interval);
   }, []);
 
-  // Subscribe to real-time Firestore messages
+  // Subscribe to real-time Firestore messages. The service window is fixed
+  // when subscribing, so re-subscribe whenever a service starts or ends —
+  // otherwise a page opened before the service never shows its messages.
   useEffect(() => {
     const unsubscribe = subscribeToChatMessages((messages) => {
       setChatMessages(messages);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isServiceHours]);
 
   // Auto-scroll to bottom when new messages arrive. Scroll the container
   // itself rather than using scrollIntoView, which also scrolls the window
