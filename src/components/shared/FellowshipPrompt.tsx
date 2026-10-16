@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { FellowshipCenter } from "@/data/centers";
+import { haversineKm } from "@/utils/mapCoordinates";
 import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -26,23 +27,6 @@ const DISMISS_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const PROMPT_DELAY_MS = 30_000; // 30 seconds
 const SKIP_PATHS = ["/fellowship", "/admin", "/welcome"];
 
-// ─── Haversine Distance ───────────────────────────────────────────────────────
-function haversineKm(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 function findNearestCenters(
   centers: FellowshipCenter[],
@@ -149,7 +133,10 @@ export default function FellowshipPrompt() {
         setLocationError(message);
         setStep("no-match");
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+      // Centers can be only 1–2 km apart, so ask for the precise position
+      // (GPS on phones) and don't reuse a reading more than a minute old —
+      // a coarse or stale fix could easily point at the wrong center.
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
   }, [centers]);
 

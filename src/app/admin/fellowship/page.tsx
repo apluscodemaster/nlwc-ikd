@@ -27,6 +27,7 @@ import { showConfirm } from "@/components/shared/CustomDialog";
 import { StatCard } from "@/components/shared/StatCard";
 import { ModalShell } from "@/components/shared/ModalShell";
 import { authFetch } from "@/lib/authClient";
+import { haversineKm } from "@/utils/mapCoordinates";
 import type {
   FellowshipCenterRecord,
   FellowshipCenterInput,
@@ -67,6 +68,90 @@ function CenterModal({
   const [lng, setLng] = useState("");
   const [areaKeywords, setAreaKeywords] = useState("");
   const [active, setActive] = useState(true);
+  // Coordinates read from the map link, kept to check the typed ones against.
+  const [linkCoords, setLinkCoords] = useState<{
+    link: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [resolving, setResolving] = useState(false);
+
+  /**
+   * Fill latitude/longitude from the Google Maps link. Runs when the link
+   * field loses focus (if the link changed) or via the "Fill from link"
+   * button. Hand-typed coordinates had drifted kilometres from the real
+   * centers, so the link — which admins copy straight from Google Maps — is
+   * the source of truth.
+   */
+  /** Coordinates of the place in `link` (null + toast unless `quiet`). */
+  const resolveLink = useCallback(
+    async (link: string, quiet: boolean) => {
+      setResolving(true);
+      try {
+        const res = await authFetch("/api/fellowship/resolve-map", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: link }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (!quiet) {
+            toast.error("Couldn't read coordinates from the link", {
+              description: data.error,
+            });
+          }
+          return null;
+        }
+        const coords = {
+          link,
+          lat: Number(data.lat.toFixed(6)),
+          lng: Number(data.lng.toFixed(6)),
+        };
+        setLinkCoords(coords);
+        return coords;
+      } catch {
+        if (!quiet) toast.error("Couldn't reach the server");
+        return null;
+      } finally {
+        setResolving(false);
+      }
+    },
+    [],
+  );
+
+  const fillFromLink = useCallback(async () => {
+    const link = mapLink.trim();
+    if (!link || resolving) return;
+    const coords =
+      linkCoords?.link === link ? linkCoords : await resolveLink(link, false);
+    if (!coords) return;
+    setLat(String(coords.lat));
+    setLng(String(coords.lng));
+    toast.success("Coordinates filled from the map link", {
+      description: `${coords.lat}, ${coords.lng}`,
+    });
+  }, [mapLink, linkCoords, resolving, resolveLink]);
+
+  // Editing an existing center: check its saved coordinates against its map
+  // link in the background (without changing anything), so a center pinned
+  // in the wrong place is flagged the moment it's opened.
+  useEffect(() => {
+    if (mode === "edit" && center?.mapLink) {
+      void resolveLink(center.mapLink.trim(), true);
+    }
+  }, [mode, center, resolveLink]);
+
+  // Distance between the typed coordinates and the map link's place.
+  const mismatchKm = (() => {
+    if (!linkCoords || linkCoords.link !== mapLink.trim()) return null;
+    const la = Number(lat);
+    const ln = Number(lng);
+    if (!lat.trim() || !lng.trim() || Number.isNaN(la) || Number.isNaN(ln)) {
+      return null;
+    }
+    const km = haversineKm(la, ln, linkCoords.lat, linkCoords.lng);
+    return km > 0.2 ? km : null;
+  })();
 
   useEffect(() => {
     if (center && mode === "edit") {
@@ -92,9 +177,10 @@ function CenterModal({
       setAreaKeywords("");
       setActive(true);
     }
+    setLinkCoords(null);
   }, [center, mode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const latNum = Number(lat);
     const lngNum = Number(lng);
@@ -115,6 +201,15 @@ function CenterModal({
         description: "They power the “find a center near me” prompt.",
       });
       return;
+    }
+    // Typed coordinates that disagree with the map link put the center in
+    // the wrong place for "nearest center" — confirm before saving.
+    if (mismatchKm !== null) {
+      const proceed = await showConfirm(
+        `The latitude/longitude are ${mismatchKm.toFixed(1)} km from the place in the Google Maps link. The "nearest center" prompt uses the latitude/longitude, so visitors may be pointed to the wrong center. Save anyway?`,
+        { title: "Coordinates don't match the map link", variant: "warning", confirmLabel: "Save anyway" },
+      );
+      if (!proceed) return;
     }
     onSave({
       id: center?.id,
@@ -219,6 +314,12 @@ function CenterModal({
               inputMode="url"
               value={mapLink}
               onChange={(e) => setMapLink(e.target.value)}
+              onBlur={() => {
+                // Auto-fill when the link was changed (or for a new center).
+                if (mapLink.trim() && mapLink.trim() !== center?.mapLink) {
+                  void fillFromLink();
+                }
+              }}
               className={inputClass}
               placeholder="https://maps.app.goo.gl/…"
               required
@@ -272,10 +373,34 @@ function CenterModal({
             />
           </div>
         </div>
-        <p className="-mt-2 text-xs text-gray-400">
-          Coordinates drive the “find a center near me” prompt. Right-click the
-          spot in Google Maps and copy the numbers shown at the top of the menu.
-        </p>
+        <div className="-mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+          <p className="text-xs text-gray-400">
+            Coordinates drive the “find a center near me” prompt. They fill in
+            automatically from the Google Maps link — use the place&apos;s own
+            share link so they point at the exact building.
+          </p>
+          <button
+            type="button"
+            onClick={() => void fillFromLink()}
+            disabled={!mapLink.trim() || resolving}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 text-xs font-semibold text-primary hover:bg-primary/5 disabled:opacity-50 cursor-pointer"
+          >
+            {resolving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <MapPin className="w-3.5 h-3.5" />
+            )}
+            Fill from map link
+          </button>
+        </div>
+        {mismatchKm !== null && (
+          <p className="-mt-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            These coordinates are {mismatchKm.toFixed(1)} km from the place in
+            the map link, so &ldquo;nearest center&rdquo; may recommend the
+            wrong center. Click <strong>Fill from map link</strong> to correct
+            them.
+          </p>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
