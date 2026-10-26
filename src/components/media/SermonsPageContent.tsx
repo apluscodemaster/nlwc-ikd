@@ -50,6 +50,11 @@ import {
 } from "@/utils/sermonProgress";
 import { logWarn, logError } from "@/lib/devLog";
 import { normalizeSearchQuery } from "@/lib/utils";
+import {
+  findTranscriptSlug,
+  getBaseSlug,
+  type TranscriptStub,
+} from "@/utils/transcriptSlug";
 
 /**
  * Earliest year offered in the Year filter.
@@ -60,39 +65,8 @@ import { normalizeSearchQuery } from "@/lib/utils";
  */
 const EARLIEST_SERMON_YEAR = 2021;
 
-// Transcript slug lookup
-// Note: WordPress generates slug variants (e.g., slug-2, slug-3) when posts with identical
-// titles exist in different categories. We use POST ID as the primary identifier to avoid
-// false matches across categories, and include category verification.
-interface TranscriptStub {
-  slug: string;
-  title: string;
-  id: number;
-  categories: number[]; // Verify category to prevent cross-category matches
-  baseSlug?: string; // Slug with numeric suffix removed (e.g., "slug" from "slug-2")
-}
-
-/**
- * Strip numeric suffix from WordPress slugs (e.g., "the-gospel-of-christ-2" → "the-gospel-of-christ")
- * UNLESS the transcript title contains an intentional part reference like "Part 2", "pt 2", etc.
- * This handles cases where WordPress generates variant slugs for posts with identical titles,
- * while preserving intentional series continuations.
- */
-function getBaseSlug(slug: string, transcriptTitle: string): string {
-  const match = slug.match(/-(\d+)$/);
-  if (!match) return slug;
-
-  // If that trailing number actually appears in the title (e.g. "Psalm 23",
-  // "Part 2", "Acts 2"), the suffix is meaningful — keep the full slug so the
-  // link resolves. Only strip it when it's a WordPress collision variant
-  // (e.g. "the-gospel-2" for a re-published "The Gospel").
-  const num = match[1];
-  if (new RegExp(`\\b${num}\\b`).test(transcriptTitle)) {
-    return slug;
-  }
-
-  return slug.slice(0, match.index);
-}
+// Transcript matching lives in utils/transcriptSlug (shared with the sermon
+// cards and the audio player) so every surface pairs sermons the same way.
 
 // Read transcript stubs from our cached server route (revalidated hourly), so
 // WordPress is queried at most once per hour instead of once per visitor.
@@ -116,6 +90,7 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
         title: string;
         id: number;
         categories: number[];
+        date?: string;
       }[];
     } = await res.json();
 
@@ -124,287 +99,13 @@ async function fetchTranscriptSlugs(): Promise<TranscriptStub[]> {
       title: p.title,
       id: p.id,
       categories: p.categories,
+      date: p.date,
       baseSlug: getBaseSlug(p.slug, p.title),
     }));
   } catch (err) {
     logError("Failed to load transcript data", err, { tag: "Transcripts" });
     return [];
   }
-}
-
-// Spelled-out part numbers → digits, so "Part One" matches "Part 1".
-const PART_WORD_TO_NUM: Record<string, string> = {
-  one: "1",
-  two: "2",
-  three: "3",
-  four: "4",
-  five: "5",
-  six: "6",
-  seven: "7",
-  eight: "8",
-  nine: "9",
-  ten: "10",
-  eleven: "11",
-  twelve: "12",
-};
-const PART_WORD_RE =
-  /\bpart\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g;
-
-function normalizeTitle(title: string): string {
-  return (
-    title
-      .toLowerCase()
-      // Decode common HTML entities
-      .replace(/&amp;/g, "&")
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8216;/g, "'")
-      .replace(/&#8220;/g, '"')
-      .replace(/&#8221;/g, '"')
-      .replace(/&rsquo;/g, "'")
-      .replace(/&lsquo;/g, "'")
-      .replace(/&rdquo;/g, '"')
-      .replace(/&ldquo;/g, '"')
-      .replace(/&ndash;/g, "-")
-      .replace(/&mdash;/g, "-")
-      // Normalize unicode quotes/dashes
-      .replace(/[\u2018\u2019\u0027]/g, "'")
-      .replace(/[\u201C\u201D\u0022]/g, '"')
-      .replace(/[\u2013\u2014]/g, "-")
-      // Normalize part references: "Pt.", "pt", "PT.", "Part" all become "part"
-      .replace(/\bpt\.?\s*/gi, "part ")
-      // Spelled-out part numbers → digits: "part one" → "part 1"
-      .replace(PART_WORD_RE, (_m, w: string) => `part ${PART_WORD_TO_NUM[w]}`)
-      // Remove all non-alphanumeric chars except spaces
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
-
-/**
- * Extract the part/series number from a normalized title.
- * Returns the number if found (e.g. "part 2" → 2), or null.
- */
-function extractPartNumber(normalizedTitle: string): number | null {
-  const match = normalizedTitle.match(/\bpart\s*(\d+)\b/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-/**
- * Get the "core" title by stripping part/series indicators and trailing numbers.
- * E.g. "the love of god part 2" → "the love of god"
- */
-function getCoreTitle(normalizedTitle: string): string {
-  return normalizedTitle
-    .replace(/\bpart\s*\d+\b/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-// Common English stop words excluded from word-overlap scoring to prevent
-// false matches between titles that share only generic filler words.
-const STOP_WORDS = new Set([
-  "the",
-  "and",
-  "for",
-  "are",
-  "but",
-  "not",
-  "you",
-  "all",
-  "can",
-  "her",
-  "was",
-  "one",
-  "our",
-  "out",
-  "has",
-  "have",
-  "had",
-  "its",
-  "his",
-  "how",
-  "man",
-  "new",
-  "now",
-  "old",
-  "see",
-  "way",
-  "who",
-  "did",
-  "get",
-  "let",
-  "say",
-  "she",
-  "too",
-  "use",
-  "with",
-  "that",
-  "this",
-  "will",
-  "your",
-  "from",
-  "they",
-  "been",
-  "have",
-  "many",
-  "some",
-  "them",
-  "than",
-  "each",
-  "make",
-  "like",
-  "into",
-  "over",
-  "such",
-  "what",
-  "when",
-  "which",
-  "their",
-  "about",
-  "would",
-  "there",
-  "these",
-  "other",
-  "could",
-  "after",
-  "those",
-]);
-
-function findTranscriptSlug(
-  sermonTitle: string,
-  transcripts: TranscriptStub[],
-  sermonId?: number,
-): string | null {
-  const normalizedSermon = normalizeTitle(sermonTitle);
-  if (!normalizedSermon) return null;
-
-  const sermonPartNum = extractPartNumber(normalizedSermon);
-  const sermonCore = getCoreTitle(normalizedSermon);
-
-  // 1. Exact normalized title match (most reliable)
-  for (const t of transcripts) {
-    if (normalizeTitle(t.title) === normalizedSermon) {
-      return t.slug;
-    }
-  }
-
-  // 2. Core title + part number match
-  //    Matches "The Gospel Part 1" sermon to "The Gospel Pt. 1" transcript
-  if (sermonCore) {
-    const coreCandidates: { t: TranscriptStub; normTitle: string }[] = [];
-    for (const t of transcripts) {
-      const normT = normalizeTitle(t.title);
-      const tCore = getCoreTitle(normT);
-      if (tCore === sermonCore) {
-        coreCandidates.push({ t, normTitle: normT });
-      }
-    }
-
-    if (coreCandidates.length > 0) {
-      // If sermon has a part number, find the transcript with the same part number
-      if (sermonPartNum !== null) {
-        const partMatch = coreCandidates.find(
-          (c) => extractPartNumber(c.normTitle) === sermonPartNum,
-        );
-        if (partMatch) return partMatch.t.slug;
-      } else {
-        // Sermon has no part number — match transcript without a part number
-        const noPartMatch = coreCandidates.find(
-          (c) => extractPartNumber(c.normTitle) === null,
-        );
-        if (noPartMatch) return noPartMatch.t.slug;
-        // Fallback: if all transcripts have part numbers, take part 1
-        const part1 = coreCandidates.find(
-          (c) => extractPartNumber(c.normTitle) === 1,
-        );
-        if (part1) return part1.t.slug;
-      }
-    }
-  }
-
-  // 3. Substring containment — require part numbers to match when present
-  if (normalizedSermon.length >= 10) {
-    for (const t of transcripts) {
-      const normalizedTranscript = normalizeTitle(t.title);
-      if (
-        normalizedSermon.includes(normalizedTranscript) ||
-        normalizedTranscript.includes(normalizedSermon)
-      ) {
-        // Verify part numbers are compatible
-        const tPartNum = extractPartNumber(normalizedTranscript);
-        if (
-          sermonPartNum !== null &&
-          tPartNum !== null &&
-          sermonPartNum !== tPartNum
-        ) {
-          continue; // Part number mismatch — skip
-        }
-        if (sermonPartNum !== null && tPartNum === null) {
-          continue; // Sermon has part number but transcript doesn't — likely different content
-        }
-        return t.slug;
-      }
-    }
-  }
-
-  // 4. Word-overlap scoring with part-number awareness
-  const sermonWords = new Set(
-    normalizedSermon
-      .split(" ")
-      .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
-  );
-  if (sermonWords.size >= 2) {
-    let bestMatch: {
-      slug: string;
-      score: number;
-    } | null = null;
-
-    for (const t of transcripts) {
-      const normalizedTranscript = normalizeTitle(t.title);
-      const transcriptWords = new Set(
-        normalizedTranscript
-          .split(" ")
-          .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
-      );
-      if (transcriptWords.size === 0) continue;
-
-      // If either has a part number, they must agree
-      const tPartNum = extractPartNumber(normalizedTranscript);
-      if (
-        sermonPartNum !== null &&
-        tPartNum !== null &&
-        sermonPartNum !== tPartNum
-      ) {
-        continue;
-      }
-      if (sermonPartNum !== null && tPartNum === null) {
-        continue;
-      }
-      if (sermonPartNum === null && tPartNum !== null) {
-        continue;
-      }
-
-      let matchCount = 0;
-      for (const w of sermonWords) {
-        if (transcriptWords.has(w)) matchCount++;
-      }
-      const score =
-        matchCount / Math.max(sermonWords.size, transcriptWords.size);
-
-      if (score >= 0.6 && (!bestMatch || score > bestMatch.score)) {
-        bestMatch = {
-          slug: t.slug,
-          score,
-        };
-      }
-    }
-    if (bestMatch) {
-      return bestMatch.slug;
-    }
-  }
-
-  return null;
 }
 
 // =============================================================================
@@ -517,11 +218,7 @@ export default function SermonsPageContent() {
     order: sortOrder,
   });
 
-  const {
-    series,
-    speakers,
-    isLoading: filtersLoading,
-  } = useFilterOptions();
+  const { series, speakers, isLoading: filtersLoading } = useFilterOptions();
 
   // Fetch transcript slugs for matching
   const { data: transcriptSlugs = [] } = useQuery({
@@ -1228,8 +925,9 @@ function SermonCard({
   onTranscriptClick: (slug: string, title: string, speaker?: string) => void;
 }) {
   const matchedSlug = useMemo(
-    () => findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id),
-    [sermon.title, transcriptSlugs, sermon.id],
+    () =>
+      findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id, sermon.date),
+    [sermon.title, transcriptSlugs, sermon.id, sermon.date],
   );
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`

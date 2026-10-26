@@ -30,10 +30,13 @@ type WPTranscriptPost = {
   slug: string;
   id: number;
   categories: number[];
+  // Post date (site-local "YYYY-MM-DDTHH:mm:ss") — the matcher compares it
+  // with the sermon date to tell same-titled sermons apart.
+  date: string;
 };
 
 const buildUrl = (categoryIds: string, page: number) =>
-  `${WP_API}/wp-json/wp/v2/posts?categories=${categoryIds}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
+  `${WP_API}/wp-json/wp/v2/posts?categories=${categoryIds}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories,date&orderby=date&order=desc`;
 
 export async function GET() {
   try {
@@ -59,7 +62,9 @@ export async function GET() {
       const rest = await Promise.all(
         Array.from({ length: lastPage - 1 }, (_, i) =>
           fetchPage(i + 2)
-            .then((r) => (r.ok ? (r.json() as Promise<WPTranscriptPost[]>) : []))
+            .then((r) =>
+              r.ok ? (r.json() as Promise<WPTranscriptPost[]>) : [],
+            )
             .catch(() => [] as WPTranscriptPost[]),
         ),
       );
@@ -72,6 +77,7 @@ export async function GET() {
         title: p.title.rendered,
         id: p.id,
         categories: p.categories,
+        date: p.date,
       })),
     });
   } catch {

@@ -19,7 +19,10 @@ import {
 } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
-import { findTranscriptSlug, type TranscriptStub } from "@/utils/transcriptSlug";
+import {
+  findTranscriptSlug,
+  type TranscriptStub,
+} from "@/utils/transcriptSlug";
 
 interface SermonCardProps {
   sermon: AudioSermon;
@@ -45,8 +48,9 @@ export default function SermonCard({
   onTranscriptClick,
 }: SermonCardProps) {
   const matchedSlug = useMemo(
-    () => findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id),
-    [sermon.title, transcriptSlugs, sermon.id],
+    () =>
+      findTranscriptSlug(sermon.title, transcriptSlugs, sermon.id, sermon.date),
+    [sermon.title, transcriptSlugs, sermon.id, sermon.date],
   );
   const transcriptHref = matchedSlug
     ? `/transcripts/${matchedSlug}`

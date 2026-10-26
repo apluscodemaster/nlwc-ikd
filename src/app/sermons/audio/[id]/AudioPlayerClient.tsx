@@ -127,7 +127,8 @@ export default function AudioPlayerClient({
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled && Array.isArray(data?.items)) setTranscriptStubs(data.items);
+        if (!cancelled && Array.isArray(data?.items))
+          setTranscriptStubs(data.items);
       } catch {
         // Best-effort: no match simply means no transcript link is shown.
       }
@@ -138,8 +139,9 @@ export default function AudioPlayerClient({
   }, []);
 
   const matchedTranscriptSlug = useMemo(
-    () => findTranscriptSlug(sermon.title, transcriptStubs, sermon.id),
-    [sermon.title, sermon.id, transcriptStubs],
+    () =>
+      findTranscriptSlug(sermon.title, transcriptStubs, sermon.id, sermon.date),
+    [sermon.title, sermon.id, sermon.date, transcriptStubs],
   );
 
   // Resolve the adjacent parts once, by searching the catalogue for the base
@@ -258,10 +260,7 @@ export default function AudioPlayerClient({
 
   const toggleMute = useCallback(() => audio.toggleMute(), [audio]);
 
-  const seek = useCallback(
-    (seconds: number) => audio.seekBy(seconds),
-    [audio],
-  );
+  const seek = useCallback((seconds: number) => audio.seekBy(seconds), [audio]);
 
   const cycleSpeed = useCallback(() => audio.cycleSpeed(), [audio]);
 
@@ -364,13 +363,11 @@ export default function AudioPlayerClient({
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-white/70 mb-1.5">
                     <span>
-                      Listened:{" "}
-                      {formatProgressTime(resumePrompt.currentTime)}
+                      Listened: {formatProgressTime(resumePrompt.currentTime)}
                     </span>
                     {resumePrompt.duration > 0 && (
                       <span>
-                        Total:{" "}
-                        {formatProgressTime(resumePrompt.duration)}
+                        Total: {formatProgressTime(resumePrompt.duration)}
                       </span>
                     )}
                   </div>
@@ -395,8 +392,7 @@ export default function AudioPlayerClient({
                   id="resume-playback"
                 >
                   <FastForward className="w-5 h-5" />
-                  Continue from{" "}
-                  {formatProgressTime(resumePrompt.currentTime)}
+                  Continue from {formatProgressTime(resumePrompt.currentTime)}
                 </button>
                 <button
                   onClick={handleStartOver}
@@ -454,7 +450,9 @@ export default function AudioPlayerClient({
               {copied ? (
                 <>
                   <Check className="w-4 h-4 text-green-400" />
-                  <span className="text-green-400 hidden sm:inline">Copied!</span>
+                  <span className="text-green-400 hidden sm:inline">
+                    Copied!
+                  </span>
                 </>
               ) : (
                 <>
@@ -649,12 +647,16 @@ export default function AudioPlayerClient({
                 ? "bg-primary/20 text-primary"
                 : "bg-white/10 text-white/60 hover:text-white hover:bg-white/20"
             }`}
-            aria-label={repeatMode === "one" ? "Disable repeat" : "Repeat this message"}
+            aria-label={
+              repeatMode === "one" ? "Disable repeat" : "Repeat this message"
+            }
             title={repeatMode === "one" ? "Repeat on" : "Repeat off"}
           >
             <Repeat2 className="w-5 h-5" />
             {repeatMode === "one" && (
-              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">1</span>
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">
+                1
+              </span>
             )}
           </button>
 

@@ -61,8 +61,11 @@ describe("normalizeTitle", () => {
     expect(normalizeTitle("God&#8217;s Grace")).toBe("gods grace");
   });
 
-  it("decodes &amp; entity", () => {
-    expect(normalizeTitle("Love &amp; Faith")).toBe("love faith");
+  it('decodes &amp; entity, reading & as "and"', () => {
+    expect(normalizeTitle("Love &amp; Faith")).toBe("love and faith");
+    expect(normalizeTitle("Love & Faith")).toBe(
+      normalizeTitle("Love and Faith"),
+    );
   });
 
   it("normalizes 'Pt.' to 'part'", () => {
@@ -147,6 +150,7 @@ describe("findTranscriptSlug", () => {
     {
       slug: "the-love-of-god",
       title: "The Love of God",
+      date: "2026-03-01T08:00:00",
       id: 2,
       categories: [20],
       baseSlug: "the-love-of-god",
@@ -168,6 +172,7 @@ describe("findTranscriptSlug", () => {
     {
       slug: "the-love-of-god-2",
       title: "The Love of God",
+      date: "2026-06-14T08:00:00",
       id: 5,
       categories: [20],
       baseSlug: "the-love-of-god",
@@ -175,6 +180,7 @@ describe("findTranscriptSlug", () => {
     {
       slug: "walking-in-divine-grace-and-favor",
       title: "Walking in Divine Grace and Favor",
+      date: "2026-05-10T08:00:00",
       id: 6,
       categories: [20],
       baseSlug: "walking-in-divine-grace-and-favor",
@@ -215,19 +221,50 @@ describe("findTranscriptSlug", () => {
 
   // 3. Sermon without part number matches transcript without part number
   it("matches sermon without part to transcript without part", () => {
-    expect(findTranscriptSlug("The Love of God", transcripts)).toBe(
-      "the-love-of-god",
-    );
+    // Two transcripts share this title; the sermon date picks between them.
+    expect(
+      findTranscriptSlug(
+        "The Love of God",
+        transcripts,
+        undefined,
+        "March 1, 2026",
+      ),
+    ).toBe("the-love-of-god");
+    expect(
+      findTranscriptSlug(
+        "The Love of God",
+        transcripts,
+        undefined,
+        "June 14, 2026",
+      ),
+    ).toBe("the-love-of-god-2");
+  });
+
+  it("refuses to guess between same-titled transcripts without a date", () => {
+    expect(findTranscriptSlug("The Love of God", transcripts)).toBeNull();
   });
 
   // 4. Substring containment
-  it("matches by substring containment", () => {
+  it("matches by substring containment on the same occasion", () => {
     expect(
       findTranscriptSlug(
         "Walking in Divine Grace and Favor - Sunday Service",
         transcripts,
+        undefined,
+        "May 10, 2026",
       ),
     ).toBe("walking-in-divine-grace-and-favor");
+  });
+
+  it("does not trust a partial title without a matching date", () => {
+    expect(
+      findTranscriptSlug(
+        "Walking in Divine Grace and Favor - Sunday Service",
+        transcripts,
+        undefined,
+        "January 4, 2026",
+      ),
+    ).toBeNull();
   });
 
   // 5. Word overlap
