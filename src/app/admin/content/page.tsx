@@ -34,6 +34,10 @@ import {
   type ViewMode,
 } from "@/components/admin/content/types";
 
+/** Whether editor HTML holds any visible text (vs. empty tags). */
+const hasText = (html: string | undefined) =>
+  !!html && html.replace(/<[^>]*>|&nbsp;/g, "").trim().length > 0;
+
 /** Default transcript category for new posts (Sunday Message Transcripts). */
 const DEFAULT_TRANSCRIPT_CATEGORY = String(
   TRANSCRIPT_TYPE_TO_CATEGORY["sunday-message"],
@@ -47,6 +51,7 @@ import {
 import { ContentListItem } from "@/components/admin/content/ContentListItem";
 import { useSermonTaxonomy } from "@/components/admin/content/useSermonTaxonomy";
 import { useTranscriptCategories } from "@/components/admin/content/useTranscriptCategories";
+import { DocxImportButton } from "@/components/admin/content/DocxImportButton";
 import {
   ThumbnailField,
   useThumbnailUpload,
@@ -256,7 +261,9 @@ export default function AdminChurchContentPage() {
       // the real description. Rows written before that injection was removed
       // still carry it; not re-adding it on save cleans them up.
       content:
-        activeTab === "sermon" ? stripLeadingSpeakerLine(rawContent) : rawContent,
+        activeTab === "sermon"
+          ? stripLeadingSpeakerLine(rawContent)
+          : rawContent,
       // A scheduled post comes back as "future", which matches neither option
       // in the Status select (it rendered blank). Treat it as "publish" — the
       // future date below is what re-schedules it on save.
@@ -956,6 +963,31 @@ export default function AdminChurchContentPage() {
                     </>
                   )}
 
+                  {activeTab === "manual" && (
+                    <div className="flex items-center justify-between gap-3 -mb-2">
+                      <p className="text-xs text-gray-400">
+                        Have the manual in Word? Import it instead of retyping.
+                      </p>
+                      <DocxImportButton
+                        hasContent={hasText(textForm.watch("content"))}
+                        onImport={({ html, title }) => {
+                          textForm.setValue("content", html, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                          // Only fill an empty title — never overwrite one
+                          // the admin has typed.
+                          if (title && !textForm.getValues("title").trim()) {
+                            textForm.setValue("title", title, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
                   <Controller
                     name="content"
                     control={textForm.control}
@@ -1084,12 +1116,28 @@ export default function AdminChurchContentPage() {
                   />
                 )}
 
+                {activeTab === "manual" && (
+                  <div className="flex justify-end -mb-2">
+                    <DocxImportButton
+                      hasContent={hasText(edit.content)}
+                      onImport={({ html, title }) =>
+                        patchEdit({
+                          content: html,
+                          ...(title && !edit.title.trim() ? { title } : {}),
+                        })
+                      }
+                    />
+                  </div>
+                )}
+
                 <ContentField
                   type={activeTab}
                   value={edit.content}
                   onChange={(content) => patchEdit({ content })}
                   placeholder={
-                    activeTab === "sermon" ? "Description / notes…" : "Edit content…"
+                    activeTab === "sermon"
+                      ? "Description / notes…"
+                      : "Edit content…"
                   }
                 />
 
