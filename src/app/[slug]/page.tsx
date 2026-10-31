@@ -14,6 +14,13 @@ import {
 // Resolutions are cached for a day so re-crawls don't re-query the backend.
 export const revalidate = 86400;
 
+// No paths are built ahead of time, but declaring this (even empty) is what
+// lets Next.js cache each page on its first visit for `revalidate` seconds.
+// Without it the page was rebuilt on every request despite `revalidate`.
+export async function generateStaticParams() {
+  return [];
+}
+
 // Only treat clean WordPress-style slugs as content; anything else (file
 // extensions, scanner probes, mixed case) 404s immediately with no backend
 // calls.
