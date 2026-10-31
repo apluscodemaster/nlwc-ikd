@@ -148,8 +148,24 @@ function TestimonyForm() {
       return;
     }
 
-    if (data.testimony.trim().length < 20) {
-      toast.error("Your testimony must be at least 20 characters.");
+    // Same limits the database enforces (firestore.rules → isValidTestimony),
+    // so a rejected save shows which field to fix instead of a vague failure.
+    const tooShort = (value: string, min: number) => value.trim().length < min;
+    const problem = tooShort(data.name, 2)
+      ? "Please enter your full name (at least 2 characters)."
+      : tooShort(data.location, 2)
+        ? "Please enter your location (at least 2 characters)."
+        : phone.replace(/\D/g, "").length < 7
+          ? "Please enter a valid phone number."
+          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())
+            ? "Please enter a valid email address."
+            : tooShort(data.testimony, 20)
+              ? "Your testimony must be at least 20 characters."
+              : data.testimony.trim().length > 5000
+                ? "Your testimony must be under 5000 characters."
+                : null;
+    if (problem) {
+      toast.error(problem);
       setFormStatus("idle");
       return;
     }
@@ -415,10 +431,9 @@ function TestimonyForm() {
         <Button
           type="submit"
           size="lg"
-          disabled={
-            formStatus === "loading" ||
-            (!!TURNSTILE_SITE_KEY && !turnstileToken)
-          }
+          // Never blocked on the bot check: the testimony is always saved;
+          // the check only gates the notification emails (see handleSubmit).
+          disabled={formStatus === "loading"}
           className="w-full h-12 sm:h-14 md:h-16 rounded-full text-sm sm:text-base md:text-lg font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all cursor-pointer"
         >
           {formStatus === "loading" ? (
