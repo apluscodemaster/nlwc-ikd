@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import {
   Send,
   User,

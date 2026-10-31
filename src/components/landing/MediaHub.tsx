@@ -28,7 +28,7 @@ import {
   Clock,
 } from "lucide-react";
 import Image from "next/image";
-import { AnimatePresence, motion, Variants } from "framer-motion";
+import { AnimatePresence, m as motion, Variants } from "framer-motion";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { useTranscripts, useManuals } from "@/hooks/useWordPress";
 import { useQuery } from "@tanstack/react-query";

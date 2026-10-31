@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { BookOpen, User, ChevronRight, Clock, Share2, Check } from "lucide-react";
 import type { TranscriptPost } from "@/lib/wordpress";
 import Link from "next/link";

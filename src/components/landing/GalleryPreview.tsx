@@ -10,7 +10,7 @@ import { ArrowRight, Heart, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sizedGoogleImage, toGoogleImageURL } from "@/utils/driveImage";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 
 const fetcher = async (): Promise<{ dates: DateColumns[] }> => {
   const res = await fetch("/api/sheet");

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { BookOpen, Calendar, ArrowRight, Sparkles } from "lucide-react";
 import { Devotional } from "@/lib/devotionals";
 

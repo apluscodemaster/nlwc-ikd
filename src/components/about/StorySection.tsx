@@ -3,7 +3,7 @@
 import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
 import SectionLabel from "@/components/shared/SectionLabel";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
 import { BookOpen, Users, Church, Heart } from "lucide-react";

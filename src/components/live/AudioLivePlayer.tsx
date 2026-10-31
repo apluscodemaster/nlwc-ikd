@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Radio, Activity, Maximize2, Minimize2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 

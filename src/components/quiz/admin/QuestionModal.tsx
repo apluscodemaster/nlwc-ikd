@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { CheckCircle2, X, Save, Loader2, BrainCircuit } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizCategory, QuizQuestion } from "@/types/quiz";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { ShieldCheck, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SECURITY_QUESTIONS } from "@/lib/quizSecurity";

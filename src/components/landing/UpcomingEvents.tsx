@@ -9,7 +9,7 @@ import {
   Clock,
   CalendarPlus,
 } from "lucide-react";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { generateGoogleCalendarUrl } from "@/data/events";

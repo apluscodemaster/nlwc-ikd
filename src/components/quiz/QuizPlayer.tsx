@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { ArrowRight, Loader2, RefreshCw, Send, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QuestionCard from "./QuestionCard";

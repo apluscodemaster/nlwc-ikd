@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { BookOpen, Calendar, ChevronRight, History } from "lucide-react";
 import { getPublishedDevotionals, Devotional } from "@/lib/devotionals";
 

@@ -36,7 +36,8 @@ vi.mock("framer-motion", () => {
   );
   MotionDiv.displayName = "MotionDiv";
 
-  return { motion: { div: MotionDiv } };
+  // Components import the lazy `m` element (as `motion`) — see MotionProvider.
+  return { motion: { div: MotionDiv }, m: { div: MotionDiv } };
 });
 
 const publishedManual: SundaySchoolManual = {

@@ -17,7 +17,7 @@ import {
   Repeat2,
   Shuffle,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 
 function formatTime(time: number): string {
   if (!time || isNaN(time)) return "0:00";

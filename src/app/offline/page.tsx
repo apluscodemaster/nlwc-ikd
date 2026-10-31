@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Home, Wifi, WifiOff, RotateCw, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";

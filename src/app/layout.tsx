@@ -8,6 +8,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import WhatsAppButtonWrapper from "@/components/WhatsAppButtonWrapper";
 import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
 import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
+import MotionProvider from "@/components/providers/MotionProvider";
 import CustomDialog from "@/components/shared/CustomDialog";
 import { Toaster } from "@/components/ui/sonner";
 import { Jost } from "next/font/google";
@@ -180,64 +181,39 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className="bg-gray-50 text-gray-900 font-sans overflow-x-hidden min-h-screen flex flex-col"
         suppressHydrationWarning={true}
       >
-        <ServiceWorkerProvider>
-          <OfflineDetector>
-            <Providers>
-              {/* Skip to Content Link - Accessibility */}
-              <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold focus:shadow-lg"
-              >
-                Skip to main content
-              </a>
-              <Navbar />
-              <main id="main-content" className="flex-grow pt-16">
-                {children}
-              </main>
-              <ScrollToTop />
-              <WhatsAppButtonWrapper />
-              <GoogleTranslate />
-              <FellowshipPrompt />
-              <RefTaggerReloader />
-              <CustomDialog />
-            </Providers>
-          </OfflineDetector>
-        </ServiceWorkerProvider>
-        <Footer />
+        <MotionProvider>
+          <ServiceWorkerProvider>
+            <OfflineDetector>
+              <Providers>
+                {/* Skip to Content Link - Accessibility */}
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold focus:shadow-lg"
+                >
+                  Skip to main content
+                </a>
+                <Navbar />
+                <main id="main-content" className="flex-grow pt-16">
+                  {children}
+                </main>
+                <ScrollToTop />
+                <WhatsAppButtonWrapper />
+                <GoogleTranslate />
+                <FellowshipPrompt />
+                <RefTaggerReloader />
+                <CustomDialog />
+              </Providers>
+            </OfflineDetector>
+          </ServiceWorkerProvider>
+          <Footer />
 
-        {/* Global toast host — mounted here (not inside Footer) so toasts also
+          {/* Global toast host — mounted here (not inside Footer) so toasts also
             render on /admin and /offline routes where the Footer is hidden. */}
-        <Toaster position="bottom-right" />
+          <Toaster position="bottom-right" />
+        </MotionProvider>
 
-        {/* Logos RefTagger — auto-detects Bible references and shows verse on hover */}
-        <Script
-          id="reftagger-config"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.refTagger = {
-                settings: {
-                  bibleVersion: "KJV",
-                  tooltipStyle: "dark",
-                  socialSharing: [],
-                  tagChapters: true,
-                  dropShadow: true,
-                  noSearchTagNames: ["H1", "H2", "H3", "INPUT", "TEXTAREA"],
-                  // Content rendered by ScriptureContent is tagged by the in-app
-                  // ScriptureProvider (KJV, portal-positioned so it works inside
-                  // overlays). Excluding it here stops RefTagger double-tagging
-                  // the same references.
-                  noSearchClassNames: ["no-reftagger"],
-                  tagColor: "#FF7C18"
-                }
-              };
-            `,
-          }}
-        />
-        <Script
-          src="https://api.reftagger.com/v2/RefTagger.js"
-          strategy="lazyOnload"
-        />
+        {/* Logos RefTagger is loaded by <RefTaggerReloader /> above, only on
+            content pages (not admin). */}
 
         {/* Note: Schema.org JSON-LD moved to head section to avoid duplication */}
       </body>

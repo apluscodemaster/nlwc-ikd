@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import PageHeader from "@/components/shared/PageHeader";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import { Heart, Flame, BookOpen, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

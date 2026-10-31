@@ -4,7 +4,7 @@ import React from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
 import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import {
   MapPin,
   MessageCircle,

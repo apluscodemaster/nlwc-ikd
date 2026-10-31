@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Crown, Medal } from "lucide-react";
 import type { LeaderboardEntry } from "@/types/quiz";
 

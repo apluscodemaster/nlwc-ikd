@@ -10,7 +10,7 @@ import {
   Instagram,
   Youtube,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useDecodedContact } from "@/components/ObfuscatedContact";
 
 const contactDetails = [

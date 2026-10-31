@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import type { DateColumns } from "@/lib/sheets";
 import PageHeader from "@/components/shared/PageHeader";
 import TabGallery from "@/components/TabGallery";

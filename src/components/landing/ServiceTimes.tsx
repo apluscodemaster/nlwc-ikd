@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import Image from "next/image";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { services } from "@/data/services";

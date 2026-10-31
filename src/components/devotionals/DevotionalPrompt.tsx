@@ -2,27 +2,45 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { BookOpen, X, Sparkles } from "lucide-react";
-import { getLatestDevotional, Devotional } from "@/lib/devotionals";
-
 const SESSION_KEY = "devotional_prompt_dismissed";
 
+/** Shape returned by /api/devotionals/latest. */
+interface LatestDevotional {
+  id: string;
+  title: string;
+  /** ISO timestamp of the release date. */
+  scheduledDate: string;
+}
+
+/**
+ * Homepage prompt for the latest devotional. Reads it from a cached API
+ * route rather than querying Firestore in the browser, which kept the whole
+ * Firebase client SDK out of the homepage bundle.
+ */
 export default function DevotionalPrompt() {
-  const [devotional, setDevotional] = useState<Devotional | null>(null);
+  const [devotional, setDevotional] = useState<LatestDevotional | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     // If already dismissed this session, bail out
     if (sessionStorage.getItem(SESSION_KEY)) return;
 
-    getLatestDevotional().then((d) => {
-      if (d) {
-        setDevotional(d);
-        // Small delay so it slides in smoothly after page renders
-        setTimeout(() => setVisible(true), 1200);
-      }
-    });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    fetch("/api/devotionals/latest")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { devotional?: LatestDevotional | null } | null) => {
+        if (data?.devotional) {
+          setDevotional(data.devotional);
+          // Small delay so it slides in smoothly after page renders
+          timer = setTimeout(() => setVisible(true), 1200);
+        }
+      })
+      .catch(() => {
+        // No prompt if it can't load — it's optional.
+      });
+    return () => clearTimeout(timer);
   }, []);
 
   const dismiss = () => {
@@ -32,14 +50,15 @@ export default function DevotionalPrompt() {
 
   if (!devotional) return null;
 
-  const formattedDate = devotional.scheduledDate
-    .toDate()
-    .toLocaleDateString("en-US", {
+  const formattedDate = new Date(devotional.scheduledDate).toLocaleDateString(
+    "en-US",
+    {
       weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
-    });
+    },
+  );
 
   return (
     <AnimatePresence>

@@ -31,7 +31,9 @@ vi.mock("framer-motion", () => {
   MockAnimatePresence.displayName = "AnimatePresence";
 
   return {
+    // Components import the lazy `m` element (as `motion`) — see MotionProvider.
     motion: { div: MotionDiv },
+    m: { div: MotionDiv },
     AnimatePresence: MockAnimatePresence,
   };
 });

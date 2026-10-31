@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
 import {
   isCurrentlyLive,

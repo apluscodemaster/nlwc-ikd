@@ -9,7 +9,7 @@ import React, {
   useRef,
 } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Book, Loader2 } from "lucide-react";
 import {
   getBibleGatewayUrl,

@@ -7,7 +7,7 @@ import SectionContainer from "@/components/shared/SectionContainer";
 import ContactForm from "@/components/contact/ContactForm";
 import ContactInfo, { SocialConnect } from "@/components/contact/ContactInfo";
 import MapEmbed from "@/components/contact/MapEmbed";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { PenLine, BookOpen } from "lucide-react";
 
 export default function ContactPage() {

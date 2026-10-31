@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type Props = {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
 import TranscriptContent from "@/components/shared/TranscriptContent";
 import { logError } from "@/lib/devLog";

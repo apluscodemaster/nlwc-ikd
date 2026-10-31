@@ -13,7 +13,7 @@ import MediaFilters from "@/components/media/MediaFilters";
 import ResourceList from "@/components/media/ResourceList";
 import { useAudioSermons } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Play,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { X, FastForward, RotateCcw, Headphones, Play } from "lucide-react";
 import { MediaProgress, formatProgressTime } from "@/lib/mediaProgress";
 import Image from "next/image";

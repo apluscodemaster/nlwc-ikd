@@ -4,7 +4,7 @@ import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { team } from "@/data/team";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },

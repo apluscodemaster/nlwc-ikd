@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import type { DateColumns } from "@/lib/sheets";
 import TabPaginator from "./TabPaginator";
 import MasonryGrid from "./MasonryGrid";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "lucide-react";
 
 type Props = {

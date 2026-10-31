@@ -2,7 +2,7 @@
 
 import React from "react";
 import SectionLabel from "@/components/shared/SectionLabel";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import { Cross, Heart, Anchor } from "lucide-react";
 
 const pillars = [

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { KeyRound, Loader2, ArrowRight, X, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatRecoveryCode } from "@/lib/quizSecurity";

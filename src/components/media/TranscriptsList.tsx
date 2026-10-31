@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { storeListUrl } from "@/components/shared/BackToListLink";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Search,

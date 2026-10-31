@@ -4,7 +4,7 @@ import React from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { meetings } from "@/data/meetings";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 

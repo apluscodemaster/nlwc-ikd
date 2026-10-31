@@ -7,7 +7,7 @@ import SectionLabel from "@/components/shared/SectionLabel";
 import { Radio } from "lucide-react";
 import Image from "next/image";
 import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
-import { motion, Variants } from "framer-motion";
+import { m as motion, Variants } from "framer-motion";
 import {
   isCurrentlyLive,
   getNextService,

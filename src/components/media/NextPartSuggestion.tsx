@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { X, Headphones, Play, ArrowLeft, Layers } from "lucide-react";
 import type { AudioSermon } from "@/lib/audioSermons";
 

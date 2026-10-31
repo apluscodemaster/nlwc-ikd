@@ -40,7 +40,7 @@ import {
   Settings,
   Timer,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 
 // ──────────────────────────────────────────────
 // Auth Context — shared across all /admin routes

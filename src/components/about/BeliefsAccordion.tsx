@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import SectionContainer from "@/components/shared/SectionContainer";
 import { ScriptureProvider } from "@/components/providers/ScriptureProvider";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, BookOpen, Sparkles } from "lucide-react";
 
 const beliefs = [
