@@ -11,7 +11,8 @@ export async function GET(
   props: { params: Promise<{ reference: string }> },
 ) {
   // Rate limited: proxies an external API.
-  const limited = rateLimitMiddleware(request, "public");
+  // One counter for all references (see rateLimitMiddleware's `bucket`).
+  const limited = rateLimitMiddleware(request, "public", "/api/scripture");
   if (limited) return limited;
 
   try {
@@ -40,7 +41,8 @@ export async function GET(
     // Return with cache headers (24 hour cache)
     return NextResponse.json(verse, {
       headers: {
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control":
+          "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
       },
     });
   } catch (error) {

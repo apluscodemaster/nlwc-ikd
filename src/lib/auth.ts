@@ -68,7 +68,9 @@ function hasValidSignature(token: string, certPem: string): boolean {
  * bypassable whenever the Admin SDK failed to initialise. Never accept a token
  * here without verifying its signature.
  */
-async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; error?: string; actor?: AuthActor }> {
+async function verifyFirebaseToken(
+  token: string,
+): Promise<{ valid: boolean; error?: string; actor?: AuthActor }> {
   // ── Primary: Firebase Admin SDK ───────────────────────────────────────────
   try {
     const auth = getAdminAuth();
@@ -78,16 +80,24 @@ async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; err
       actor: { uid: decoded.uid, email: decoded.email ?? null },
     };
   } catch (adminError) {
-    const msg = adminError instanceof Error ? adminError.message : String(adminError);
+    const msg =
+      adminError instanceof Error ? adminError.message : String(adminError);
     // If the token itself is invalid/expired, don't fall through
     if (msg.includes("expired") || msg.includes("revoked")) {
       return { valid: false, error: "Token expired" };
     }
-    if (msg.includes("argument") || msg.includes("Decoding") || msg.includes("malformed")) {
+    if (
+      msg.includes("argument") ||
+      msg.includes("Decoding") ||
+      msg.includes("malformed")
+    ) {
       return { valid: false, error: "Malformed token" };
     }
     // Admin SDK not initialised — fall through to manual decode
-    console.warn("[auth] Firebase Admin unavailable, falling back to manual JWT check:", msg);
+    console.warn(
+      "[auth] Firebase Admin unavailable, falling back to manual JWT check:",
+      msg,
+    );
   }
 
   // ── Fallback: manual JWT decode ───────────────────────────────────────────
@@ -97,7 +107,10 @@ async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; err
       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     if (!projectId) {
-      return { valid: false, error: "Server configuration error: no project ID" };
+      return {
+        valid: false,
+        error: "Server configuration error: no project ID",
+      };
     }
 
     const parts = token.split(".");
@@ -169,7 +182,9 @@ async function verifyFirebaseToken(token: string): Promise<{ valid: boolean; err
  * Audit entries must take the actor from here and never from a client-supplied
  * body field, otherwise any admin could write another admin's name into the log.
  */
-export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid: boolean; error?: string; actor?: AuthActor }> {
+export async function verifyAuthHeader(
+  request: NextRequest,
+): Promise<{ isValid: boolean; error?: string; actor?: AuthActor }> {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader) {
@@ -179,7 +194,10 @@ export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid:
   const [scheme, token] = authHeader.split(" ");
 
   if (scheme !== "Bearer") {
-    return { isValid: false, error: "Invalid authorization scheme. Use 'Bearer <token>'" };
+    return {
+      isValid: false,
+      error: "Invalid authorization scheme. Use 'Bearer <token>'",
+    };
   }
 
   if (!token) {
@@ -187,14 +205,40 @@ export async function verifyAuthHeader(request: NextRequest): Promise<{ isValid:
   }
 
   const result = await verifyFirebaseToken(token);
+  if (result.valid && result.actor && !isAllowedAdmin(result.actor.email)) {
+    return { isValid: false, error: "This account is not an administrator" };
+  }
   return { isValid: result.valid, error: result.error, actor: result.actor };
+}
+
+/**
+ * Optional admin allowlist: ADMIN_EMAILS="a@x.org, b@y.org".
+ *
+ * A valid Firebase ID token only proves someone has an account in the
+ * project — and Firebase lets anyone create an email/password account through
+ * its public REST API (using the API key shipped to every browser) unless
+ * sign-up is disabled in the console. With ADMIN_EMAILS set, only the listed
+ * accounts pass. Unset keeps the previous "any account" behaviour so setting
+ * this up can never lock the admins out by surprise.
+ */
+function isAllowedAdmin(email: string | null): boolean {
+  const list = process.env.ADMIN_EMAILS;
+  if (!list || !list.trim()) return true;
+  if (!email) return false;
+  const allowed = list
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return allowed.includes(email.toLowerCase());
 }
 
 /**
  * Middleware helper to enforce authentication on API routes
  * Returns error response if authentication fails
  */
-export async function requireAuth(request: NextRequest): Promise<NextResponse | null> {
+export async function requireAuth(
+  request: NextRequest,
+): Promise<NextResponse | null> {
   const authCheck = await verifyAuthHeader(request);
 
   if (!authCheck.isValid) {
@@ -217,7 +261,10 @@ export async function requireAuth(request: NextRequest): Promise<NextResponse | 
  */
 export async function requireAuthActor(
   request: NextRequest,
-): Promise<{ response: NextResponse; actor?: undefined } | { response?: undefined; actor: AuthActor }> {
+): Promise<
+  | { response: NextResponse; actor?: undefined }
+  | { response?: undefined; actor: AuthActor }
+> {
   const authCheck = await verifyAuthHeader(request);
 
   if (!authCheck.isValid || !authCheck.actor) {
@@ -236,7 +283,10 @@ export async function requireAuthActor(
  * Verify webhook secret from Authorization header
  * Supports format: Authorization: Bearer <secret>
  */
-export function verifyWebhookSecret(request: NextRequest): { isValid: boolean; error?: string } {
+export function verifyWebhookSecret(request: NextRequest): {
+  isValid: boolean;
+  error?: string;
+} {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader) {
@@ -246,7 +296,10 @@ export function verifyWebhookSecret(request: NextRequest): { isValid: boolean; e
   const [scheme, secret] = authHeader.split(" ");
 
   if (scheme !== "Bearer") {
-    return { isValid: false, error: "Invalid authorization scheme. Use 'Bearer <secret>'" };
+    return {
+      isValid: false,
+      error: "Invalid authorization scheme. Use 'Bearer <secret>'",
+    };
   }
 
   if (!secret) {

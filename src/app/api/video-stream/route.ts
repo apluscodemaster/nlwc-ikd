@@ -4,6 +4,12 @@ import { getGoogleSheetsClient } from "@/lib/googleSheets";
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const RANGE = "video_stream!A:A"; // Only the URL column
 
+// Cache the handler's result for a minute (ISR for route handlers). Every
+// /live visitor requests this, peaking during services, and each uncached
+// call read Google Sheets (per-minute read quota). The stream URL changes at
+// most once per service, and an admin update still shows within 60s.
+export const revalidate = 60;
+
 export async function GET() {
   if (!SHEET_ID) {
     return NextResponse.json(

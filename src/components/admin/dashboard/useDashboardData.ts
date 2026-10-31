@@ -18,7 +18,7 @@ import {
   type Testimony,
 } from "@/lib/testimonyService";
 import { getAllDevotionals } from "@/lib/devotionals";
-import { getAuthorizationHeader } from "@/lib/authClient";
+import { authFetch, getAuthorizationHeader } from "@/lib/authClient";
 
 export interface SpeakerStat {
   name: string;
@@ -85,7 +85,9 @@ async function fetchContentCount(
   type: "sermon" | "transcript" | "manual",
 ): Promise<number> {
   try {
-    const res = await fetch(`/api/wp/content?type=${type}&page=1&per_page=1`);
+    const res = await authFetch(
+      `/api/wp/content?type=${type}&page=1&per_page=1`,
+    );
     const data = await res.json();
     const p = data?.pagination;
     return (
@@ -147,9 +149,7 @@ export function useDashboardData() {
       const devotionals: DevotionalLite[] = devos.map((d) => {
         const ms = d.scheduledDate?.toMillis
           ? d.scheduledDate.toMillis()
-          : new Date(
-              d.scheduledDate as unknown as string,
-            ).getTime();
+          : new Date(d.scheduledDate as unknown as string).getTime();
         return {
           id: d.id,
           title: d.title,
@@ -186,7 +186,9 @@ export function useDashboardData() {
       }));
       setLastUpdated(Date.now());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load dashboard data");
+      setError(
+        e instanceof Error ? e.message : "Failed to load dashboard data",
+      );
     }
   }, []);
 

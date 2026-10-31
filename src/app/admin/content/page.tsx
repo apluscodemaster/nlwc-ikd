@@ -21,7 +21,7 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
 import ManualThemeBoard from "@/components/admin/ManualThemeBoard";
 import { scheduledPublishDateTime } from "@/utils/publishSchedule";
-import { getAuthorizationHeader } from "@/lib/authClient";
+import { authFetch, getAuthorizationHeader } from "@/lib/authClient";
 import {
   TABS,
   TRANSCRIPT_TYPE_TO_CATEGORY,
@@ -193,7 +193,7 @@ export default function AdminChurchContentPage() {
         // page, so load a much larger page there (≈4+ themes visible) to make
         // dragging between themes actually useful. The normal list stays at 6.
         const perPage = type === "manual" && manualGroupMode ? 48 : 6;
-        const res = await fetch(
+        const res = await authFetch(
           `/api/wp/content?type=${type}&page=${page}&per_page=${perPage}${searchParam}`,
           // The edit modal prefills straight from these items, so a stale
           // response would silently reopen a post with out-of-date content or

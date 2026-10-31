@@ -98,18 +98,20 @@ export async function sharpShareImage(image: ShareImage): Promise<ShareImage> {
 
   try {
     const publicId = publicIdFor(image.url);
-    if (!(await alreadyUploaded(publicId))) {
-      await uploadFromUrl(image.url, publicId);
-    }
-
     const url = deliveryUrl(
       publicId,
       `e_upscale/c_scale,w_${TARGET_WIDTH}/f_jpg,q_auto:best`,
     );
-    // The upscale runs on the first request for this rendition; warm it now
-    // so a link previewer (which may give up after a few seconds) gets the
-    // cached result rather than waiting on it.
-    void fetch(url, { cache: "no-store" }).catch(() => {});
+
+    if (!(await alreadyUploaded(publicId))) {
+      await uploadFromUrl(image.url, publicId);
+      // The upscale runs on the first request for this rendition; warm it
+      // once, right after the upload, so a link previewer (which may give up
+      // after a few seconds) gets the cached result. Cloudinary keeps it from
+      // then on — warming on every render re-downloaded the full image each
+      // time a manual page was built.
+      void fetch(url, { method: "HEAD", cache: "no-store" }).catch(() => {});
+    }
 
     return {
       url,

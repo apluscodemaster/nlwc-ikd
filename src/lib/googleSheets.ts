@@ -1,6 +1,16 @@
-import { google } from "googleapis";
+import { google, type sheets_v4 } from "googleapis";
+
+/**
+ * One client per server instance. GoogleAuth caches its OAuth access token
+ * and refreshes it only when it expires; building a new client per call (as
+ * before) re-signed a JWT and fetched a fresh token on every request — an
+ * extra Google round-trip each time, on top of the Sheets read itself.
+ */
+let cachedClient: sheets_v4.Sheets | null = null;
 
 export async function getGoogleSheetsClient() {
+  if (cachedClient) return cachedClient;
+
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
   const GOOGLE_PRIVATE_KEY_RAW = process.env.GOOGLE_PRIVATE_KEY;
 
@@ -23,5 +33,6 @@ export async function getGoogleSheetsClient() {
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
 
-  return google.sheets({ version: "v4", auth });
+  cachedClient = google.sheets({ version: "v4", auth });
+  return cachedClient;
 }

@@ -4,15 +4,23 @@ import { fetchQuestionById, buildQuizResult } from "@/lib/quizService";
 import { getSupabase } from "@/lib/supabase";
 import { z } from "zod";
 
+/** A quiz serves at most 25 questions (see /api/quiz/questions). */
+const MAX_ANSWERS = 25;
+
 const submitSchema = z.object({
   session_id: z.string().uuid(),
-  answers: z.array(
-    z.object({
-      question_id: z.string(),
-      category: z.string(),
-      selected_answer: z.number().min(0),
-    }),
-  ),
+  // Bounded: every answer costs a Firestore read, so an unbounded array let a
+  // single request trigger any number of reads.
+  answers: z
+    .array(
+      z.object({
+        question_id: z.string().min(1).max(200),
+        category: z.string().max(200),
+        selected_answer: z.number().int().min(0).max(20),
+      }),
+    )
+    .min(1)
+    .max(MAX_ANSWERS),
 });
 
 export async function POST(req: NextRequest) {
@@ -44,11 +52,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
-    // Validate answers server-side against Firebase
+    // One answer per question — a repeated question_id would otherwise fail
+    // the (session_id, question_id) unique constraint and reject the whole
+    // submission.
+    const uniqueAnswers = [
+      ...new Map(answers.map((a) => [a.question_id, a])).values(),
+    ];
+
+    // Validate answers server-side against Firebase (in parallel).
+    const questions = await Promise.all(
+      uniqueAnswers.map((a) => fetchQuestionById(a.question_id)),
+    );
     const attempts = [];
     const failedSermonRefs: { slug: string; category: string }[] = [];
-    for (const answer of answers) {
-      const question = await fetchQuestionById(answer.question_id);
+    for (const [i, answer] of uniqueAnswers.entries()) {
+      const question = questions[i];
       if (!question) continue;
 
       const isCorrect = question.correctAnswer === answer.selected_answer;
@@ -61,7 +79,10 @@ export async function POST(req: NextRequest) {
 
       // Collect sermon_ref + category from wrong answers for targeted recommendations
       if (!isCorrect && question.sermon_ref) {
-        failedSermonRefs.push({ slug: question.sermon_ref, category: question.category });
+        failedSermonRefs.push({
+          slug: question.sermon_ref,
+          category: question.category,
+        });
       }
     }
 

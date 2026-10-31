@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 
@@ -8,16 +9,46 @@ import { z } from "zod";
 // ──────────────────────────────────────────────
 
 const testimonySchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  location: z.string().min(2, "Location must be at least 2 characters"),
-  phone: z.string().min(7, "Phone number must be at least 7 digits"),
-  email: z.string().email("Invalid email address"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  location: z
+    .string()
+    .trim()
+    .min(2, "Location must be at least 2 characters")
+    .max(100),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Phone number must be at least 7 digits")
+    .max(30),
+  email: z.string().trim().email("Invalid email address").max(254),
   testimony: z
     .string()
+    .trim()
     .min(20, "Testimony must be at least 20 characters")
     .max(5000, "Testimony must be under 5000 characters"),
   displayPreference: z.enum(["public", "private"]),
+  turnstileToken: z.string().optional(),
 });
+
+/** Escape user input before it goes into email HTML. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * The name to greet the sender by in the auto-reply — only when it looks like
+ * a person's name. The auto-reply goes to whatever address was typed into the
+ * form, so anything free-form in it (links, numbers, long text) would let a
+ * spammer use the church's mailbox to deliver their message to third parties.
+ */
+function greetingName(name: string): string {
+  return /^[\p{L}][\p{L}\s.'’-]{1,59}$/u.test(name) ? esc(name) : "friend";
+}
 
 // ──────────────────────────────────────────────
 // SMTP transporter (one.com webmail)
@@ -59,7 +90,7 @@ function buildAdminNotificationEmail(data: z.infer<typeof testimonySchema>) {
   });
 
   return {
-    subject: `📢 New Testimony Submission from ${data.name}`,
+    subject: `📢 New Testimony Submission from ${data.name.replace(/[\r\n]+/g, " ")}`,
     html: `
       <div style="font-family: 'Jost', 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
         <div style="background: linear-gradient(135deg, #FF7C18 0%, #FF9A47 100%); padding: 32px 24px; text-align: center;">
@@ -71,20 +102,20 @@ function buildAdminNotificationEmail(data: z.infer<typeof testimonySchema>) {
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; font-weight: 600; color: #666; width: 140px; vertical-align: top;">Name:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${data.name}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${esc(data.name)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; font-weight: 600; color: #666; vertical-align: top;">Location:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${data.location}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${esc(data.location)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; font-weight: 600; color: #666; vertical-align: top;">Phone:</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${data.phone}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">${esc(data.phone)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; font-weight: 600; color: #666; vertical-align: top;">Email:</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #f5f5f5; color: #333;">
-                <a href="mailto:${data.email}" style="color: #FF7C18; text-decoration: none;">${data.email}</a>
+                <a href="mailto:${encodeURIComponent(data.email)}" style="color: #FF7C18; text-decoration: none;">${esc(data.email)}</a>
               </td>
             </tr>
             <tr>
@@ -101,7 +132,7 @@ function buildAdminNotificationEmail(data: z.infer<typeof testimonySchema>) {
           
           <div style="margin-top: 24px; padding: 20px; background: #fafafa; border-radius: 12px; border-left: 4px solid #FF7C18;">
             <h3 style="margin: 0 0 12px; color: #333; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Testimony</h3>
-            <p style="margin: 0; color: #444; line-height: 1.7; font-size: 15px; white-space: pre-wrap;">${data.testimony}</p>
+            <p style="margin: 0; color: #444; line-height: 1.7; font-size: 15px; white-space: pre-wrap;">${esc(data.testimony)}</p>
           </div>
           
           <div style="margin-top: 28px; padding: 16px; background: #fff7ed; border-radius: 12px; text-align: center;">
@@ -127,13 +158,13 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
     html: `
       <div style="font-family: 'Jost', 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0;">
         <div style="background: linear-gradient(135deg, #FF7C18 0%, #FF9A47 100%); padding: 32px 24px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">Thank You, ${data.name}!</h1>
+          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">Thank You, ${greetingName(data.name)}!</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">Your testimony has been received</p>
         </div>
         
         <div style="padding: 32px 24px;">
           <p style="color: #444; line-height: 1.7; font-size: 15px; margin: 0 0 16px;">
-            Dear ${data.name},
+            Dear ${greetingName(data.name)},
           </p>
           <p style="color: #444; line-height: 1.7; font-size: 15px; margin: 0 0 16px;">
             We are deeply grateful that you shared your testimony with us. Your story of God's faithfulness 
@@ -147,10 +178,6 @@ function buildAutoReplyEmail(data: z.infer<typeof testimonySchema>) {
             }
           </p>
           
-          <div style="margin: 28px 0; padding: 20px; background: #fafafa; border-radius: 12px; border-left: 4px solid #FF7C18;">
-            <h3 style="margin: 0 0 8px; color: #333; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your Testimony</h3>
-            <p style="margin: 0; color: #666; line-height: 1.6; font-size: 14px; font-style: italic; white-space: pre-wrap;">"${data.testimony}"</p>
-          </div>
           
           <p style="color: #444; line-height: 1.7; font-size: 15px; margin: 0;">
             God bless you!<br/>
@@ -196,6 +223,19 @@ export async function POST(req: NextRequest) {
     }
 
     const data = result.data;
+
+    // Bot check before any mail is sent (same Cloudflare Turnstile as the
+    // contact form; skipped while TURNSTILE_SECRET_KEY is unset).
+    if (!(await verifyTurnstileToken(data.turnstileToken))) {
+      return NextResponse.json(
+        {
+          error:
+            "Verification failed. Please complete the check and try again.",
+        },
+        { status: 400 },
+      );
+    }
+
     const churchEmail = process.env.CHURCH_EMAIL_ADDRESS;
 
     // Send emails (don't block the response if SMTP is not configured)

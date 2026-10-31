@@ -49,10 +49,30 @@ service cloud.firestore {
                   || (resource.data.status == 'verified'
                       && resource.data.displayPreference == 'public');
 
-      // A submission may only ever arrive as 'pending' — nobody can self-verify.
-      allow create: if request.resource.data.status == 'pending';
+      // A submission may only ever arrive as 'pending' — nobody can self-verify
+      // — with exactly the fields testimonyService.submitTestimony writes and
+      // within the form's limits, so the collection can't be stuffed with
+      // arbitrary or oversized documents.
+      allow create: if isValidTestimony(request.resource.data);
 
       allow update, delete: if isAdmin();
+    }
+
+    function isValidTestimony(d) {
+      return d.keys().hasOnly(['name', 'location', 'phone', 'email', 'testimony',
+                               'displayPreference', 'status', 'createdAt'])
+          && d.keys().hasAll(['name', 'location', 'phone', 'email', 'testimony',
+                              'displayPreference', 'status', 'createdAt'])
+          && d.status == 'pending'
+          && d.name is string && d.name.size() >= 2 && d.name.size() <= 100
+          && d.location is string && d.location.size() >= 2 && d.location.size() <= 100
+          && d.phone is string && d.phone.size() >= 7 && d.phone.size() <= 30
+          && d.email is string && d.email.size() <= 254 && d.email.matches('.+@.+[.].+')
+          && d.testimony is string && d.testimony.size() >= 20 && d.testimony.size() <= 5000
+          && d.displayPreference in ['public', 'private']
+          && d.createdAt is int
+          && d.createdAt > request.time.toMillis() - 120000
+          && d.createdAt < request.time.toMillis() + 120000;
     }
 
     // ── Devotionals ─────────────────────────────────────────────────────────
@@ -64,10 +84,27 @@ service cloud.firestore {
 
     // ── Live chat ───────────────────────────────────────────────────────────
     // Public read + post; only admins may edit or remove messages.
+    //
+    // A post must have exactly the fields liveChatService.sendChatMessage
+    // writes, within the UI's limits (name ≤ 30 chars in the UI, message ≤
+    // 500), and a timestamp of "now". That last check matters: the chat shows
+    // messages with timestamp >= the service start, so a future timestamp
+    // would let a message reappear in later services.
     match /live-chat/{messageId} {
       allow read: if true;
-      allow create: if true;
+      allow create: if isValidChatMessage(request.resource.data);
       allow update, delete: if isAdmin();
+    }
+
+    function isValidChatMessage(d) {
+      return d.keys().hasOnly(['name', 'message', 'timestamp', 'color'])
+          && d.keys().hasAll(['name', 'message', 'timestamp', 'color'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 50
+          && d.message is string && d.message.size() > 0 && d.message.size() <= 500
+          && d.color is string && d.color.size() <= 16
+          && d.timestamp is int
+          && d.timestamp > request.time.toMillis() - 120000
+          && d.timestamp < request.time.toMillis() + 120000;
     }
 
     // ── Server-only collections ─────────────────────────────────────────────

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import PageHeader from "@/components/shared/PageHeader";
@@ -45,9 +46,10 @@ function PublicTestimonyCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = testimony.testimony.length > TESTIMONY_CHAR_LIMIT;
-  const displayText = expanded || !isLong
-    ? testimony.testimony
-    : testimony.testimony.slice(0, TESTIMONY_CHAR_LIMIT).trimEnd() + "…";
+  const displayText =
+    expanded || !isLong
+      ? testimony.testimony
+      : testimony.testimony.slice(0, TESTIMONY_CHAR_LIMIT).trimEnd() + "…";
 
   const date = new Date(testimony.createdAt).toLocaleDateString("en-GB", {
     year: "numeric",
@@ -107,12 +109,17 @@ function PublicTestimonyCard({
 // Testimony Form
 // ──────────────────────────────────────────────
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 function TestimonyForm() {
   const [formStatus, setFormStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [displayPref, setDisplayPref] = useState<DisplayPreference>("public");
   const [phone, setPhone] = useState("");
+  // Cloudflare Turnstile bot check (shown when a site key is configured).
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,11 +165,16 @@ function TestimonyForm() {
       const response = await fetch("/api/testimonies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, turnstileToken }),
       });
+      // A Turnstile token is single-use; get a fresh one for any next submit.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
 
       if (!response.ok) {
-        console.warn("Testimony email API failed, but testimony was saved to database.");
+        console.warn(
+          "Testimony email API failed, but testimony was saved to database.",
+        );
       }
 
       setFormStatus("success");
@@ -388,10 +400,25 @@ function TestimonyForm() {
           </div>
         </div>
 
+        {TURNSTILE_SITE_KEY && (
+          <div className="flex justify-center">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={TURNSTILE_SITE_KEY}
+              onSuccess={setTurnstileToken}
+              onError={() => setTurnstileToken(null)}
+              onExpire={() => setTurnstileToken(null)}
+            />
+          </div>
+        )}
+
         <Button
           type="submit"
           size="lg"
-          disabled={formStatus === "loading"}
+          disabled={
+            formStatus === "loading" ||
+            (!!TURNSTILE_SITE_KEY && !turnstileToken)
+          }
           className="w-full h-12 sm:h-14 md:h-16 rounded-full text-sm sm:text-base md:text-lg font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all cursor-pointer"
         >
           {formStatus === "loading" ? (
@@ -613,7 +640,9 @@ export default function TestimoniesPage() {
             {visibleCount < testimonies.length && (
               <div className="flex justify-center mt-10">
                 <button
-                  onClick={() => setVisibleCount((prev) => prev + TESTIMONIES_PER_PAGE)}
+                  onClick={() =>
+                    setVisibleCount((prev) => prev + TESTIMONIES_PER_PAGE)
+                  }
                   className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                 >
                   Load More

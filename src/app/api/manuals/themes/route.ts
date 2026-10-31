@@ -16,6 +16,12 @@ function extractTheme(excerpt: string): string | null {
   return null;
 }
 
+// Cache the theme list (ISR for route handlers). Without this the route ran on
+// every /manuals visit, paging through up to 10 × 100 manuals from WordPress
+// each time. Publishing or re-grouping a manual revalidates it immediately
+// (see lib/revalidateTargets.ts), so 10 minutes is only a fallback.
+export const revalidate = 600;
+
 export async function GET() {
   try {
     // ⚡ Fetch posts directly with fetchWPPosts (skips full transform pipeline)

@@ -53,5 +53,15 @@ export async function GET(req: NextRequest) {
   }
 
   const data = (await upstream.json())?.data ?? {};
-  return NextResponse.json({ results: normalizeApiBibleResults(data, MAX_RESULTS) });
+  // Same query, same results: serve repeats from the CDN for a day instead of
+  // running the function (the upstream API.Bible call is already data-cached).
+  return NextResponse.json(
+    { results: normalizeApiBibleResults(data, MAX_RESULTS) },
+    {
+      headers: {
+        "Cache-Control":
+          "public, s-maxage=86400, stale-while-revalidate=604800",
+      },
+    },
+  );
 }

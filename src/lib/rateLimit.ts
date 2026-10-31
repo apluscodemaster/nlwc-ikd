@@ -88,10 +88,16 @@ function isWithinRateLimit(key: string, config: RateLimitConfig): boolean {
 export function rateLimitMiddleware(
   request: NextRequest,
   configKey: "public" | "authenticated" | "strict" = "public",
+  /**
+   * Counter to charge, instead of the request path. Dynamic routes must pass
+   * one: keyed by path, every distinct value (e.g. each verse reference at
+   * /api/scripture/[reference]) got its own allowance, i.e. no limit at all.
+   */
+  bucket?: string,
 ): NextResponse | null {
   const config = DEFAULT_CONFIGS[configKey];
   const clientIp = getClientIp(request);
-  const pathname = new URL(request.url).pathname;
+  const pathname = bucket ?? new URL(request.url).pathname;
   const key = `${clientIp}:${pathname}`;
 
   if (!isWithinRateLimit(key, config)) {

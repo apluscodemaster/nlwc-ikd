@@ -17,6 +17,7 @@ export const TARGETS_BY_TYPE: Record<string, RevalidateTarget[]> = {
   manual: [
     { path: "/manuals" },
     { path: "/manuals/[slug]", kind: "page" },
+    { path: "/api/manuals/themes" }, // cached theme list (filter pills)
   ],
   sermon: [
     { path: "/sermons" },

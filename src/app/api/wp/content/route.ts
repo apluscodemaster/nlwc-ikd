@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { requireAuthActor } from "@/lib/auth";
 import {
   WP_CATEGORIES,
   fetchWPPosts,
@@ -40,8 +41,14 @@ export async function GET(request: NextRequest) {
 }
 
 async function handleGet(request: NextRequest): Promise<NextResponse> {
+  // Admin only: this reads WordPress with the admin application password and
+  // includes drafts, scheduled and pending posts. It used to be public, which
+  // let anyone list unpublished content.
+  const auth = await requireAuthActor(request);
+  if (auth.response) return auth.response;
+
   // Rate limited: proxies WordPress.
-  const limited = rateLimitMiddleware(request, "public");
+  const limited = rateLimitMiddleware(request, "authenticated");
   if (limited) return limited;
 
   const searchParams = request.nextUrl.searchParams;
@@ -54,9 +61,7 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
   // drafts/scheduled posts appear in the admin list. Without creds we fall
   // back to published-only (the public behaviour).
   const authHeader = getAdminAuth();
-  const adminStatus = authHeader
-    ? "publish,future,draft,pending"
-    : undefined;
+  const adminStatus = authHeader ? "publish,future,draft,pending" : undefined;
 
   try {
     switch (type) {

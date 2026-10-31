@@ -304,6 +304,7 @@ export async function PUT(request: NextRequest) {
     { path: "/transcripts/[slug]", kind: "page" },
     { path: "/manuals" },
     { path: "/manuals/[slug]", kind: "page" },
+    { path: "/api/manuals/themes" },
     { path: "/sermons" },
     { path: "/admin/content" },
   ]);

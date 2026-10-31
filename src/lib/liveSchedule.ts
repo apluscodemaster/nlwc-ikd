@@ -60,6 +60,13 @@ let specialServices: ParsedSpecial[] = [];
 
 let loaded = false;
 let loadPromise: Promise<void> | null = null;
+/** Retry backoff after a failed load (the countdowns call the loader every
+ *  second until it succeeds — without this a /api/schedule outage turned
+ *  every open tab into one request per second). */
+let failures = 0;
+let nextRetryAt = 0;
+const RETRY_BASE_MS = 2_000;
+const RETRY_MAX_MS = 60_000;
 
 function parseSpecialDate(entry: SpecialServiceEntry): ParsedSpecial {
   const [y, m, d] = entry.date.split("-").map(Number);
@@ -80,6 +87,7 @@ function parseSpecialDate(entry: SpecialServiceEntry): ParsedSpecial {
 export async function loadScheduleFromApi(): Promise<void> {
   if (loaded) return;
   if (loadPromise) return loadPromise;
+  if (Date.now() < nextRetryAt) return; // backing off after a failure
 
   loadPromise = (async () => {
     try {
@@ -114,8 +122,12 @@ export async function loadScheduleFromApi(): Promise<void> {
       loaded = true;
     } catch (err) {
       console.warn("[liveSchedule] Failed to load the schedule:", err);
-      // Not marked loaded, so the next call tries again rather than running
-      // on a schedule the admin never set.
+      // Not marked loaded, so a later call tries again rather than running
+      // on a schedule the admin never set — after 2s, 4s, 8s… up to a minute.
+      failures++;
+      nextRetryAt =
+        Date.now() +
+        Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (failures - 1));
       loadPromise = null;
     }
   })();
@@ -205,7 +217,9 @@ function findLiveRecurring(now: Date): ScheduledService | undefined {
   const c = lagosClock(now);
   return LIVE_SERVICES.find(
     (s) =>
-      s.dayOfWeek === c.dayOfWeek && c.hour >= s.startHour && c.hour < s.endHour,
+      s.dayOfWeek === c.dayOfWeek &&
+      c.hour >= s.startHour &&
+      c.hour < s.endHour,
   );
 }
 

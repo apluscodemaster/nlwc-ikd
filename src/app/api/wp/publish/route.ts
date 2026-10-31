@@ -176,6 +176,7 @@ export async function POST(request: NextRequest) {
     targets.push(
       { path: "/manuals" },
       { path: "/manuals/[slug]", kind: "page" },
+      { path: "/api/manuals/themes" },
     );
   }
   await safeRevalidate(targets);
