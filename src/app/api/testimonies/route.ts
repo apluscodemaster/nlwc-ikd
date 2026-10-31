@@ -27,7 +27,8 @@ const testimonySchema = z.object({
     .min(20, "Testimony must be at least 20 characters")
     .max(5000, "Testimony must be under 5000 characters"),
   displayPreference: z.enum(["public", "private"]),
-  turnstileToken: z.string().optional(),
+  // null/absent when the bot-check widget never completed.
+  turnstileToken: z.string().nullish(),
 });
 
 /** Escape user input before it goes into email HTML. */
@@ -224,17 +225,24 @@ export async function POST(req: NextRequest) {
 
     const data = result.data;
 
-    // Bot check before any mail is sent (same Cloudflare Turnstile as the
-    // contact form; skipped while TURNSTILE_SECRET_KEY is unset).
-    if (!(await verifyTurnstileToken(data.turnstileToken))) {
-      return NextResponse.json(
-        {
-          error:
-            "Verification failed. Please complete the check and try again.",
-        },
-        { status: 400 },
-      );
+    // Bot check (Cloudflare Turnstile, same as the contact form; treated as
+    // passed while TURNSTILE_SECRET_KEY is unset). It only gates the
+    // AUTO-REPLY: that goes to whatever address was typed into the form, so
+    // it is the part a spammer could abuse. The church notification only
+    // reaches the church's own inbox, so it is sent either way (flagged when
+    // unverified) — a widget problem must never hide a real testimony.
+    const verified = await verifyTurnstileToken(data.turnstileToken);
+    if (!verified) {
+      console.warn("⚠️ Testimony bot check failed or missing — no auto-reply");
     }
+
+    const emails: {
+      adminNotified: boolean;
+      autoReplySent: boolean;
+      /** Why the auto-reply wasn't sent, when it wasn't. */
+      autoReplySkipped:
+        null | "verification" | "smtp-not-configured" | "send-failed";
+    } = { adminNotified: false, autoReplySent: false, autoReplySkipped: null };
 
     const churchEmail = process.env.CHURCH_EMAIL_ADDRESS;
 
@@ -255,7 +263,11 @@ export async function POST(req: NextRequest) {
           to: notifyEmails,
           replyTo: data.email,
           ...adminEmail,
+          subject: verified
+            ? adminEmail.subject
+            : `[Bot check not passed] ${adminEmail.subject}`,
         });
+        emails.adminNotified = true;
         console.log(
           `✅ Admin notification sent for testimony from ${data.name}`,
         );
@@ -263,30 +275,37 @@ export async function POST(req: NextRequest) {
         console.error("⚠️ Failed to send admin notification:", adminError);
       }
 
-      // 2. Auto-reply acknowledgement to sender
-      try {
-        const replyEmail = buildAutoReplyEmail(data);
-        await transporter.sendMail({
-          from: `"NLWC Ikorodu" <${churchEmail}>`,
-          to: data.email,
-          replyTo: churchEmail,
-          ...replyEmail,
-        });
-        console.log(`✅ Auto-reply sent to ${data.email}`);
-      } catch (replyError) {
-        console.error(
-          `⚠️ Failed to send auto-reply to ${data.email}:`,
-          replyError,
-        );
+      // 2. Auto-reply acknowledgement to sender — verified submissions only.
+      if (!verified) {
+        emails.autoReplySkipped = "verification";
+      } else {
+        try {
+          const replyEmail = buildAutoReplyEmail(data);
+          await transporter.sendMail({
+            from: `"NLWC Ikorodu" <${churchEmail}>`,
+            to: data.email,
+            replyTo: churchEmail,
+            ...replyEmail,
+          });
+          emails.autoReplySent = true;
+          console.log(`✅ Auto-reply sent to ${data.email}`);
+        } catch (replyError) {
+          emails.autoReplySkipped = "send-failed";
+          console.error(
+            `⚠️ Failed to send auto-reply to ${data.email}:`,
+            replyError,
+          );
+        }
       }
     } else {
+      emails.autoReplySkipped = "smtp-not-configured";
       console.warn(
         "⚠️ SMTP credentials not configured — skipping email notifications",
       );
     }
 
     return NextResponse.json(
-      { message: "Testimony submitted successfully" },
+      { message: "Testimony submitted successfully", emails },
       { status: 200 },
     );
   } catch (error) {

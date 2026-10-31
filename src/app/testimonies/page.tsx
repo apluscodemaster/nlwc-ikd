@@ -187,14 +187,27 @@ function TestimonyForm() {
       turnstileRef.current?.reset();
       setTurnstileToken(null);
 
-      if (!response.ok) {
-        console.warn(
-          "Testimony email API failed, but testimony was saved to database.",
-        );
+      // The testimony is saved either way; the emails are best-effort. Say so
+      // when the sender's confirmation email didn't go out, and log why.
+      const emailResult = (await response.json().catch(() => null)) as {
+        error?: string;
+        emails?: { autoReplySent?: boolean; autoReplySkipped?: string | null };
+      } | null;
+      const confirmationSent =
+        response.ok && emailResult?.emails?.autoReplySent === true;
+      if (!confirmationSent) {
+        console.warn("Testimony saved; confirmation email not sent:", {
+          status: response.status,
+          reason: emailResult?.emails?.autoReplySkipped ?? emailResult?.error,
+        });
       }
 
       setFormStatus("success");
-      toast.success("Testimony submitted successfully!");
+      toast.success("Testimony submitted successfully!", {
+        description: confirmationSent
+          ? "A confirmation has been sent to your email."
+          : "We couldn't send a confirmation email this time, but your testimony was received.",
+      });
     } catch {
       setFormStatus("error");
       toast.error("Failed to submit testimony. Please try again.");
