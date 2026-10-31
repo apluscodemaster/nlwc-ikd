@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { Radio } from "lucide-react";
 import Image from "next/image";
+import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
 import { motion, Variants } from "framer-motion";
 import {
   isCurrentlyLive,
@@ -59,6 +60,8 @@ function useNextServiceCountdown() {
     loadScheduleFromApi();
 
     const tick = () => {
+      // Nothing to update while the tab is in the background.
+      if (document.hidden) return;
       // Wait for the admin schedule rather than counting down to nothing.
       if (!isScheduleLoaded()) {
         void loadScheduleFromApi();
@@ -118,6 +121,7 @@ export default function WelcomeSection() {
             >
               <Image
                 src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1774247545/nlwc-ikd-assets/yod0s9qidic53wxu5gmt.webp"
+                loader={cloudinaryLoader}
                 alt="Members of NLWC Ikorodu fellowshipping together"
                 fill
                 className="object-cover"
@@ -130,6 +134,7 @@ export default function WelcomeSection() {
             >
               <Image
                 src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1775202695/community-2_vwupj4.jpg"
+                loader={cloudinaryLoader}
                 alt="Congregation gathered for worship at NLWC Ikorodu"
                 fill
                 className="object-cover"
@@ -143,6 +148,7 @@ export default function WelcomeSection() {
           >
             <Image
               src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1774247555/nlwc-ikd-assets/nnjinqr23gen813vyqrn.avif"
+              loader={cloudinaryLoader}
               alt="NLWC Ikorodu leadership during worship service"
               fill
               className="object-cover"

@@ -2,21 +2,27 @@
 // Bumped to v3: the activate handler deletes every cache whose name differs,
 // which clears any opaque/partial media responses v2 may have stored before
 // the media bail-out below existed.
-const CACHE_NAME = "nlwc-gallery-v3";
+// v4: stop caching Next.js RSC/prefetch payloads (and clear any v3 cached).
+const CACHE_NAME = "nlwc-gallery-v4";
+/** Most entries kept in the cache; oldest are evicted first. */
+const MAX_ENTRIES = 150;
 const OFFLINE_PAGE = "/offline";
 const OFFLINE_FALLBACK = "/offline-fallback.html";
 
-// Files to cache on install
-const CACHE_FILES = [
-  "/",
-  "/offline",
-  "/offline-fallback.html",
-  "/about",
-  "/contact",
-  "/gallery",
-  "/sermons",
-  "/devotionals",
-];
+// Files to cache on install — only what offline mode needs. Pre-fetching
+// full pages (home, about, sermons…) cost every new visitor several extra
+// page loads; pages a visitor actually opens are cached as they go.
+const CACHE_FILES = ["/offline", "/offline-fallback.html"];
+
+/** Drop the oldest entries once the cache passes MAX_ENTRIES. */
+function trimCache() {
+  caches.open(CACHE_NAME).then((cache) =>
+    cache.keys().then((keys) => {
+      const excess = keys.length - MAX_ENTRIES;
+      for (let i = 0; i < excess; i++) cache.delete(keys[i]);
+    }),
+  );
+}
 
 /**
  * Check if a URL can be cached (must be http or https)
@@ -103,9 +109,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Next.js client navigations and link prefetches fetch RSC payloads. They
+  // are not pages: caching them (they matched the old navigation check, since
+  // fetch() has an empty destination) filled the cache without limit and
+  // could serve stale page data. Leave them to the network.
+  if (
+    event.request.headers.has("RSC") ||
+    event.request.headers.has("Next-Router-Prefetch") ||
+    new URL(event.request.url).searchParams.has("_rsc")
+  ) {
+    return;
+  }
+
   const { destination, url } = event.request;
-  const isNavigation =
-    destination === "" || destination === "document" || destination === "frame";
+  // Only real page loads are navigations.
+  const isNavigation = event.request.mode === "navigate";
+  // Any other fetch()/XHR from page code: not ours to cache.
+  if (!isNavigation && destination === "") {
+    return;
+  }
 
   // Handle navigation requests (page loads)
   if (isNavigation) {
@@ -116,7 +138,7 @@ self.addEventListener("fetch", (event) => {
           if (response && response.status === 200 && isCacheable(event.request.url)) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
+              cache.put(event.request, responseToCache).then(trimCache);
             });
           }
           return response;
@@ -175,7 +197,7 @@ self.addEventListener("fetch", (event) => {
             if (response && response.status === 200 && !isApiRequest && isCacheable(event.request.url)) {
               const responseToCache = response.clone();
               caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseToCache);
+                cache.put(event.request, responseToCache).then(trimCache);
               });
             }
             return response;

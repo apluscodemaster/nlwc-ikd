@@ -25,7 +25,9 @@ export default function GalleryPage() {
   const { data, error, isLoading, refetch, isError } = useQuery({
     queryKey: ["sheet-data"],
     queryFn: fetcher,
-    refetchInterval: 60 * 1000,
+    // /api/sheet is regenerated at most every 10 minutes (ISR), so polling
+    // more often only re-downloaded the same data.
+    refetchInterval: 10 * 60 * 1000,
   });
 
   const dates = data?.dates || [];

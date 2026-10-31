@@ -20,7 +20,11 @@ export function isCloudinaryUrl(src: string): boolean {
   return /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(src);
 }
 
-export function cloudinaryLoader({ src, width, quality }: ImageLoaderProps): string {
+export function cloudinaryLoader({
+  src,
+  width,
+  quality,
+}: ImageLoaderProps): string {
   const at = src.indexOf(UPLOAD);
   if (at === -1) return src;
 

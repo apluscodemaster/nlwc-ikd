@@ -34,6 +34,8 @@ export default function ServiceCountdown() {
     loadScheduleFromApi();
 
     const calculateTimeLeft = () => {
+      // Nothing to update while the tab is in the background.
+      if (document.hidden) return;
       // Wait for the admin schedule rather than counting down to nothing.
       if (!isScheduleLoaded()) {
         void loadScheduleFromApi();

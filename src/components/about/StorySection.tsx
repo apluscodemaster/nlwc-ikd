@@ -5,6 +5,7 @@ import SectionContainer from "@/components/shared/SectionContainer";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
+import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
 import { BookOpen, Users, Church, Heart } from "lucide-react";
 
 const textVariants: Variants = {
@@ -133,6 +134,7 @@ export default function StorySection() {
           >
             <Image
               src="https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247540/nlwc-ikd-assets/zq1kz50plmzpptw5rcdn.jpg"
+              loader={cloudinaryLoader}
               alt="Church Community"
               fill
               className="object-cover"

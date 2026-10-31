@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { cloudinaryImageProps } from "@/lib/cloudinaryLoader";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Home } from "lucide-react";
@@ -63,6 +64,7 @@ export default function PageHeader({
       >
         <Image
           src={backgroundImage}
+          {...cloudinaryImageProps(backgroundImage)}
           alt={title}
           fill
           className="object-cover"

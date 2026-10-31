@@ -35,7 +35,9 @@ describe("cloudinaryLoader", () => {
 
   it("only claims Cloudinary image URLs", () => {
     expect(isCloudinaryUrl(`${BASE}v1/x.jpg`)).toBe(true);
-    expect(isCloudinaryUrl("https://ikdadmin.nlwc.church/wp-content/x.jpg")).toBe(false);
+    expect(
+      isCloudinaryUrl("https://ikdadmin.nlwc.church/wp-content/x.jpg"),
+    ).toBe(false);
     expect(isCloudinaryUrl("/logo.png")).toBe(false);
   });
 });

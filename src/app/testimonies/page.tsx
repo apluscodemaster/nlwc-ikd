@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import {
   submitTestimony,
   subscribeToVerifiedTestimonies,
-  fetchVerifiedTestimonies,
   type Testimony,
   type DisplayPreference,
 } from "@/lib/testimonyService";
@@ -477,35 +476,15 @@ export default function TestimoniesPage() {
   const [visibleCount, setVisibleCount] = useState(TESTIMONIES_PER_PAGE);
 
   useEffect(() => {
-    let cancelled = false;
-    let unsubscribe: (() => void) | null = null;
-
-    // Attempt a one-time fetch first (fails fast on permission errors).
-    // Then subscribe to real-time updates if successful.
-    const init = async () => {
-      try {
-        const data = await fetchVerifiedTestimonies();
-        if (!cancelled) {
-          setTestimonies(data);
-          setLoading(false);
-
-          // Subscribe to real-time updates
-          unsubscribe = subscribeToVerifiedTestimonies((liveData) => {
-            if (!cancelled) setTestimonies(liveData);
-          });
-        }
-      } catch {
-        // Permission error or missing index — show empty state
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-      unsubscribe?.();
-    };
+    // One real-time subscription. Its first snapshot is the full list, so the
+    // separate one-time fetch that used to run first read (and billed) every
+    // verified testimony twice per visitor. On a permission error the
+    // listener reports an empty list, which ends the loading state too.
+    const unsubscribe = subscribeToVerifiedTestimonies((liveData) => {
+      setTestimonies(liveData);
+      setLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
   return (

@@ -3,7 +3,9 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import AudioLivePlayer, { AUDIO_EMBED_ID } from "@/components/live/AudioLivePlayer";
+import AudioLivePlayer, {
+  AUDIO_EMBED_ID,
+} from "@/components/live/AudioLivePlayer";
 import ServiceCountdown from "@/components/live/ServiceCountdown";
 import Image from "next/image";
 import {
@@ -420,6 +422,7 @@ export default function ListenLivePage() {
                         src={sermon.thumbnailUrl}
                         alt={sermon.title}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
@@ -536,6 +539,7 @@ export default function ListenLivePage() {
                       src={activeSermon.thumbnailUrl}
                       alt={activeSermon.title}
                       fill
+                      sizes="56px"
                       className="object-cover"
                     />
                   ) : (

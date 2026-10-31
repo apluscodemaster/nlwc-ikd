@@ -143,6 +143,17 @@ function CardSkeleton() {
 // =============================================================================
 export default function MediaHub() {
   const [activeTab, setActiveTab] = useState<TabKey>("audio");
+  // Tabs whose data has been requested. Only the visible tab loads; the rest
+  // load the first time they are opened (and then stay cached), instead of
+  // the homepage firing all four tabs worth of requests on every visit.
+  const [openedTabs, setOpenedTabs] = useState<Set<TabKey>>(
+    () => new Set<TabKey>(["audio"]),
+  );
+  useEffect(() => {
+    setOpenedTabs((prev) =>
+      prev.has(activeTab) ? prev : new Set(prev).add(activeTab),
+    );
+  }, [activeTab]);
 
   // ---- Audio state ----
   const {
@@ -172,6 +183,7 @@ export default function MediaHub() {
     queryKey: ["video-messages"],
     queryFn: fetchVideoMessages,
     staleTime: 5 * 60 * 1000,
+    enabled: activeTab === "video" || openedTabs.has("video"),
   });
   const [selectedVideo, setSelectedVideo] = useState<VideoMessage | null>(null);
   const [videoResumeStartTime, setVideoResumeStartTime] = useState(0);
@@ -183,21 +195,34 @@ export default function MediaHub() {
   // YouTube player refs
   const ytPlayerRef = useRef<YT.Player | null>(null);
   const ytPlayerContainerRef = useRef<HTMLDivElement | null>(null);
-  const videoProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const videoProgressIntervalRef = useRef<ReturnType<
+    typeof setInterval
+  > | null>(null);
 
   // ---- Transcripts ----
   const {
     data: transcriptsData,
     isLoading: isTranscriptsLoading,
     error: transcriptsError,
-  } = useTranscripts(1, 3);
+  } = useTranscripts(
+    1,
+    3,
+    undefined,
+    undefined,
+    activeTab === "transcripts" || openedTabs.has("transcripts"),
+  );
 
   // ---- Manuals ----
   const {
     data: manualsData,
     isLoading: isManualsLoading,
     error: manualsError,
-  } = useManuals(1, 3);
+  } = useManuals(
+    1,
+    3,
+    undefined,
+    activeTab === "manuals" || openedTabs.has("manuals"),
+  );
 
   // ---- Audio player controls ----
   const startPlayback = useCallback(
@@ -318,7 +343,11 @@ export default function MediaHub() {
       if (cancelled || !ytPlayerContainerRef.current) return;
 
       if (ytPlayerRef.current) {
-        try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          /* ignore */
+        }
         ytPlayerRef.current = null;
       }
 
@@ -373,7 +402,11 @@ export default function MediaHub() {
     return () => {
       stopVideoProgressInterval();
       if (ytPlayerRef.current) {
-        try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          /* ignore */
+        }
         ytPlayerRef.current = null;
       }
     };
@@ -419,7 +452,11 @@ export default function MediaHub() {
     saveVideoProgress();
     stopVideoProgressInterval();
     if (ytPlayerRef.current) {
-      try { ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+      try {
+        ytPlayerRef.current.destroy();
+      } catch {
+        /* ignore */
+      }
       ytPlayerRef.current = null;
     }
     setSelectedVideo(null);
@@ -557,6 +594,7 @@ export default function MediaHub() {
                               src={sermon.thumbnailUrl}
                               alt={sermon.title}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                               className="object-cover group-hover:scale-105 transition-transform duration-700"
                             />
                           ) : (
@@ -763,6 +801,7 @@ export default function MediaHub() {
                                 src={transcript.thumbnail}
                                 alt={transcript.title}
                                 fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                                 className="object-cover group-hover:scale-105 transition-transform duration-700"
                               />
                             ) : (
@@ -846,6 +885,7 @@ export default function MediaHub() {
                               src={manual.thumbnail}
                               alt={manual.title}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
                               className="object-cover group-hover:scale-105 transition-transform duration-700"
                             />
                             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />

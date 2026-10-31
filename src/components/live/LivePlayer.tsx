@@ -49,7 +49,9 @@ function XTwitterIcon({ className }: { className?: string }) {
 
 export default function LivePlayer() {
   const [showShareMenu, setShowShareMenu] = useState(false);
-  const [streamEmbedUrl, setStreamEmbedUrl] = useState(FALLBACK_EMBED_URL);
+  // Empty until /api/video-stream answers. Rendering the fallback first and
+  // swapping to the sheet URL made the YouTube player (≈1 MB) load twice.
+  const [streamEmbedUrl, setStreamEmbedUrl] = useState("");
   const [isLive, setIsLive] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("Worship Experience");
   const shareRef = useRef<HTMLDivElement>(null);
@@ -68,17 +70,17 @@ export default function LivePlayer() {
   // Fetch the live stream URL from Google Sheets
   useEffect(() => {
     async function fetchStreamUrl() {
+      let embedUrl = "";
       try {
         const res = await fetch("/api/video-stream");
         if (res.ok) {
           const data = await res.json();
-          if (data.embedUrl) {
-            setStreamEmbedUrl(data.embedUrl);
-          }
+          if (data.embedUrl) embedUrl = data.embedUrl;
         }
       } catch {
-        // Silently fall back to env var
+        // Fall back to the env-configured channel below
       }
+      setStreamEmbedUrl(embedUrl || FALLBACK_EMBED_URL);
     }
     fetchStreamUrl();
   }, []);

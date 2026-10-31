@@ -11,10 +11,7 @@ import type { NormalizedColumn } from "@/app/api/sheet/route";
  *  - "unknown"           – not a recognised Google image URL
  */
 export type GoogleImageSource =
-  | "googleusercontent"
-  | "drive"
-  | "googlephotos"
-  | "unknown";
+  "googleusercontent" | "drive" | "googlephotos" | "unknown";
 
 export function detectGoogleImageSource(url: string): GoogleImageSource {
   if (!url) return "unknown";
@@ -343,4 +340,16 @@ export function isGooglePhotosDirectLink(url: string): boolean {
  */
 export function isGoogleDriveDirectLink(url: string): boolean {
   return /lh3\.googleusercontent\.com\/d\//.test(url);
+}
+
+/**
+ * A googleusercontent (lh3) image at a given width. Without a size suffix
+ * Google serves a large default, so thumbnails downloaded far more than they
+ * display. Any size suffix already on the URL is replaced. Non-lh3 URLs are
+ * returned unchanged.
+ */
+export function sizedGoogleImage(url: string, width: number): string {
+  if (!url.includes("googleusercontent.com")) return url;
+  const base = url.replace(/=[whspkno\d-]+$/, "");
+  return `${base}=w${width}`;
 }

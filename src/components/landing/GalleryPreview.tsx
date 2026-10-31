@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toGoogleImageURL } from "@/utils/driveImage";
+import { sizedGoogleImage, toGoogleImageURL } from "@/utils/driveImage";
 import { motion, Variants } from "framer-motion";
 
 const fetcher = async (): Promise<{ dates: DateColumns[] }> => {
@@ -105,9 +105,10 @@ export default function GalleryPreview() {
               className="group relative aspect-square rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-shadow duration-500 cursor-pointer"
             >
               <Image
-                src={toGoogleImageURL(src)}
+                src={sizedGoogleImage(toGoogleImageURL(src), 600)}
                 alt={`Church Memory ${i}`}
                 fill
+                sizes="(max-width: 1024px) 50vw, 300px"
                 className="object-cover group-hover:scale-110 transition-transform duration-700"
                 unoptimized
               />

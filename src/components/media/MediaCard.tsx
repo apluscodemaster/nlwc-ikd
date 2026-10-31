@@ -25,6 +25,7 @@ export default function MediaCard({ media }: MediaCardProps) {
           src={media.thumbnail}
           alt={media.title}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />

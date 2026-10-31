@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
 
 export default function Hero() {
   const scrollToContent = () => {
@@ -20,6 +21,7 @@ export default function Hero() {
       <div className="absolute inset-0 animate-in fade-in zoom-in duration-1500">
         <Image
           src="https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_1920/v1774247833/nlwc-ikd-assets/ygkueoffnv3wvqy4d7ir.avif"
+          loader={cloudinaryLoader}
           alt="Congregation worshipping at NLWC Ikorodu during Sunday service"
           fill
           className="object-cover"
