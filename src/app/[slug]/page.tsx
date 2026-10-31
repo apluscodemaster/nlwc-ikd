@@ -58,7 +58,8 @@ async function resolveDestination(slug: string): Promise<string | null> {
     const target = normalize(slug);
     const { data } = await getAudioSermons({
       search: slug.replace(/-/g, " "),
-      perPage: 50,
+      // An exact title match ranks near the top; 20 results is plenty.
+      perPage: 20,
     });
     const hit = data.find(
       (s) => s.slug === slug || (s.title && normalize(s.title) === target),

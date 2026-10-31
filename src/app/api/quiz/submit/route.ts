@@ -25,7 +25,7 @@ const submitSchema = z.object({
 
 export async function POST(req: NextRequest) {
   // Rate limited: writes attempts + builds results.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

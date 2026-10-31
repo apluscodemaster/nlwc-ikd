@@ -6,6 +6,10 @@ const CATEGORY_ID = 20; // Sunday Message Transcripts
 const MAX_PAGES = 5;
 const PER_PAGE = 100;
 
+// Cache like ISR: the WordPress pages below are data-cached for 30 minutes,
+// so a CDN miss no longer refetches up to 5 pages from WordPress.
+export const revalidate = 1800;
+
 export async function GET() {
   try {
     const allTranscripts: {
@@ -19,7 +23,10 @@ export async function GET() {
     for (let page = 1; page <= totalPages; page++) {
       const url = `${WP_API}/wp-json/wp/v2/posts?categories=${CATEGORY_ID}&per_page=${PER_PAGE}&page=${page}&_fields=title,slug,id,categories&orderby=date&order=desc`;
 
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(10000),
+        next: { revalidate: 1800 },
+      });
 
       if (!res.ok) {
         console.warn(`[TranscriptSlugs] Page ${page} failed: ${res.status}`);

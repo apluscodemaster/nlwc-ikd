@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecommendations } from "@/lib/quizService";
 import type { WeakArea, QuizCategory } from "@/types/quiz";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
+  // Rate limited: each call reaches WordPress / renders an image.
+  const limited = await rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const searchParams = req.nextUrl.searchParams;
     const sermonRef = searchParams.get("sermon_ref") || undefined;

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const auth = await requireAuthActor(request);
   if (auth.response) return auth.response;
 
-  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  const rateLimitError = await rateLimitMiddleware(request, "authenticated");
   if (rateLimitError) return rateLimitError;
 
   if (!WP_APP_PASSWORD) {

@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Search, X, ArrowUp } from "lucide-react";
 import Link from "next/link";
+import { useUrlSearchQuery } from "@/hooks/useUrlSearchQuery";
 
 interface SearchHighlightBannerProps {
-  query: string;
+  /** Defaults to the page's `?q=` (read client-side — see useUrlSearchQuery). */
+  query?: string;
   backHref: string;
   backLabel: string;
 }
@@ -17,14 +19,17 @@ interface SearchHighlightBannerProps {
  * the search results.
  */
 export default function SearchHighlightBanner({
-  query,
+  query: queryProp,
   backHref,
   backLabel,
 }: SearchHighlightBannerProps) {
+  const urlQuery = useUrlSearchQuery();
+  const query = queryProp ?? urlQuery;
   const [highlightCount, setHighlightCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(-1);
 
   useEffect(() => {
+    if (!query) return;
     // Count highlights after content renders
     const timer = setTimeout(() => {
       const marks = document.querySelectorAll("mark.search-highlight");
@@ -37,7 +42,7 @@ export default function SearchHighlightBanner({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [query]);
 
   const scrollToHighlight = (el: HTMLElement) => {
     el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -61,6 +66,8 @@ export default function SearchHighlightBanner({
     setCurrentIndex(prev);
     scrollToHighlight(marks[prev] as HTMLElement);
   };
+
+  if (!query) return null;
 
   return (
     <div className="sticky top-[64px] z-30 bg-primary/5 border-b border-primary/10 backdrop-blur-md">

@@ -155,7 +155,7 @@ export async function PUT(request: NextRequest) {
   if (auth.response) return auth.response;
 
   // ── 2. Rate limiting ──────────────────────────────────────────────────────
-  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  const rateLimitError = await rateLimitMiddleware(request, "authenticated");
   if (rateLimitError) return rateLimitError;
 
   if (!WP_APP_PASSWORD) {

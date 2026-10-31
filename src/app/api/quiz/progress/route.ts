@@ -10,7 +10,7 @@ import type { QuizResult, QuizQuestion } from "@/types/quiz";
 
 export async function GET(req: NextRequest) {
   // Rate limited: reads every attempt for a session.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

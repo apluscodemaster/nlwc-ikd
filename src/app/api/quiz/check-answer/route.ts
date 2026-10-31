@@ -4,7 +4,7 @@ import { fetchQuestionById } from "@/lib/quizService";
 
 export async function POST(req: NextRequest) {
   // Rate limited: reveals the answer; DB read per call.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

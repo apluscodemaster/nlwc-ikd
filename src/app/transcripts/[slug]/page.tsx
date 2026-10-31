@@ -25,7 +25,6 @@ import {
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 // ISR: cache rendered pages for 5 minutes, then regenerate in background
@@ -43,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = stripHtml(transcript.title);
   const description = metaDescription(
-    transcript.excerpt || `Read the full transcript of "${title}" from NLWC Ikorodu.`,
+    transcript.excerpt ||
+      `Read the full transcript of "${title}" from NLWC Ikorodu.`,
   );
   const url = `${SITE_URL}/transcripts/${slug}`;
   // Every transcript shares the same labelled preview card.
@@ -92,19 +92,19 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function TranscriptPage({ params, searchParams }: Props) {
+export default async function TranscriptPage({ params }: Props) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
   const transcript = await getTranscriptBySlug(slug);
-  const searchQuery =
-    typeof resolvedSearchParams?.q === "string" ? resolvedSearchParams.q : "";
 
   if (!transcript) {
     notFound();
   }
 
   // Fetch adjacent transcripts for navigation
-  const adjacent = await getAdjacentTranscripts(transcript.date, transcript.slug);
+  const adjacent = await getAdjacentTranscripts(
+    transcript.date,
+    transcript.slug,
+  );
 
   const cleanTitle = stripHtml(transcript.title);
   const pageUrl = `${SITE_URL}/transcripts/${slug}`;
@@ -147,13 +147,9 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
       <JsonLd data={[articleLd, breadcrumbLd]} />
 
       {/* Search Highlight Banner */}
-      {searchQuery && (
-        <SearchHighlightBanner
-          query={searchQuery}
-          backHref="/transcripts"
-          backLabel="transcripts"
-        />
-      )}
+      {/* Shown only when arriving from a search (?q=) — read in the browser
+          so this page stays cacheable. */}
+      <SearchHighlightBanner backHref="/transcripts" backLabel="transcripts" />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
@@ -246,10 +242,7 @@ export default async function TranscriptPage({ params, searchParams }: Props) {
       {/* Content */}
       <SectionContainer className="py-8 sm:py-12">
         <article className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-5 sm:p-8 md:p-12 overflow-hidden">
-          <TranscriptContent
-            content={transcript.content}
-            searchQuery={searchQuery}
-          />
+          <TranscriptContent content={transcript.content} />
         </article>
       </SectionContainer>
 

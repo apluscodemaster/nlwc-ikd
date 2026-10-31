@@ -1,4 +1,4 @@
-import { permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getAudioSermons, getAudioSermonBySlug } from "@/lib/audioSermons";
 import {
   getMessageTranscriptBySlug,
@@ -9,6 +9,12 @@ import {
 // 301 (permanent) so Google credits the destination. Cache each resolution for
 // a day so re-crawls don't re-query the backend.
 export const revalidate = 86400;
+
+// Only clean WordPress-style slugs can be legacy permalinks. Anything else
+// (file extensions, scanner probes, mixed case) 404s with no backend calls —
+// previously every such path ran the full lookup cascade below and was then
+// cached as a redirect.
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -37,7 +43,8 @@ async function resolveDestination(slug: string): Promise<string> {
   //        exact normalised title match (works even before the API change).
   try {
     const phrase = slug.replace(/-/g, " ");
-    const { data } = await getAudioSermons({ search: phrase, perPage: 50 });
+    // An exact title match ranks near the top; 20 results is plenty.
+    const { data } = await getAudioSermons({ search: phrase, perPage: 20 });
     const hit = data.find(
       (s) => s.slug === slug || (s.title && normalize(s.title) === target),
     );
@@ -66,6 +73,7 @@ async function resolveDestination(slug: string): Promise<string> {
 
 export default async function LegacyMessageRedirect({ params }: Props) {
   const { slug } = await params;
+  if (!SLUG_RE.test(slug) || slug.length > 200) notFound();
   const destination = await resolveDestination(slug);
   // Must run outside try/catch — permanentRedirect throws a control-flow signal
   // that Next needs to propagate.

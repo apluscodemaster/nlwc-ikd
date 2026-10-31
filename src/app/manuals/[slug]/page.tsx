@@ -34,7 +34,6 @@ import {
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 // ISR: cache rendered pages for 5 minutes, then regenerate in background
@@ -103,7 +102,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = stripHtml(manual.title);
   const description = metaDescription(
-    manual.excerpt || `Read the Sunday School manual "${title}" from NLWC Ikorodu.`,
+    manual.excerpt ||
+      `Read the Sunday School manual "${title}" from NLWC Ikorodu.`,
   );
   const url = `${SITE_URL}/manuals/${slug}`;
   // The image the manual's card shows on /manuals (featured or placeholder).
@@ -142,12 +142,9 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function ManualPage({ params, searchParams }: Props) {
+export default async function ManualPage({ params }: Props) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
   const manual = await getManualBySlug(slug);
-  const searchQuery =
-    typeof resolvedSearchParams?.q === "string" ? resolvedSearchParams.q : "";
 
   if (!manual) {
     notFound();
@@ -203,13 +200,9 @@ export default async function ManualPage({ params, searchParams }: Props) {
       <ReadingProgressBar />
 
       {/* Search Highlight Banner */}
-      {searchQuery && (
-        <SearchHighlightBanner
-          query={searchQuery}
-          backHref="/manuals"
-          backLabel="manuals"
-        />
-      )}
+      {/* Shown only when arriving from a search (?q=) — read in the browser
+          so this page stays cacheable. */}
+      <SearchHighlightBanner backHref="/manuals" backLabel="manuals" />
 
       {/* ===== GRADIENT HERO HEADER ===== */}
       <div className="relative overflow-hidden bg-linear-to-br from-amber-600 via-orange-500 to-yellow-500">
@@ -285,7 +278,6 @@ export default async function ManualPage({ params, searchParams }: Props) {
             <TranscriptContent
               content={manual.content}
               accentColor="amber"
-              searchQuery={searchQuery}
               className={MANUAL_PROSE}
             />
 

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdjacentManuals } from "@/lib/wordpress";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
+  // Rate limited: each call reaches WordPress / renders an image.
+  const limited = await rateLimitMiddleware(request, "public");
+  if (limited) return limited;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const date = searchParams.get("date");

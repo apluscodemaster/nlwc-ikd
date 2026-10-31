@@ -4,7 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   // Rate limited: unbounded read per session.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

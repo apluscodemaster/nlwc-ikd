@@ -15,7 +15,7 @@ const CACHE_TTL_SECONDS = 86400;
 
 export async function GET(req: NextRequest) {
   // Rate limited: proxies an external API.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   const query = (req.nextUrl.searchParams.get("q") ?? "").trim();

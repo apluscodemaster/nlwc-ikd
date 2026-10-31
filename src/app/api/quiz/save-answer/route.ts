@@ -6,7 +6,7 @@ import type { QuizAttempt } from "@/types/quiz";
 
 export async function POST(req: NextRequest) {
   // Rate limited: writes a quiz attempt.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

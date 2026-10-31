@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
+import type { NextRequest } from "next/server";
 import { getManualBySlug } from "@/lib/wordpress";
 import { manualBackgroundFor } from "@/utils/manualThumbnail";
+import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
  * GET /api/manuals/<slug>/og
@@ -36,9 +38,17 @@ function previewBackground(url: string): string {
 }
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  // Rate limited: each call reaches WordPress / renders an image.
+  const limited = await rateLimitMiddleware(
+    request,
+    "public",
+    "/api/manuals/og",
+  );
+  if (limited) return limited;
+
   const { slug } = await params;
   const manual = await getManualBySlug(slug).catch(() => null);
   if (!manual) {
@@ -48,105 +58,103 @@ export async function GET(
   const background = previewBackground(manualBackgroundFor(manual.title));
 
   const image = new ImageResponse(
-    (
+    <div
+      style={{
+        display: "flex",
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        color: "#ffffff",
+      }}
+    >
+      {/* Background photo */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- satori renders plain <img> */}
+      <img
+        src={background}
+        alt=""
+        width={SIZE.width}
+        height={SIZE.height}
+        style={{ position: "absolute", inset: 0, objectFit: "cover" }}
+      />
+
+      {/* Dark overlay for text readability (matches the card) */}
       <div
         style={{
+          position: "absolute",
+          inset: 0,
           display: "flex",
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          color: "#ffffff",
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)",
+        }}
+      />
+
+      {/* Icon */}
+      <div
+        style={{
+          position: "absolute",
+          top: 48,
+          left: 56,
+          width: 88,
+          height: 88,
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.15)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {/* Background photo */}
-        {/* eslint-disable-next-line @next/next/no-img-element -- satori renders plain <img> */}
-        <img
-          src={background}
-          alt=""
-          width={SIZE.width}
-          height={SIZE.height}
-          style={{ position: "absolute", inset: 0, objectFit: "cover" }}
-        />
-
-        {/* Dark overlay for text readability (matches the card) */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%)",
-          }}
-        />
-
-        {/* Icon */}
-        <div
-          style={{
-            position: "absolute",
-            top: 48,
-            left: 56,
-            width: 88,
-            height: 88,
-            borderRadius: 22,
-            background: "rgba(255,255,255,0.15)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+        <svg
+          width="44"
+          height="44"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="rgba(255,255,255,0.85)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <svg
-            width="44"
-            height="44"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="rgba(255,255,255,0.85)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 7v14" />
-            <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
-          </svg>
-        </div>
-
-        {/* "Sunday School" label */}
-        <div
-          style={{
-            position: "absolute",
-            top: 64,
-            right: 56,
-            display: "flex",
-            padding: "12px 22px",
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.6)",
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: 4,
-            textTransform: "uppercase",
-          }}
-        >
-          Sunday School Manuals
-        </div>
-
-        {/* Full title text */}
-        <div
-          style={{
-            position: "absolute",
-            left: 56,
-            right: 56,
-            bottom: 56,
-            display: "flex",
-            fontSize: manual.title.length > 70 ? 52 : 64,
-            fontWeight: 700,
-            lineHeight: 1.2,
-            textShadow: "0 4px 16px rgba(0,0,0,0.6)",
-          }}
-        >
-          {manual.title}
-        </div>
+          <path d="M12 7v14" />
+          <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+        </svg>
       </div>
-    ),
+
+      {/* "Sunday School" label */}
+      <div
+        style={{
+          position: "absolute",
+          top: 64,
+          right: 56,
+          display: "flex",
+          padding: "12px 22px",
+          borderRadius: 10,
+          background: "rgba(255,255,255,0.1)",
+          color: "rgba(255,255,255,0.6)",
+          fontSize: 24,
+          fontWeight: 700,
+          letterSpacing: 4,
+          textTransform: "uppercase",
+        }}
+      >
+        Sunday School Manuals
+      </div>
+
+      {/* Full title text */}
+      <div
+        style={{
+          position: "absolute",
+          left: 56,
+          right: 56,
+          bottom: 56,
+          display: "flex",
+          fontSize: manual.title.length > 70 ? 52 : 64,
+          fontWeight: 700,
+          lineHeight: 1.2,
+          textShadow: "0 4px 16px rgba(0,0,0,0.6)",
+        }}
+      >
+        {manual.title}
+      </div>
+    </div>,
     { ...SIZE },
   );
 

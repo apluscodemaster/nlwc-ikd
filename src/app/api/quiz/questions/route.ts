@@ -18,7 +18,7 @@ import type { QuizCategory } from "@/types/quiz";
  * (random-field sampling) rather than over-fetching by answered-count.
  */
 export async function GET(req: NextRequest) {
-  const limited = rateLimitMiddleware(req, "strict");
+  const limited = await rateLimitMiddleware(req, "strict");
   if (limited) return limited;
 
   try {

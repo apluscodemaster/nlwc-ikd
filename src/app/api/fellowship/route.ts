@@ -29,7 +29,7 @@ async function requireAdmin(
   const auth = await requireAuthActor(req);
   if (auth.response) return { denied: auth.response };
 
-  const limited = rateLimitMiddleware(req, "authenticated");
+  const limited = await rateLimitMiddleware(req, "authenticated");
   if (limited) return { denied: limited };
 
   return { actor: auth.actor };
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     } else {
       // Public read still hits Firestore, so throttle it like any other
       // public endpoint. (The CDN cache below absorbs most of the traffic.)
-      const limited = rateLimitMiddleware(req, "public");
+      const limited = await rateLimitMiddleware(req, "public");
       if (limited) return limited;
     }
 

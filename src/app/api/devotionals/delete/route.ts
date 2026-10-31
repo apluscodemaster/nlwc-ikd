@@ -16,7 +16,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   // Apply rate limiting
-  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  const rateLimitError = await rateLimitMiddleware(request, "authenticated");
   if (rateLimitError) {
     return rateLimitError;
   }

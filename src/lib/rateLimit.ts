@@ -1,10 +1,13 @@
 /**
- * Rate limiting utilities for API routes
- * Implements simple in-memory rate limiting with IP-based tracking
- * For production, consider using Vercel's built-in ratelimit or external service
+ * Rate limiting utilities for API routes.
+ *
+ * Uses a shared Upstash Redis store when configured (see "Shared store"
+ * below), otherwise a per-instance in-memory sliding window.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 // Simple in-memory store for rate limit tracking
 // Format: { "ip:endpoint": [timestamp1, timestamp2, ...] }
@@ -81,38 +84,99 @@ function isWithinRateLimit(key: string, config: RateLimitConfig): boolean {
   return false;
 }
 
+// ── Shared store (Upstash Redis) ─────────────────────────────────────────────
+//
+// The in-memory store above lives in ONE serverless instance: on Vercel each
+// warm instance counts separately and resets on every cold start, so the real
+// ceiling is N × the limit. With Upstash Redis configured, every instance
+// shares one counter. Env names: UPSTASH_REDIS_REST_URL/_TOKEN, or the
+// KV_REST_API_URL/_TOKEN that Vercel's Upstash integration sets. Unset → the
+// in-memory limiter keeps working exactly as before.
+
+type Tier = "public" | "authenticated" | "strict";
+
+const redisUrl =
+  process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const redisToken =
+  process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+const redis =
+  redisUrl && redisToken
+    ? new Redis({ url: redisUrl, token: redisToken })
+    : null;
+
+const sharedLimiters = new Map<Tier, Ratelimit>();
+
+function sharedLimiter(tier: Tier): Ratelimit | null {
+  if (!redis) return null;
+  let limiter = sharedLimiters.get(tier);
+  if (!limiter) {
+    const config = DEFAULT_CONFIGS[tier];
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        config.maxRequests,
+        `${Math.round(config.windowMs / 1000)} s`,
+      ),
+      prefix: `nlwc:rl:${tier}`,
+      // A slow or unreachable Redis must never take the site down: after
+      // this long the request is allowed.
+      timeout: 1000,
+    });
+    sharedLimiters.set(tier, limiter);
+  }
+  return limiter;
+}
+
+function tooManyRequests(retryAfterSeconds: number): NextResponse {
+  return NextResponse.json(
+    {
+      error: "Too many requests. Please try again later.",
+      retryAfter: retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers: { "Retry-After": retryAfterSeconds.toString() },
+    },
+  );
+}
+
 /**
- * Rate limit middleware for API routes
- * Usage in route: const error = rateLimitMiddleware(request, "public");
+ * Rate limit middleware for API routes.
+ * Usage in route:
+ *   const limited = await rateLimitMiddleware(request, "public");
+ *   if (limited) return limited;
  */
-export function rateLimitMiddleware(
+export async function rateLimitMiddleware(
   request: NextRequest,
-  configKey: "public" | "authenticated" | "strict" = "public",
+  configKey: Tier = "public",
   /**
    * Counter to charge, instead of the request path. Dynamic routes must pass
    * one: keyed by path, every distinct value (e.g. each verse reference at
    * /api/scripture/[reference]) got its own allowance, i.e. no limit at all.
    */
   bucket?: string,
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const config = DEFAULT_CONFIGS[configKey];
   const clientIp = getClientIp(request);
   const pathname = bucket ?? new URL(request.url).pathname;
   const key = `${clientIp}:${pathname}`;
 
+  const shared = sharedLimiter(configKey);
+  if (shared) {
+    try {
+      const { success, reset } = await shared.limit(key);
+      if (success) return null;
+      return tooManyRequests(
+        Math.max(1, Math.ceil((reset - Date.now()) / 1000)),
+      );
+    } catch (err) {
+      // Redis error — fall back to this instance's own counter below.
+      console.warn("[rateLimit] shared store failed, using in-memory:", err);
+    }
+  }
+
   if (!isWithinRateLimit(key, config)) {
-    return NextResponse.json(
-      {
-        error: "Too many requests. Please try again later.",
-        retryAfter: Math.ceil(config.windowMs / 1000),
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": Math.ceil(config.windowMs / 1000).toString(),
-        },
-      },
-    );
+    return tooManyRequests(Math.ceil(config.windowMs / 1000));
   }
 
   return null;

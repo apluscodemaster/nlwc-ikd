@@ -16,14 +16,19 @@ export const runtime = "nodejs";
  * Body: { session_id, question, answer }
  */
 export async function POST(req: NextRequest) {
-  const limited = rateLimitMiddleware(req, "authenticated");
+  // Public route that writes a security answer — strict, not the 1000/min
+  // admin tier it used before.
+  const limited = await rateLimitMiddleware(req, "strict");
   if (limited) return limited;
 
   let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
 
   const sessionId = typeof body.session_id === "string" ? body.session_id : "";
@@ -61,9 +66,7 @@ export async function POST(req: NextRequest) {
     const lastMs = new Date(existing.updated_at).getTime();
     const daysSince = (Date.now() - lastMs) / 86_400_000;
     if (daysSince < SELF_RESET_COOLDOWN_DAYS) {
-      const nextDate = new Date(
-        lastMs + SELF_RESET_COOLDOWN_DAYS * 86_400_000,
-      );
+      const nextDate = new Date(lastMs + SELF_RESET_COOLDOWN_DAYS * 86_400_000);
       return NextResponse.json(
         {
           error: `You can change your security question once every ${SELF_RESET_COOLDOWN_DAYS} days. Try again on ${nextDate.toDateString()}, or ask an admin to reset it.`,

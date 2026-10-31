@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireAuthActor(req);
   if (auth.response) return auth.response;
 
-  const limited = rateLimitMiddleware(req, "authenticated");
+  const limited = await rateLimitMiddleware(req, "authenticated");
   if (limited) return limited;
 
   let body: Record<string, unknown>;

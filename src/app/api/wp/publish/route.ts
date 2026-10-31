@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   if (auth.response) return auth.response;
 
   // ── Rate limiting ─────────────────────────────────────────────────────────
-  const rateLimitError = rateLimitMiddleware(request, "authenticated");
+  const rateLimitError = await rateLimitMiddleware(request, "authenticated");
   if (rateLimitError) return rateLimitError;
 
   let body: Record<string, unknown>;

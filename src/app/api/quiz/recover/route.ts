@@ -33,7 +33,7 @@ async function findSessionByUsername(username: string) {
 export async function GET(req: NextRequest) {
   // Public endpoint: it resolves a username against the DB, so it takes the
   // public tier (100/min), not the 1000/min authenticated one it had.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   const username = (req.nextUrl.searchParams.get("username") || "").trim();
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
  * carries `mustSetSecurity: true` and the client prompts for a fresh one.
  */
 export async function POST(req: NextRequest) {
-  const limited = rateLimitMiddleware(req, "strict");
+  const limited = await rateLimitMiddleware(req, "strict");
   if (limited) return limited;
 
   let body: Record<string, unknown>;

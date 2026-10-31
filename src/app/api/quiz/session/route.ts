@@ -13,7 +13,7 @@ const sessionSchema = z.object({
 
 export async function POST(req: NextRequest) {
   // Creates a player row — throttle so the sessions table can't be flooded.
-  const limited = rateLimitMiddleware(req, "public");
+  const limited = await rateLimitMiddleware(req, "public");
   if (limited) return limited;
 
   try {

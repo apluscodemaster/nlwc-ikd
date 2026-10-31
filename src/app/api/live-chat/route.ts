@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 // =============================================================================
 export async function POST(request: NextRequest) {
   // Rate limited: public write.
-  const limited = rateLimitMiddleware(request, "public");
+  const limited = await rateLimitMiddleware(request, "public");
   if (limited) return limited;
 
   try {

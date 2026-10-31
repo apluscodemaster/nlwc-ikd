@@ -333,7 +333,10 @@ export async function fetchWPPosts(
       : { next: { revalidate: revalidate ?? 300 } };
     if (authHeader) fetchInit.headers = { Authorization: authHeader };
 
-    response = await fetch(`${WP_API_BASE}/posts?${params.toString()}`, fetchInit);
+    response = await fetch(
+      `${WP_API_BASE}/posts?${params.toString()}`,
+      fetchInit,
+    );
 
     if (response.ok) break;
     if (response.status === 429) {
@@ -1161,10 +1164,19 @@ export async function getTranscriptBySlug(
   if (!post) return null;
   const isTranscript = (ids: number[]) =>
     post.categories?.some((c) => ids.includes(c)) ?? false;
+  if (isTranscript(await getTranscriptCategoryIds())) {
+    return transformToTranscript(post);
+  }
+  // A manual (or uncategorised post) can never be a transcript — answer
+  // without the uncached re-check, which legacy-link lookups and crawlers
+  // would otherwise trigger for every manual slug.
+  const onlyNonTranscript = (post.categories ?? []).every(
+    (c) => c === WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL || c === WP_CATEGORIES.POST,
+  );
   // The cached list can lag a category created in the last few minutes, so
-  // only a miss pays for a fresh read before answering "not a transcript".
+  // only an unexplained miss pays for a fresh read before answering "no".
   if (
-    !isTranscript(await getTranscriptCategoryIds()) &&
+    onlyNonTranscript ||
     !isTranscript(await getTranscriptCategoryIds(true))
   ) {
     return null;

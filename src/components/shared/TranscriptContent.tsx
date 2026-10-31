@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import ScriptureContent from "./ScriptureContent";
+import { useUrlSearchQuery } from "@/hooks/useUrlSearchQuery";
 import { highlightSearchInHtml } from "@/utils/highlightSearch";
 import { formatMemoryTrack } from "@/utils/formatMemoryTrack";
 
@@ -27,9 +29,13 @@ interface TranscriptContentProps {
 export default function TranscriptContent({
   content,
   accentColor = "primary",
-  searchQuery = "",
+  searchQuery: searchQueryProp,
   className = "",
 }: TranscriptContentProps) {
+  // Detail pages don't pass a query: they highlight the page's own `?q=`,
+  // read in the browser so the page itself stays cacheable.
+  const urlQuery = useUrlSearchQuery();
+  const searchQuery = searchQueryProp ?? urlQuery;
   const accentClasses =
     accentColor === "amber"
       ? "prose-a:text-amber-600 prose-blockquote:border-l-amber-500 prose-blockquote:bg-amber-500/5"
@@ -38,15 +44,23 @@ export default function TranscriptContent({
     ? `${accentClasses} ${className}`
     : accentClasses;
 
-  // Apply search highlighting to the content if a query is provided
-  let formattedContent = searchQuery
-    ? highlightSearchInHtml(content, searchQuery)
-    : content;
+  const formattedContent = useMemo(() => {
+    // Apply search highlighting to the content if a query is provided
+    const highlighted = searchQuery
+      ? highlightSearchInHtml(content, searchQuery)
+      : content;
+    // Enhance "Memory Track" sections for an aesthetic UI layout
+    return formatMemoryTrack(highlighted);
+  }, [content, searchQuery]);
 
-  // Enhance "Memory Track" sections for an aesthetic UI layout
-  formattedContent = formatMemoryTrack(formattedContent);
-
+  // Keyed by the query: scripture tooltips are wired into the rendered HTML
+  // once, so when highlighting swaps the HTML in after mount, remount to
+  // re-wire them rather than leave the new text untagged.
   return (
-    <ScriptureContent content={formattedContent} className={colorClasses} />
+    <ScriptureContent
+      key={searchQuery}
+      content={formattedContent}
+      className={colorClasses}
+    />
   );
 }

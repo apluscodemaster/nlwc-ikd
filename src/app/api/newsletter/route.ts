@@ -4,7 +4,7 @@ import { rateLimitMiddleware } from "@/lib/rateLimit";
 export async function POST(request: NextRequest) {
   // Public signup form — "strict" (10/min) so the list can't be stuffed
   // automatically. A real person signs up once.
-  const limited = rateLimitMiddleware(request, "strict");
+  const limited = await rateLimitMiddleware(request, "strict");
   if (limited) return limited;
 
   try {

@@ -4,7 +4,7 @@ import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
   // Apply rate limiting to public endpoint
-  const rateLimitError = rateLimitMiddleware(request, "public");
+  const rateLimitError = await rateLimitMiddleware(request, "public");
   if (rateLimitError) {
     return rateLimitError;
   }

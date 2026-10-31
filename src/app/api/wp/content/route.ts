@@ -48,7 +48,7 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
   if (auth.response) return auth.response;
 
   // Rate limited: proxies WordPress.
-  const limited = rateLimitMiddleware(request, "authenticated");
+  const limited = await rateLimitMiddleware(request, "authenticated");
   if (limited) return limited;
 
   const searchParams = request.nextUrl.searchParams;

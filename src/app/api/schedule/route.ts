@@ -41,12 +41,13 @@ export const dynamic = "force-dynamic";
 async function requireAdmin(
   req: NextRequest,
 ): Promise<
-  { denied: NextResponse; actor?: undefined } | { denied?: undefined; actor: AuthActor }
+  | { denied: NextResponse; actor?: undefined }
+  | { denied?: undefined; actor: AuthActor }
 > {
   const auth = await requireAuthActor(req);
   if (auth.response) return { denied: auth.response };
 
-  const limited = rateLimitMiddleware(req, "authenticated");
+  const limited = await rateLimitMiddleware(req, "authenticated");
   if (limited) return { denied: limited };
 
   return { actor: auth.actor };
@@ -194,7 +195,11 @@ function getDefaultSpecialEvents() {
 }
 
 // ── GET: Fetch all schedules (public) — auto-seeds defaults if empty ──
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Public, uncached (force-dynamic) and reads whole Firestore collections.
+  const limited = await rateLimitMiddleware(req, "public");
+  if (limited) return limited;
+
   try {
     const [fetchedRecurring, fetchedSpecial, settings] = await Promise.all([
       getRecurringServices(),
@@ -277,7 +282,10 @@ export async function POST(req: NextRequest) {
 
     if (!data.endsNextDay && data.startHour >= data.endHour) {
       return NextResponse.json(
-        { error: "Start hour must be before end hour (or enable 'Ends next day')" },
+        {
+          error:
+            "Start hour must be before end hour (or enable 'Ends next day')",
+        },
         { status: 400 },
       );
     }
@@ -407,7 +415,10 @@ export async function PUT(req: NextRequest) {
     if (data.startHour !== undefined && data.endHour !== undefined) {
       if (!data.endsNextDay && data.startHour >= data.endHour) {
         return NextResponse.json(
-          { error: "Start hour must be before end hour (or enable 'Ends next day')" },
+          {
+            error:
+              "Start hour must be before end hour (or enable 'Ends next day')",
+          },
           { status: 400 },
         );
       }

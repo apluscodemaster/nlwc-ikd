@@ -28,7 +28,7 @@ type Target = RevalidateTarget;
 
 export async function POST(request: NextRequest) {
   // Strict rate limiting (this is a webhook, not a high-frequency endpoint).
-  const rateLimitError = rateLimitMiddleware(request, "strict");
+  const rateLimitError = await rateLimitMiddleware(request, "strict");
   if (rateLimitError) return rateLimitError;
 
   // Verify the shared secret (Authorization: Bearer <WEBHOOK_SECRET>).

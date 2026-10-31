@@ -22,7 +22,7 @@ const contactSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const rateLimitError = rateLimitMiddleware(req, "strict");
+  const rateLimitError = await rateLimitMiddleware(req, "strict");
   if (rateLimitError) {
     return rateLimitError;
   }

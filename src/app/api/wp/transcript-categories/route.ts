@@ -15,7 +15,7 @@ import { createTranscriptCategory } from "@/services/wp-service";
  * /api/wp/speakers, is only honoured for an authenticated caller.
  */
 export async function GET(request: NextRequest) {
-  const limited = rateLimitMiddleware(request, "public");
+  const limited = await rateLimitMiddleware(request, "public");
   if (limited) return limited;
 
   let fresh = request.nextUrl.searchParams.get("fresh") === "1";
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuthActor(request);
   if (auth.response) return auth.response;
 
-  const limited = rateLimitMiddleware(request, "authenticated");
+  const limited = await rateLimitMiddleware(request, "authenticated");
   if (limited) return limited;
 
   let body: unknown;

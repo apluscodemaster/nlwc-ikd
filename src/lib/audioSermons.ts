@@ -111,7 +111,9 @@ function getFetchOptions(noStore = false): RequestInit {
  * Image component fetches external URLs directly (bypassing Next rewrites),
  * so we need to rewrite the hostname.
  */
-export function fixThumbnailUrl(url: string | undefined | null): string | undefined {
+export function fixThumbnailUrl(
+  url: string | undefined | null,
+): string | undefined {
   if (!url) return undefined;
   return url.replace(
     "://ikorodu.nlwc.church/wp-content/",
@@ -198,9 +200,12 @@ async function fetchFromWpApi(
  * Includes retry logic for transient failures.
  * Uses plain fetch() for retries to avoid "Body already read" errors from deduplicatedFetch caching.
  */
+/** The WordPress API said this sermon does not exist (HTTP 404). */
+const SERMON_NOT_FOUND = Symbol("sermon-not-found");
+
 async function fetchDetailFromWpApi(
   messageId: number,
-): Promise<AudioSermon | null> {
+): Promise<AudioSermon | typeof SERMON_NOT_FOUND | null> {
   const maxRetries = 2;
   let lastError: Error | null = null;
 
@@ -214,7 +219,7 @@ async function fetchDetailFromWpApi(
       if (response.status === 404) {
         // 404 means the sermon doesn't exist, don't retry
         logDebug("Sermon not found", { messageId }, { tag: "AudioSermons" });
-        return null;
+        return SERMON_NOT_FOUND;
       }
 
       if (!response.ok) {
@@ -589,10 +594,19 @@ async function searchRecentSermons(
 export async function getAudioSermonDetail(
   messageId: number,
 ): Promise<AudioSermon | null> {
+  // Not a message id at all (e.g. /sermons/audio/abc) — nothing to look up.
+  if (!Number.isInteger(messageId) || messageId <= 0) return null;
+
   console.log(`[AudioSermons] Fetching detail for sermon ${messageId}`);
 
   // Try WP REST API first
   const apiResult = await fetchDetailFromWpApi(messageId);
+  // A definite 404 is final. The fallbacks below (scraping the full Series
+  // Engine page, searching recent sermons, a placeholder object) exist for
+  // when WordPress is DOWN — running them for ids that simply do not exist let
+  // any crawler-invented id cost several expensive upstream calls and become a
+  // cached "Message #<id>" page.
+  if (apiResult === SERMON_NOT_FOUND) return null;
   if (apiResult) {
     console.log(
       `[AudioSermons] Successfully fetched sermon ${messageId} from API`,

@@ -1,6 +1,5 @@
 import { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft, Headphones } from "lucide-react";
+import { notFound } from "next/navigation";
 import { getAudioSermonDetail } from "@/lib/audioSermons";
 import AudioPlayerClient from "./AudioPlayerClient";
 import { stripLeadingSpeakerLine } from "@/utils/speakerLine";
@@ -96,31 +95,11 @@ export default async function AudioSermonPage({ params }: Props) {
   const { id } = await params;
   const sermon = await getAudioSermonDetail(parseInt(id));
 
-  // The fallback system ensures we always get a sermon object with at least
-  // an ID and listen URL, even if detailed metadata is unavailable
-  if (!sermon) {
-    // This should theoretically never happen, but kept as a safety net
-    return (
-      <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-        <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-6">
-          <Headphones className="w-12 h-12 text-red-400" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Message Not Found
-        </h1>
-        <p className="text-gray-500 mb-8">
-          This audio message could not be found.
-        </p>
-        <Link
-          href="/sermons"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold hover:scale-105 transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Browse All Messages
-        </Link>
-      </main>
-    );
-  }
+  // null = the id is not a message (WordPress answered 404, or it isn't a
+  // number). Return a real 404 so crawlers drop it, rather than a 200 "not
+  // found" page cached under every invented id. When WordPress is merely
+  // unreachable, getAudioSermonDetail still returns a playable placeholder.
+  if (!sermon) notFound();
 
   const hasTitle = sermon.title && !sermon.title.includes("Message #");
   const ldTitle = stripHtml(

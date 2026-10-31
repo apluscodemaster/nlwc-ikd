@@ -12,7 +12,7 @@ export async function GET(
 ) {
   // Rate limited: proxies an external API.
   // One counter for all references (see rateLimitMiddleware's `bucket`).
-  const limited = rateLimitMiddleware(request, "public", "/api/scripture");
+  const limited = await rateLimitMiddleware(request, "public", "/api/scripture");
   if (limited) return limited;
 
   try {

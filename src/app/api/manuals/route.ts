@@ -21,7 +21,7 @@ function getManualsAuth(): string | undefined {
 
 export async function GET(request: NextRequest) {
   // Rate limited: proxies WordPress.
-  const limited = rateLimitMiddleware(request, "public");
+  const limited = await rateLimitMiddleware(request, "public");
   if (limited) return limited;
 
   try {

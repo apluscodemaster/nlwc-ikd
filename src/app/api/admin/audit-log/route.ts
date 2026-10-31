@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
   // Each page is a Firestore read that can scan up to 500 docs when filters are
   // applied, so this endpoint is worth bounding like the other authed routes.
-  const limited = rateLimitMiddleware(request, "authenticated");
+  const limited = await rateLimitMiddleware(request, "authenticated");
   if (limited) return limited;
 
   try {
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuthActor(request);
   if (auth.response) return auth.response;
 
-  const limited = rateLimitMiddleware(request, "authenticated");
+  const limited = await rateLimitMiddleware(request, "authenticated");
   if (limited) return limited;
 
   try {
