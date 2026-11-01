@@ -11,8 +11,9 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 | **Phase 3** - Performance        | ✅ Complete | Image Optimization, Lazy Loading, Cache Optimization, Code Splitting, ISR      |
 | **Phase 4** - Polish             | ✅ Complete | Accessibility, Keyboard Navigation, SEO Metadata, PWA/Offline Support          |
 | **Phase 5** - Community Features | ✅ Complete | Bible Quiz, Testimonies, Live Chat, Google Translate, WhatsApp Integration     |
+| **Phase 6** - Operations & Cost  | ✅ Complete | Scheduled jobs, CI, shared rate limiting, caching & bundle-size audit fixes    |
 
-**Last Updated:** June 20, 2026
+**Last Updated:** November 1, 2026
 
 ## ✨ Features
 
@@ -28,9 +29,13 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - **Sunday Message Transcripts**: 140+ full written transcripts with search, pagination, and adjacent navigation
 - **Sunday School Manuals**: 111+ study materials with series filtering and theme-based organization
 - Real-time sync with WordPress backend via headless CMS
-- Advanced search with 300ms debounce and URL-synced filters
+- Advanced search with 300ms debounce and URL-synced filters; arriving from a search highlights the matches on the detail page
 - Beautiful card-based UI with reading progress bars
 - Back-to-list navigation preserving pagination state via `sessionStorage`
+- **Transcript categories are open-ended** — any child of the WordPress "Transcripts" category counts, and admins can create new ones from the transcript form (they appear in wp-admin, the public filter tabs, listings and the sitemap automatically)
+- **Sermon ↔ transcript matching** on the sermons and audio pages pairs by title _and_ preached date, so repeated titles ("Bible Study", "Opening Charge") and sibling titles in a series don't share one transcript
+- **Import from Word** — Sunday School manuals can be created from a `.docx` (converted in the browser; the title is taken from the `TOPIC:` line)
+- **Link previews** — manuals share with their card image (generated for manuals without one, AI-upscaled when the WordPress image is small); transcripts share with a dedicated labelled card
 
 ### 🧠 Bible Knowledge Quiz
 
@@ -45,10 +50,11 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 
 ### 🙏 Testimonies
 
-- Public testimony submission form
+- Public testimony submission form (always saved, even if the bot check fails)
+- Church notification email plus a thank-you auto-reply to the sender — the auto-reply only after a Cloudflare Turnstile check passes, and it never echoes the submitted text (so the form can't be used to spam third parties)
 - Admin moderation and approval workflow
 - Display of approved testimonies with pagination
-- Firebase Firestore backend for testimony storage
+- Firebase Firestore backend for testimony storage (field and size rules enforced in `firestore.rules`)
 
 ### 🎵 Live Streaming & Audio
 
@@ -56,12 +62,21 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - Audio sermon browser with search, filters, and pagination
 - Resume-from-where-you-left-off prompt (media progress tracking via `localStorage`)
 - Mobile-optimized full-screen audio player
+- **Live community chat** during services (Firestore, real time) — shows the current service's newest 200 messages; only the chat column scrolls; messages older than 7 days are deleted by a nightly job
+- **Service times are Lagos time (WAT)** everywhere — live status, chat window, countdowns — whatever the viewer's time zone
+- **Schedule is managed in Admin → Settings → Schedule** — the site uses only what's set there (no hardcoded fallback). Monthly special services (Sithrah + prep prayers, Season of the Spirit) can be added automatically by a scheduled job, switchable on the Schedule page
 
 ### 📬 Contact & Newsletter
 
-- Contact form with Zod validation and Google Sheets backend
-- Newsletter subscription
+- Contact form with Zod validation and Cloudflare Turnstile (submissions are validated; they are not yet stored or emailed)
+- Newsletter subscription (currently logged only — no mailing list is kept yet)
 - Obfuscated contact info to prevent scraping
+
+### 🏠 House Fellowship
+
+- Fellowship centers managed in Admin → Fellowship
+- "Find a center near me" prompt using the visitor's location (precise GPS where available)
+- Center coordinates fill in automatically from the center's Google Maps link, with a warning when typed coordinates disagree with the link
 
 ### 🌐 Accessibility & Internationalization
 
@@ -79,18 +94,22 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - Fully responsive design (mobile-first)
 - Custom dialog system and toast notifications (Sonner)
 - Reading progress bar on long-form content
-- Scripture tooltips via RefTagger integration
+- Scripture tooltips: an in-app KJV tooltip (`ScriptureProvider`) on transcripts, manuals, the About beliefs and the Salvation page; Logos RefTagger elsewhere, loaded only on content pages (not admin)
 
 ## 🚀 Tech Stack
 
 - **Framework**: Next.js 16 (App Router + Turbopack)
 - **Language**: TypeScript 5.9
 - **Styling**: Tailwind CSS 4 + `tailwindcss-animate`
-- **Animations**: Framer Motion
-- **Data Fetching**: React Query (TanStack Query v5) + SWR
+- **Animations**: Framer Motion (lazy-loaded engine via `LazyMotion` — see `MotionProvider`)
+- **Data Fetching**: React Query (TanStack Query v5)
 - **Backend / CMS**: WordPress REST API (headless) + Google Sheets API
-- **Database**: Supabase (quiz sessions, leaderboard) + Firebase Firestore (quiz questions, testimonies)
-- **Auth**: Firebase Admin SDK (admin endpoints) + Bearer token auth
+- **Database**: Supabase (quiz sessions, leaderboard) + Firebase Firestore (quiz questions, testimonies, schedule, fellowship, live chat, devotionals)
+- **Auth**: Firebase Authentication — admin routes verify the Firebase ID token (`Authorization: Bearer <token>`), optionally restricted to `ADMIN_EMAILS`
+- **Rate limiting**: Upstash Redis (shared across server instances) with an in-memory fallback
+- **Scheduled jobs**: Vercel Cron (`vercel.json`)
+- **CI**: GitHub Actions — lint, type-check and tests on every push/PR
+- **Word import**: mammoth (`.docx` → HTML, in the browser)
 - **Forms**: React Hook Form + Zod validation
 - **Email**: Nodemailer (SMTP via One.com)
 - **UI Components**: Radix UI primitives + shadcn/ui + Lucide React icons
@@ -101,6 +120,10 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 ## 📂 Project Structure
 
 ```
+firestore.rules                 # Firestore security rules (publish via Firebase Console)
+vercel.json                     # Scheduled jobs (Vercel Cron)
+.github/workflows/ci.yml        # CI: lint, type-check, tests
+supabase/migrations/            # Quiz database schema
 src/
 ├── app/                        # Next.js App Router pages
 │   ├── layout.tsx              # Root layout (Navbar, Footer, Providers)
@@ -112,7 +135,8 @@ src/
 │   ├── sitemap.ts              # Dynamic sitemap
 │   ├── about/                  # Church story, leadership, beliefs
 │   ├── admin/                  # Admin dashboard (Firebase-auth protected)
-│   │   ├── page.tsx            # Church Content (publish sermons/transcripts/manuals)
+│   │   ├── page.tsx            # Admin dashboard
+│   │   ├── content/            # Church Content (sermons, transcripts, manuals)
 │   │   ├── quiz/               # Quiz question & category management
 │   │   ├── devotionals/        # Devotional uploads
 │   │   ├── fellowship/         # House fellowship centers (Firestore)
@@ -121,23 +145,28 @@ src/
 │   │   │   └── audit-log/      # Who changed what, and when
 │   │   └── testimonies/        # Testimony moderation
 │   ├── api/                    # API routes
+│   │   ├── admin/              # Admin audit log
 │   │   ├── audio-sermons/      # Audio sermon proxy
 │   │   ├── autoscroll-gallery/ # Gallery images from Sheets
+│   │   ├── bible/              # Bible search (API.Bible)
 │   │   ├── contact/            # Contact form handler
-│   │   ├── devotionals/        # Devotional CRUD
-│   │   ├── events/             # Events data
-│   │   ├── live-chat/          # Live chat messages
+│   │   ├── cron/               # Scheduled jobs (see Scheduled Jobs)
+│   │   ├── devotionals/        # Devotional upload/delete + latest
+│   │   ├── fellowship/         # Fellowship centers + Maps-link resolver
+│   │   ├── live-chat/          # Legacy in-memory chat (unused — chat is Firestore)
 │   │   ├── manuals/            # WordPress manuals proxy + themes
 │   │   ├── newsletter/         # Newsletter subscription
 │   │   ├── quiz/               # Quiz engine (session, questions, leaderboard)
 │   │   ├── revalidate/         # ISR on-demand revalidation webhook
+│   │   ├── schedule/           # Service schedule (public read, admin write)
+│   │   ├── scripture/          # Verse lookup for scripture tooltips
 │   │   ├── sermons/            # WordPress sermons proxy
 │   │   ├── sheet/              # Google Sheets proxy
 │   │   ├── testimonies/        # Testimony submission
 │   │   ├── transcripts/        # WordPress transcripts proxy
 │   │   ├── video-messages/     # Video content
 │   │   ├── video-stream/       # Live video stream info
-│   │   └── wp/                 # WordPress publish/upload (admin)
+│   │   └── wp/                 # WordPress publish/update/upload, categories, speakers
 │   ├── contact/                # Contact page
 │   ├── devotionals/            # Daily devotionals archive
 │   ├── fellowship/             # House fellowship directory
@@ -195,14 +224,14 @@ src/
 │   │   ├── ScriptureTooltip.tsx # Bible verse tooltips
 │   │   └── ...
 │   └── ui/                     # shadcn/ui primitives
-├── data/                       # Static data (centers, events, services, team)
+├── data/                       # Static data (centers, services, team; event type + calendar link)
 ├── hooks/
 │   ├── useWordPress.ts         # React Query hooks for WP content
 │   ├── useAudioSermons.ts      # Audio sermon data hooks
 │   ├── useQuizSession.ts       # Quiz session state management
 │   ├── useOnlineStatus.ts      # Online/offline detection
 │   ├── useSessionTimeout.ts    # Admin session timeout
-│   └── useEvents.ts            # Events data hook
+│   └── useUrlSearchQuery.ts    # Reads ?q= in the browser (keeps pages cacheable)
 ├── lib/
 │   ├── wordpress.ts            # WordPress API client (transcripts, manuals, adjacent nav)
 │   ├── firebase.ts             # Firebase client config
@@ -217,14 +246,22 @@ src/
 │   ├── cloudinary.ts           # Cloudinary image helpers
 │   ├── auth.ts                 # Server-side auth helpers
 │   ├── authClient.ts           # Client-side auth helpers
-│   ├── rateLimit.ts            # IP-based rate limiting
+│   ├── rateLimit.ts            # Rate limiting (Upstash Redis, in-memory fallback)
+│   ├── cronAuth.ts             # CRON_SECRET check for scheduled jobs
+│   ├── turnstile.ts            # Cloudflare Turnstile verification
+│   ├── revalidateTargets.ts    # Which pages to refresh per content type
+│   ├── scheduleService.ts      # Schedule + settings (Firestore)
+│   ├── specialEvents.ts        # Sithrah / Season of the Spirit date rules
+│   ├── cloudinaryLoader.ts     # next/image loader for Cloudinary URLs
+│   ├── motionFeatures.ts       # Lazy-loaded Framer Motion engine
 │   ├── devotionals.ts          # Devotional content helpers
 │   ├── mediaProgress.ts        # Resume playback tracking
-│   ├── liveSchedule.ts         # Service schedule logic
+│   ├── liveSchedule.ts         # Service schedule logic (Lagos time)
 │   ├── bible-api.ts            # Bible verse lookup
 │   └── utils.ts                # General utilities (cn, formatting)
 ├── services/
-│   └── wp-service.ts           # WordPress service layer
+│   ├── wp-service.ts           # WordPress service layer
+│   └── shareImageUpscale.ts    # Upscales small manual share images via Cloudinary
 ├── types/
 │   ├── quiz.ts                 # Quiz type definitions
 │   ├── wp-types.ts             # WordPress content types
@@ -427,8 +464,8 @@ Management interface (restricted access via Firebase Authentication — admin AP
 - **Church Content** (`/admin`) — Publish and edit WordPress sermons, transcripts, and manuals: rich-text editor (paste-cleaning of external fonts), media uploads, future-date scheduling, and live search across content
 - **Quiz Management** (`/admin/quiz`) — CRUD for quiz questions and categories, CSV/JSON import/export, player stats
 - **Devotional Management** (`/admin/devotionals`) — Upload, edit, and delete daily devotionals
-- **House Fellowship** (`/admin/fellowship`) — Firestore-backed CRUD for the fellowship centers shown on `/fellowship` (seeded from the former static list on first load)
-- **Settings** (`/admin/settings`) — Service schedule (`/admin/settings/schedule`: recurring services and special events) and the audit log (`/admin/settings/audit-log`)
+- **House Fellowship** (`/admin/fellowship`) — Firestore-backed CRUD for the fellowship centers shown on `/fellowship` (seeded from the former static list on first load). Latitude/longitude fill in from the center's Google Maps link, and opening a center warns if its saved coordinates are more than 200 m from the place in its link
+- **Settings** (`/admin/settings`) — Service schedule (`/admin/settings/schedule`: recurring services, special events, and the "Auto-add monthly special services" switch — this page is the only source the live pages, countdowns and Upcoming Gatherings use) and the audit log (`/admin/settings/audit-log`)
 - **Testimony Moderation** (`/admin/testimonies`) — Approve or reject submitted testimonies
 - Session timeout with automatic logout
 
@@ -440,8 +477,8 @@ Custom not-found page with helpful navigation back to main content
 
 ### Prerequisites
 
-- Node.js 18+
-- npm, yarn, pnpm, or bun
+- Node.js 20.9+ (required by Next.js 16; CI uses Node 22)
+- npm (the repo's lockfile is `package-lock.json`)
 
 ### Installation
 
@@ -462,57 +499,89 @@ npm install
    Create a `.env.local` file in the root directory with the following variables:
 
 ```env
-# 🔐 Admin API Authentication
-ADMIN_API_KEY=your_secure_api_key_here
+# 🌐 Site & WordPress
+NEXT_PUBLIC_SITE_URL=https://ikorodu.nlwc.church
+NEXT_PUBLIC_WORDPRESS_URL=https://ikdadmin.nlwc.church
+WP_APPLICATION_USER=wordpress_user          # WordPress Application Password login,
+WP_APPLICATION_PASSWORD=application_password # used for publishing and admin reads
 
-# 🔗 Webhook Security (Authorization header)
-WEBHOOK_SECRET=your_webhook_secret_here
+# 🔗 Secrets for incoming calls (send as "Authorization: Bearer <secret>")
+WEBHOOK_SECRET=your_webhook_secret   # WordPress → /api/revalidate
+CRON_SECRET=your_cron_secret         # Vercel Cron → /api/cron/* (jobs refuse to run without it)
 
-# 📊 Google Sheets API
+# 🔐 Admin access (optional)
+# Comma-separated emails allowed to use admin routes. Unset = any Firebase
+# account in the project counts as an admin (see Security below).
+ADMIN_EMAILS=admin1@example.org,admin2@example.org
+
+# 📊 Google Sheets API (gallery, video messages, live stream link)
 GOOGLE_SHEETS_ID=your_spreadsheet_id
+GOOGLE_SHEETS_NAME=church_gallery   # optional; gallery tab name (default shown)
+GOOGLE_TYPE=service_account
 GOOGLE_PROJECT_ID=your_project_id
+GOOGLE_CLIENT_EMAIL=your_service_account_email
 GOOGLE_PRIVATE_KEY=your_private_key
-GOOGLE_CLIENT_EMAIL=your_client_email
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
-GOOGLE_TOKEN_URI=https://oauth2.googleapis.com/token
-GOOGLE_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-GOOGLE_CLIENT_CERT_URL=your_client_cert_url
 
-# ☁️ Cloudinary Config
+# ☁️ Cloudinary (devotional PDFs, share images)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 
-# 🔥 Firebase Config (Client)
+# 🔥 Firebase (client)
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
-# 🔥 Firebase Admin Config (Server)
+# 🔥 Firebase Admin (server)
 FIREBASE_ADMIN_PROJECT_ID=your_project_id
 FIREBASE_ADMIN_CLIENT_EMAIL=your_admin_email
 FIREBASE_ADMIN_PRIVATE_KEY=your_admin_private_key
 
-# 🗄️ Supabase Config
+# 🗄️ Supabase (quiz)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+QUIZ_SECURITY_PEPPER=random_secret   # hashes quiz security answers
 
-# 📧 Church Email (SMTP)
+# 📧 Church email (SMTP, one.com)
 CHURCH_EMAIL_ADDRESS=your_email@church.com
 CHURCH_EMAIL_PASSWORD=your_email_password
 SMTP_HOST=send.one.com
 SMTP_PORT=465
+TESTIMONY_NOTIFY_EMAILS=a@church.com,b@church.com  # optional; defaults to CHURCH_EMAIL_ADDRESS
+
+# 🤖 Cloudflare Turnstile (contact + testimony bot check; both halves from the SAME widget)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_site_key
+TURNSTILE_SECRET_KEY=your_secret_key  # without it the server skips the check
+
+# 🚦 Shared rate limiting (optional — Upstash Redis)
+# Either pair works; Vercel's Upstash integration sets the KV_* pair.
+UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token
+# KV_REST_API_URL=…
+# KV_REST_API_TOKEN=…
+
+# 📖 Bible search (API.Bible)
+BIBLE_API_KEY=your_api_bible_key
+BIBLE_API_BIBLE_ID=your_bible_id
+BIBLE_API_BASE=https://rest.api.bible   # optional; this is the default
+
+# 🎥 Live stream & misc
+NEXT_PUBLIC_YOUTUBE_CHANNEL_ID=your_channel_id   # fallback when the sheet has no stream link
+NEXT_PUBLIC_WAYSTREAM_EMBED_URL=your_waystream_embed_url
+NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_key
 ```
 
 **Security Notes:**
 
-- Generate `ADMIN_API_KEY` with: `openssl rand -base64 32`
+- Generate secrets (`WEBHOOK_SECRET`, `CRON_SECRET`, `QUIZ_SECURITY_PEPPER`) with: `openssl rand -base64 32`
 - Never commit `.env.local` to git (already in `.gitignore`)
-- In production (Vercel), add these via Project Settings → Environment Variables
+- In production (Vercel), add these via Project Settings → Environment Variables, then redeploy — `NEXT_PUBLIC_*` values are baked in at build time
 
 4. Run the development server (uses Turbopack for fast refresh):
 
@@ -524,27 +593,43 @@ npm run dev
 
 ### Available Scripts
 
-| Command         | Description                         |
-| --------------- | ----------------------------------- |
-| `npm run dev`   | Start dev server with Turbopack HMR |
-| `npm run build` | Production build with Turbopack     |
-| `npm start`     | Serve production build              |
-| `npm run lint`  | Run ESLint                          |
+| Command              | Description                         |
+| -------------------- | ----------------------------------- |
+| `npm run dev`        | Start dev server with Turbopack HMR |
+| `npm run build`      | Production build with Turbopack     |
+| `npm start`          | Serve production build              |
+| `npm run lint`       | Run ESLint                          |
+| `npm run typecheck`  | Type-check with `tsc --noEmit`      |
+| `npm test`           | Run the Vitest suite once           |
+| `npm run test:watch` | Run Vitest in watch mode            |
 
-## � Security Implementation
+CI runs `lint`, `typecheck` and `test` on every push to `main` and every pull request (`.github/workflows/ci.yml`).
+
+## 🔒 Security Implementation
 
 The app has been hardened with comprehensive security measures:
 
-- **Authentication**: Bearer token authentication on all admin API endpoints
-- **Rate Limiting**: IP-based rate limiting (100 req/min public, 1000 req/min authenticated, 10 req/min sensitive)
+- **Authentication**: admin API routes require a Firebase ID token (`Authorization: Bearer <token>`); set `ADMIN_EMAILS` to restrict them to named accounts
+- **Rate Limiting**: per-IP sliding windows (100 req/min public, 1000 req/min authenticated, 10 req/min sensitive). With Upstash configured the counts are shared by every server instance; without it each instance counts on its own. Dynamic routes charge one shared counter (e.g. all `/api/scripture/*` lookups)
 - **Input Validation**: Zod schema validation on all forms and API inputs
+- **Database rules**: `firestore.rules` restricts what browsers may write — e.g. chat messages and testimonies must have exactly the expected fields, sizes and a current timestamp
 - **Content Security Policy**: Strict CSP headers with allowlisted domains for scripts, frames, and connections
 - **Error Handling**: Graceful error boundaries with user-friendly messages at both route and global levels
-- **Bot Protection**: Cloudflare Turnstile on public-facing forms
+- **Bot Protection**: Cloudflare Turnstile on the contact and testimony forms
+- **Email safety**: user input is HTML-escaped in emails; testimony auto-replies don't echo submitted text
+- **Scheduled jobs**: `/api/cron/*` only run with the `CRON_SECRET` bearer token (compared in constant time)
 - **TLS/SSL**: Strict certificate validation in production
 - **Contact Obfuscation**: Email and phone numbers rendered client-side to prevent scraping
 
-For detailed security status, see **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)**.
+### Setup that lives outside the code
+
+These are configured in dashboards, not in the repo:
+
+1. **Publish `firestore.rules`** — there is no Firebase deploy config in the repo. Firebase Console → Firestore → **Rules**: paste the file, test in the **Rules Playground**, then Publish.
+2. **Disable public sign-up** — Firebase Console → Authentication → **Settings → User actions**: untick **"Enable create (sign-up)"**. Firebase's REST API otherwise lets anyone create an account with the public API key, and the database rules treat any signed-in user as an admin (they can't read `ADMIN_EMAILS`).
+3. **Turnstile hostnames** — Cloudflare → Turnstile → your widget → **Hostnames**: include `ikorodu.nlwc.church` (and `localhost` for local testing).
+4. **Upstash (optional)** — Vercel → Marketplace → **Upstash Redis**, connected to the project, for shared rate limits.
+5. **`CRON_SECRET`** — required for the scheduled jobs below.
 
 ## 📝 WordPress Integration
 
@@ -585,6 +670,18 @@ import { getManualBySlug, getAdjacentManuals } from "@/lib/wordpress";
 const manual = await getManualBySlug("manual-slug");
 ```
 
+## ⏰ Scheduled Jobs
+
+Defined in `vercel.json` and run by Vercel Cron (times in UTC; Lagos is UTC+1). Each route lives under `src/app/api/cron/` and requires `CRON_SECRET`. They appear under Vercel → Settings → **Cron Jobs**, where each can also be run by hand.
+
+| Job                | Schedule (UTC) | What it does                                                                                                                        |
+| ------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `release-refresh`  | daily 00:00    | Pings WordPress's scheduler so posts due at the 00:30 WAT release slot publish, then refreshes manual/transcript pages              |
+| `purge-live-chat`  | daily 02:00    | Deletes live-chat messages older than 7 days                                                                                        |
+| `special-services` | 15th, 07:00    | Adds next month's Sithrah (+ Thursday/Friday prep) and Season of the Spirit entries — skipped when switched off in Admin → Schedule |
+
+On Vercel's Hobby plan a daily job may start up to an hour late; the schedules above allow for that.
+
 ## 🏗️ Building for Production
 
 ```bash
@@ -597,92 +694,83 @@ The build process:
 - Compiles TypeScript with Turbopack
 - Optimizes assets and code-splits routes
 - Pre-renders static pages (SSG)
-- Generates first 5 transcript and manual pages (rest via ISR on demand)
-- Produces a standalone deployable output
+- Generates the first transcript, manual and sermon pages; every other content page (sermons, audio messages, video messages, legacy redirects) is built on its first visit and then cached (ISR)
+
+**Local build notes:**
+
+- Stop `npm run dev` before running `npm run build` — both write to `.next/`, and the build can fail with a misleading type error in `.next/dev/types`.
+- `/api/sheet` resolves every gallery Google Photos link while building; on a slow connection it can exceed Next.js's 60-second per-route limit. Vercel's builders are normally fast enough.
 
 ## ⚠️ API Authentication
 
-If you're using the protected API endpoints, update your code:
+Admin routes require the signed-in admin's **Firebase ID token**. In admin pages, use the `authFetch` helper, which attaches it:
 
-### Admin Endpoints Now Require Authentication
+```typescript
+import { authFetch } from "@/lib/authClient";
 
-**Before:**
-
-```javascript
-const response = await fetch("/api/wp/publish", {
+const response = await authFetch("/api/wp/publish", {
   method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify(data),
 });
 ```
 
-**After:**
+Equivalent raw request: `Authorization: Bearer <Firebase ID token>`. With `ADMIN_EMAILS` set, only those accounts are accepted.
 
-```javascript
-const response = await fetch("/api/wp/publish", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.ADMIN_API_KEY}`,
-  },
-  body: JSON.stringify(data),
-});
-```
+**Admin-only routes:**
 
-**Affected Endpoints:**
+- `/api/wp/content` (GET — lists drafts and scheduled posts), `/api/wp/media` (GET)
+- `/api/wp/publish` (POST), `/api/wp/update` (PUT), `/api/wp/upload-media` (POST)
+- `/api/fellowship/resolve-map` (POST)
+- `/api/devotionals/upload` (POST), `/api/devotionals/delete` (DELETE)
+- `/api/quiz/admin/*` (except the public GET of `categories`)
+- `/api/admin/audit-log`
 
-- `/api/wp/publish`
-- `/api/wp/upload-media`
-- `/api/wp/speakers` (POST — creates a Series Engine speaker or series; GET stays public)
-- `/api/fellowship` (POST/PUT/DELETE; GET stays public)
-- `/api/devotionals/upload`
-- `/api/devotionals/delete`
+**Public reads, admin writes:**
+
+- `/api/schedule` — writes are POST/PUT/DELETE, plus `PUT { type: "settings", autoAddSpecials }`
+- `/api/fellowship` — `?include=inactive` also needs a token
+- `/api/wp/speakers`, `/api/wp/transcript-categories` — POST creates a minister/series or a transcript category; `?fresh=1` (uncached read) needs a token
 
 ### Revalidation Endpoint (Secret in Header, Not URL)
 
-**Before:**
+WordPress calls this when content changes; it can also be called by hand:
 
 ```javascript
-fetch("/api/revalidate?path=/page&secret=WEBHOOK_SECRET");
-```
-
-**After:**
-
-```javascript
-fetch("/api/revalidate?path=/page", {
+fetch("/api/revalidate?type=transcript", {
+  // or type=manual | sermon, or ?path=/some/page
   method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.WEBHOOK_SECRET}`,
-  },
+  headers: { Authorization: `Bearer ${process.env.WEBHOOK_SECRET}` },
 });
 ```
 
 ## 🗺️ Site Navigation Reference
 
-| Section           | URL                  | Purpose                                           |
-| ----------------- | -------------------- | ------------------------------------------------- |
-| Home              | `/`                  | Landing page with overview of all content         |
-| About             | `/about`             | Church story, leadership, beliefs, events         |
-| Gallery           | `/gallery`           | Photo archive from church events                  |
-| Media Hub         | `/media`             | Central entry point for all media content         |
-| Sermons           | `/sermons`           | Audio recordings of messages                      |
-| Transcripts       | `/transcripts`       | Written text of sermons (140+ available)          |
-| Manuals           | `/manuals`           | Sunday School teaching materials (111+ available) |
-| Devotionals       | `/devotionals`       | Daily spiritual devotional content                |
-| Video Messages    | `/video-messages`    | Video teachings and sermons                       |
-| Listen Live       | `/listen-live`       | Live audio streaming of services                  |
-| Live Video        | `/live`              | Live video streaming of services                  |
-| Testimonies       | `/testimonies`       | Community testimony submissions                   |
-| Fellowship        | `/fellowship`        | House fellowship center locations                 |
-| Contact           | `/contact`           | Contact form and church location                  |
-| Give              | `/give`              | Donation and tithing platform                     |
-| Salvation         | `/salvation`         | Gospel message and spiritual guidance             |
-| Welcome           | `/welcome`           | New visitor landing page                          |
-| Admin (Church Content) | `/admin`        | Publish/edit sermons, transcripts & manuals       |
-| Admin Quiz        | `/admin/quiz`        | Quiz question & category management               |
-| Admin Devotionals | `/admin/devotionals` | Devotional content management                     |
-| Admin Fellowship  | `/admin/fellowship`  | House fellowship center management                |
-| Admin Settings    | `/admin/settings`    | Schedule & audit log                              |
-| Admin Testimonies | `/admin/testimonies` | Testimony moderation                              |
+| Section                | URL                  | Purpose                                           |
+| ---------------------- | -------------------- | ------------------------------------------------- |
+| Home                   | `/`                  | Landing page with overview of all content         |
+| About                  | `/about`             | Church story, leadership, beliefs, events         |
+| Gallery                | `/gallery`           | Photo archive from church events                  |
+| Media Hub              | `/media`             | Central entry point for all media content         |
+| Sermons                | `/sermons`           | Audio recordings of messages                      |
+| Transcripts            | `/transcripts`       | Written text of sermons (140+ available)          |
+| Manuals                | `/manuals`           | Sunday School teaching materials (111+ available) |
+| Devotionals            | `/devotionals`       | Daily spiritual devotional content                |
+| Video Messages         | `/video-messages`    | Video teachings and sermons                       |
+| Listen Live            | `/listen-live`       | Live audio streaming of services                  |
+| Live Video             | `/live`              | Live video streaming of services                  |
+| Testimonies            | `/testimonies`       | Community testimony submissions                   |
+| Fellowship             | `/fellowship`        | House fellowship center locations                 |
+| Contact                | `/contact`           | Contact form and church location                  |
+| Give                   | `/give`              | Donation and tithing platform                     |
+| Salvation              | `/salvation`         | Gospel message and spiritual guidance             |
+| Welcome                | `/welcome`           | New visitor landing page                          |
+| Admin (Church Content) | `/admin`             | Publish/edit sermons, transcripts & manuals       |
+| Admin Quiz             | `/admin/quiz`        | Quiz question & category management               |
+| Admin Devotionals      | `/admin/devotionals` | Devotional content management                     |
+| Admin Fellowship       | `/admin/fellowship`  | House fellowship center management                |
+| Admin Settings         | `/admin/settings`    | Schedule & audit log                              |
+| Admin Testimonies      | `/admin/testimonies` | Testimony moderation                              |
 
 ## 🎯 Key Features Breakdown
 
@@ -713,21 +801,25 @@ fetch("/api/revalidate?path=/page", {
 - **Turbopack** for fast development and production builds
 - **Server-Side Rendering** for SEO
 - **Static Site Generation** for popular content
-- **Incremental Static Regeneration** (5-min revalidation + on-demand webhook)
-- **React Query caching** for client-side data
-- **Image optimization** with Next.js Image + Cloudinary
+- **Incremental Static Regeneration** (5-min revalidation + on-demand webhook). Transcript and manual detail pages stay cacheable because search highlighting (`?q=`) is applied in the browser (`useUrlSearchQuery`), not on the server
+- **Cached API routes** — the live-stream link (60s), manual themes, transcript lists and the latest devotional are cached; Bible verse and search responses are CDN-cached for a day
+- **Cheap 404s** — unknown sermon IDs and junk legacy links return 404 without the expensive WordPress fallbacks
+- **React Query caching** for client-side data; homepage MediaHub tabs load only when opened
+- **Image optimization** — Cloudinary images are resized by Cloudinary itself (`cloudinaryLoader`) instead of being optimised twice; thumbnails declare `sizes`
+- **Lean homepage bundle** — no Firebase client SDK on the homepage (the devotional prompt uses `/api/devotionals/latest`); Framer Motion's engine is lazy-loaded
 - **Code splitting** per route
-- **Service Worker** for offline support and asset caching
+- **Service Worker** for offline support — pre-caches only the offline pages, never caches Next.js RSC/prefetch payloads, and keeps at most 150 entries
 
 ### Developer Experience
 
 - **TypeScript 5.9** for strict type safety
 - **ESLint** for code quality
+- **Vitest** test suite (`npm test`), run with lint and type-check by GitHub Actions CI
 - **Turbopack HMR** for instant development feedback
 - **Component-driven** architecture with Radix UI primitives
 - **Comprehensive project documentation**
 
-## � Application Flow
+## 🔄 Application Flow
 
 ### Content Delivery Pipeline
 
@@ -762,41 +854,48 @@ Leaderboard (Supabase, top scores by username)
 ### Admin Flow
 
 ```
-Admin Login (Bearer token via ADMIN_API_KEY)
+Admin Login (Firebase Authentication; API calls carry the ID token)
   ↓
-/admin → Dashboard with links to quiz, devotionals, testimonies
+/admin → Dashboard with links to every admin area
   ↓
+/admin/content → Publish/edit sermons, transcripts (incl. new categories) and manuals (incl. Import from Word)
 /admin/quiz → Add/Edit/Delete questions, Import CSV/JSON, Export
 /admin/devotionals → Upload/Delete devotional content
 /admin/testimonies → Approve/Reject submitted testimonies
+/admin/fellowship → Fellowship centers (coordinates from the Maps link)
+/admin/settings/schedule → Weekly services, special events, monthly auto-add switch
+/admin/settings/audit-log → Who changed what, and when
 ```
 
 ### Data Flow Summary
 
-| Data            | Source                 | Storage                          | Cache                  |
-| --------------- | ---------------------- | -------------------------------- | ---------------------- |
-| Transcripts     | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
-| Manuals         | WordPress REST API     | None (fetched on demand)         | ISR 5min + React Query |
-| Quiz Questions  | Firebase Firestore     | `quiz_questions` collection      | None (real-time)       |
-| Quiz Sessions   | Supabase               | `sessions`, `quiz_attempts`      | None                   |
-| Quiz Recovery   | Supabase               | `session_security` (hashed)      | None                   |
-| Recovery Codes  | Supabase               | `session_recovery_codes` (hashed) | None                  |
-| Leaderboard     | Supabase               | `sessions` (aggregated)          | React Query            |
-| Testimonies     | Firebase Firestore     | `testimonies` collection         | None                   |
-| Fellowship      | Firebase Firestore     | `fellowship_centers` collection  | s-maxage 60 + React Query |
-| Gallery Images  | Google Sheets          | Spreadsheet rows                 | API route cache        |
-| Audio Sermons   | External audio host    | None                             | React Query            |
-| Devotionals     | Cloudinary + metadata  | Cloud storage                    | ISR                    |
-| Contact Form    | Google Sheets          | Spreadsheet rows                 | None                   |
-| Media Progress  | Browser `localStorage` | Per-device                       | None                   |
-| List Pagination | URL query params       | `sessionStorage` (for back nav)  | None                   |
+| Data            | Source                 | Storage                           | Cache                     |
+| --------------- | ---------------------- | --------------------------------- | ------------------------- |
+| Transcripts     | WordPress REST API     | None (fetched on demand)          | ISR 5min + React Query    |
+| Manuals         | WordPress REST API     | None (fetched on demand)          | ISR 5min + React Query    |
+| Quiz Questions  | Firebase Firestore     | `quiz_questions` collection       | None (real-time)          |
+| Quiz Sessions   | Supabase               | `sessions`, `quiz_attempts`       | None                      |
+| Quiz Recovery   | Supabase               | `session_security` (hashed)       | None                      |
+| Recovery Codes  | Supabase               | `session_recovery_codes` (hashed) | None                      |
+| Leaderboard     | Supabase               | `sessions` (aggregated)           | React Query               |
+| Testimonies     | Firebase Firestore     | `testimonies` collection          | None                      |
+| Fellowship      | Firebase Firestore     | `fellowship_centers` collection   | s-maxage 60 + React Query |
+| Gallery Images  | Google Sheets          | Spreadsheet rows                  | API route cache           |
+| Audio Sermons   | External audio host    | None                              | React Query               |
+| Devotionals     | Firestore + Cloudinary | `devotionals` collection + PDFs   | ISR / 5 min (latest)      |
+| Schedule        | Firebase Firestore     | `schedule_*` collections          | s-maxage 30               |
+| Live Chat       | Firebase Firestore     | `live-chat` (purged after 7 days) | None (real-time)          |
+| Contact Form    | — (validated only)     | Not stored yet                    | None                      |
+| Media Progress  | Browser `localStorage` | Per-device                        | None                      |
+| List Pagination | URL query params       | `sessionStorage` (for back nav)   | None                      |
 
-## �📚 Documentation
+## 📚 Documentation
 
-- **[SECURITY_SCAN_REPORT.md](./SECURITY_SCAN_REPORT.md)** - Security audit and implementation status
-- **[IMPLEMENTATION_PROGRESS.md](./IMPLEMENTATION_PROGRESS.md)** - Phase 1 & 2 implementation details
-- **[APP_AUDIT_REPORT.md](./APP_AUDIT_REPORT.md)** - Full 50-issue audit report (reference)
-- **[QUIZ_IMPLEMENTATION.md](./QUIZ_IMPLEMENTATION.md)** - Quiz feature documentation
+- **[firestore.rules](./firestore.rules)** — Firestore security rules (publish via the Firebase Console; see Security)
+- **[vercel.json](./vercel.json)** — scheduled jobs
+- **[.github/workflows/ci.yml](./.github/workflows/ci.yml)** — CI pipeline
+- **[supabase/migrations/](./supabase/migrations/)** — quiz database schema
+- Most design decisions are documented in comments next to the code they explain
 
 ## 🤝 Contributing
 
