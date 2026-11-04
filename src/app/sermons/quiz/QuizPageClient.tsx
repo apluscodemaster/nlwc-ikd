@@ -32,18 +32,20 @@ type Phase = "launch" | "playing" | "results";
 function TopScoreCelebration({
   active,
   leaderboard,
-  sessionId,
+  username,
 }: {
   active: boolean;
   leaderboard: LeaderboardEntry[];
-  sessionId?: string;
+  /** The player's username — unique, and the leaderboard has no session ids. */
+  username?: string;
 }) {
   const { celebrate } = useCelebration();
   useEffect(() => {
-    if (!active || !sessionId || leaderboard.length === 0) return;
-    const isTop = leaderboard[0].session_id === sessionId;
-    const myScore =
-      leaderboard.find((e) => e.session_id === sessionId)?.total_score ?? 0;
+    const me = username?.trim().toLowerCase();
+    if (!active || !me || leaderboard.length === 0) return;
+    const isMe = (e: LeaderboardEntry) => e.username.toLowerCase() === me;
+    const isTop = isMe(leaderboard[0]);
+    const myScore = leaderboard.find(isMe)?.total_score ?? 0;
     if (checkTopScore(isTop, myScore)) {
       celebrate({
         intensity: "champion",
@@ -51,7 +53,7 @@ function TopScoreCelebration({
         label: "New #1 on the leaderboard!",
       });
     }
-  }, [active, leaderboard, sessionId, celebrate]);
+  }, [active, leaderboard, username, celebrate]);
   return null;
 }
 
@@ -197,7 +199,7 @@ export default function QuizPageClient() {
         <TopScoreCelebration
           active={phase === "results"}
           leaderboard={leaderboard}
-          sessionId={session?.session_id}
+          username={session?.username}
         />
         <PageHeader
           title="Bible Quiz"
