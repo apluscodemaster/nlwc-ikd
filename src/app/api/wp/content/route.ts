@@ -80,7 +80,10 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
       return await fetchWPPosts({ ...opts, status: adminStatus, authHeader });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (!adminStatus || !/rest_forbidden_status|returned 40[01]|Bad Request/.test(message)) {
+      if (
+        !adminStatus ||
+        !/rest_forbidden_status|returned 40[01]|Bad Request/.test(message)
+      ) {
         throw err;
       }
       console.error(
