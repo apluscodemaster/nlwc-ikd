@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import { m as motion, AnimatePresence } from "framer-motion";
@@ -130,6 +130,8 @@ export default function AdminChurchContentPage() {
   const [publishing, setPublishing] = useState(false);
 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  /** Id of the newest list request; older responses are ignored. */
+  const latestContentRequest = useRef(0);
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentPage, setContentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -184,6 +186,12 @@ export default function AdminChurchContentPage() {
   // layout so it is already protected at the page level.
   const fetchContent = useCallback(
     async (type: ContentType, page: number, search = "") => {
+      // Only the newest request may update the list. The sermon list is slow
+      // (Series Engine), so switching tabs while it was loading let its late
+      // response overwrite the transcript/manual list — and Edit then opened
+      // a sermon.
+      const requestId = ++latestContentRequest.current;
+      const isStale = () => requestId !== latestContentRequest.current;
       setLoadingContent(true);
       try {
         const searchParam = search
@@ -200,15 +208,32 @@ export default function AdminChurchContentPage() {
           // category. Never serve this list from the browser cache.
           { cache: "no-store" },
         );
-        const data = await res.json();
-        if (data.items) {
+        const data = await res.json().catch(() => ({}));
+        if (isStale()) return;
+        if (res.ok && data.items) {
           setContentItems(data.items);
           setTotalPages(data.pagination?.totalPages || 1);
+        } else {
+          // Don't leave the previous tab's items on screen.
+          setContentItems([]);
+          setTotalPages(1);
+          toast.error(`Couldn't load ${type}s`, {
+            description:
+              res.status === 401
+                ? data.error ||
+                  "Your session has expired — please sign in again."
+                : data.error || `Server returned ${res.status}`,
+          });
         }
       } catch {
+        if (isStale()) return;
+        setContentItems([]);
         console.error("Failed to load content");
+        toast.error(`Couldn't load ${type}s`, {
+          description: "Could not reach the server.",
+        });
       } finally {
-        setLoadingContent(false);
+        if (!isStale()) setLoadingContent(false);
       }
     },
     [manualGroupMode],
@@ -229,6 +254,12 @@ export default function AdminChurchContentPage() {
 
   // ── Handle tab switch ───────────────────────────────────────────────────────
   const handleTabSwitch = (tab: ContentType) => {
+    if (tab !== activeTab) {
+      // Clear right away so the previous tab's items never show under the
+      // new tab while its list loads.
+      setContentItems([]);
+      setTotalPages(1);
+    }
     setActiveTab(tab);
     setViewMode("list");
     setContentPage(1);
@@ -241,6 +272,9 @@ export default function AdminChurchContentPage() {
 
   // ── Edit item ───────────────────────────────────────────────────────────────
   const handleEditItem = (item: ContentItem) => {
+    // Never open an item from another tab in this tab's edit form (it would
+    // be saved through the wrong backend).
+    if (item.type !== activeTab) return;
     // Older list rows (or a post in no transcript category) carry no id; fall
     // back to the category its resolved type maps to.
     const currentCategory = item.transcriptCategoryId
