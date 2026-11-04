@@ -213,6 +213,15 @@ export default function AdminChurchContentPage() {
         if (res.ok && data.items) {
           setContentItems(data.items);
           setTotalPages(data.pagination?.totalPages || 1);
+          // The list still loaded (published posts) but WordPress refused the
+          // admin login — say so, or missing drafts look like data loss.
+          if (data.warning) {
+            toast.warning("Showing published posts only", {
+              id: "wp-admin-login-warning",
+              description: data.warning,
+              duration: 10000,
+            });
+          }
         } else {
           // Don't leave the previous tab's items on screen.
           setContentItems([]);

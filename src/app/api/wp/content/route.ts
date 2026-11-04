@@ -63,6 +63,36 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
   const authHeader = getAdminAuth();
   const adminStatus = authHeader ? "publish,future,draft,pending" : undefined;
 
+  // Set when WordPress refused the admin login and the list fell back to
+  // published posts only; returned so the admin sees why drafts are missing.
+  let warning: string | undefined;
+
+  /**
+   * WordPress posts for the admin list, including drafts/scheduled when the
+   * admin login works. If WordPress rejects that login it answers 400
+   * "Status is forbidden" for the unpublished statuses — then fall back to
+   * the published posts rather than failing the whole list.
+   */
+  const fetchAdminPosts = async (
+    opts: Omit<Parameters<typeof fetchWPPosts>[0], "status" | "authHeader">,
+  ) => {
+    try {
+      return await fetchWPPosts({ ...opts, status: adminStatus, authHeader });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!adminStatus || !/rest_forbidden_status|returned 40[01]|Bad Request/.test(message)) {
+        throw err;
+      }
+      console.error(
+        "WordPress rejected the admin login (WP_APPLICATION_USER / WP_APPLICATION_PASSWORD) — listing published posts only:",
+        message,
+      );
+      warning =
+        "WordPress rejected the site's admin login, so drafts and scheduled posts are hidden and publishing/editing may fail. Check WP_APPLICATION_USER and WP_APPLICATION_PASSWORD in Vercel.";
+      return await fetchWPPosts(opts);
+    }
+  };
+
   try {
     switch (type) {
       case "sermon": {
@@ -102,13 +132,11 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
         const categoryNames = new Map(
           transcriptCategories.map((c) => [c.id, c.name]),
         );
-        const result = await fetchWPPosts({
+        const result = await fetchAdminPosts({
           categories: transcriptCategories.map((c) => c.id),
           page,
           perPage,
           search,
-          status: adminStatus,
-          authHeader,
           noStore: true,
           // Admin list shows no thumbnail for transcripts — skip _embed to
           // lighten the WP query and response.
@@ -146,17 +174,16 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
             total: result.total,
             totalPages: result.totalPages,
           },
+          ...(warning ? { warning } : {}),
         });
       }
 
       case "manual": {
-        const result = await fetchWPPosts({
+        const result = await fetchAdminPosts({
           categories: [WP_CATEGORIES.SUNDAY_SCHOOL_MANUAL],
           page,
           perPage,
           search,
-          status: adminStatus,
-          authHeader,
           noStore: true,
           embed: false,
         });
@@ -187,6 +214,7 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
             total: result.total,
             totalPages: result.totalPages,
           },
+          ...(warning ? { warning } : {}),
         });
       }
 
