@@ -7,13 +7,15 @@ import type { LeaderboardEntry } from "@/types/quiz";
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
-  currentSessionId?: string;
+  /** The viewer's username, to highlight their row. */
+  currentUsername?: string;
 }
 
 export default function Leaderboard({
   entries,
-  currentSessionId,
+  currentUsername,
 }: LeaderboardProps) {
+  const me = currentUsername?.trim().toLowerCase();
   if (entries.length === 0) {
     return (
       <div className="text-center text-sm text-muted-foreground py-8">
@@ -31,7 +33,7 @@ export default function Leaderboard({
 
       <div className="divide-y divide-gray-50">
         {entries.slice(0, 20).map((entry, i) => {
-          const isMe = entry.session_id === currentSessionId;
+          const isMe = !!me && entry.username.toLowerCase() === me;
           const rankColors = [
             "text-amber-500",
             "text-gray-400",
@@ -40,7 +42,7 @@ export default function Leaderboard({
 
           return (
             <motion.div
-              key={`${entry.session_id}-${i}`}
+              key={`${entry.username}-${i}`}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}

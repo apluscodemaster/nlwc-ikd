@@ -59,8 +59,12 @@ export interface ContentMapping {
 }
 
 // ── Leaderboard ──
+/**
+ * Public leaderboard row. Deliberately has no session_id: a player's
+ * session_id is the only credential for their progress, so it must never be
+ * published. Usernames are unique (case-insensitive) and identify "you".
+ */
 export interface LeaderboardEntry {
-  session_id: string;
   username: string;
   total_score: number;
   quizzes_taken: number;

@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
+/**
+ * GET /api/quiz/leaderboard — top players.
+ *
+ * Read with the service key (the quiz tables no longer allow public reads)
+ * and returns only public fields. It used to return each player's session_id,
+ * which is the only credential for their progress — anyone could then submit
+ * answers or restore progress as them.
+ */
 export async function GET() {
   try {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseAdmin()
       .from("leaderboard")
-      .select("*")
+      .select("username, total_score, quizzes_taken, last_active")
       .limit(100);
 
     if (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import {
   getWeakAreas,
   getRecommendations,
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all attempts for this session
-    const { data: attempts, error: attemptsError } = await getSupabase()
+    const { data: attempts, error: attemptsError } = await getSupabaseAdmin()
       .from("quiz_attempts")
       .select("*")
       .eq("session_id", session_id);

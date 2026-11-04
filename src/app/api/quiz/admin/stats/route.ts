@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   if (auth.response) return auth.response;
 
   try {
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
 
     // Fetch sessions count and aggregate stats
     const { data: sessions, error: sessErr } = await fetchAllRows<{

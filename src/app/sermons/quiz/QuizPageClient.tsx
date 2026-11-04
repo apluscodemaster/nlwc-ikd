@@ -193,107 +193,107 @@ export default function QuizPageClient() {
 
   return (
     <CelebrationProvider>
-    <main>
-      <TopScoreCelebration
-        active={phase === "results"}
-        leaderboard={leaderboard}
-        sessionId={session?.session_id}
-      />
-      <PageHeader
-        title="Bible Quiz"
-        subtitle="Test your knowledge from services and messages. See how you rank on the leaderboard!"
-        backgroundImage="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=2073&auto=format&fit=crop"
-      />
-
-      <SectionContainer>
-        <div className="py-8 space-y-12">
-          {/* Username prompt for new users */}
-          {needsUsername ? (
-            <UsernamePrompt
-              onSubmit={handleCreateSession}
-              onRecovered={handleRecovered}
-            />
-          ) : (
-            <>
-              {/* Recovery prompt — only when no security question is set yet */}
-              {phase === "launch" && session && !session.security_set && (
-                <div className="max-w-2xl mx-auto -mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
-                  <div className="flex items-start gap-2.5">
-                    <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-800">
-                      Secure your progress so you can continue on another device
-                      or after clearing your browser.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSecurityMode("set");
-                      setShowSecurity(true);
-                    }}
-                    className="shrink-0 px-4 py-2 rounded-full bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    Set security question
-                  </button>
-                </div>
-              )}
-
-              {/* Quiz phases */}
-              {phase === "launch" && (
-                <QuizLauncher
-                  onStart={handleStart}
-                  loading={fetchingQuestions}
-                  username={session?.username}
-                />
-              )}
-
-              {/* Change recovery question (already secured) */}
-              {phase === "launch" && session?.security_set && (
-                <p className="max-w-2xl mx-auto -mt-6 text-center text-xs text-muted-foreground">
-                  <button
-                    onClick={() => {
-                      setSecurityMode("change");
-                      setShowSecurity(true);
-                    }}
-                    className="font-medium text-primary hover:underline cursor-pointer"
-                  >
-                    Change your recovery question
-                  </button>
-                </p>
-              )}
-
-              {phase === "playing" && session && (
-                <QuizPlayer
-                  sessionId={session.session_id}
-                  category={category}
-                  onComplete={handleComplete}
-                />
-              )}
-
-              {phase === "results" && result && (
-                <QuizResults result={result} onRetry={handleRetry} />
-              )}
-
-              {/* Leaderboard (always visible except during play) */}
-              {phase !== "playing" && (
-                <Leaderboard
-                  entries={leaderboard}
-                  currentSessionId={session?.session_id}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </SectionContainer>
-
-      {showSecurity && session && (
-        <SecurityQuestionModal
-          sessionId={session.session_id}
-          mode={securityMode}
-          onClose={() => setShowSecurity(false)}
-          onSaved={markSecuritySet}
+      <main>
+        <TopScoreCelebration
+          active={phase === "results"}
+          leaderboard={leaderboard}
+          sessionId={session?.session_id}
         />
-      )}
-    </main>
+        <PageHeader
+          title="Bible Quiz"
+          subtitle="Test your knowledge from services and messages. See how you rank on the leaderboard!"
+          backgroundImage="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=2073&auto=format&fit=crop"
+        />
+
+        <SectionContainer>
+          <div className="py-8 space-y-12">
+            {/* Username prompt for new users */}
+            {needsUsername ? (
+              <UsernamePrompt
+                onSubmit={handleCreateSession}
+                onRecovered={handleRecovered}
+              />
+            ) : (
+              <>
+                {/* Recovery prompt — only when no security question is set yet */}
+                {phase === "launch" && session && !session.security_set && (
+                  <div className="max-w-2xl mx-auto -mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                    <div className="flex items-start gap-2.5">
+                      <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-sm text-amber-800">
+                        Secure your progress so you can continue on another
+                        device or after clearing your browser.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSecurityMode("set");
+                        setShowSecurity(true);
+                      }}
+                      className="shrink-0 px-4 py-2 rounded-full bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Set security question
+                    </button>
+                  </div>
+                )}
+
+                {/* Quiz phases */}
+                {phase === "launch" && (
+                  <QuizLauncher
+                    onStart={handleStart}
+                    loading={fetchingQuestions}
+                    username={session?.username}
+                  />
+                )}
+
+                {/* Change recovery question (already secured) */}
+                {phase === "launch" && session?.security_set && (
+                  <p className="max-w-2xl mx-auto -mt-6 text-center text-xs text-muted-foreground">
+                    <button
+                      onClick={() => {
+                        setSecurityMode("change");
+                        setShowSecurity(true);
+                      }}
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      Change your recovery question
+                    </button>
+                  </p>
+                )}
+
+                {phase === "playing" && session && (
+                  <QuizPlayer
+                    sessionId={session.session_id}
+                    category={category}
+                    onComplete={handleComplete}
+                  />
+                )}
+
+                {phase === "results" && result && (
+                  <QuizResults result={result} onRetry={handleRetry} />
+                )}
+
+                {/* Leaderboard (always visible except during play) */}
+                {phase !== "playing" && (
+                  <Leaderboard
+                    entries={leaderboard}
+                    currentUsername={session?.username}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </SectionContainer>
+
+        {showSecurity && session && (
+          <SecurityQuestionModal
+            sessionId={session.session_id}
+            mode={securityMode}
+            onClose={() => setShowSecurity(false)}
+            onSaved={markSecuritySet}
+          />
+        )}
+      </main>
     </CelebrationProvider>
   );
 }

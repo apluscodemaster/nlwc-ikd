@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { fetchQuestionById, buildQuizResult } from "@/lib/quizService";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { z } from "zod";
 
 /** A quiz serves at most 25 questions (see /api/quiz/questions). */
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const { session_id, answers } = result.data;
 
     // Verify session exists
-    const { data: sessionData } = await getSupabase()
+    const { data: sessionData } = await getSupabaseAdmin()
       .from("sessions")
       .select("session_id")
       .eq("session_id", session_id)
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     // Atomic score increment via RPC
     const score = quizResult.correct_answers;
-    await getSupabase().rpc("increment_quiz_count", {
+    await getSupabaseAdmin().rpc("increment_quiz_count", {
       sid: session_id,
       points: score,
     });

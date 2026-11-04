@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { normalizeSearchQuery } from "@/lib/utils";
 import type {
   QuizQuestion,
@@ -72,7 +72,7 @@ export async function saveQuizAttempts(
   sessionId: string,
   attempts: Omit<QuizAttempt, "id" | "answered_at">[],
 ): Promise<void> {
-  const { error } = await getSupabase()
+  const { error } = await getSupabaseAdmin()
     .from("quiz_attempts")
     .insert(
       attempts.map((a) => ({
@@ -88,7 +88,7 @@ export async function saveQuizAttempts(
 
 // ── Get weak areas for a session ──
 export async function getWeakAreas(sessionId: string): Promise<WeakArea[]> {
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from("session_weak_areas")
     .select("*")
     .eq("session_id", sessionId);
@@ -252,7 +252,7 @@ export async function getRecommendations(
     const categories = weakAreas.map((w) => w.category);
 
     try {
-      const { data: catContent } = await getSupabase()
+      const { data: catContent } = await getSupabaseAdmin()
         .from("content_mapping")
         .select("*")
         .in("category", categories)

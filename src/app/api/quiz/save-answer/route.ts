@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { fetchQuestionById, saveQuizAttempts } from "@/lib/quizService";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import type { QuizAttempt } from "@/types/quiz";
 
 export async function POST(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { question_id, selected_answer, category } = answer;
 
     // Check if this question was already answered by this session
-    const { data: existing } = await getSupabase()
+    const { data: existing } = await getSupabaseAdmin()
       .from("quiz_attempts")
       .select("id, is_correct")
       .eq("session_id", session_id)
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     // Increment score if correct
     if (is_correct) {
       try {
-        await getSupabase().rpc("increment_quiz_count", {
+        await getSupabaseAdmin().rpc("increment_quiz_count", {
           sid: session_id,
           points: 1,
         });

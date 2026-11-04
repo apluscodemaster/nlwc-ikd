@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchQuizQuestions } from "@/lib/quizService";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import type { QuizCategory } from "@/types/quiz";
 
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     // the hundreds/thousands.
     let dbAnswered: string[] = [];
     if (sessionId) {
-      let answeredQuery = getSupabase()
+      let answeredQuery = getSupabaseAdmin()
         .from("quiz_attempts")
         .select("question_id")
         .eq("session_id", sessionId);

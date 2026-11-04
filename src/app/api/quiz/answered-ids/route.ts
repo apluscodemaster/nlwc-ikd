@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   // Rate limited: unbounded read per session.
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let query = getSupabase()
+    let query = getSupabaseAdmin()
       .from("quiz_attempts")
       .select("question_id")
       .eq("session_id", session_id);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getSupabase } from "@/lib/supabase";
 import type { QuizSession } from "@/types/quiz";
 
 const SESSION_KEY = "nlwc_quiz_session";
@@ -9,6 +8,26 @@ const SESSION_KEY = "nlwc_quiz_session";
 interface StoredSession {
   session_id: string;
   username: string;
+}
+
+/**
+ * The player's quiz session. All reads and writes go through /api/quiz/*
+ * routes (service key on the server); the browser no longer talks to
+ * Supabase directly, which is what let the quiz tables' RLS be locked down.
+ */
+
+/** Load a session by its id; null when it doesn't exist (or can't be read). */
+async function fetchSession(sessionId: string): Promise<QuizSession | null> {
+  try {
+    const res = await fetch(
+      `/api/quiz/session?session_id=${encodeURIComponent(sessionId)}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as QuizSession;
+  } catch {
+    return null;
+  }
 }
 
 export function useQuizSession() {
@@ -32,108 +51,55 @@ export function useQuizSession() {
     }
   }, []);
 
+  /** Load the stored session (the API also bumps last_active). */
   async function syncSession(sessionId: string) {
-    const { data, error } = await getSupabase()
-      .from("sessions")
-      .select("*")
-      .eq("session_id", sessionId)
-      .single();
-
-    if (error || !data) {
+    const data = await fetchSession(sessionId);
+    if (!data) {
       setNeedsUsername(true);
       setLoading(false);
       return;
     }
-
-    // Update last_active silently
-    getSupabase()
-      .from("sessions")
-      .update({ last_active: new Date().toISOString() })
-      .eq("session_id", sessionId)
-      .then();
-
-    setSession(data as QuizSession);
+    setSession(data);
     setLoading(false);
   }
 
   const createSession = useCallback(async (username: string) => {
     const trimmed = username.trim();
 
-    // Check if username already exists (case-insensitive)
-    const { data: existingSession, error: checkError } = await getSupabase()
-      .from("sessions")
-      .select("username")
-      .ilike("username", trimmed)
-      .maybeSingle();
+    const res = await fetch("/api/quiz/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: trimmed }),
+    });
+    const data = (await res
+      .json()
+      .catch(() => ({}))) as Partial<QuizSession> & {
+      error?: string;
+      code?: string;
+    };
 
-    if (checkError && checkError.code !== "PGRST116") {
-      throw new Error("Failed to validate username");
-    }
-
-    if (existingSession) {
-      const error = new Error("Username already taken") as Error & {
-        code?: string;
-      };
-      error.code = "USERNAME_EXISTS";
+    if (!res.ok || !data.session_id) {
+      const error = new Error(
+        res.status === 409
+          ? "Username already taken"
+          : data.error || "Failed to create session",
+      ) as Error & { code?: string };
+      if (res.status === 409) error.code = "USERNAME_EXISTS";
       throw error;
     }
 
-    const sessionId = crypto.randomUUID();
-
-    const { data, error } = await getSupabase()
-      .from("sessions")
-      .insert({ session_id: sessionId, username: trimmed })
-      .select()
-      .single();
-
-    if (error || !data) {
-      if (error?.code === "23505") {
-        // Unique constraint violation
-        const constraintError = new Error("Username already taken") as Error & {
-          code?: string;
-        };
-        constraintError.code = "USERNAME_EXISTS";
-        throw constraintError;
-      }
-      throw new Error("Failed to create session");
-    }
-
+    const created = data as QuizSession;
     localStorage.setItem(
       SESSION_KEY,
-      JSON.stringify({ session_id: sessionId, username: trimmed }),
+      JSON.stringify({
+        session_id: created.session_id,
+        username: created.username,
+      }),
     );
-
-    // Increment quizzes_taken once for this new session
-    try {
-      await getSupabase().rpc("increment_quizzes_taken", { sid: sessionId });
-    } catch (error) {
-      console.error("Failed to increment quizzes_taken:", error);
-    }
-
-    setSession(data as QuizSession);
+    setSession(created);
     setNeedsUsername(false);
-    return data as QuizSession;
+    return created;
   }, []);
-
-  const updateScore = useCallback(
-    async (additionalScore: number) => {
-      if (!session) return;
-
-      const { data } = await getSupabase()
-        .from("sessions")
-        .update({
-          total_score: session.total_score + additionalScore,
-          quizzes_taken: session.quizzes_taken + 1,
-          last_active: new Date().toISOString(),
-        })
-        .eq("session_id", session.session_id)
-        .select()
-        .single();
-
-      if (data) setSession(data as QuizSession);
-    },
-    [session],
-  );
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);
@@ -150,13 +116,9 @@ export function useQuizSession() {
         JSON.stringify({ session_id: sessionId, username }),
       );
       setLoading(true);
-      const { data } = await getSupabase()
-        .from("sessions")
-        .select("*")
-        .eq("session_id", sessionId)
-        .single();
+      const data = await fetchSession(sessionId);
       if (data) {
-        setSession(data as QuizSession);
+        setSession(data);
         setNeedsUsername(false);
       }
       setLoading(false);
@@ -175,7 +137,6 @@ export function useQuizSession() {
     loading,
     needsUsername,
     createSession,
-    updateScore,
     clearSession,
     adoptSession,
     markSecuritySet,

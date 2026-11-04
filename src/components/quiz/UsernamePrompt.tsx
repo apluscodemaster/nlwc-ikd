@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { m as motion } from "framer-motion";
 import { User, ArrowRight, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSupabase } from "@/lib/supabase";
 import RecoverProgressModal, {
   type RecoveredSession,
 } from "./RecoverProgressModal";
@@ -46,16 +45,19 @@ export default function UsernamePrompt({
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const { data, error: checkError } = await getSupabase()
-          .from("sessions")
-          .select("username")
-          .ilike("username", trimmed)
-          .maybeSingle();
+        // Server-side check (the browser no longer queries Supabase).
+        const res = await fetch(
+          `/api/quiz/username?name=${encodeURIComponent(trimmed)}`,
+          { cache: "no-store" },
+        );
+        const result = (await res.json().catch(() => null)) as {
+          available?: boolean;
+        } | null;
 
-        if (checkError && checkError.code !== "PGRST116") {
+        if (!res.ok || typeof result?.available !== "boolean") {
           setError("Could not check availability");
           setIsAvailable(null);
-        } else if (data) {
+        } else if (!result.available) {
           setIsAvailable(false);
           setError("This name is already taken. Please try another name.");
         } else {
@@ -171,7 +173,9 @@ export default function UsernamePrompt({
 
           <Button
             type="submit"
-            disabled={loading || !isValidLength || checking || isAvailable !== true}
+            disabled={
+              loading || !isValidLength || checking || isAvailable !== true
+            }
             className="w-full h-12 rounded-full font-bold cursor-pointer"
           >
             {loading ? (
