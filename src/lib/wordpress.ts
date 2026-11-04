@@ -343,7 +343,15 @@ export async function fetchWPPosts(
       lastError = new Error(`Rate limited (attempt ${attempt + 1})`);
       continue;
     }
-    throw new Error(`Failed to fetch posts: ${response.statusText}`);
+    // Include WordPress's own status and message (e.g. {"code":
+    // "rest_forbidden"} or a security plugin's block page) so failures can be
+    // diagnosed from the logs / admin error instead of a bare statusText.
+    const detail = (await response.text().catch(() => ""))
+      .replace(/\s+/g, " ")
+      .slice(0, 200);
+    throw new Error(
+      `WordPress returned ${response.status} ${response.statusText}${detail ? `: ${detail}` : ""}`,
+    );
   }
 
   if (!response || !response.ok) {

@@ -198,9 +198,15 @@ async function handleGet(request: NextRequest): Promise<NextResponse> {
     }
   } catch (error) {
     console.error(`Failed to fetch ${type} content:`, error);
+    // Admin-only route, so the underlying reason (e.g. what WordPress
+    // answered) is safe to return — the list's error toast shows it.
     return NextResponse.json(
-      { error: `Failed to fetch ${type} content` },
-      { status: 500 },
+      {
+        error: `Failed to fetch ${type} content: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      },
+      { status: 502 },
     );
   }
 }
