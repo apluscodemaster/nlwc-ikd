@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const WP_ORIGIN = "https://ikdadmin.nlwc.church";
 
 const nextConfig: NextConfig = {
-  staticPageGenerationTimeout: 300, // TEMP: local build check only
   turbopack: {
     root: __dirname,
   },
