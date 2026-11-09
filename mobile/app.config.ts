@@ -29,13 +29,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
-  splash: {
-    image: "./assets/images/splash-icon.png",
-    resizeMode: "contain",
-    backgroundColor: "#FFFFFF",
-    dark: { image: "./assets/images/splash-icon.png", backgroundColor: "#0B0B0F" },
-  },
   ios: {
     bundleIdentifier: id,
     supportsTablet: true,
@@ -53,7 +46,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#FF7C18",
     },
-    edgeToEdgeEnabled: true,
     permissions: [
       "ACCESS_COARSE_LOCATION",
       "ACCESS_FINE_LOCATION",

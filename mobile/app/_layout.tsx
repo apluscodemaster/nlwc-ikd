@@ -3,7 +3,13 @@ import "expo-sqlite/localStorage/install";
 
 import { useEffect } from "react";
 import { View } from "react-native";
-import { Stack, type ErrorBoundaryProps } from "expo-router";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavThemeProvider,
+  Stack,
+  type ErrorBoundaryProps,
+} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -13,7 +19,6 @@ import {
   Jost_700Bold,
   useFonts,
 } from "@expo-google-fonts/jost";
-import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from "@react-navigation/native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";

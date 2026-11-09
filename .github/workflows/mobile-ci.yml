@@ -33,12 +33,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
 
-      # Switch to `npm ci` (and add `cache: npm` with
-      # cache-dependency-path: mobile/package-lock.json above) once
-      # mobile/package-lock.json is committed.
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
 
       - name: Shared-code guard
         run: npm run check:shared
@@ -51,3 +50,7 @@ jobs:
 
       - name: Test
         run: npm test -- --ci
+
+      # Proves the app actually bundles (including the shared web modules).
+      - name: Bundle (Android)
+        run: npx expo export --platform android --output-dir dist

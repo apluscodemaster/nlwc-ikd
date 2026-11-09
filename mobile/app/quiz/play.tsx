@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { BookOpen, CheckCircle2, Flag, Headphones, PartyPopper, XCircle } from "lucide-react-native";
+import { BookOpen, CheckCircle2, Flag, Headphones, PartyPopper, XCircle } from "~/components/icons";
 import { quizApi, type PublicQuestion, type SaveAnswerResult } from "~/api/quiz";
 import { Button, Card, EmptyState, ErrorState, LoadingState, Screen, Text } from "~/components";
 import { useQuizSession } from "~/features/quiz/QuizSessionProvider";
@@ -53,9 +53,24 @@ export default function QuizPlay() {
     }
   }, [session, category]);
 
+  // First question. State is only set after the request resolves, so the
+  // initial render shows the loading state (loading starts true).
   useEffect(() => {
-    next();
-    // Fetch the first question once.
+    if (!session) return;
+    let cancelled = false;
+    quizApi
+      .questions(session.session_id, { category })
+      .then((qs) => {
+        if (cancelled) return;
+        if (qs.length) setQuestion(qs[0]);
+        else setNoMore(true);
+      })
+      .catch((e) => !cancelled && setError(e))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+    // Only on mount: later questions come from next().
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

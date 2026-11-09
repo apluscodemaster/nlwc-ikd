@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Heart, PenLine, Quote } from "lucide-react-native";
+import { CheckCircle2, Heart, PenLine, Quote } from "~/components/icons";
 import { testimoniesApi, type TestimonyInput } from "~/api/community";
 import { FormField } from "~/components/FormField";
 import { Button, Card, Chip, EmptyState, ListSkeleton, Screen, SegmentedControl, Sheet, Text } from "~/components";
@@ -51,7 +51,7 @@ function TestimonyFeed({ onShare }: { onShare: () => void }) {
   const [open, setOpen] = useState<{ name: string; testimony: string } | null>(null);
 
   return (
-    <Screen onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
+    <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
       {q.isLoading ? (
         <ListSkeleton rows={4} />
       ) : !q.data?.length ? (

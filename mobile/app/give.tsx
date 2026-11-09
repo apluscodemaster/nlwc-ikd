@@ -4,7 +4,7 @@ import { Stack } from "expo-router";
 import { Image } from "expo-image";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { Check, Copy } from "lucide-react-native";
+import { Check, Copy } from "~/components/icons";
 import { Button, Card, Screen, Text } from "~/components";
 import { GIVING_OPTIONS } from "~/data/giving";
 import { radius, spacing, useTheme } from "~/theme";

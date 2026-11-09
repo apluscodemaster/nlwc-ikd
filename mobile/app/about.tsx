@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { Image } from "expo-image";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown } from "~/components/icons";
 import { Card, Screen, SectionHeader, Text } from "~/components";
 import { BELIEFS, STAND_FOR, STORY } from "~/data/about";
 import { ScriptureSheet } from "~/features/reader/ScriptureSheet";

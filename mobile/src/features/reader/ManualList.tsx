@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { BookMarked, CalendarClock } from "lucide-react-native";
+import { BookMarked, CalendarClock } from "~/components/icons";
 import { ChipRow, ListRow, SearchField, StatusBadge } from "~/components";
 import { useManualList, useManualThemes } from "~/hooks/useReader";
 import { spacing } from "~/theme";

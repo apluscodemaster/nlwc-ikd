@@ -1,5 +1,5 @@
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
-import type { LucideIcon } from "lucide-react-native";
+import type { LucideIcon } from "~/components/icons";
 import { HIT, radius, useTheme, type ColorName } from "~/theme";
 
 export interface IconButtonProps extends Omit<PressableProps, "style" | "children"> {

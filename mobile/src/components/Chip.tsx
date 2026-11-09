@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet } from "react-native";
-import type { LucideIcon } from "lucide-react-native";
+import type { LucideIcon } from "~/components/icons";
 import { radius, spacing, useTheme } from "~/theme";
 import { Text } from "./Text";
 

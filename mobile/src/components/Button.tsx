@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import type { LucideIcon } from "lucide-react-native";
+import type { LucideIcon } from "~/components/icons";
 import { HIT, radius, spacing, useTheme } from "~/theme";
 import { Text } from "./Text";
 

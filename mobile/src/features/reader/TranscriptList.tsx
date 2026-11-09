@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { FileText } from "lucide-react-native";
+import { FileText } from "~/components/icons";
 import { ChipRow, ListRow, SearchField } from "~/components";
 import { useTranscriptCategories, useTranscriptList } from "~/hooks/useReader";
 import { TRANSCRIPT_CATEGORIES } from "~/shared";

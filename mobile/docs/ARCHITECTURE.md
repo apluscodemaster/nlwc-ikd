@@ -73,13 +73,13 @@ public config, so the security rules continue to apply unchanged.
 
 | Concern | Choice | Why |
 | --- | --- | --- |
-| Runtime | **Expo** (managed workflow, Continuous Native Generation), SDK pinned in `mobile/package.json` | No native folders to maintain; EAS Build/Update; first-class modules for audio, location, notifications, secure storage |
+| Runtime | **Expo SDK 58** (React Native 0.88, React 19.3, New Architecture), managed workflow with Continuous Native Generation | No native folders to maintain; EAS Build/Update; first-class modules for audio, location, notifications, secure storage |
 | Language | TypeScript (strict), same compiler settings as web | Lets the app import web types and logic directly |
 | Navigation | **expo-router** (file-based) | Same mental model as the Next.js App Router: `app/transcripts/[slug].tsx` maps to `src/app/transcripts/[slug]/page.tsx`. Gives deep links for free |
 | Server state | **TanStack Query v5** (same as web) + AsyncStorage persister | Same query keys and patterns as `src/hooks/*`; the persisted cache gives offline reading of anything already viewed |
 | Local state | React context + small hooks (no Redux) | The web app manages without a store; the only cross-screen state is the audio player and the theme |
 | Styling | `StyleSheet` + typed design tokens (`mobile/src/theme`) | No Tailwind runtime; tokens mirror `globals.css` (see DESIGN.md) |
-| Icons | `lucide-react-native` | Same icon names as the web's `lucide-react` |
+| Icons | `lucide-react-native`, imported only through the generated `src/components/icons.ts` (`npm run icons`) | Same icon names as the web's `lucide-react`. Metro doesn't tree-shake, so per-icon deep imports keep ~2,000 unused icons out of the bundle (9.5 MB → 5.8 MB on Android) |
 | Audio | **expo-audio** with background mode + lock-screen metadata | Sermons and the live audio broadcast keep playing with the screen off |
 | Video / live | `react-native-youtube-iframe` (WebView) | Video messages and the live stream are YouTube |
 | Rich text | `react-native-render-html` | Transcripts and manuals are sanitised WordPress HTML from the API |
@@ -136,7 +136,11 @@ never mix.
 ### 5.1 How it works
 
 - `mobile/metro.config.js` adds the repository's `src/` to `watchFolders`, so
-  Metro can bundle files outside `mobile/`.
+  Metro can bundle files outside `mobile/`. Its resolver maps the aliases below
+  and resolves any package imported *by a web module* as if it were imported
+  from `mobile/`, so the web app's `node_modules` (React DOM, a second React)
+  can never enter the bundle. Verified on the production bundle: one React
+  (the app's), 24 web modules.
 - `mobile/tsconfig.json` maps `@web/*` → `../src/*` (and `@/*` → `../src/*`, so
   the web modules' own `@/…` imports resolve). Mobile code uses `~/*` for its
   own `mobile/src/*`.

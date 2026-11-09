@@ -15,7 +15,7 @@ app type-checking.
 | 6 | Home | ✅ |
 | 7 | More: fellowship (location), testimonies, gallery, about, salvation, give, contact, settings | ✅ |
 | 8 | Bible quiz (session, play, results, leaderboard, recovery) | ✅ |
-| 8.5 | **First install on an open network**: `npm install`, `npx expo install --fix`, commit `package-lock.json`, switch CI to `npm ci`, fix any type/lint errors, first run on device | ⏳ next |
+| 8.5 | First install: upgraded to **Expo SDK 58**, lockfile committed, CI on `npm ci` + bundle step, all type/lint errors fixed, Android + iOS production bundles build, icon bundle trimmed | ✅ (device run pending) |
 | 9 | Hardening: tests, accessibility pass, offline downloads, service reminders (local notifications), Sentry | ⏳ |
 | 10 | Release: icons/splash, store listings, EAS Build/Submit, App Check for forms, deep links | ⏳ |
 
@@ -24,35 +24,35 @@ app type-checking.
 ```bash
 git checkout mobile-dev
 cd mobile
-npm install
-npx expo install --fix     # align native module versions with the Expo SDK
+npm ci
 cp .env.example .env       # fill in EXPO_PUBLIC_FIREBASE_* (same values as the web's NEXT_PUBLIC_FIREBASE_*)
 npm run check              # typecheck + lint + shared-import guard + tests
-npx expo start             # press i / a, or scan with a development build
+npx expo start             # scan the QR code with Expo Go (SDK 58), or press a / i
 ```
 
 Audio background playback and some native modules need a **development build**
 (`npx expo run:android` / `eas build --profile development`) rather than Expo Go.
 
-## Verification status (batches 1–8)
+## Verification status
 
-Batches 1–8 were written on a network where the npm registry was blocked, so
-`mobile/node_modules` has never been installed. What has been checked:
+Installed and checked on Expo SDK 58 (React Native 0.88, React 19.3):
 
-- ✅ Every `.ts`/`.tsx` file in `mobile/` parses (TypeScript transpile, no syntax errors)
-- ✅ `npm run check:shared` passes (26 web modules, none pull in React/Next/Node/DOM)
-- ✅ Every name re-exported from `src/shared.ts` exists in the web source
-- ✅ Pure-logic unit tests pass (HTML preparation, time/schedule formatting), run
-  against the real web modules
-- ✅ Web app on this branch: type-check clean, 360/360 tests pass, no lint errors;
-  no file under `src/` differs from `main`
+- ✅ `npm run check` passes: `tsc` (0 errors), `expo lint` (0 problems),
+  shared-code guard (26 web modules), Jest under `jest-expo` (10/10)
+- ✅ Production bundles build with Metro: Android 5.8 MB, iOS 7.1 MB
+- ✅ The bundle contains a single React (the app's 19.3.0) and 24 web modules;
+  nothing comes from the web app's `node_modules`
+- ✅ `expo-doctor`: 19/20 checks (see the render-html item below)
+- ✅ Web app on this branch: type-check clean, 360/360 tests; no file under
+  `src/` differs from `main`
 
-Not yet checked (batch 8.5): full type-check against the Expo/React Native type
-definitions, `expo lint`, Jest under `jest-expo`, and running on a device.
-Dependency versions are pinned to a known Expo SDK 54 set; `npx expo install --fix`
-will realign them if the SDK has moved on.
+Not yet checked: running on a device or emulator.
 
 ## Known gaps / follow-ups
+
+- **`react-native-render-html` is unmaintained** (flagged by expo-doctor). It
+  powers the transcript/manual reader and bundles fine on SDK 58; replace it
+  before release (e.g. a styled WebView renderer) and re-test scripture links.
 
 - **Contact form & testimony auto-reply** need a bot-check alternative to
   Turnstile (ARCHITECTURE.md §7.4). Until then Contact uses WhatsApp/email and

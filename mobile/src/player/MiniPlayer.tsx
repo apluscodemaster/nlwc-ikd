@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { Pause, Play, Radio, X } from "lucide-react-native";
+import { Pause, Play, Radio, X } from "~/components/icons";
 import { IconButton, Text } from "~/components";
 import { radius, spacing, useTheme } from "~/theme";
 import { usePlayer, usePlayerStatus } from "./PlayerProvider";

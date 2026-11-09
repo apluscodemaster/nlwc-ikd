@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useRouter } from "expo-router";
-import { Sun } from "lucide-react-native";
+import { Sun } from "~/components/icons";
 import { EmptyState, ListRow } from "~/components";
 import { useDevotionalArchive } from "~/hooks/useReader";
 import { isFirebaseConfigured } from "~/lib/config";

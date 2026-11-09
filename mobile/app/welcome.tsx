@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Linking, Platform, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
-import { CheckCircle2, Send } from "lucide-react-native";
+import { CheckCircle2, Send } from "~/components/icons";
 import { FormField } from "~/components/FormField";
 import { Button, Card, Chip, EmptyState, Screen, Text } from "~/components";
 import { whatsappLink } from "~/lib/config";

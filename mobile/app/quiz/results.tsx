@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Brain, Trophy } from "lucide-react-native";
+import { Brain, Trophy } from "~/components/icons";
 import { quizApi } from "~/api/quiz";
 import { Button, Card, EmptyState, ErrorState, LoadingState, Screen, SectionHeader, Text } from "~/components";
 import { useQuizSession } from "~/features/quiz/QuizSessionProvider";

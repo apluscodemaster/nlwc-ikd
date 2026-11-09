@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { MapPinOff } from "lucide-react-native";
+import { MapPinOff } from "~/components/icons";
 import { EmptyState, Screen } from "~/components";
 
 export default function NotFound() {

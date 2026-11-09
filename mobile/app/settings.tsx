@@ -1,7 +1,7 @@
 import { Alert, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react-native";
+import { Trash2 } from "~/components/icons";
 import { Button, Card, Chip, Screen, SectionHeader, Text } from "~/components";
 import { FONT_MAX, FONT_MIN, useReaderPrefs } from "~/features/reader/readerPrefs";
 import { API_BASE_URL, APP_VARIANT, APP_VERSION } from "~/lib/config";

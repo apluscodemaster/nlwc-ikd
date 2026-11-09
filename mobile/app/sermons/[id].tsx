@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Share, StyleSheet, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { ChevronLeft, ChevronRight, FileText, Headphones, Pause, Play, Share2 } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, FileText, Headphones, Pause, Play, Share2 } from "~/components/icons";
 import { Button, Card, ErrorState, LoadingState, Screen, StatusBadge, Text } from "~/components";
 import { usePlaySermon } from "~/features/sermons/playSermon";
 import { useSermonDetail, useSermonList, useTranscriptForSermon } from "~/hooks/useSermons";

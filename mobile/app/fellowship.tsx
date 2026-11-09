@@ -3,7 +3,7 @@ import { Alert, Linking, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { Clock, LocateFixed, MapPin, MessageCircle, Navigation, User } from "lucide-react-native";
+import { Clock, LocateFixed, MapPin, MessageCircle, Navigation, User } from "~/components/icons";
 import { fellowshipApi } from "~/api/community";
 import { Button, Card, EmptyState, ErrorState, ListSkeleton, Screen, SearchField, Text } from "~/components";
 import { CHURCH } from "~/lib/config";
@@ -56,7 +56,7 @@ export default function FellowshipScreen() {
   }, [query.data, search, me]);
 
   return (
-    <Screen onRefresh={() => query.refetch()} refreshing={query.isRefetching}>
+    <Screen onRefresh={() => void query.refetch()} refreshing={query.isRefetching}>
       <Stack.Screen options={{ title: "House Fellowship" }} />
       <Text color="textSecondary">
         Our house fellowship centres meet across Ikorodu. Find the one closest to you and join us.

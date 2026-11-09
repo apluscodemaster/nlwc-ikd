@@ -2,7 +2,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { Headphones, Mail } from "lucide-react-native";
+import { Headphones, Mail } from "~/components/icons";
 import { Button, Card, Screen, Text } from "~/components";
 import { HtmlContent } from "~/features/reader/HtmlContent";
 import { ScriptureSheet } from "~/features/reader/ScriptureSheet";

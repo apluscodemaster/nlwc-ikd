@@ -1,6 +1,6 @@
 import { Share, StyleSheet, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import { Share2 } from "lucide-react-native";
+import { Share2 } from "~/components/icons";
 import { Button, EmptyState, ErrorState, LoadingState, Screen, Text } from "~/components";
 import { YouTubePlayer } from "~/features/video/YouTubePlayer";
 import { useVideoMessages } from "~/hooks/useVideo";

@@ -3,7 +3,7 @@ import { Share, StyleSheet, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { WebView } from "react-native-webview";
-import { ExternalLink, Share2, Sun } from "lucide-react-native";
+import { ExternalLink, Share2, Sun } from "~/components/icons";
 import { Button, EmptyState, ErrorState, LoadingState, Text } from "~/components";
 import { useDevotional } from "~/hooks/useReader";
 import { SITE_URL } from "~/lib/config";

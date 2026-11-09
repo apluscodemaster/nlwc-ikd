@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, View } from "react-native";
 import { radius, useTheme, type ColorName } from "~/theme";
 import { Text } from "./Text";
@@ -14,7 +14,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ label, tone = "primary", pulse, solid }: StatusBadgeProps) {
   const { colors } = useTheme();
   const color = colors[tone];
-  const scale = useRef(new Animated.Value(1)).current;
+  const [scale] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     if (!pulse) return;

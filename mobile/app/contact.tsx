@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Facebook, Instagram, Mail, MapPin, MessageCircle, Phone, Send, Youtube } from "lucide-react-native";
+import { ExternalLink, Mail, MapPin, MessageCircle, Phone, Send } from "~/components/icons";
 import { FormField } from "~/components/FormField";
-import { Button, Card, IconButton, ListRow, Screen, SectionHeader, Text } from "~/components";
+import { Button, Card, ListRow, Screen, SectionHeader, Text } from "~/components";
 import { CHURCH, whatsappLink } from "~/lib/config";
 import { spacing } from "~/theme";
 
@@ -51,9 +51,15 @@ export default function ContactScreen() {
 
       <SectionHeader label="Follow us" />
       <View style={styles.row}>
-        <IconButton icon={Facebook} accessibilityLabel="Facebook" color="primary" onPress={() => WebBrowser.openBrowserAsync(CHURCH.social.facebook)} />
-        <IconButton icon={Instagram} accessibilityLabel="Instagram" color="primary" onPress={() => WebBrowser.openBrowserAsync(CHURCH.social.instagram)} />
-        <IconButton icon={Youtube} accessibilityLabel="YouTube" color="primary" onPress={() => WebBrowser.openBrowserAsync(CHURCH.social.youtube)} />
+        {(
+          [
+            ["Facebook", CHURCH.social.facebook],
+            ["Instagram", CHURCH.social.instagram],
+            ["YouTube", CHURCH.social.youtube],
+          ] as const
+        ).map(([label, url]) => (
+          <Button key={label} title={label} size="sm" variant="secondary" icon={ExternalLink} onPress={() => WebBrowser.openBrowserAsync(url)} />
+        ))}
       </View>
       <Text variant="small" color="textMuted">
         We usually reply within a day.

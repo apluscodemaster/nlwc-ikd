@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, type ListRenderItem } from "react-native";
-import type { LucideIcon } from "lucide-react-native";
+import type { LucideIcon } from "~/components/icons";
 import { EmptyState, ErrorState, ListSkeleton } from "~/components";
 import { spacing, useTheme } from "~/theme";
 
@@ -41,7 +41,7 @@ export function InfiniteList<T>(p: Props<T>) {
         )
       }
       ListFooterComponent={
-        p.isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: spacing.lg }} color={colors.primary} /> : null
+        p.isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: spacing.lg }} color={colors.primary} /> : undefined
       }
       onEndReached={() => {
         if (p.hasNextPage && !p.isFetchingNextPage) p.fetchNextPage();
@@ -50,7 +50,7 @@ export function InfiniteList<T>(p: Props<T>) {
       refreshControl={
         <RefreshControl
           refreshing={p.isRefetching && !p.isFetchingNextPage}
-          onRefresh={() => p.refetch()}
+          onRefresh={() => void p.refetch()}
           tintColor={colors.primary}
           colors={[colors.primary]}
         />

@@ -26,21 +26,34 @@ export function QuizSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<QuizSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  /** Read the stored session id and fetch its current score from the API. */
+  const fetchStored = useCallback(async (): Promise<QuizSession | null> => {
     try {
       const raw = await secure.get(SESSION_KEY);
       const stored = raw ? (JSON.parse(raw) as { session_id: string }) : null;
-      setSession(stored ? await quizApi.session(stored.session_id) : null);
+      return stored ? await quizApi.session(stored.session_id) : null;
     } catch {
-      setSession(null);
-    } finally {
-      setLoading(false);
+      return null;
     }
   }, []);
 
+  const load = useCallback(async () => {
+    const s = await fetchStored();
+    setSession(s);
+    setLoading(false);
+  }, [fetchStored]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    fetchStored().then((s) => {
+      if (cancelled) return;
+      setSession(s);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchStored]);
 
   const persist = (id: string, username: string) =>
     secure.set(SESSION_KEY, JSON.stringify({ session_id: id, username }));

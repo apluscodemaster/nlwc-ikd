@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
-import { ChevronRight, type LucideIcon } from "lucide-react-native";
+import { ChevronRight, type LucideIcon } from "~/components/icons";
 import { radius, spacing, useTheme } from "~/theme";
 import { Text } from "./Text";
 

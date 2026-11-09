@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { ScrollView, Share, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronLeft, ChevronRight, Minus, Plus, Share2, Type } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Minus, Plus, Share2, Type } from "~/components/icons";
 import { Card, Chip, IconButton, Sheet, StatusBadge, Text } from "~/components";
 import { radius, spacing, useTheme } from "~/theme";
 import { HtmlContent } from "./HtmlContent";

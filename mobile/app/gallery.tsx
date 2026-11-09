@@ -4,7 +4,7 @@ import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Images, X } from "lucide-react-native";
+import { Images, X } from "~/components/icons";
 import { galleryApi } from "~/api/community";
 import { ChipRow, EmptyState, ErrorState, IconButton, LoadingState, Text } from "~/components";
 import { sizedGoogleImage } from "~/shared";

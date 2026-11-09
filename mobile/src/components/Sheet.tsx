@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X } from "lucide-react-native";
+import { X } from "~/components/icons";
 import { radius, spacing, useTheme } from "~/theme";
 import { IconButton } from "./IconButton";
 import { Text } from "./Text";
@@ -55,7 +55,7 @@ export function Sheet({ visible, onClose, title, children, maxHeight = "80%", sc
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  backdrop: { ...StyleSheet.absoluteFill },
   sheet: {
     position: "absolute",
     left: 0,

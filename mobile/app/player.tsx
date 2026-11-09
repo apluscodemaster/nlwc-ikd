@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronDown, FileText, Pause, Play, Radio, RotateCcw, RotateCw } from "lucide-react-native";
+import { ChevronDown, FileText, Pause, Play, Radio, RotateCcw, RotateCw } from "~/components/icons";
 import { Button, Chip, IconButton, StatusBadge, Text } from "~/components";
 import { usePlayer, usePlayerStatus } from "~/player/PlayerProvider";
 import { Scrubber } from "~/player/Scrubber";

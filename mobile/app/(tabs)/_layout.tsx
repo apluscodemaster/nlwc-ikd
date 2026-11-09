@@ -1,6 +1,5 @@
-import { Tabs } from "expo-router";
-import { BottomTabBar } from "@react-navigation/bottom-tabs";
-import { BookOpen, Headphones, House, Menu, Radio } from "lucide-react-native";
+import { BottomTabBar, Tabs } from "expo-router/js-tabs";
+import { BookOpen, Headphones, House, Menu, Radio } from "~/components/icons";
 import { MiniPlayer } from "~/player/MiniPlayer";
 import { fonts, useTheme } from "~/theme";
 

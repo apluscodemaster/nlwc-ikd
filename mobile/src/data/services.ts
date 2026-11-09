@@ -4,7 +4,7 @@
  * components, so it can't be shared directly; the same icons come from
  * lucide-react-native here (docs/ARCHITECTURE.md §5.4). Keep in sync.
  */
-import { Book, Calendar, Flame, Sparkles, Users, type LucideIcon } from "lucide-react-native";
+import { Book, Calendar, Flame, Sparkles, Users, type LucideIcon } from "~/components/icons";
 
 export interface Service {
   id: number;

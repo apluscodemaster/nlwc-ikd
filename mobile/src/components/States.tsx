@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Animated, StyleSheet, View, type DimensionValue } from "react-native";
-import { AlertCircle, Inbox, WifiOff, type LucideIcon } from "lucide-react-native";
+import { AlertCircle, Inbox, WifiOff, type LucideIcon } from "~/components/icons";
 import { ApiError } from "~/api/client";
 import { radius, spacing, useTheme } from "~/theme";
 import { Button } from "./Button";
@@ -69,7 +69,7 @@ export function Skeleton({
   rounded?: number;
 }) {
   const { colors } = useTheme();
-  const opacity = useRef(new Animated.Value(0.5)).current;
+  const [opacity] = useState(() => new Animated.Value(0.5));
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([

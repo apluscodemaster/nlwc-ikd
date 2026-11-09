@@ -2,7 +2,7 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
-import { CalendarClock, Headphones, Video } from "lucide-react-native";
+import { CalendarClock, Headphones, Video } from "~/components/icons";
 import { dayName, formatHour } from "~/api/schedule";
 import { Card, EmptyState, LoadingState, SectionHeader, SegmentedControl, StatusBadge, Text } from "~/components";
 import { Countdown } from "~/features/live/Countdown";

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { Tabs, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search } from "lucide-react-native";
+import { Search } from "~/components/icons";
 import { IconButton, SegmentedControl } from "~/components";
 import { DevotionalList } from "~/features/reader/DevotionalList";
 import { ManualList } from "~/features/reader/ManualList";

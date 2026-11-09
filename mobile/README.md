@@ -12,11 +12,10 @@ TypeScript.
 
 ```bash
 cd mobile
-npm install
-npx expo install --fix   # align native module versions with the installed Expo SDK
+npm ci
 cp .env.example .env     # then fill in the Firebase values
 npm run check            # typecheck, lint, shared-code guard, tests
-npx expo start
+npx expo start           # scan the QR code with Expo Go (SDK 58)
 ```
 
 Background audio, notifications and location need a development build:

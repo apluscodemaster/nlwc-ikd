@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react-native";
+import { BookOpen } from "~/components/icons";
 import { EmptyState, ErrorState, ListSkeleton, SearchField, Text } from "~/components";
 import { searchBible } from "~/shared";
 import { spacing, useTheme } from "~/theme";

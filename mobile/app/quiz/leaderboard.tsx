@@ -1,6 +1,6 @@
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy } from "lucide-react-native";
+import { Trophy } from "~/components/icons";
 import { quizApi } from "~/api/quiz";
 import { EmptyState, ErrorState, ListSkeleton, Text } from "~/components";
 import { useQuizSession } from "~/features/quiz/QuizSessionProvider";
@@ -24,7 +24,7 @@ export default function LeaderboardScreen() {
       data={q.data ?? []}
       keyExtractor={(e) => e.username}
       contentContainerStyle={{ padding: spacing.gutter, gap: spacing.xs, paddingBottom: spacing.huge }}
-      refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.primary} />}
       ListEmptyComponent={<EmptyState icon={Trophy} title="No scores yet" message="Be the first on the board!" />}
       renderItem={({ item, index }) => {
         const mine = item.username.toLowerCase() === me;

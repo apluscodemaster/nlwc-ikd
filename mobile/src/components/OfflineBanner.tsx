@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
-import { WifiOff } from "lucide-react-native";
+import { WifiOff } from "~/components/icons";
 import { spacing } from "~/theme";
 import { Text } from "./Text";
 

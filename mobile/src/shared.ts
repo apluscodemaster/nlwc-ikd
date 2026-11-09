@@ -96,7 +96,14 @@ export type { Verse, SearchResult, ParsedReference } from "@web/types/bible";
 
 /* ── Quiz ───────────────────────────────────────────────────────────────── */
 export { QUIZ_CATEGORIES } from "@web/types/quiz";
-export type * from "@web/types/quiz";
+export type {
+  QuizCategory,
+  QuizSession,
+  QuizQuestion,
+  LeaderboardEntry,
+  QuizResult,
+  Recommendation,
+} from "@web/types/quiz";
 export {
   loadMasteryState,
   saveMasteryState,

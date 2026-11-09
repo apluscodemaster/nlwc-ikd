@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Video } from "lucide-react-native";
+import { Video } from "~/components/icons";
 import { youtubeThumb } from "~/api/video";
 import { ChipRow, EmptyState, ErrorState, ListRow, ListSkeleton, SearchField } from "~/components";
 import { useVideoMessages } from "~/hooks/useVideo";
@@ -63,7 +63,7 @@ export function VideoMessages() {
       refreshControl={
         <RefreshControl
           refreshing={query.isRefetching}
-          onRefresh={() => query.refetch()}
+          onRefresh={() => void query.refetch()}
           tintColor={colors.primary}
           colors={[colors.primary]}
         />

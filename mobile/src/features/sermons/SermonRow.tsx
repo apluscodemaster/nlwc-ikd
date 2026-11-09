@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { Pause, Play } from "lucide-react-native";
+import { Pause, Play } from "~/components/icons";
 import { IconButton, ListRow } from "~/components";
 import { usePlayer, usePlayerStatus } from "~/player/PlayerProvider";
 import { getMediaProgress, parseSermonPart, type AudioSermon } from "~/shared";

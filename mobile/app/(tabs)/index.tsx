@@ -14,7 +14,7 @@ import {
   Sun,
   Users,
   type LucideIcon,
-} from "lucide-react-native";
+} from "~/components/icons";
 import { Card, IconButton, ListRow, Screen, SectionHeader, Skeleton, StatusBadge, Text } from "~/components";
 import { services } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
@@ -47,7 +47,7 @@ export default function HomeTab() {
   const sermons = latest.data?.pages[0]?.data ?? [];
 
   return (
-    <Screen edges={["top", "left", "right"]} padded={false} refreshing={latest.isRefetching} onRefresh={() => latest.refetch()}>
+    <Screen edges={["top", "left", "right"]} padded={false} refreshing={latest.isRefetching} onRefresh={() => void latest.refetch()}>
           <View style={styles.content}>
             <View style={styles.top}>
               <Image source={require("../../assets/images/icon.png")} style={styles.logo} contentFit="contain" />

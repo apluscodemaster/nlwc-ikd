@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Brain, KeyRound, ShieldCheck, Trophy } from "lucide-react-native";
+import { Brain, KeyRound, ShieldCheck, Trophy } from "~/components/icons";
 import { ApiError } from "~/api/client";
 import { quizApi } from "~/api/quiz";
 import { FormField } from "~/components/FormField";

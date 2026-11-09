@@ -1,6 +1,6 @@
 import { ActivityIndicator, View } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { ExternalLink } from "lucide-react-native";
+import { ExternalLink } from "~/components/icons";
 import { Button, Sheet, Text } from "~/components";
 import { useScripture } from "~/hooks/useReader";
 import { getBibleGatewayUrl } from "~/shared";

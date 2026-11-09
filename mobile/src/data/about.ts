@@ -3,7 +3,7 @@
  * BeliefsAccordion.tsx (text only; those modules are React DOM components).
  * Keep in sync.
  */
-import { BookOpen, Church, Heart, Users, type LucideIcon } from "lucide-react-native";
+import { BookOpen, Church, Heart, Users, type LucideIcon } from "~/components/icons";
 
 export const STORY = {
   intro:

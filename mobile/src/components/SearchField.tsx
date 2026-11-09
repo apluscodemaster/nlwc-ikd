@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Search, X } from "lucide-react-native";
+import { Search, X } from "~/components/icons";
 import { fonts, radius, spacing, useTheme } from "~/theme";
 
 interface SearchFieldProps {
@@ -19,8 +19,12 @@ export function SearchField({
 }: SearchFieldProps) {
   const { colors } = useTheme();
   const [text, setText] = useState(value);
-
-  useEffect(() => setText(value), [value]);
+  // Adopt an external change to `value` (e.g. "Clear all") during render.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setText(value);
+  }
 
   useEffect(() => {
     if (text === value) return;

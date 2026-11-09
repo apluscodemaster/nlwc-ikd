@@ -15,7 +15,7 @@ import {
   Sparkles,
   Users,
   type LucideIcon,
-} from "lucide-react-native";
+} from "~/components/icons";
 import { Card, ListRow, Screen, SectionHeader, Text } from "~/components";
 import { APP_VERSION, CHURCH } from "~/lib/config";
 import { spacing } from "~/theme";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, TextInput, View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { MessageCircle, Send } from "lucide-react-native";
+import { MessageCircle, Send } from "~/components/icons";
 import { Button, EmptyState, IconButton, Text } from "~/components";
 import { isFirebaseConfigured } from "~/lib/config";
 import { kv } from "~/lib/storage";

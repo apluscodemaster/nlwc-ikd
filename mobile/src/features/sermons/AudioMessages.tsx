@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronDown, Headphones } from "lucide-react-native";
+import { ChevronDown, Headphones } from "~/components/icons";
 import { Chip, EmptyState, ErrorState, ListSkeleton, SearchField, Text } from "~/components";
 import { useSermonFilters, useSermonList } from "~/hooks/useSermons";
 import type { AudioSermon } from "~/shared";
@@ -82,7 +82,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
           )
         }
         ListFooterComponent={
-          query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : null
+          query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : undefined
         }
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
@@ -91,7 +91,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
         refreshControl={
           <RefreshControl
             refreshing={query.isRefetching && !query.isFetchingNextPage}
-            onRefresh={() => query.refetch()}
+            onRefresh={() => void query.refetch()}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
