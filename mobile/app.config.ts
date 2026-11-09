@@ -24,6 +24,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name,
   slug: "nlwc-ikorodu",
+  // Phone-only: the website is the web client. Without this, opening the dev
+  // server URL in a browser triggers a web build that can't resolve
+  // react-native-web.
+  platforms: ["ios", "android"],
   scheme: "nlwcikd",
   version: "0.1.0",
   orientation: "portrait",
