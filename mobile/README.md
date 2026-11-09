@@ -21,6 +21,16 @@ npx expo start           # scan the QR code with Expo Go (SDK 58)
 Background audio, notifications and location need a development build:
 `npx expo run:android`, `npx expo run:ios`, or `eas build --profile development`.
 
+### Windows: keep the repo at a short path
+
+Native Android builds fail on Windows when the project path is long:
+CMake builds object paths that contain the project path twice, and they
+exceed the 260-character limit (`ninja: error: mkdir(...): No such file or
+directory`). Clone the repo to a short path such as `C:\nlwc` and build
+there. A `subst` drive letter does **not** help, because Node resolves it
+back to the long path. Alternatively, have an admin enable Windows long
+paths (`LongPathsEnabled=1`).
+
 ## Layout
 
 | Path | What |

@@ -170,6 +170,14 @@ React (the web's React 19 DOM would be a second React copy).
 `shared.ts` and fails CI if one breaks these rules. Run it with
 `npm run check:shared` in `mobile/`.
 
+It also follows **type-only** imports. They never reach the bundle, but
+TypeScript type-checks the whole imported file, so a type imported from a
+server module (Google Sheets, `firebase-admin`, Next.js) only type-checks on
+machines that also have the web app's `node_modules`, which CI doesn't. Mirror
+such types in `mobile/src/types/web-server-types.ts` instead. For a reused
+module that type-imports a server file, map that one path to a stub in
+`tsconfig.json` (see `src/types/web-stubs/`).
+
 ### 5.4 Reuse matrix
 
 | Web module | Reuse | Used for |
