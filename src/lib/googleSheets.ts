@@ -1,4 +1,7 @@
-import { google, type sheets_v4 } from "googleapis";
+// The standalone Sheets client — NOT the umbrella "googleapis" package, whose
+// type definitions cover every Google API (~150 MB loaded by TypeScript) and
+// pushed the type check past the build machine's memory limit.
+import { auth as googleAuth, sheets, type sheets_v4 } from "@googleapis/sheets";
 
 /**
  * One client per server instance. GoogleAuth caches its OAuth access token
@@ -23,7 +26,7 @@ export async function getGoogleSheetsClient() {
     ? GOOGLE_PRIVATE_KEY_RAW.replace(/\\n/g, "\n")
     : GOOGLE_PRIVATE_KEY_RAW;
 
-  const auth = new google.auth.GoogleAuth({
+  const auth = new googleAuth.GoogleAuth({
     credentials: {
       type: process.env.GOOGLE_TYPE,
       project_id: process.env.GOOGLE_PROJECT_ID,
@@ -33,6 +36,6 @@ export async function getGoogleSheetsClient() {
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
 
-  cachedClient = google.sheets({ version: "v4", auth });
+  cachedClient = sheets({ version: "v4", auth });
   return cachedClient;
 }
