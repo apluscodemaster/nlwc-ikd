@@ -69,6 +69,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   },
   plugins: [
+    // Windows: keep native (CMake) object paths under 260 chars.
+    "./plugins/withCmakeObjectPathMax",
     "expo-router",
     "expo-font",
     "expo-secure-store",
