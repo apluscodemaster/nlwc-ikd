@@ -100,7 +100,6 @@ function AppStack() {
     <NavThemeProvider value={navTheme}>
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <OfflineBanner />
         <Stack
           screenOptions={{
             headerTintColor: colors.primary,
@@ -114,6 +113,8 @@ function AppStack() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="player" options={{ presentation: "modal", headerShown: false }} />
         </Stack>
+        {/* After the stack so the floating pill draws above the screens. */}
+        <OfflineBanner />
       </View>
     </NavThemeProvider>
   );

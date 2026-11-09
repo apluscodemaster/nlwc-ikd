@@ -42,9 +42,12 @@ export function wireQueryManagers(): void {
   if (wired) return;
   wired = true;
 
+  // Offline only when there's no connection at all. NetInfo's
+  // isInternetReachable probes a Google URL that some networks block; trusting
+  // it paused every query even though the church API was reachable.
   onlineManager.setEventListener((setOnline) =>
     NetInfo.addEventListener((state) => {
-      setOnline(state.isConnected !== false && state.isInternetReachable !== false);
+      setOnline(state.isConnected !== false);
     }),
   );
 
