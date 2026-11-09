@@ -80,11 +80,16 @@ export {
   highlightSearchInText,
 } from "@web/utils/highlightSearch";
 export { stripLeadingSpeakerLine } from "@web/utils/speakerLine";
-export { formatMemoryTrack } from "@web/utils/formatMemoryTrack";
 export { manualBackgroundFor } from "@web/utils/manualThumbnail";
 
 /* ── Bible ──────────────────────────────────────────────────────────────── */
 export { searchBible } from "@web/lib/bibleSearch";
+export {
+  parseScriptureReference,
+  findScriptureReferences,
+  getBibleGatewayUrl,
+} from "@web/lib/bible-api";
+export type { BibleVerse } from "@web/lib/bible-api";
 export type { Verse, SearchResult, ParsedReference } from "@web/types/bible";
 
 /* ── Quiz ───────────────────────────────────────────────────────────────── */

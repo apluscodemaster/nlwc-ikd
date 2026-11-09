@@ -55,7 +55,16 @@ export default function RootLayout() {
         <ThemeProvider>
           <PersistQueryClientProvider
             client={queryClient}
-            persistOptions={{ persister: queryPersister, buster: PERSIST_BUSTER, maxAge: PERSIST_MAX_AGE }}
+            persistOptions={{
+              persister: queryPersister,
+              buster: PERSIST_BUSTER,
+              maxAge: PERSIST_MAX_AGE,
+              dehydrateOptions: {
+                // Only successful data, and never queries that opt out
+                // (e.g. Firestore cursors, which can't be serialised).
+                shouldDehydrateQuery: (q) => q.state.status === "success" && q.meta?.persist !== false,
+              },
+            }}
           >
             <PlayerProvider>
               <AppStack />
