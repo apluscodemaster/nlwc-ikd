@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // React Native app: has its own toolchain in mobile/ (expo lint)
+      "mobile/**",
     ],
   },
 ];

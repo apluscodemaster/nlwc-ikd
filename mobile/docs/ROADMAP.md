@@ -7,7 +7,7 @@ app type-checking.
 | Batch | Scope | Status |
 | --- | --- | --- |
 | 0 | Branch, architecture, design, roadmap (`mobile/docs/`) | ✅ |
-| 1 | Expo project scaffold in `mobile/`: config, TypeScript, Metro shared-code setup, `shared.ts` allowlist + guard script, env config, EAS profiles, mobile CI | ⏳ |
+| 1 | Expo project scaffold in `mobile/`: config, TypeScript, Metro shared-code setup, `shared.ts` allowlist + guard script, env config, EAS profiles, mobile CI | ✅ |
 | 2 | Foundation: theme tokens, design-system primitives, API client, React Query + persistence, fetch/localStorage adapters, root layout, tab navigation, error boundary, offline banner | ⏳ |
 | 3 | Listen: audio messages list (search, filters, infinite scroll), sermon detail, global player (expo-audio, background, mini + full player, resume) | ⏳ |
 | 4 | Read: transcripts and manuals (lists, filters, HTML reader, scripture popover, prev/next), devotionals | ⏳ |

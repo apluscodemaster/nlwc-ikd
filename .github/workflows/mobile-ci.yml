@@ -1,0 +1,53 @@
+# Mobile app CI (React Native / Expo in mobile/).
+# Runs only when the app or the web source it imports changes. The web CI
+# (ci.yml) is unchanged.
+name: Mobile CI
+
+on:
+  push:
+    branches: [mobile-dev]
+    paths: ["mobile/**", "src/**", ".github/workflows/mobile-ci.yml"]
+  pull_request:
+    paths: ["mobile/**", "src/**", ".github/workflows/mobile-ci.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Type-check, lint, shared-code guard & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Switch to `npm ci` (and add `cache: npm` with
+      # cache-dependency-path: mobile/package-lock.json above) once
+      # mobile/package-lock.json is committed.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Shared-code guard
+        run: npm run check:shared
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test -- --ci
