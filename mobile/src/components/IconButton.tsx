@@ -9,6 +9,8 @@ export interface IconButtonProps extends Omit<PressableProps, "style" | "childre
   size?: number;
   color?: ColorName;
   filled?: boolean;
+  /** Raw colour override (e.g. white on a photo viewer). */
+  tint?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -17,6 +19,7 @@ export function IconButton({
   size = 22,
   color = "text",
   filled,
+  tint,
   style,
   ...rest
 }: IconButtonProps) {
@@ -40,7 +43,7 @@ export function IconButton({
       ]}
       {...rest}
     >
-      <Icon size={size} color={filled ? colors.onPrimary : colors[color]} />
+      <Icon size={size} color={tint ?? (filled ? colors.onPrimary : colors[color])} />
     </Pressable>
   );
 }

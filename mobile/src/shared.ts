@@ -114,6 +114,10 @@ export {
   formatRecoveryCode,
 } from "@web/lib/quizSecurity";
 
+/* ── Gallery ────────────────────────────────────────────────────────────── */
+export { sizedGoogleImage } from "@web/utils/driveImage";
+export type { DateColumns } from "@web/lib/sheets";
+
 /* ── Fellowship, team, events ───────────────────────────────────────────── */
 export { haversineKm, extractCoordinates } from "@web/utils/mapCoordinates";
 export type { LatLng } from "@web/utils/mapCoordinates";
