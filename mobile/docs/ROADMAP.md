@@ -14,7 +14,7 @@ app type-checking.
 | 5 | Live: schedule (reused `liveSchedule`), countdown, video stream, audio broadcast, live chat (Firestore) | ✅ |
 | 6 | Home | ✅ |
 | 7 | More: fellowship (location), testimonies, gallery, about, salvation, give, contact, settings | ✅ |
-| 8 | Bible quiz (session, play, results, leaderboard, recovery) | ⏳ |
+| 8 | Bible quiz (session, play, results, leaderboard, recovery) | ✅ |
 | 9 | Hardening: tests, accessibility pass, offline downloads, service reminders (local notifications), Sentry | ⏳ |
 | 10 | Release: icons/splash, store listings, EAS Build/Submit, App Check for forms, deep links | ⏳ |
 
