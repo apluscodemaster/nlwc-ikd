@@ -89,9 +89,20 @@ const photosLimiter = createLimiter(6);
  * can recover on a later attempt instead of being stuck empty until restart.
  * All network work runs through a shared concurrency limiter.
  */
+export function resolveGooglePhotosShareLink(shareUrl: string): Promise<string>;
+/**
+ * With `shouldStart`: checked when the link reaches the front of the queue;
+ * returning false skips it and resolves to `undefined` (used to respect a
+ * per-request time budget — see lib/photoLinkCache).
+ */
+export function resolveGooglePhotosShareLink(
+  shareUrl: string,
+  shouldStart: () => boolean,
+): Promise<string | undefined>;
 export async function resolveGooglePhotosShareLink(
   shareUrl: string,
-): Promise<string> {
+  shouldStart?: () => boolean,
+): Promise<string | undefined> {
   if (!shareUrl.includes("photos")) {
     return shareUrl;
   }
@@ -106,6 +117,8 @@ export async function resolveGooglePhotosShareLink(
     // Another concurrent caller may have resolved it while we were queued.
     const warm = resolvedCache.get(shareUrl);
     if (warm) return warm;
+    // Out of time by the time this link's turn came: skip, don't fetch.
+    if (shouldStart && !shouldStart()) return undefined;
 
     try {
       console.log("🔍 Resolving Google Photos share link:", shareUrl);

@@ -1,0 +1,16 @@
+# Netlify settings kept in the repo. Build command, publish directory and the
+# Next.js plugin stay as configured in the Netlify UI — only what's below is
+# set here.
+
+[build.environment]
+  # Netlify's secrets scanner fails the build when an environment variable's
+  # VALUE appears in the build output. These four are not secrets:
+  #  - GOOGLE_AUTH_URI / GOOGLE_TOKEN_URI / GOOGLE_AUTH_PROVIDER_CERT_URL hold
+  #    Google's public OAuth endpoints, which google-auth-library itself
+  #    contains. (The app doesn't read these variables at all; they can be
+  #    deleted from the Netlify UI.)
+  #  - NEXT_PUBLIC_FIREBASE_API_KEY is Firebase's web API key, public by design
+  #    (NEXT_PUBLIC_ = shipped to browsers); access is enforced by
+  #    firestore.rules, not by hiding it.
+  # Real secrets (service keys, passwords, tokens) are still scanned.
+  SECRETS_SCAN_OMIT_KEYS = "GOOGLE_AUTH_URI,GOOGLE_TOKEN_URI,GOOGLE_AUTH_PROVIDER_CERT_URL,NEXT_PUBLIC_FIREBASE_API_KEY"

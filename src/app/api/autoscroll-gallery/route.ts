@@ -1,23 +1,21 @@
 import { NextResponse } from "next/server";
 import { getGoogleSheetsClient } from "@/lib/googleSheets";
-import {
-  toGoogleImageURL,
-  resolveGooglePhotosShareLink,
-  detectGoogleImageSource,
-} from "@/utils/driveImage";
+import { resolveImageUrls } from "@/lib/photoLinkCache";
+import { galleryCacheHeaders } from "@/lib/galleryCache";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = "AutoScrollGallery";
 
-// Cache for 10 minutes (ISR) so Google Photos resolution runs occasionally
-// rather than on every visitor request.
-export const revalidate = 600;
+// Rendered on demand and cached at the CDN (see galleryCacheHeaders), not
+// pre-built at deploy time. Google Photos share links resolve through the
+// shared Firestore cache (lib/photoLinkCache), so only new links hit Google.
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!SHEET_ID)
     return NextResponse.json(
       { error: "Missing Google Sheet ID" },
-      { status: 500 }
+      { status: 500 },
     );
 
   try {
@@ -29,25 +27,22 @@ export async function GET() {
       range: `${SHEET_NAME}!A:A`,
     });
 
-    const values = response.data.values || [];
-    const imageUrls = await Promise.all(
-      values
-        .flat()
-        .map((url) => url?.trim())
-        .filter((url) => url && /^https?:\/\//.test(url))
-        .map(async (url) => {
-          const source = detectGoogleImageSource(url);
-          if (source === "googlephotos") {
-            return resolveGooglePhotosShareLink(url);
-          }
-          return toGoogleImageURL(url);
-        })
+    const sheetUrls = (response.data.values || [])
+      .flat()
+      .map((url) => (typeof url === "string" ? url.trim() : ""))
+      .filter((url) => url && /^https?:\/\//.test(url));
+
+    const { urls: resolved, pending } = await resolveImageUrls(sheetUrls);
+
+    // Keep sheet order; drop links that couldn't be resolved (yet).
+    const validUrls = sheetUrls
+      .map((url) => resolved.get(url) ?? "")
+      .filter((url) => url.length > 0);
+
+    return NextResponse.json(
+      { images: validUrls },
+      { headers: galleryCacheHeaders(pending) },
     );
-
-    // Filter out empty strings from failed resolutions
-    const validUrls = imageUrls.filter((url) => url && url.length > 0);
-
-    return NextResponse.json({ images: validUrls });
   } catch (err: unknown) {
     console.error("AutoScroll Gallery Error:", err);
     const message = err instanceof Error ? err.message : JSON.stringify(err);

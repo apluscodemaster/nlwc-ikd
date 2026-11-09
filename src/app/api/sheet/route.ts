@@ -5,7 +5,8 @@ import {
   groupColumnsToDates,
   RawColumn,
 } from "@/lib/sheets";
-import { cleanImageColumns } from "@/utils/driveImage";
+import { resolveImageUrls } from "@/lib/photoLinkCache";
+import { galleryCacheHeaders } from "@/lib/galleryCache";
 
 export type NormalizedColumn = RawColumn & {
   images?: string[];
@@ -14,10 +15,11 @@ export type NormalizedColumn = RawColumn & {
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "church_gallery";
 
-// Cache the resolved gallery for 10 minutes (ISR) so Google Photos links are
-// scraped at most occasionally instead of on every visitor request — keeps
-// outbound/CPU load low while images still refresh within a few minutes.
-export const revalidate = 600;
+// Rendered on demand and cached at the CDN (see galleryCacheHeaders), NOT
+// pre-built: pre-building made every deploy resolve all ~900 Google Photos
+// share links. Resolutions are remembered in Firestore (lib/photoLinkCache),
+// so a request only resolves links it has never seen.
+export const dynamic = "force-dynamic";
 
 /**
  * Filter out empty image URLs that couldn't be resolved
@@ -59,9 +61,21 @@ export async function GET() {
       columnsRaw,
     ) as NormalizedColumn[];
 
-    // ✅ Step 2: Transform all image URLs (Drive & Photos) to proper Googleusercontent links
-    // This now includes async resolution of Google Photos share links
-    const cleaned = await cleanImageColumns(normalized);
+    // ✅ Step 2: Transform all image URLs (Drive & Photos) to direct links,
+    // via the shared cache — only never-seen share links hit Google.
+    const { urls: resolved, pending } = await resolveImageUrls(
+      normalized.flatMap((col) => [
+        ...(Array.isArray(col.values) ? col.values : []),
+        ...(Array.isArray(col.images) ? col.images : []),
+      ]),
+    );
+    const convert = (list: string[]) =>
+      list.map((u) => resolved.get(u?.trim()) ?? u);
+    const cleaned = normalized.map((col) => ({
+      ...col,
+      values: Array.isArray(col.values) ? convert(col.values) : col.values,
+      images: Array.isArray(col.images) ? convert(col.images) : col.images,
+    }));
 
     // ✅ Step 2.5: Filter out empty URLs that couldn't be resolved
     const filtered = filterEmptyUrls(cleaned);
@@ -70,7 +84,10 @@ export async function GET() {
     const grouped = groupColumnsToDates(filtered);
 
     // ✅ Step 4: Return JSON response
-    return NextResponse.json({ dates: grouped });
+    return NextResponse.json(
+      { dates: grouped },
+      { headers: galleryCacheHeaders(pending) },
+    );
   } catch (err: unknown) {
     console.error("Sheets API Error:", err);
     const message =
