@@ -23,6 +23,8 @@ export {
   getCurrentMeetingTitle,
 } from "@web/lib/liveSchedule";
 export type { ScheduledService, NextServiceInfo } from "@web/lib/liveSchedule";
+// Types only: lib/scheduleService is the server's Firestore layer.
+export type { RecurringService, SpecialService } from "@web/lib/scheduleService";
 
 /* ── Sermons, parts and playback progress ───────────────────────────────── */
 export {
