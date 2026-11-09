@@ -77,7 +77,11 @@
       "^~/(.*)$": "<rootDir>/src/$1",
       "^@web/(.*)$": "<rootDir>/../src/$1",
       "^@/(.*)$": "<rootDir>/../src/$1"
-    }
+    },
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>/node_modules"
+    ]
   },
   "expo": {
     "install": {

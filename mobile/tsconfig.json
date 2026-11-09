@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
+      "@/app/api/sheet/route": [
+        "./src/types/web-stubs/sheet-route.d.ts"
+      ],
       "~/*": [
         "./src/*"
       ],

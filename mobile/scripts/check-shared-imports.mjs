@@ -119,6 +119,71 @@ for (const spec of valueSpecifiers(entrySrc)) {
   visitWeb(dep.file, []);
 }
 
+/* ── Type-check reachability ───────────────────────────────────────────────
+ * `import type` is erased from the bundle, but TypeScript still type-checks
+ * the whole imported file. So every web file reachable from shared.ts by ANY
+ * import (value or type) must only use packages the app itself has installed;
+ * otherwise `tsc` passes only on machines that also have the web app's
+ * node_modules (and fails in CI). Paths stubbed in tsconfig.json are skipped.
+ */
+const MOBILE_NM = join(MOBILE_ROOT, "node_modules");
+const tsconfig = JSON.parse(readFileSync(join(MOBILE_ROOT, "tsconfig.json"), "utf8"));
+const STUBBED = new Set(
+  Object.keys(tsconfig.compilerOptions?.paths ?? {}).filter((k) => !k.includes("*")),
+);
+
+function allSpecifiers(src) {
+  const code = stripComments(src);
+  const out = [];
+  for (const m of code.matchAll(IMPORT_RE)) {
+    if (m[1] === "export" && !/from\s+["']/.test(m[0])) continue;
+    out.push(m[3]);
+  }
+  for (const m of code.matchAll(DYNAMIC_IMPORT_RE)) out.push(m[1]);
+  return out;
+}
+
+function packageInstalled(spec) {
+  const parts = spec.split("/");
+  const name = spec.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
+  if (name.startsWith("node:")) return false;
+  const typesName = name.startsWith("@") ? name.slice(1).replace("/", "__") : name;
+  return (
+    existsSync(join(MOBILE_NM, name, "package.json")) ||
+    existsSync(join(MOBILE_NM, "@types", typesName, "package.json"))
+  );
+}
+
+const typeVisited = new Set();
+function visitForTypes(file, chain) {
+  if (typeVisited.has(file)) return;
+  typeVisited.add(file);
+  const where = [...chain, relative(WEB_SRC, file)].join(" → ");
+  for (const spec of allSpecifiers(readFileSync(file, "utf8"))) {
+    if (STUBBED.has(spec)) continue;
+    const dep = classify(spec, file);
+    if (dep.kind === "package") {
+      if (!packageInstalled(spec)) {
+        errors.push(
+          `${where}: type-checking needs package "${spec}", which the app doesn't have ` +
+            `(mirror the type in mobile/src/types instead of importing it)`,
+        );
+      }
+    } else if (dep.kind === "web" && dep.file) {
+      visitForTypes(dep.file, [...chain, relative(WEB_SRC, file)]);
+    }
+  }
+}
+
+if (existsSync(MOBILE_NM)) {
+  for (const spec of allSpecifiers(entrySrc)) {
+    const dep = classify(spec, ENTRY);
+    if (dep.kind === "web" && dep.file) visitForTypes(dep.file, []);
+  }
+} else {
+  console.warn("! mobile/node_modules not installed: skipped the type-reachability check.");
+}
+
 if (process.argv.includes("--list")) {
   console.log("Web modules bundled into the app:");
   for (const f of [...visited].sort()) console.log(`  src/${relative(WEB_SRC, f).replace(/\\/g, "/")}`);

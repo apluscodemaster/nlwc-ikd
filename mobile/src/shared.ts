@@ -23,8 +23,9 @@ export {
   getCurrentMeetingTitle,
 } from "@web/lib/liveSchedule";
 export type { ScheduledService, NextServiceInfo } from "@web/lib/liveSchedule";
-// Types only: lib/scheduleService is the server's Firestore layer.
-export type { RecurringService, SpecialService } from "@web/lib/scheduleService";
+// Server-only on the web (Firestore admin layer): shapes mirrored locally,
+// because even a type import would type-check firebase-admin code.
+export type { RecurringService, SpecialService } from "~/types/web-server-types";
 
 /* ── Sermons, parts and playback progress ───────────────────────────────── */
 export {
@@ -56,8 +57,8 @@ export type {
   TopicItem,
 } from "@web/lib/audioSermons";
 
-// Types only: lib/videoMessages reads Google Sheets server-side.
-export type { VideoMessage } from "@web/lib/videoMessages";
+// Server-only on the web (reads Google Sheets): shape mirrored locally.
+export type { VideoMessage } from "~/types/web-server-types";
 export { videoSlug, findVideoBySlug } from "@web/lib/videoSlug";
 
 /* ── Transcripts and manuals ────────────────────────────────────────────── */
