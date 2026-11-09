@@ -54,10 +54,15 @@ export type {
   TopicItem,
 } from "@web/lib/audioSermons";
 
+// Types only: lib/videoMessages reads Google Sheets server-side.
+export type { VideoMessage } from "@web/lib/videoMessages";
+export { videoSlug, findVideoBySlug } from "@web/lib/videoSlug";
+
 /* ── Transcripts and manuals ────────────────────────────────────────────── */
 export {
   fetchTranscriptSlugs,
   findTranscriptSlug,
+  getBaseSlug,
 } from "@web/utils/transcriptSlug";
 export type { TranscriptStub } from "@web/utils/transcriptSlug";
 

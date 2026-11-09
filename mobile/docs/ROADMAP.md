@@ -9,10 +9,10 @@ app type-checking.
 | 0 | Branch, architecture, design, roadmap (`mobile/docs/`) | ✅ |
 | 1 | Expo project scaffold in `mobile/`: config, TypeScript, Metro shared-code setup, `shared.ts` allowlist + guard script, env config, EAS profiles, mobile CI | ✅ |
 | 2 | Foundation: theme tokens, design-system primitives, API client, React Query + persistence, fetch/localStorage adapters, root layout, tab navigation, error boundary, offline banner, global audio player (expo-audio, background, mini + full player, resume) | ✅ |
-| 3 | Listen: audio messages list (search, filters, infinite scroll), sermon detail | ⏳ |
+| 3 | Listen: audio messages list (search, filters, infinite scroll), sermon detail (resume, transcript link, part navigation), video messages list + player | ✅ |
 | 4 | Read: transcripts and manuals (lists, filters, HTML reader, scripture popover, prev/next), devotionals | ⏳ |
 | 5 | Live: schedule (reused `liveSchedule`), countdown, video stream, audio broadcast, live chat (Firestore) | ⏳ |
-| 6 | Home + Video messages | ⏳ |
+| 6 | Home | ⏳ |
 | 7 | More: fellowship (location), testimonies, gallery, about, salvation, give, contact, settings | ⏳ |
 | 8 | Bible quiz (session, play, results, leaderboard, recovery) | ⏳ |
 | 9 | Hardening: tests, accessibility pass, offline downloads, service reminders (local notifications), Sentry | ⏳ |

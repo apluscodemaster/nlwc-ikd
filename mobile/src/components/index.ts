@@ -11,3 +11,4 @@ export { ListRow } from "./ListRow";
 export { EmptyState, ErrorState, LoadingState, Skeleton, ListSkeleton } from "./States";
 export { StatusBadge } from "./StatusBadge";
 export { OfflineBanner } from "./OfflineBanner";
+export { Sheet } from "./Sheet";
