@@ -112,6 +112,14 @@ function AppStack() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="player" options={{ presentation: "modal", headerShown: false }} />
+          {/* Quiz has its own stack (app/quiz/_layout.tsx) with its own header. */}
+          <Stack.Screen name="quiz" options={{ headerShown: false }} />
+          {/* Titles are declared here so the header is right from the first frame;
+              otherwise it shows the route name (e.g. "transcripts/[slug]") until
+              the page's own <Stack.Screen> options apply. */}
+          {ROUTE_TITLES.map(([name, title]) => (
+            <Stack.Screen key={name} name={name} options={{ title }} />
+          ))}
         </Stack>
         {/* After the stack so the floating pill draws above the screens. */}
         <OfflineBanner />
@@ -120,10 +128,49 @@ function AppStack() {
   );
 }
 
-/** Route-level error boundary (port of the web's error.tsx). */
+/** Header titles for every screen pushed on the root stack. */
+const ROUTE_TITLES: [string, string][] = [
+  ["sermons/[id]", "Message"],
+  ["sermons/index", "Messages"],
+  ["sermons/audio/[id]", "Message"],
+  ["transcripts/[slug]", "Transcript"],
+  ["manuals/[slug]", "Sunday School"],
+  ["devotionals/[id]", "Devotional"],
+  ["video-messages/[slug]", "Video message"],
+  ["bible", "Search the Bible"],
+  ["fellowship", "House Fellowship"],
+  ["testimonies", "Testimonies"],
+  ["gallery", "Church Gallery"],
+  ["about", "About Us"],
+  ["salvation", "Salvation"],
+  ["give", "Give"],
+  ["contact", "Contact Us"],
+  ["welcome", "First time here?"],
+  ["settings", "Settings"],
+  ["+not-found", "Not found"],
+];
+
+/**
+ * Route-level error boundary (port of the web's error.tsx). It replaces the
+ * whole root layout when something fails, i.e. it renders OUTSIDE the
+ * providers above, so it brings its own ThemeProvider; without it, the error
+ * screen itself crashed and left a blank white screen.
+ */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
-    <View style={{ flex: 1, justifyContent: "center" }}>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <ErrorScreen error={error} retry={retry} />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function ErrorScreen({ error, retry }: ErrorBoundaryProps) {
+  const { colors } = useTheme();
+  if (__DEV__) console.error("[ErrorBoundary]", error);
+  return (
+    <View style={{ flex: 1, justifyContent: "center", backgroundColor: colors.background }}>
       <ErrorState error={error} onRetry={retry} />
     </View>
   );

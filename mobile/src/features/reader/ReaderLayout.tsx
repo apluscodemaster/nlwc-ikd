@@ -101,7 +101,7 @@ export function ReaderLayout({
         ) : null}
         <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
-        <HtmlContent html={html} fontSize={fontSize} query={query} onScripture={setReference} />
+        <HtmlContent html={html} fontSize={fontSize} query={query} onScripture={setReference} justify />
 
         {footer}
 
@@ -169,7 +169,7 @@ function NavCard({ dir, link }: { dir: "prev" | "next"; link: ReaderLink }) {
 
 const styles = StyleSheet.create({
   progress: { height: 3, borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm },
-  content: { paddingHorizontal: spacing.gutter, paddingTop: spacing.md, paddingBottom: spacing.huge * 2 },
+  content: { paddingHorizontal: spacing.gutter, paddingTop: spacing.md, paddingBottom: spacing.xxl },
   title: { marginTop: spacing.xxs, marginBottom: spacing.xxs },
   rule: { height: 1, marginVertical: spacing.lg },
   nav: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xl },

@@ -105,13 +105,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
-        image: "./assets/images/splash-icon.png",
+        // Round emblem on a square canvas: Android 12+ masks the splash icon to
+        // a circle, which trimmed the wide wordmark. In dark mode the emblem sits
+        // on a white disc so its dark artwork stays visible
+        // (scripts/make-brand-assets.mjs).
+        image: "./assets/images/splash-emblem.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#FFFFFF",
-        // The logo's dark artwork vanishes on a dark background, so dark mode
-        // shows it on a white badge (scripts/make-brand-assets.mjs).
-        dark: { image: "./assets/images/splash-icon-dark.png", backgroundColor: "#0B0B0F" },
+        dark: { image: "./assets/images/splash-emblem-dark.png", backgroundColor: "#0B0B0F" },
       },
     ],
   ],

@@ -10,7 +10,7 @@ import { usePlaySermon } from "./playSermon";
 import { SermonFilterSheet, type SermonFilters } from "./SermonFilterSheet";
 import { SermonRow } from "./SermonRow";
 
-type SheetKind = "series" | "speaker" | "topic" | "year";
+type SheetKind = "series" | "speaker" | "year";
 
 /** Audio messages list: search, filters, infinite scroll (port of AudioSermonsList). */
 export function AudioMessages({ header }: { header?: React.ReactElement }) {
@@ -19,7 +19,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<SermonFilters>({});
   const [sheet, setSheet] = useState<SheetKind | null>(null);
-  const { series, speakers, topics } = useSermonFilters();
+  const { series, speakers } = useSermonFilters();
   const { playSermon, loadingId } = usePlaySermon();
 
   const query = useSermonList({ search: search || undefined, ...filters });
@@ -31,18 +31,17 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
   const label = (kind: SheetKind): string => {
     if (kind === "series") return series.find((s) => s.id === filters.seriesId)?.title ?? "Series";
     if (kind === "speaker") return speakers.find((s) => s.id === filters.speakerId)?.name ?? "Speaker";
-    if (kind === "topic") return topics.find((t) => t.id === filters.topicId)?.name ?? "Topic";
     return filters.year ? String(filters.year) : "Year";
   };
   const active = (kind: SheetKind) =>
-    kind === "series" ? !!filters.seriesId : kind === "speaker" ? !!filters.speakerId : kind === "topic" ? !!filters.topicId : !!filters.year;
+    kind === "series" ? !!filters.seriesId : kind === "speaker" ? !!filters.speakerId : !!filters.year;
 
   const listHeader = (
     <View style={styles.header}>
       {header}
       <SearchField value={search} onChangeDebounced={setSearch} placeholder="Search messages, speakers…" />
       <View style={styles.chips}>
-        {(["series", "speaker", "topic", "year"] as const).map((k) => (
+        {(["series", "speaker", "year"] as const).map((k) => (
           <Chip key={k} label={label(k)} selected={active(k)} icon={ChevronDown} onPress={() => setSheet(k)} />
         ))}
       </View>

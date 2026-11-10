@@ -20,11 +20,12 @@ import { services } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
 import { usePlaySermon } from "~/features/sermons/playSermon";
 import { useLiveStatus } from "~/hooks/useLiveStatus";
+import { useGallery } from "~/hooks/useGallery";
 import { useLatestDevotional } from "~/hooks/useReader";
 import { useSermonList } from "~/hooks/useSermons";
-import { formatLongDate, greeting } from "~/lib/dates";
+import { formatCompactDate, formatLongDate, greeting } from "~/lib/dates";
 import { getRecentProgress } from "~/player/recent";
-import { formatProgressTime, type AudioSermon, type MediaProgress } from "~/shared";
+import { formatProgressTime, sizedGoogleImage, type AudioSermon, type MediaProgress } from "~/shared";
 import { radius, spacing, useTheme } from "~/theme";
 
 const QUICK_LINKS: { label: string; icon: LucideIcon; href: Href }[] = [
@@ -148,8 +149,70 @@ export default function HomeTab() {
                 <ChevronRight color={colors.textMuted} />
               </View>
             </Card>
+
+            <GalleryStrip />
           </View>
     </Screen>
+  );
+}
+
+const GALLERY_PREVIEW = 10;
+
+/** Photos from the most recent event in the gallery sheet (web GalleryPreview). */
+function GalleryStrip() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const { data, isLoading } = useGallery();
+  // The sheet is sorted oldest-first, so the last entry is the latest event.
+  const latest = data?.length ? data[data.length - 1] : undefined;
+  const photos = (latest?.images ?? []).filter(Boolean).slice(0, GALLERY_PREVIEW);
+
+  if (!isLoading && !photos.length) return null;
+  const label = latest ? `Gallery · ${formatCompactDate(latest.date)}` : "Gallery";
+
+  return (
+    <>
+      <SectionHeader
+        label={label}
+        title="Recent moments"
+        onAction={latest ? () => router.push({ pathname: "/gallery", params: { date: latest.date } }) : undefined}
+      />
+      {isLoading ? (
+        <View style={styles.galleryRow}>
+          <Skeleton width={150} height={150} rounded={radius.lg} />
+          <Skeleton width={150} height={150} rounded={radius.lg} />
+        </View>
+      ) : (
+        <FlatList
+          horizontal
+          data={photos}
+          keyExtractor={(u, i) => `${i}-${u}`}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: spacing.xs }}
+          style={{ marginHorizontal: -spacing.gutter }}
+          ListHeaderComponent={<View style={{ width: spacing.gutter - spacing.xs }} />}
+          ListFooterComponent={<View style={{ width: spacing.gutter - spacing.xs }} />}
+          renderItem={({ item, index }) => (
+            <Pressable
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Gallery photo ${index + 1} of ${photos.length}`}
+              onPress={() =>
+                router.push({ pathname: "/gallery", params: { date: latest!.date, photo: String(index) } })
+              }
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            >
+              <Image
+                source={{ uri: sizedGoogleImage(item, 400) }}
+                style={[styles.galleryPhoto, { backgroundColor: colors.surfaceMuted }]}
+                contentFit="cover"
+                transition={150}
+                recyclingKey={item}
+              />
+            </Pressable>
+          )}
+        />
+      )}
+    </>
   );
 }
 
@@ -277,8 +340,10 @@ function LatestCarousel({ sermons, loading }: { sermons: AudioSermon[]; loading:
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.gutter, paddingBottom: spacing.huge * 2 },
+  content: { padding: spacing.gutter, paddingBottom: spacing.xs },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
+  galleryRow: { flexDirection: "row", gap: spacing.xs },
+  galleryPhoto: { width: 150, height: 150, borderRadius: radius.lg },
   logoBadge: {
     width: 48,
     height: 48,

@@ -30,6 +30,21 @@ export function formatShortDate(iso: string | undefined): string {
   }
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * Compact event date: "2026-11-04" → "4 Nov'26" (gallery dates).
+ * Parsed from the string, not via Date, so time zones can't shift the day.
+ * Anything not in YYYY-MM-DD form is returned unchanged.
+ */
+export function formatCompactDate(ymd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
+  if (!m) return ymd;
+  const month = MONTHS[Number(m[2]) - 1];
+  if (!month) return ymd;
+  return `${Number(m[3])} ${month}'${m[1].slice(2)}`;
+}
+
 /** Morning / afternoon / evening greeting in Lagos time. */
 export function greeting(now = new Date()): string {
   let hour = now.getHours();

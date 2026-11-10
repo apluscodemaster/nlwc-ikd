@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   pad: { paddingHorizontal: spacing.gutter },
   audio: { height: 220, marginHorizontal: spacing.gutter, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
-  offAir: { padding: spacing.gutter, paddingBottom: spacing.huge * 2 },
+  offAir: { padding: spacing.gutter, paddingBottom: spacing.xl },
   svc: { flexDirection: "row", alignItems: "center", padding: spacing.md },
 });

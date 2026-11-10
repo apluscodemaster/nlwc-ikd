@@ -1,6 +1,17 @@
 import { dayName, formatHour } from "~/api/schedule";
 import { formatClock } from "~/player/format";
-import { splitDuration } from "../dates";
+import { formatCompactDate, splitDuration } from "../dates";
+
+describe("formatCompactDate", () => {
+  it("formats gallery dates as d Mon'yy", () => {
+    expect(formatCompactDate("2026-11-04")).toBe("4 Nov'26");
+    expect(formatCompactDate("2025-01-19")).toBe("19 Jan'25");
+  });
+  it("leaves unexpected input alone", () => {
+    expect(formatCompactDate("Easter 2026")).toBe("Easter 2026");
+    expect(formatCompactDate("2026-13-01")).toBe("2026-13-01");
+  });
+});
 
 describe("formatHour", () => {
   it("formats admin decimal hours as Lagos wall-clock times", () => {

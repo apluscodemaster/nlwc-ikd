@@ -1,25 +1,30 @@
 import { useMemo, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import { Stack } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Images, X } from "~/components/icons";
-import { galleryApi } from "~/api/community";
 import { ChipRow, EmptyState, ErrorState, IconButton, LoadingState, Text } from "~/components";
+import { useGallery } from "~/hooks/useGallery";
+import { formatCompactDate } from "~/lib/dates";
 import { sizedGoogleImage } from "~/shared";
 import { spacing } from "~/theme";
 
 const COLS = 3;
 
-/** Church gallery from Google Sheets (web /gallery): grouped by event date. */
+/**
+ * Church gallery from Google Sheets (web /gallery): grouped by event date,
+ * newest first. `?date=YYYY-MM-DD` opens a specific event (from Home).
+ */
 export default function GalleryScreen() {
   const { width } = useWindowDimensions();
-  const q = useQuery({ queryKey: ["sheet-data"], queryFn: galleryApi.dates, staleTime: 10 * 60 * 1000 });
-  const [date, setDate] = useState<string | null>(null);
-  const [viewer, setViewer] = useState<number | null>(null);
+  const params = useLocalSearchParams<{ date?: string; photo?: string }>();
+  const q = useGallery();
+  const [date, setDate] = useState<string | null>(params.date ?? null);
+  const [viewer, setViewer] = useState<number | null>(params.photo != null ? Number(params.photo) : null);
 
-  const dates = q.data ?? [];
+  // The sheet arrives oldest-first; show the newest event first.
+  const dates = useMemo(() => [...(q.data ?? [])].reverse(), [q.data]);
   const active = dates.find((d) => d.date === date) ?? dates[0];
   const images = useMemo(() => (active?.images ?? []).filter(Boolean), [active]);
   const tile = Math.floor((width - spacing.gutter * 2 - spacing.xxs * (COLS - 1)) / COLS);
@@ -42,7 +47,7 @@ export default function GalleryScreen() {
           ListHeaderComponent={
             <View style={{ marginBottom: spacing.sm }}>
               <ChipRow
-                options={dates.map((d) => ({ value: d.date, label: d.date }))}
+                options={dates.map((d) => ({ value: d.date, label: formatCompactDate(d.date) }))}
                 value={active?.date ?? ""}
                 onChange={(d) => setDate(d)}
               />

@@ -7,11 +7,10 @@ import { spacing } from "~/theme";
 export interface SermonFilters {
   seriesId?: number;
   speakerId?: number;
-  topicId?: number;
   year?: number;
 }
 
-type Kind = "series" | "speaker" | "topic" | "year";
+type Kind = "series" | "speaker" | "year";
 
 const FIRST_YEAR = 2015;
 
@@ -22,9 +21,9 @@ interface Props {
   onClose: () => void;
 }
 
-/** One sheet per filter type (series / speaker / topic / year), with search for long lists. */
+/** One sheet per filter type (series / speaker / year), with search for long lists. */
 export function SermonFilterSheet({ kind, value, onChange, onClose }: Props) {
-  const { series, speakers, topics } = useSermonFilters();
+  const { series, speakers } = useSermonFilters();
   const [q, setQ] = useState("");
 
   const options = useMemo(() => {
@@ -34,20 +33,18 @@ export function SermonFilterSheet({ kind, value, onChange, onClose }: Props) {
         ? series.map((s) => ({ id: s.id, label: s.title, count: s.messageCount }))
         : kind === "speaker"
           ? speakers.map((s) => ({ id: s.id, label: s.name, count: s.messageCount }))
-          : kind === "topic"
-            ? topics.map((t) => ({ id: t.id, label: t.name, count: t.messageCount }))
-            : Array.from({ length: thisYear - FIRST_YEAR + 1 }, (_, i) => ({
+          : Array.from({ length: thisYear - FIRST_YEAR + 1 }, (_, i) => ({
                 id: thisYear - i,
                 label: String(thisYear - i),
               }));
     const needle = q.toLowerCase();
     return needle ? all.filter((o) => o.label.toLowerCase().includes(needle)) : all;
-  }, [kind, series, speakers, topics, q]);
+  }, [kind, series, speakers, q]);
 
   const key: keyof SermonFilters | null =
-    kind === "series" ? "seriesId" : kind === "speaker" ? "speakerId" : kind === "topic" ? "topicId" : kind === "year" ? "year" : null;
+    kind === "series" ? "seriesId" : kind === "speaker" ? "speakerId" : kind === "year" ? "year" : null;
   const selected = key ? value[key] : undefined;
-  const title = kind === "series" ? "Series" : kind === "speaker" ? "Speaker" : kind === "topic" ? "Topic" : "Year";
+  const title = kind === "series" ? "Series" : kind === "speaker" ? "Speaker" : "Year";
 
   const pick = (id: number | undefined) => {
     if (!key) return;

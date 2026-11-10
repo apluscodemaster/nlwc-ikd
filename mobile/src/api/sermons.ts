@@ -1,4 +1,4 @@
-import type { AudioSermon, AudioSermonsResponse, SeriesItem, SpeakerItem, TopicItem } from "~/shared";
+import type { AudioSermon, AudioSermonsResponse, SeriesItem, SpeakerItem } from "~/shared";
 import { api } from "./client";
 
 export interface AudioSermonQuery {
@@ -7,7 +7,6 @@ export interface AudioSermonQuery {
   search?: string;
   seriesId?: number;
   speakerId?: number;
-  topicId?: number;
   year?: number;
 }
 
@@ -21,7 +20,6 @@ export const sermonsApi = {
         search: q.search,
         series_id: q.seriesId,
         speaker_id: q.speakerId,
-        topic_id: q.topicId,
         year: q.year,
       },
       signal,
@@ -33,5 +31,4 @@ export const sermonsApi = {
 
   series: () => api.get<SeriesItem[]>("/api/audio-sermons/filters", { type: "series" }),
   speakers: () => api.get<SpeakerItem[]>("/api/audio-sermons/filters", { type: "speakers" }),
-  topics: () => api.get<TopicItem[]>("/api/audio-sermons/filters", { type: "topics" }),
 };

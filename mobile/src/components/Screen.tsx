@@ -67,5 +67,7 @@ export function Screen({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   padded: { paddingHorizontal: spacing.gutter, paddingTop: spacing.md },
-  scrollContent: { paddingBottom: spacing.huge * 2 },
+  // Comfortable end-of-page space; the mini player lives in the tab bar slot,
+  // so content never needs extra clearance for it.
+  scrollContent: { paddingBottom: spacing.xl },
 });

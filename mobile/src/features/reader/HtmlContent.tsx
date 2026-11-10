@@ -13,13 +13,15 @@ interface Props {
   onScripture?: (reference: string) => void;
   /** Horizontal padding of the parent, for image sizing. */
   inset?: number;
+  /** Justify paragraphs and list items (long-form transcripts and manuals). */
+  justify?: boolean;
 }
 
 const SYSTEM_FONTS = [fonts.regular, fonts.medium, fonts.semibold, fonts.bold];
 const IGNORED_TAGS = ["script", "style", "iframe", "form", "input", "button", "svg"];
 
 /** Long-form WordPress HTML with reader typography (DESIGN.md §4.6). */
-function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.gutter }: Props) {
+function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.gutter, justify = false }: Props) {
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
 
@@ -29,7 +31,8 @@ function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.g
   const tagsStyles = useMemo<MixedStyleRecord>(
     () => ({
       body: { color: colors.text, fontFamily: fonts.regular, fontSize, lineHeight },
-      p: { marginTop: 0, marginBottom: spacing.md },
+      // Body copy only: headings, quotes and the memory-verse card stay left-aligned.
+      p: { marginTop: 0, marginBottom: spacing.md, ...(justify ? { textAlign: "justify" as const } : null) },
       h1: { fontFamily: fonts.semibold, fontSize: fontSize + 6, lineHeight: lineHeight + 6, marginVertical: spacing.md },
       h2: { fontFamily: fonts.semibold, fontSize: fontSize + 4, lineHeight: lineHeight + 4, marginVertical: spacing.md },
       h3: { fontFamily: fonts.semibold, fontSize: fontSize + 2, marginVertical: spacing.sm },
@@ -48,13 +51,13 @@ function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.g
         marginHorizontal: 0,
       },
       mark: { backgroundColor: "#FDE68A", color: "#111827" },
-      li: { marginBottom: spacing.xs },
+      li: { marginBottom: spacing.xs, ...(justify ? { textAlign: "justify" as const } : null) },
       ul: { marginBottom: spacing.md },
       ol: { marginBottom: spacing.md },
       img: { borderRadius: 10 },
       hr: { backgroundColor: colors.border, height: 1, marginVertical: spacing.lg },
     }),
-    [colors, fontSize, lineHeight],
+    [colors, fontSize, lineHeight, justify],
   );
 
   const classesStyles = useMemo<MixedStyleRecord>(

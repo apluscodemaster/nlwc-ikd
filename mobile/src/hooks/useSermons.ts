@@ -8,7 +8,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const sermonKeys = {
   list: (q: Omit<AudioSermonQuery, "page">) => ["audio-sermons", "list", q] as const,
   detail: (id: number) => ["audio-sermons", "detail", id] as const,
-  filters: (type: "series" | "speakers" | "topics") => ["audio-sermons", "filters", type] as const,
+  filters: (type: "series" | "speakers") => ["audio-sermons", "filters", type] as const,
 };
 
 /** Paginated audio messages with infinite scroll (port of useAudioSermons). */
@@ -36,8 +36,7 @@ export function useSermonDetail(id: number | undefined, initial?: AudioSermon) {
 export function useSermonFilters() {
   const series = useQuery({ queryKey: sermonKeys.filters("series"), queryFn: sermonsApi.series, staleTime: DAY });
   const speakers = useQuery({ queryKey: sermonKeys.filters("speakers"), queryFn: sermonsApi.speakers, staleTime: DAY });
-  const topics = useQuery({ queryKey: sermonKeys.filters("topics"), queryFn: sermonsApi.topics, staleTime: DAY });
-  return { series: series.data ?? [], speakers: speakers.data ?? [], topics: topics.data ?? [] };
+  return { series: series.data ?? [], speakers: speakers.data ?? [] };
 }
 
 export function useTranscriptStubs() {
