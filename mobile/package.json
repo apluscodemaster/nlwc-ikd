@@ -13,7 +13,8 @@
     "check:shared": "node scripts/check-shared-imports.mjs",
     "check": "npm run typecheck && npm run lint && npm run check:shared && npm test",
     "doctor": "npx expo-doctor",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "brand-assets": "node scripts/make-brand-assets.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/jost": "^0.4.1",

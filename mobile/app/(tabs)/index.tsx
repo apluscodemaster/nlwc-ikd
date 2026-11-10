@@ -37,7 +37,7 @@ const QUICK_LINKS: { label: string; icon: LucideIcon; href: Href }[] = [
 /** Home (web landing page, re-thought for a phone: DESIGN.md §4.1). */
 export default function HomeTab() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const latest = useSermonList({ perPage: 8 });
   const [recent, setRecent] = useState<MediaProgress[]>([]);
 
@@ -50,7 +50,15 @@ export default function HomeTab() {
     <Screen edges={["top", "left", "right"]} padded={false} refreshing={latest.isRefetching} onRefresh={() => void latest.refetch()}>
           <View style={styles.content}>
             <View style={styles.top}>
-              <Image source={require("../../assets/images/icon.png")} style={styles.logo} contentFit="contain" />
+              {/* Emblem only, on a white badge so its dark artwork reads in dark mode too. */}
+              <View style={[styles.logoBadge, scheme === "light" && styles.logoBadgeLift]}>
+                <Image
+                  source={require("../../assets/images/emblem.png")}
+                  style={styles.logo}
+                  contentFit="contain"
+                  accessibilityLabel="The New & Living Way Church emblem"
+                />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text variant="small" color="textSecondary">
                   {greeting()}
@@ -271,7 +279,24 @@ function LatestCarousel({ sermons, loading }: { sermons: AudioSermon[]; loading:
 const styles = StyleSheet.create({
   content: { padding: spacing.gutter, paddingBottom: spacing.huge * 2 },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
-  logo: { width: 44, height: 44, borderRadius: 22 },
+  logoBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Light mode only: white-on-near-white needs a soft lift (a hairline border
+  // rendered black on Android); in dark mode the white badge already stands out.
+  logoBadgeLift: {
+    shadowColor: "#111827",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  logo: { width: 30, height: 36 },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   quick: { flexDirection: "row", gap: spacing.xs },
   quickItem: { flex: 1, alignItems: "center", gap: spacing.xs, paddingVertical: spacing.md, borderRadius: radius.lg },

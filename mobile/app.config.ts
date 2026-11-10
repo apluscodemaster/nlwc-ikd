@@ -35,6 +35,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "automatic",
   ios: {
     bundleIdentifier: id,
+    // Opaque: iOS renders a transparent icon's background as black.
+    icon: "./assets/images/icon-ios.png",
     supportsTablet: true,
     infoPlist: {
       UIBackgroundModes: ["audio"],
@@ -104,10 +106,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 180,
+        imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#FFFFFF",
-        dark: { backgroundColor: "#0B0B0F" },
+        // The logo's dark artwork vanishes on a dark background, so dark mode
+        // shows it on a white badge (scripts/make-brand-assets.mjs).
+        dark: { image: "./assets/images/splash-icon-dark.png", backgroundColor: "#0B0B0F" },
       },
     ],
   ],
