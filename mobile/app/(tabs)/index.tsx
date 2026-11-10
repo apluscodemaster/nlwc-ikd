@@ -15,7 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from "~/components/icons";
-import { Card, IconButton, ListRow, Screen, SectionHeader, Skeleton, StatusBadge, Text } from "~/components";
+import { Card, IconButton, ListRow, Screen, SectionHeader, SegmentedControl, Skeleton, StatusBadge, Text } from "~/components";
 import { dayName, formatHour } from "~/api/schedule";
 import { annualMeetings, serviceIcon } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
@@ -26,7 +26,7 @@ import { useLatestDevotional } from "~/hooks/useReader";
 import { useSermonList } from "~/hooks/useSermons";
 import { formatCompactDate, formatLongDate, greeting } from "~/lib/dates";
 import { getRecentProgress } from "~/player/recent";
-import { formatProgressTime, sizedGoogleImage, type AudioSermon, type MediaProgress } from "~/shared";
+import { formatProgressTime, sizedGoogleImage, type AudioSermon, type MediaProgress, type SpecialService } from "~/shared";
 import { radius, spacing, useTheme } from "~/theme";
 
 const QUICK_LINKS: { label: string; icon: LucideIcon; href: Href }[] = [
@@ -184,6 +184,7 @@ function ScheduleRow({
  */
 function ServiceTimes() {
   const schedule = useSchedule();
+  const [tab, setTab] = useState<"weekly" | "annual">("weekly");
   const weekly = (schedule.data?.recurring ?? [])
     .filter((s) => s.active !== false)
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour);
@@ -191,35 +192,117 @@ function ServiceTimes() {
   return (
     <>
       <SectionHeader label="Join us" title="Service times" />
-      {schedule.isLoading && !weekly.length ? (
-        <Skeleton height={190} rounded={radius.lg} />
-      ) : weekly.length ? (
+      <View style={{ marginBottom: spacing.sm }}>
+        <SegmentedControl
+          segments={[
+            { value: "weekly", label: "Weekly" },
+            { value: "annual", label: "Annual" },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+      </View>
+
+      {tab === "annual" ? (
         <Card padded={false}>
-          {weekly.map((s, i) => (
-            <ScheduleRow
-              key={s.id ?? `${s.dayOfWeek}-${s.startHour}`}
-              first={i === 0}
-              icon={serviceIcon(s)}
-              title={s.label}
-              subtitle={[s.recurrenceLabel || `Every ${dayName(s.dayOfWeek)}`, shortLocation(s.location)]
-                .filter(Boolean)
-                .join(" · ")}
-              trailing={formatHour(s.startHour)}
-            />
+          {annualMeetings.map((m, i) => (
+            <ScheduleRow key={m.id} first={i === 0} icon={m.icon} title={m.name} subtitle={m.period} trailing={m.short} />
           ))}
         </Card>
+      ) : schedule.isLoading && !weekly.length ? (
+        <Skeleton height={190} rounded={radius.lg} />
+      ) : weekly.length ? (
+        <>
+          <Card padded={false}>
+            {weekly.map((s, i) => (
+              <ScheduleRow
+                key={s.id ?? `${s.dayOfWeek}-${s.startHour}`}
+                first={i === 0}
+                icon={serviceIcon(s)}
+                title={s.label}
+                subtitle={[s.recurrenceLabel || `Every ${dayName(s.dayOfWeek)}`, shortLocation(s.location)]
+                  .filter(Boolean)
+                  .join(" · ")}
+                trailing={formatHour(s.startHour)}
+              />
+            ))}
+          </Card>
+          <Text variant="small" color="textMuted" style={{ marginTop: spacing.xs }}>
+            Times are Lagos time (WAT).
+          </Text>
+        </>
       ) : (
         <Text color="textSecondary">Service times will appear here soon.</Text>
       )}
-      <Text variant="small" color="textMuted" style={{ marginTop: spacing.xs }}>
-        Times are Lagos time (WAT).
-      </Text>
 
-      <SectionHeader label="Every year" title="Annual meetings" />
+      <UpcomingEvents specials={schedule.data?.special ?? []} />
+    </>
+  );
+}
+
+/** Today's date in Lagos as YYYY-MM-DD (event dates in the schedule are Lagos dates). */
+function lagosToday(): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+const UPCOMING_LIMIT = 5;
+
+/**
+ * One-off events from the admin schedule ("special" services), soonest first.
+ * Past events drop off automatically; the section hides when none are coming.
+ */
+function UpcomingEvents({ specials }: { specials: SpecialService[] }) {
+  const { colors } = useTheme();
+  const today = lagosToday();
+  const upcoming = specials
+    .filter((s) => s.active !== false && s.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.startHour - b.startHour)
+    .slice(0, UPCOMING_LIMIT);
+
+  if (!upcoming.length) return null;
+
+  return (
+    <>
+      <SectionHeader label="Coming up" title="Upcoming events" />
       <Card padded={false}>
-        {annualMeetings.map((m, i) => (
-          <ScheduleRow key={m.id} first={i === 0} icon={m.icon} title={m.name} subtitle={m.period} trailing={m.short} />
-        ))}
+        {upcoming.map((e, i) => {
+          const [y, mo, d] = e.date.split("-").map(Number);
+          const month = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+          const weekday = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+          const when = [weekday, formatHour(e.startHour), shortLocation(e.location)].filter(Boolean).join(" · ");
+          return (
+            <View
+              key={e.id ?? `${e.date}-${e.label}`}
+              style={[styles.svc, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
+              accessible
+              accessibilityLabel={`${e.label}, ${weekday} ${d} ${month}, ${formatHour(e.startHour)}`}
+            >
+              <View style={[styles.dateTile, { backgroundColor: colors.accentSoft }]}>
+                <Text variant="heading" color="primary" style={{ lineHeight: 20 }}>
+                  {d}
+                </Text>
+                <Text variant="caption" color="primary" style={{ fontSize: 10 }}>
+                  {month}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyStrong">{e.label}</Text>
+                <Text variant="small" color="textSecondary">
+                  {when}
+                </Text>
+                {e.description ? (
+                  <Text variant="small" color="textMuted" numberOfLines={2}>
+                    {e.description}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
       </Card>
     </>
   );
@@ -411,6 +494,7 @@ function LatestCarousel({ sermons, loading }: { sermons: AudioSermon[]; loading:
 const styles = StyleSheet.create({
   content: { padding: spacing.gutter, paddingBottom: spacing.xs },
   top: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
+  dateTile: { width: 46, height: 50, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
   galleryRow: { flexDirection: "row", gap: spacing.xs },
   galleryPhoto: { width: 150, height: 150, borderRadius: radius.lg },
   logoBadge: {
