@@ -37,7 +37,9 @@ for (const m of indexSrc.matchAll(/export\s*\{([^}]*)\}\s*from\s*['"]\.\/icons\/
 }
 
 const IMPORT_RE = /import\s*\{([^}]*)\}\s*from\s*["'](?:lucide-react-native|~\/components\/icons)["'];?/g;
-const files = [...walk(join(ROOT, "app")), ...walk(join(ROOT, "src"))].filter((f) => f !== OUT);
+const CUSTOM = join(ROOT, "src", "components", "icons-custom.tsx");
+// icons.ts and icons-custom.tsx import lucide directly; never rewrite them.
+const files = [...walk(join(ROOT, "app")), ...walk(join(ROOT, "src"))].filter((f) => f !== OUT && f !== CUSTOM);
 const used = new Set();
 for (const f of files) {
   for (const m of readFileSync(f, "utf8").matchAll(IMPORT_RE)) {
@@ -48,9 +50,16 @@ for (const f of files) {
   }
 }
 
+// Custom icons (lucide-style, for symbols lucide lacks) live in icons-custom.tsx.
+const CUSTOM_FILE = join(ROOT, "src", "components", "icons-custom.tsx");
+const custom = new Set(
+  [...readFileSync(CUSTOM_FILE, "utf8").matchAll(/export const (\w+)/g)].map((m) => m[1]),
+);
+for (const n of custom) used.delete(n);
+
 const missing = [...used].filter((n) => !fileFor.has(n));
 if (missing.length) {
-  console.error(`Unknown lucide icons: ${missing.join(", ")}`);
+  console.error(`Unknown lucide icons: ${missing.join(", ")} (add custom ones to src/components/icons-custom.tsx)`);
   process.exit(1);
 }
 
@@ -76,6 +85,9 @@ writeFileSync(
     "}",
     "",
     ...names.map((n) => `export const ${n} = thin(${n}Base);`),
+    "",
+    "// Custom lucide-style icons (src/components/icons-custom.tsx).",
+    `export { ${[...custom].sort().join(", ")} } from "./icons-custom";`,
     "",
   ].join("\n"),
 );
