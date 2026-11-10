@@ -43,7 +43,7 @@ export default function SettingsScreen() {
           Reading text size
         </Text>
         <View style={styles.row}>
-          {[FONT_MIN, 17, 18, 20, 22, FONT_MAX].map((s) => (
+          {[FONT_MIN, 16, 17, 18, 20, FONT_MAX].map((s) => (
             <Chip key={s} label={String(s)} selected={fontSize === s} onPress={() => setFontSize(s)} />
           ))}
         </View>

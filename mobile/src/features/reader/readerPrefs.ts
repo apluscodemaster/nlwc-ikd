@@ -10,8 +10,8 @@ export interface ReaderPrefs {
 }
 
 const KEY = "nlwc-reader-prefs";
-const DEFAULTS: ReaderPrefs = { fontSize: 18, surface: "default" };
-export const FONT_MIN = 15;
+const DEFAULTS: ReaderPrefs = { fontSize: 17, surface: "default" };
+export const FONT_MIN = 14;
 export const FONT_MAX = 24;
 
 let current: ReaderPrefs = { ...DEFAULTS, ...(kv.getJSON<ReaderPrefs>(KEY) ?? {}) };

@@ -30,12 +30,12 @@ function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.g
     () => ({
       body: { color: colors.text, fontFamily: fonts.regular, fontSize, lineHeight },
       p: { marginTop: 0, marginBottom: spacing.md },
-      h1: { fontFamily: fonts.bold, fontSize: fontSize + 8, lineHeight: lineHeight + 8, marginVertical: spacing.md },
-      h2: { fontFamily: fonts.bold, fontSize: fontSize + 5, lineHeight: lineHeight + 4, marginVertical: spacing.md },
-      h3: { fontFamily: fonts.semibold, fontSize: fontSize + 3, marginVertical: spacing.sm },
+      h1: { fontFamily: fonts.semibold, fontSize: fontSize + 6, lineHeight: lineHeight + 6, marginVertical: spacing.md },
+      h2: { fontFamily: fonts.semibold, fontSize: fontSize + 4, lineHeight: lineHeight + 4, marginVertical: spacing.md },
+      h3: { fontFamily: fonts.semibold, fontSize: fontSize + 2, marginVertical: spacing.sm },
       h4: { fontFamily: fonts.semibold, fontSize: fontSize + 1, marginVertical: spacing.sm },
-      strong: { fontFamily: fonts.bold },
-      b: { fontFamily: fonts.bold },
+      strong: { fontFamily: fonts.semibold },
+      b: { fontFamily: fonts.semibold },
       em: { fontStyle: "italic" },
       a: { color: colors.primary, textDecorationLine: "none", fontFamily: fonts.medium },
       blockquote: {
@@ -61,8 +61,8 @@ function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.g
     () => ({
       memory: { borderLeftColor: colors.accent, paddingVertical: spacing.sm },
       "memory-title": {
-        fontFamily: fonts.bold,
-        fontSize: 12,
+        fontFamily: fonts.semibold,
+        fontSize: 11,
         letterSpacing: 1,
         color: colors.accent,
         marginBottom: 4,

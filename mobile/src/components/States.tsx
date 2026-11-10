@@ -19,7 +19,7 @@ export function EmptyState({ icon: Icon = Inbox, title, message, actionLabel, on
   return (
     <View style={styles.center} accessibilityLiveRegion="polite">
       <View style={[styles.iconWrap, { backgroundColor: colors.accentSoft }]}>
-        <Icon size={28} color={colors.primary} />
+        <Icon size={26} color={colors.primary} />
       </View>
       <Text variant="heading" align="center">
         {title}

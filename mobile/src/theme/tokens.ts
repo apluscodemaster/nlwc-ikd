@@ -79,22 +79,27 @@ export const fonts = {
   bold: "Jost_700Bold",
 } as const;
 
+/**
+ * Type scale. Jost is geometric with a large x-height, so it reads bigger than
+ * its point size; the scale is kept compact and leans on weight (semibold
+ * rather than bold) and spacing for hierarchy instead of size.
+ */
 export const typography = {
-  display: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38 },
-  title: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30 },
-  heading: { fontFamily: fonts.semibold, fontSize: 19, lineHeight: 25 },
-  body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24 },
-  bodyStrong: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 24 },
-  reader: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 30 },
-  label: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
+  display: { fontFamily: fonts.semibold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3 },
+  title: { fontFamily: fonts.semibold, fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
+  heading: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22 },
+  body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
+  bodyStrong: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 21 },
+  reader: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 28 },
+  label: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
   caption: {
     fontFamily: fonts.medium,
-    fontSize: 12,
-    lineHeight: 16,
-    letterSpacing: 0.8,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 1,
     textTransform: "uppercase" as const,
   },
-  small: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  small: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 17 },
 } as const;
 
 export type TypographyVariant = keyof typeof typography;

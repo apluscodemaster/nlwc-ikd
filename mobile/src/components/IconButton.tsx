@@ -16,7 +16,7 @@ export interface IconButtonProps extends Omit<PressableProps, "style" | "childre
 
 export function IconButton({
   icon: Icon,
-  size = 22,
+  size = 20,
   color = "text",
   filled,
   tint,

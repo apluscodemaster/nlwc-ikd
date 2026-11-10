@@ -75,5 +75,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 44,
   },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, paddingVertical: spacing.xs },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, paddingVertical: spacing.xs },
 });

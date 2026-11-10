@@ -96,7 +96,7 @@ export default function HomeTab() {
                   style={({ pressed }) => [styles.quickItem, { backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 }]}
                 >
                   <View style={[styles.quickIcon, { backgroundColor: colors.accentSoft }]}>
-                    <q.icon size={22} color={colors.primary} />
+                    <q.icon size={20} color={colors.primary} />
                   </View>
                   <Text variant="label" align="center" dense>
                     {q.label}

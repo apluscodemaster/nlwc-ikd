@@ -81,7 +81,7 @@ export function Button({
       ) : (
         <View style={styles.row}>
           {Icon ? <Icon size={size === "sm" ? 16 : 18} color={fg[variant]} /> : null}
-          <Text variant="label" style={{ color: fg[variant], fontSize: size === "lg" ? 16 : 14 }}>
+          <Text variant="label" style={{ color: fg[variant], fontSize: size === "lg" ? 15 : 13 }}>
             {title}
           </Text>
           {trailing}

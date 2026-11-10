@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     minHeight: 46,
     fontFamily: fonts.regular,
-    fontSize: 16,
+    fontSize: 15,
   },
   multiline: { minHeight: 130, paddingTop: spacing.sm },
 });

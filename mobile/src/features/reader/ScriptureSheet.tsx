@@ -21,7 +21,7 @@ export function ScriptureSheet({ reference, onClose }: { reference: string | nul
         <View style={{ gap: spacing.xs }}>
           {data.verses?.length ? (
             data.verses.map((v) => (
-              <Text key={`${v.chapter}:${v.verse}`} variant="reader" style={{ fontSize: 17, lineHeight: 27 }}>
+              <Text key={`${v.chapter}:${v.verse}`} variant="reader" style={{ fontSize: 16, lineHeight: 26 }}>
                 <Text variant="caption" color="primary">
                   {v.verse}{" "}
                 </Text>

@@ -50,7 +50,7 @@ export function ListRow({
         />
       ) : Icon ? (
         <View style={[styles.thumb, styles.iconThumb, { backgroundColor: colors.accentSoft }]}>
-          <Icon size={22} color={colors.primary} />
+          <Icon size={20} color={colors.primary} />
         </View>
       ) : null}
       <View style={styles.body}>

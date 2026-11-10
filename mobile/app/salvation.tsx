@@ -40,14 +40,14 @@ export default function SalvationScreen() {
         <Text variant="caption" color="primary" style={{ marginBottom: spacing.xs }}>
           Prayer of Salvation
         </Text>
-        <HtmlContent html={SALVATION_PRAYER} fontSize={17} onScripture={setRef} inset={spacing.gutter * 2} />
+        <HtmlContent html={SALVATION_PRAYER} fontSize={16} onScripture={setRef} inset={spacing.gutter * 2} />
       </Card>
 
       <Card style={{ marginTop: spacing.md }}>
         <Text variant="caption" color="primary" style={{ marginBottom: spacing.xs }}>
           Prayer for Baptism of the Holy Ghost
         </Text>
-        <HtmlContent html={HOLY_GHOST_PRAYER} fontSize={17} onScripture={setRef} inset={spacing.gutter * 2} />
+        <HtmlContent html={HOLY_GHOST_PRAYER} fontSize={16} onScripture={setRef} inset={spacing.gutter * 2} />
       </Card>
 
       <Text variant="heading" style={{ marginTop: spacing.xl }}>

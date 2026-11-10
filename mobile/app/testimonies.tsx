@@ -75,7 +75,7 @@ function TestimonyFeed({ onShare }: { onShare: () => void }) {
         </View>
       )}
       <Sheet visible={!!open} onClose={() => setOpen(null)} title={open ? `${open.name}'s testimony` : ""}>
-        <Text variant="reader" style={{ fontSize: 17, lineHeight: 28 }}>
+        <Text variant="reader" style={{ fontSize: 16, lineHeight: 26 }}>
           {open?.testimony}
         </Text>
       </Sheet>

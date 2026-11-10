@@ -35,7 +35,7 @@ export default function BibleSearchScreen() {
             <Text variant="label" color="primary">
               {item.ref}
             </Text>
-            <Text variant="reader" style={{ fontSize: 17, lineHeight: 27 }} selectable>
+            <Text variant="reader" style={{ fontSize: 16, lineHeight: 26 }} selectable>
               {item.text}
             </Text>
           </View>

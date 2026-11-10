@@ -58,16 +58,26 @@ Font: **Jost** (the website's font) loaded with `expo-font` /
 
 | Style | Size / line height | Weight | Use |
 | --- | --- | --- | --- |
-| `display` | 32 / 38 | 700 | Home hero, Live countdown |
-| `title` | 24 / 30 | 700 | Screen titles |
-| `heading` | 19 / 25 | 600 | Section headers, card titles |
-| `body` | 16 / 24 | 400 | Default |
-| `reader` | 18 / 30 (user adjustable 15–24) | 400 | Transcript and manual body |
-| `label` | 14 / 20 | 500 | Buttons, chips, metadata |
-| `caption` | 12 / 16 | 500 | Dates, durations, overlines (uppercase, +0.8 letter spacing; port of `SectionLabel`) |
+| `display` | 26 / 32 | 600, −0.3 tracking | Countdown, big stats |
+| `title` | 20 / 26 | 600, −0.2 tracking | Screen and content titles |
+| `heading` | 16 / 22 | 600 | Section headers, card titles |
+| `body` | 15 / 22 | 400 | Default |
+| `bodyStrong` | 15 / 21 | 500 | List row titles |
+| `reader` | 17 / 28 (user adjustable 14–24) | 400 | Transcript and manual body |
+| `label` | 13 / 18 | 500 | Buttons, chips, metadata |
+| `small` | 12.5 / 17 | 400 | Secondary lines |
+| `caption` | 11 / 14 | 500 | Overlines (uppercase, +1 letter spacing; port of `SectionLabel`) |
+
+Jost is geometric with a large x-height, so it reads bigger than its point
+size. The scale stays compact and uses weight (semibold, not bold) and spacing
+for hierarchy rather than size. Bold (700) isn't used.
 
 All sizes scale with the OS text size (`allowFontScaling`), capped at 1.4× on
 dense list rows so layouts don't break.
+
+**Icons:** lucide, stroke width **1.5** (lucide's default is 2), set once in the
+generated `src/components/icons.ts`. Sizes: 20 for list and button icons, 22 in
+the tab bar.
 
 ### Spacing, radius, elevation
 

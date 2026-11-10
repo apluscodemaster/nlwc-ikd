@@ -18,9 +18,9 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 10.5, letterSpacing: 0.2 },
         headerStyle: { backgroundColor: colors.surface },
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
+        headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 18, color: colors.text },
         headerShadowVisible: false,
         headerTitleAlign: "left",
       }}
@@ -30,24 +30,24 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <House color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
         name="listen"
-        options={{ title: "Listen", tabBarIcon: ({ color, size }) => <Headphones color={color} size={size} /> }}
+        options={{ title: "Listen", tabBarIcon: ({ color, size }) => <Headphones color={color} size={size - 2} /> }}
       />
       <Tabs.Screen
         name="live"
-        options={{ title: "Live", tabBarIcon: ({ color, size }) => <Radio color={color} size={size} /> }}
+        options={{ title: "Live", tabBarIcon: ({ color, size }) => <Radio color={color} size={size - 2} /> }}
       />
       <Tabs.Screen
         name="read"
-        options={{ title: "Read", tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} /> }}
+        options={{ title: "Read", tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size - 2} /> }}
       />
       <Tabs.Screen
         name="more"
-        options={{ title: "More", tabBarIcon: ({ color, size }) => <Menu color={color} size={size} /> }}
+        options={{ title: "More", tabBarIcon: ({ color, size }) => <Menu color={color} size={size - 2} /> }}
       />
     </Tabs>
   );
