@@ -1,94 +1,116 @@
-import {
-  Calendar,
-  Users,
-  LucideIcon,
-  Book,
-  Flame,
-  Sparkles,
-} from "lucide-react";
+import { BookOpen, Calendar, Church, LucideIcon, Sparkles, Users } from "lucide-react";
+import PrayingHands from "@/components/shared/PrayingHandsIcon";
+import type { RecurringService } from "@/lib/scheduleService";
 
-export type Service = {
-  id: number;
+/**
+ * Service presentation for the homepage "Fellowship Gatherings" section.
+ *
+ * The weekly services themselves come from the admin schedule
+ * (Admin → Settings → Schedule, read via GET /api/schedule), so their names,
+ * days, times and venues follow admin changes. This file only supplies how a
+ * service looks (icon, colours, fallback image and description, chosen by its
+ * admin category) and the annual meetings, which aren't weekly entries in the
+ * schedule. The mobile app's mobile/src/data/services.ts mirrors this.
+ */
+
+export interface ServiceVisual {
+  icon: LucideIcon;
+  color: string;
+  iconColor: string;
+  /** Used when the admin entry has no imageUrl. */
+  image?: string;
+  /** Used when the admin entry has no description. */
+  description: string;
+}
+
+const VISUALS = {
+  worship: {
+    icon: Church,
+    color: "bg-orange-50",
+    iconColor: "text-orange-600",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1775202517/Sunday-service_yqnt8b.jpg",
+    description: "Join us for an uplifting morning of worship and transformative teaching.",
+  },
+  prayer: {
+    icon: PrayingHands,
+    color: "bg-blue-50",
+    iconColor: "text-blue-600",
+    image:
+      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247627/nlwc-ikd-assets/m6cvj4hlycpdwzd61vfh.avif",
+    description: "Standing together in faith and interceding for our community.",
+  },
+  study: {
+    icon: BookOpen,
+    color: "bg-green-50",
+    iconColor: "text-green-600",
+    image:
+      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247542/nlwc-ikd-assets/pm8b0f37oyetsclcesg7.avif",
+    description: "Deep dive into God's word and grow in your understanding of faith.",
+  },
+  other: {
+    icon: Calendar,
+    color: "bg-gray-50",
+    iconColor: "text-gray-600",
+    description: "Join us at the Church Auditorium.",
+  },
+} satisfies Record<string, ServiceVisual>;
+
+/** How a weekly service looks, by its admin category, then by its label. */
+export function serviceVisual(s: Pick<RecurringService, "category" | "label">): ServiceVisual {
+  const key = `${s.category ?? ""} ${s.label}`.toLowerCase();
+  if (key.includes("prayer")) return VISUALS.prayer;
+  if (key.includes("study") || key.includes("bible")) return VISUALS.study;
+  if (key.includes("worship") || key.includes("sunday") || key.includes("service")) return VISUALS.worship;
+  return VISUALS.other;
+}
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** "Every Wednesday" (or the admin's own recurrence label). */
+export function serviceDayLabel(s: Pick<RecurringService, "recurrenceLabel" | "dayOfWeek">): string {
+  return s.recurrenceLabel?.trim() || `Every ${DAYS[s.dayOfWeek] ?? ""}`.trim();
+}
+
+/** 18.5 → "6:30 PM" (admin hours are Lagos wall-clock decimals). */
+export function formatServiceHour(hour: number): string {
+  const h24 = Math.floor(hour) % 24;
+  const m = Math.round((hour - Math.floor(hour)) * 60);
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${h24 >= 12 ? "PM" : "AM"}`;
+}
+
+export interface AnnualMeeting {
+  id: string;
   name: string;
-  day: string;
-  time: string;
-  location: string;
+  /** When in the year it holds, e.g. "Sundays in September". */
+  period: string;
   description: string;
   icon: LucideIcon;
   color: string;
   iconColor: string;
   image?: string;
-};
+}
 
-export const services: Service[] = [
+/** Annual meetings: not weekly entries in the admin schedule. */
+export const annualMeetings: AnnualMeeting[] = [
   {
-    id: 1,
-    name: "Sunday Service",
-    day: "Sundays",
-    time: "8:00 AM",
-    location: "Church Auditorium",
-    description:
-      "Join us for an uplifting morning of worship and transformative teaching.",
-    icon: Calendar,
-    color: "bg-orange-50",
-    iconColor: "text-orange-600",
-    image:
-      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1775202517/Sunday-service_yqnt8b.jpg",
-  },
-  {
-    id: 2,
-    name: "Prayer Meeting",
-    day: "Wednesdays",
-    time: "6:00 PM",
-    location: "Church Auditorium",
-    description:
-      "Standing together in faith and interceding for our community.",
-    icon: Users,
-    color: "bg-blue-50",
-    iconColor: "text-blue-600",
-    image:
-      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247627/nlwc-ikd-assets/m6cvj4hlycpdwzd61vfh.avif",
-  },
-  {
-    id: 3,
-    name: "Bible Study",
-    day: "Fridays",
-    time: "6:00 PM",
-    location: "Church Auditorium",
-    description:
-      "Deep dive into God's word and grow in your understanding of faith.",
-    icon: Book,
-    color: "bg-green-50",
-    iconColor: "text-green-600",
-    image:
-      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247542/nlwc-ikd-assets/pm8b0f37oyetsclcesg7.avif",
-  },
-  {
-    id: 4,
-    name: "Sithrah",
-    day: "2nd Sat Monthly",
-    time: "12:00 PM",
-    location: "Church Auditorium",
-    description:
-      "A special monthly time of prayer and spiritual refreshing before the Lord.",
-    icon: Flame,
-    color: "bg-purple-50",
-    iconColor: "text-purple-600",
-    image:
-      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247787/nlwc-ikd-assets/taxdkmtwzd7rn1np8wfm.avif",
-  },
-  {
-    id: 5,
+    id: "season-of-the-spirit",
     name: "Season of the Spirit",
-    day: "Feb - March",
-    time: "8:00 AM",
-    location: "Church Auditorium",
-    description:
-      "A special season of spiritual refreshing and prophetic advancement.",
+    period: "February – March",
+    description: "A special season of spiritual refreshing and prophetic advancement.",
     icon: Sparkles,
     color: "bg-amber-50",
     iconColor: "text-amber-600",
     image:
       "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247798/nlwc-ikd-assets/nu4dqvqovsnbodckjmnu.avif",
+  },
+  {
+    id: "family-life-festival",
+    name: "Family Life Festival",
+    period: "Sundays in September",
+    description: "A month of Sundays devoted to building strong marriages and families.",
+    icon: Users,
+    color: "bg-rose-50",
+    iconColor: "text-rose-600",
   },
 ];

@@ -1,11 +1,71 @@
 "use client";
 
 import React, { useRef } from "react";
-import { MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Clock, ChevronLeft, ChevronRight, LucideIcon } from "lucide-react";
 import { m as motion, Variants } from "framer-motion";
 import Image from "next/image";
-import SectionLabel from "@/components/shared/SectionLabel";
-import { services } from "@/data/services";
+import { useQuery } from "@tanstack/react-query";
+import {
+  annualMeetings,
+  formatServiceHour,
+  serviceDayLabel,
+  serviceVisual,
+} from "@/data/services";
+import type { RecurringService } from "@/lib/scheduleService";
+
+/** One card in the carousel: a weekly service (admin schedule) or an annual meeting. */
+interface GatheringCard {
+  id: string;
+  name: string;
+  /** Badge on the image, e.g. "Every Sunday" / "Annual". */
+  badge: string;
+  description: string;
+  timeLabel: string;
+  timeValue: string;
+  icon: LucideIcon;
+  color: string;
+  iconColor: string;
+  image?: string;
+}
+
+async function fetchWeeklyServices(): Promise<RecurringService[]> {
+  const res = await fetch("/api/schedule");
+  if (!res.ok) throw new Error(`Schedule request failed (${res.status})`);
+  const data = (await res.json()) as { recurring?: RecurringService[] };
+  return (data.recurring ?? [])
+    .filter((s) => s.active !== false)
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour);
+}
+
+function weeklyCard(s: RecurringService): GatheringCard {
+  const v = serviceVisual(s);
+  return {
+    id: s.id ?? `${s.dayOfWeek}-${s.startHour}`,
+    name: s.label,
+    badge: serviceDayLabel(s),
+    description: s.description?.trim() || v.description,
+    timeLabel: "Time",
+    timeValue: formatServiceHour(s.startHour),
+    icon: v.icon,
+    color: v.color,
+    iconColor: v.iconColor,
+    // Admin images may be Cloudinary public IDs; only use full URLs here.
+    image: s.imageUrl?.startsWith("http") ? s.imageUrl : v.image,
+  };
+}
+
+const ANNUAL_CARDS: GatheringCard[] = annualMeetings.map((m) => ({
+  id: m.id,
+  name: m.name,
+  badge: "Annual",
+  description: m.description,
+  timeLabel: "When",
+  timeValue: m.period,
+  icon: m.icon,
+  color: m.color,
+  iconColor: m.iconColor,
+  image: m.image,
+}));
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -33,6 +93,13 @@ const headingVariants: Variants = {
 
 export default function ServiceTimes() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Same source as the admin Schedule page and the live-service countdowns.
+  const { data: weekly, isLoading } = useQuery({
+    queryKey: ["schedule", "weekly"],
+    queryFn: fetchWeeklyServices,
+    staleTime: 5 * 60 * 1000,
+  });
+  const cards = [...(weekly ?? []).map(weeklyCard), ...ANNUAL_CARDS];
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -103,7 +170,15 @@ export default function ServiceTimes() {
             variants={containerVariants}
             className="flex overflow-x-auto gap-6 scroll-smooth scrollbar-hide pb-12 px-2 -mx-2"
           >
-            {services.map((service) => (
+            {isLoading &&
+              [0, 1, 2].map((i) => (
+                <div
+                  key={`placeholder-${i}`}
+                  aria-hidden="true"
+                  className="min-w-[300px] sm:min-w-[380px] h-[460px] bg-white rounded-[2.5rem] border border-gray-100/50 animate-pulse"
+                />
+              ))}
+            {cards.map((service) => (
               <motion.div
                 key={service.id}
                 variants={cardVariants}
@@ -147,7 +222,7 @@ export default function ServiceTimes() {
                   {/* Badge */}
                   <div className="absolute bottom-6 left-6">
                     <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-xs font-bold text-gray-900 shadow-sm uppercase tracking-wider">
-                      {service.day}
+                      {service.badge}
                     </span>
                   </div>
                 </div>
@@ -170,10 +245,10 @@ export default function ServiceTimes() {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                            Time
+                            {service.timeLabel}
                           </span>
                           <span className="font-bold text-sm text-gray-900">
-                            {service.time}
+                            {service.timeValue}
                           </span>
                         </div>
                       </div>
