@@ -16,10 +16,11 @@ import {
   type LucideIcon,
 } from "~/components/icons";
 import { Card, IconButton, ListRow, Screen, SectionHeader, Skeleton, StatusBadge, Text } from "~/components";
-import { services } from "~/data/services";
+import { dayName, formatHour } from "~/api/schedule";
+import { annualMeetings, serviceIcon } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
 import { usePlaySermon } from "~/features/sermons/playSermon";
-import { useLiveStatus } from "~/hooks/useLiveStatus";
+import { useLiveStatus, useSchedule } from "~/hooks/useLiveStatus";
 import { useGallery } from "~/hooks/useGallery";
 import { useLatestDevotional } from "~/hooks/useReader";
 import { useSermonList } from "~/hooks/useSermons";
@@ -114,28 +115,7 @@ export default function HomeTab() {
               ))}
             </View>
 
-            <SectionHeader label="Join us" title="Service times" />
-            <Card padded={false}>
-              {services.map((s, i) => (
-                <View
-                  key={s.id}
-                  style={[styles.svc, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
-                >
-                  <View style={[styles.svcIcon, { backgroundColor: colors.accentSoft }]}>
-                    <s.icon size={18} color={colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text variant="bodyStrong">{s.name}</Text>
-                    <Text variant="small" color="textSecondary">
-                      {s.day} · {s.location}
-                    </Text>
-                  </View>
-                  <Text variant="label" color="primary">
-                    {s.time}
-                  </Text>
-                </View>
-              ))}
-            </Card>
+            <ServiceTimes />
 
             <Card style={{ marginTop: spacing.xl }} onPress={() => router.push("/welcome")} accessibilityLabel="New here? Start here">
               <View style={styles.row}>
@@ -153,6 +133,95 @@ export default function HomeTab() {
             <GalleryStrip />
           </View>
     </Screen>
+  );
+}
+
+/** "Church Auditorium, Ikorodu" → "Church Auditorium" (the app is Ikorodu-only). */
+function shortLocation(location?: string): string {
+  return (location ?? "").replace(/,\s*Ikorodu\s*$/i, "").trim();
+}
+
+/** One row in the service-times card. */
+function ScheduleRow({
+  icon: Icon,
+  title,
+  subtitle,
+  trailing,
+  first,
+}: {
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  trailing: string;
+  first: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[styles.svc, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
+      accessible
+      accessibilityLabel={`${title}, ${subtitle}, ${trailing}`}
+    >
+      <View style={[styles.svcIcon, { backgroundColor: colors.accentSoft }]}>
+        <Icon size={18} color={colors.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text variant="bodyStrong">{title}</Text>
+        <Text variant="small" color="textSecondary">
+          {subtitle}
+        </Text>
+      </View>
+      <Text variant="label" color="primary">
+        {trailing}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Weekly services from the admin schedule (Admin → Settings → Schedule), so
+ * changes there appear here automatically, followed by the annual meetings.
+ */
+function ServiceTimes() {
+  const schedule = useSchedule();
+  const weekly = (schedule.data?.recurring ?? [])
+    .filter((s) => s.active !== false)
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour);
+
+  return (
+    <>
+      <SectionHeader label="Join us" title="Service times" />
+      {schedule.isLoading && !weekly.length ? (
+        <Skeleton height={190} rounded={radius.lg} />
+      ) : weekly.length ? (
+        <Card padded={false}>
+          {weekly.map((s, i) => (
+            <ScheduleRow
+              key={s.id ?? `${s.dayOfWeek}-${s.startHour}`}
+              first={i === 0}
+              icon={serviceIcon(s)}
+              title={s.label}
+              subtitle={[s.recurrenceLabel || `Every ${dayName(s.dayOfWeek)}`, shortLocation(s.location)]
+                .filter(Boolean)
+                .join(" · ")}
+              trailing={formatHour(s.startHour)}
+            />
+          ))}
+        </Card>
+      ) : (
+        <Text color="textSecondary">Service times will appear here soon.</Text>
+      )}
+      <Text variant="small" color="textMuted" style={{ marginTop: spacing.xs }}>
+        Times are Lagos time (WAT).
+      </Text>
+
+      <SectionHeader label="Every year" title="Annual meetings" />
+      <Card padded={false}>
+        {annualMeetings.map((m, i) => (
+          <ScheduleRow key={m.id} first={i === 0} icon={m.icon} title={m.name} subtitle={m.period} trailing={m.short} />
+        ))}
+      </Card>
+    </>
   );
 }
 
