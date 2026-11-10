@@ -4,7 +4,7 @@
  * components, so it can't be shared directly; the same icons come from
  * lucide-react-native here (docs/ARCHITECTURE.md §5.4). Keep in sync.
  */
-import { Book, Calendar, Flame, Sparkles, Users, type LucideIcon } from "~/components/icons";
+import { BookOpen, Calendar, Flame, Sparkles, Users, type LucideIcon } from "~/components/icons";
 
 export interface Service {
   id: number;
@@ -45,7 +45,7 @@ export const services: Service[] = [
     time: "6:00 PM",
     location: "Church Auditorium",
     description: "Deep dive into God's word and grow in your understanding of faith.",
-    icon: Book,
+    icon: BookOpen, // open Bible
     image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247542/nlwc-ikd-assets/pm8b0f37oyetsclcesg7.avif",
   },
   {

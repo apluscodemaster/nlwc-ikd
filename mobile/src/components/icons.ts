@@ -3,7 +3,6 @@
 import { createElement } from "react";
 import type { LucideIcon, LucideProps } from "lucide-react-native";
 import AlertCircleBase from "lucide-react-native/icons/circle-exclamation-point";
-import BookBase from "lucide-react-native/icons/book";
 import BookHeartBase from "lucide-react-native/icons/book-heart";
 import BookMarkedBase from "lucide-react-native/icons/book-bookmark";
 import BookOpenBase from "lucide-react-native/icons/book-open";
@@ -77,7 +76,6 @@ function thin(Icon: LucideIcon): LucideIcon {
 }
 
 export const AlertCircle = thin(AlertCircleBase);
-export const Book = thin(BookBase);
 export const BookHeart = thin(BookHeartBase);
 export const BookMarked = thin(BookMarkedBase);
 export const BookOpen = thin(BookOpenBase);
