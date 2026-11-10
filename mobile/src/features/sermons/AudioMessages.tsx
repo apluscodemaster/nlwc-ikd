@@ -42,7 +42,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
       <SearchField value={search} onChangeDebounced={setSearch} placeholder="Search messages, speakers…" />
       <View style={styles.chips}>
         {(["series", "speaker", "year"] as const).map((k) => (
-          <Chip key={k} label={label(k)} selected={active(k)} icon={ChevronDown} onPress={() => setSheet(k)} />
+          <Chip key={k} fill label={label(k)} selected={active(k)} icon={ChevronDown} onPress={() => setSheet(k)} />
         ))}
       </View>
       {total != null ? (
@@ -106,6 +106,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.gutter, paddingTop: spacing.sm, gap: spacing.sm, paddingBottom: spacing.xs },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  // Three filters share the full width equally.
+  chips: { flexDirection: "row", gap: spacing.xs },
   footer: { marginVertical: spacing.lg },
 });

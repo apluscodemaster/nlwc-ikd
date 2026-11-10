@@ -8,9 +8,11 @@ interface ChipProps {
   selected?: boolean;
   onPress?: () => void;
   icon?: LucideIcon;
+  /** Share the row equally with sibling chips (label centred, truncates). */
+  fill?: boolean;
 }
 
-export function Chip({ label, selected, onPress, icon: Icon }: ChipProps) {
+export function Chip({ label, selected, onPress, icon: Icon, fill }: ChipProps) {
   const { colors } = useTheme();
   const fg = selected ? colors.onPrimary : colors.textSecondary;
   return (
@@ -22,6 +24,7 @@ export function Chip({ label, selected, onPress, icon: Icon }: ChipProps) {
       hitSlop={{ top: 6, bottom: 6 }}
       style={({ pressed }) => [
         styles.chip,
+        fill && styles.fill,
         {
           backgroundColor: selected ? colors.primary : colors.surface,
           borderColor: selected ? colors.primary : colors.border,
@@ -30,7 +33,7 @@ export function Chip({ label, selected, onPress, icon: Icon }: ChipProps) {
       ]}
     >
       {Icon ? <Icon size={14} color={fg} /> : null}
-      <Text variant="label" dense style={{ color: fg }} numberOfLines={1}>
+      <Text variant="label" dense style={[{ color: fg }, fill && styles.fillLabel]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -69,5 +72,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
   },
+  fill: { flex: 1, justifyContent: "center", minWidth: 0 },
+  // Lets a long label shrink and truncate instead of pushing the chip wider.
+  fillLabel: { flexShrink: 1 },
   row: { gap: spacing.xs, paddingVertical: spacing.xs },
 });
