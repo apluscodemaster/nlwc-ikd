@@ -21,10 +21,21 @@ export interface LiveStatus {
   secondsToNext: number;
 }
 
+/**
+ * Development only: EXPO_PUBLIC_FORCE_LIVE=1 makes the Live screen behave as
+ * if a service were on, to work on the stream/chat UI between services.
+ * Always false in release builds (__DEV__ is false there), and chat sending is
+ * blocked while it's on so test messages never reach the real chat.
+ */
+export const FORCE_LIVE = __DEV__ && process.env.EXPO_PUBLIC_FORCE_LIVE === "1";
+
 function read(): LiveStatus {
   const loaded = isScheduleLoaded();
   if (!loaded) return { loaded, isLive: false, currentTitle: "", next: null, secondsToNext: 0 };
   const now = new Date();
+  if (FORCE_LIVE) {
+    return { loaded, isLive: true, currentTitle: "Test service (forced live)", next: null, secondsToNext: 0 };
+  }
   const isLive = isCurrentlyLive(now);
   let next: NextServiceInfo | null = null;
   try {

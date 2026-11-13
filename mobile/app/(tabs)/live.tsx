@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
-import { CalendarClock, Headphones, Video } from "~/components/icons";
+import { CalendarClock, ChevronDown, ChevronUp, Headphones, MessageCircle, Video } from "~/components/icons";
 import { dayName, formatHour } from "~/api/schedule";
 import { Card, EmptyState, LoadingState, SectionHeader, SegmentedControl, StatusBadge, Text } from "~/components";
+import { KeyboardAware } from "~/components/KeyboardAware";
 import { Countdown } from "~/features/live/Countdown";
 import { LiveChat } from "~/features/live/LiveChat";
 import { YouTubePlayer } from "~/features/video/YouTubePlayer";
@@ -22,6 +23,8 @@ export default function LiveTab() {
   const { colors } = useTheme();
   const status = useLiveStatus(1000);
   const [mode, setMode] = useState<Mode>("video");
+  // Listen mode: the player fills the screen and the chat is one tap away.
+  const [chatOpen, setChatOpen] = useState(false);
 
   if (!status.loaded) return <LoadingState label="Loading the service schedule…" />;
 
@@ -29,11 +32,8 @@ export default function LiveTab() {
 
   return (
     <SafeAreaView edges={["left", "right"]} style={{ flex: 1, backgroundColor: colors.background }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-      >
+      {/* Lifts the chat composer above the keyboard on iOS and Android. */}
+      <KeyboardAware>
         <View style={styles.liveHead}>
           <View style={styles.row}>
             <StatusBadge label="Live now" tone="live" pulse solid />
@@ -50,10 +50,54 @@ export default function LiveTab() {
             onChange={setMode}
           />
         </View>
-        {mode === "video" ? <LiveVideo /> : <LiveAudio />}
-        <LiveChat />
-      </KeyboardAvoidingView>
+
+        {mode === "video" ? (
+          <>
+            <LiveVideo />
+            <LiveChat />
+          </>
+        ) : (
+          <>
+            {/* Stays mounted while the chat is open, so the broadcast keeps playing. */}
+            <LiveAudio hidden={chatOpen} />
+            {chatOpen ? (
+              <>
+                <ChatToggleBar open onPress={() => setChatOpen(false)} />
+                <LiveChat />
+              </>
+            ) : (
+              <ChatToggleBar open={false} onPress={() => setChatOpen(true)} />
+            )}
+          </>
+        )}
+      </KeyboardAware>
     </SafeAreaView>
+  );
+}
+
+/** Slim bar that swaps the Listen player and the live chat. */
+function ChatToggleBar({ open, onPress }: { open: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  const Icon = open ? Headphones : MessageCircle;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={open ? "Show the audio player" : "Open live chat"}
+      style={({ pressed }) => [
+        styles.chatBar,
+        { backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+      ]}
+    >
+      <Icon size={18} color={colors.primary} />
+      <Text variant="label" style={{ flex: 1 }}>
+        {open ? "Audio player" : "Live chat"}
+      </Text>
+      <Text variant="label" color="primary">
+        {open ? "Show player" : "Open"}
+      </Text>
+      {open ? <ChevronDown size={16} color={colors.primary} /> : <ChevronUp size={16} color={colors.primary} />}
+    </Pressable>
   );
 }
 
@@ -74,10 +118,23 @@ function LiveVideo() {
   );
 }
 
-function LiveAudio() {
+/**
+ * Waystream audio broadcast. The embed is a tall portrait player (artwork,
+ * title, controls) whose play button sits ~500-600px down, so it fills the
+ * screen down to the chat bar instead of a 16:9 box. `hidden` collapses it
+ * while keeping it mounted, so audio keeps playing while the chat is open.
+ */
+function LiveAudio({ hidden }: { hidden: boolean }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.audio, { borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.audio,
+        hidden ? styles.audioHidden : { borderColor: colors.border, backgroundColor: "#1F1F1F" },
+      ]}
+      importantForAccessibility={hidden ? "no-hide-descendants" : "auto"}
+      accessibilityElementsHidden={hidden}
+    >
       <WebView
         source={{ uri: WAYSTREAM_EMBED_URL }}
         style={{ flex: 1, backgroundColor: "transparent" }}
@@ -158,7 +215,28 @@ const styles = StyleSheet.create({
   liveHead: { padding: spacing.gutter, gap: spacing.sm },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   pad: { paddingHorizontal: spacing.gutter },
-  audio: { height: 220, marginHorizontal: spacing.gutter, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, overflow: "hidden" },
+  // Fills the space between the header and the chat bar (was a fixed 220pt).
+  audio: {
+    flex: 1,
+    marginHorizontal: spacing.gutter,
+    marginBottom: spacing.xs,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  // Collapsed but still mounted (audio keeps playing while the chat is open).
+  audioHidden: { flex: 0, height: 1, opacity: 0, borderWidth: 0, marginBottom: 0 },
+  chatBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginHorizontal: spacing.gutter,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   offAir: { padding: spacing.gutter, paddingBottom: spacing.xl },
   svc: { flexDirection: "row", alignItems: "center", padding: spacing.md },
 });

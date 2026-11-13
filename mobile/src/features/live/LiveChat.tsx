@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, StyleSheet, TextInput, View } from "react-native";
+import { FORCE_LIVE } from "~/hooks/useLiveStatus";
 import * as Haptics from "expo-haptics";
 import { MessageCircle, Send } from "~/components/icons";
 import { Button, EmptyState, IconButton, Text } from "~/components";
@@ -39,6 +40,12 @@ export function LiveChat() {
 
   const send = async () => {
     if (!text.trim() || sending) return;
+    if (FORCE_LIVE) {
+      // Dev "force live" mode: never post test messages to the real chat.
+      Alert.alert("Test mode", "Messages aren't sent while EXPO_PUBLIC_FORCE_LIVE is on.");
+      setText("");
+      return;
+    }
     setSending(true);
     const ok = await sendChat(name, text);
     setSending(false);
@@ -59,6 +66,15 @@ export function LiveChat() {
     <View style={styles.root}>
       {messages === null && !error ? (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.xl }} />
+      ) : !messages?.length ? (
+        // Rendered outside the inverted list: on RN 0.88 an inverted
+        // FlatList's empty component isn't flipped, so counter-flipping it
+        // (as before) showed this text upside down.
+        <View style={styles.empty}>
+          <Text color="textMuted" align="center">
+            {error ? "Chat couldn't connect. It will retry automatically." : "No messages yet. Say hello!"}
+          </Text>
+        </View>
       ) : (
         <FlatList
           inverted
@@ -87,11 +103,6 @@ export function LiveChat() {
               </View>
             </View>
           )}
-          ListEmptyComponent={
-            <Text color="textMuted" align="center" style={{ padding: spacing.lg, transform: [{ scaleY: -1 }] }}>
-              {error ? "Chat couldn't connect. It will retry automatically." : "No messages yet. Say hello!"}
-            </Text>
-          }
         />
       )}
 
@@ -139,8 +150,11 @@ export function LiveChat() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, minHeight: 320 },
+  // No minimum height: the chat must be able to shrink so the composer stays
+  // visible above the keyboard.
+  root: { flex: 1 },
   list: { flex: 1 },
+  empty: { flex: 1, justifyContent: "center", padding: spacing.lg },
   msg: { flexDirection: "row", gap: spacing.sm, paddingVertical: spacing.xs, paddingHorizontal: spacing.gutter },
   avatar: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   composer: {
