@@ -33,7 +33,8 @@ export default function SalvationScreen() {
         Become Born-Again Today
       </Text>
       <Text color="textSecondary" style={{ marginBottom: spacing.lg }}>
-        God loves you and wants you to have a personal relationship with Him. The following prayer will guide you into that new life in Christ.
+        God loves you and wants you to have a personal relationship with Him. The following prayer will guide you into
+        that new life in Christ.
       </Text>
 
       <Card style={{ backgroundColor: colors.accentSoft }}>
@@ -54,11 +55,17 @@ export default function SalvationScreen() {
         What's next?
       </Text>
       <Text color="textSecondary">
-        Congratulations on making the most important decision of your life! We'd love to walk with you on this journey. Connect with us today.
+        Congratulations on making the most important decision of your life! We'd love to walk with you on this journey.
+        Connect with us today.
       </Text>
       <View style={styles.actions}>
         <Button title="Contact us" icon={Mail} onPress={() => router.push("/contact")} />
-        <Button title="Listen to messages" variant="secondary" icon={Headphones} onPress={() => router.push("/listen")} />
+        <Button
+          title="Listen to messages"
+          variant="secondary"
+          icon={Headphones}
+          onPress={() => router.push("/listen")}
+        />
       </View>
       <ScriptureSheet reference={ref} onClose={() => setRef(null)} />
     </Screen>

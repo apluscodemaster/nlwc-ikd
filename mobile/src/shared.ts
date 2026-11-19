@@ -33,70 +33,38 @@ export type { ScheduledService, NextServiceInfo, ServiceLiveState, StreamState }
 export type { RecurringService, SpecialService } from "~/types/web-server-types";
 
 /* ── Sermons, parts and playback progress ───────────────────────────────── */
-export {
-  parseSermonPart,
-  normalizeBaseTitle,
-  hasSermonPart,
-  findAdjacentParts,
-} from "@web/lib/sermonParts";
+export { parseSermonPart, normalizeBaseTitle, hasSermonPart, findAdjacentParts } from "@web/lib/sermonParts";
 export type { SermonPartInfo } from "@web/lib/sermonParts";
 
 // localStorage-backed; works through the expo-sqlite localStorage polyfill.
-export {
-  saveMediaProgress,
-  getMediaProgress,
-  clearMediaProgress,
-  formatProgressTime,
-} from "@web/lib/mediaProgress";
+export { saveMediaProgress, getMediaProgress, clearMediaProgress, formatProgressTime } from "@web/lib/mediaProgress";
 export type { MediaProgress } from "@web/lib/mediaProgress";
 
 export { toStreamableAudioUrl, isGoogleDriveUrl } from "@web/utils/audioUrl";
 
 // Types only: lib/audioSermons fetches WordPress server-side; the app goes
 // through /api/audio-sermons instead.
-export type {
-  AudioSermon,
-  AudioSermonsResponse,
-  SeriesItem,
-  SpeakerItem,
-  TopicItem,
-} from "@web/lib/audioSermons";
+export type { AudioSermon, AudioSermonsResponse, SeriesItem, SpeakerItem, TopicItem } from "@web/lib/audioSermons";
 
 // Server-only on the web (reads Google Sheets): shape mirrored locally.
 export type { VideoMessage } from "~/types/web-server-types";
 export { videoSlug, findVideoBySlug } from "@web/lib/videoSlug";
 
 /* ── Transcripts and manuals ────────────────────────────────────────────── */
-export {
-  fetchTranscriptSlugs,
-  findTranscriptSlug,
-  getBaseSlug,
-} from "@web/utils/transcriptSlug";
+export { fetchTranscriptSlugs, findTranscriptSlug, getBaseSlug } from "@web/utils/transcriptSlug";
 export type { TranscriptStub } from "@web/utils/transcriptSlug";
 
 export { WP_CATEGORIES, TRANSCRIPT_CATEGORIES } from "@web/lib/wordpress";
-export type {
-  TranscriptPost,
-  TranscriptType,
-  SundaySchoolManual,
-  TranscriptCategory,
-} from "@web/lib/wordpress";
+export type { TranscriptPost, TranscriptType, SundaySchoolManual, TranscriptCategory } from "@web/lib/wordpress";
 
 export { calculateReadingTime } from "@web/utils/readingTime";
-export {
-  highlightSearchInHtml,
-  highlightSearchInText,
-} from "@web/utils/highlightSearch";
+export { highlightSearchInHtml, highlightSearchInText } from "@web/utils/highlightSearch";
 export { stripLeadingSpeakerLine } from "@web/utils/speakerLine";
 export { manualBackgroundFor } from "@web/utils/manualThumbnail";
 
 /* ── Bible ──────────────────────────────────────────────────────────────── */
 export { searchBible } from "@web/lib/bibleSearch";
-export {
-  parseScriptureReference,
-  findScriptureReferences,
-  getBibleGatewayUrl,
-} from "@web/lib/bible-api";
+export { parseScriptureReference, findScriptureReferences, getBibleGatewayUrl } from "@web/lib/bible-api";
 export type { BibleVerse } from "@web/lib/bible-api";
 export type { Verse, SearchResult, ParsedReference } from "@web/types/bible";
 
@@ -110,12 +78,7 @@ export type {
   QuizResult,
   Recommendation,
 } from "@web/types/quiz";
-export {
-  loadMasteryState,
-  saveMasteryState,
-  recordCorrectReview,
-  computeMasteryPercent,
-} from "@web/lib/quizMastery";
+export { loadMasteryState, saveMasteryState, recordCorrectReview, computeMasteryPercent } from "@web/lib/quizMastery";
 export type { MasteryState } from "@web/lib/quizMastery";
 export { checkMilestones, checkTopScore } from "@web/lib/quizCelebrations";
 export type { MilestoneHit } from "@web/lib/quizCelebrations";

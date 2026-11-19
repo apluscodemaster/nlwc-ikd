@@ -42,7 +42,10 @@ export function TranscriptList() {
           subtitle={item.speaker}
           meta={[item.formattedDate, `${item.readingTime} min read`].filter(Boolean).join(" · ")}
           onPress={() =>
-            router.push({ pathname: "/transcripts/[slug]", params: { slug: item.slug, ...(search ? { q: search } : {}) } })
+            router.push({
+              pathname: "/transcripts/[slug]",
+              params: { slug: item.slug, ...(search ? { q: search } : {}) },
+            })
           }
         />
       )}

@@ -35,7 +35,11 @@ export default function QuizHome() {
       </Card>
 
       {!session.security_set ? (
-        <Card style={{ marginTop: spacing.md }} onPress={() => setShowSecurity(true)} accessibilityLabel="Protect your progress">
+        <Card
+          style={{ marginTop: spacing.md }}
+          onPress={() => setShowSecurity(true)}
+          accessibilityLabel="Protect your progress"
+        >
           <View style={styles.row}>
             <ShieldCheck color={colors.primary} />
             <View style={{ flex: 1 }}>
@@ -65,7 +69,12 @@ export default function QuizHome() {
         onPress={() => router.push({ pathname: "/quiz/play", params: category ? { category } : {} })}
       />
       <View style={styles.row2}>
-        <Button title="Leaderboard" variant="secondary" icon={Trophy} onPress={() => router.push("/quiz/leaderboard")} />
+        <Button
+          title="Leaderboard"
+          variant="secondary"
+          icon={Trophy}
+          onPress={() => router.push("/quiz/leaderboard")}
+        />
         <Button title="My results" variant="secondary" onPress={() => router.push("/quiz/results")} />
       </View>
 
@@ -117,9 +126,30 @@ function UsernamePrompt() {
       <Text color="textSecondary" style={{ marginVertical: spacing.sm }}>
         Test what you've learned from our messages. Pick a name for the leaderboard — no account needed.
       </Text>
-      <FormField label="Your quiz name" value={name} onChangeText={setName} error={error} autoCapitalize="words" maxLength={30} />
-      <Button title="Start playing" icon={Brain} size="lg" fullWidth loading={busy} onPress={start} style={{ marginTop: spacing.md }} />
-      <Button title="I've played before — restore my progress" variant="ghost" icon={KeyRound} onPress={() => setRecovering(true)} style={{ marginTop: spacing.sm }} />
+      <FormField
+        label="Your quiz name"
+        value={name}
+        onChangeText={setName}
+        error={error}
+        autoCapitalize="words"
+        maxLength={30}
+      />
+      <Button
+        title="Start playing"
+        icon={Brain}
+        size="lg"
+        fullWidth
+        loading={busy}
+        onPress={start}
+        style={{ marginTop: spacing.md }}
+      />
+      <Button
+        title="I've played before — restore my progress"
+        variant="ghost"
+        icon={KeyRound}
+        onPress={() => setRecovering(true)}
+        style={{ marginTop: spacing.sm }}
+      />
       <RecoverSheet visible={recovering} onClose={() => setRecovering(false)} />
     </Screen>
   );
@@ -176,7 +206,13 @@ function RecoverSheet({ visible, onClose }: { visible: boolean; onClose: () => v
       <View style={{ gap: spacing.md }}>
         {step === "name" ? (
           <>
-            <FormField label="Your quiz name" value={username} onChangeText={setUsername} autoCapitalize="none" error={error} />
+            <FormField
+              label="Your quiz name"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              error={error}
+            />
             <Button title="Continue" fullWidth loading={busy} disabled={!username.trim()} onPress={lookup} />
           </>
         ) : (
@@ -193,7 +229,15 @@ function RecoverSheet({ visible, onClose }: { visible: boolean; onClose: () => v
             />
             <Button title="Restore" fullWidth loading={busy} onPress={verify} />
             {step === "answer" ? (
-              <Button title="I have a recovery code instead" variant="ghost" onPress={() => { setStep("code"); setValue(""); setError(""); }} />
+              <Button
+                title="I have a recovery code instead"
+                variant="ghost"
+                onPress={() => {
+                  setStep("code");
+                  setValue("");
+                  setError("");
+                }}
+              />
             ) : null}
           </>
         )}

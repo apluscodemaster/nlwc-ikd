@@ -62,8 +62,19 @@ export default function FellowshipScreen() {
         Our house fellowship centres meet across Ikorodu. Find the one closest to you and join us.
       </Text>
       <View style={styles.tools}>
-        <Button title={me ? "Sorted by distance" : "Find centres near me"} icon={LocateFixed} loading={locating} onPress={locate} fullWidth />
-        <SearchField value={search} onChangeDebounced={setSearch} placeholder="Search by area, street or name" delay={150} />
+        <Button
+          title={me ? "Sorted by distance" : "Find centres near me"}
+          icon={LocateFixed}
+          loading={locating}
+          onPress={locate}
+          fullWidth
+        />
+        <SearchField
+          value={search}
+          onChangeDebounced={setSearch}
+          placeholder="Search by area, street or name"
+          delay={150}
+        />
       </View>
 
       {query.isError && !query.data ? (
@@ -71,7 +82,13 @@ export default function FellowshipScreen() {
       ) : !query.data ? (
         <ListSkeleton />
       ) : centers.length === 0 ? (
-        <EmptyState icon={MapPin} title="No centres match" message="Try another area, or ask us on WhatsApp." actionLabel="Ask on WhatsApp" onAction={() => Linking.openURL(CHURCH.fellowshipWhatsapp)} />
+        <EmptyState
+          icon={MapPin}
+          title="No centres match"
+          message="Try another area, or ask us on WhatsApp."
+          actionLabel="Ask on WhatsApp"
+          onAction={() => Linking.openURL(CHURCH.fellowshipWhatsapp)}
+        />
       ) : (
         <View style={{ gap: spacing.sm }}>
           {centers.map(({ c, km }) => (
@@ -82,7 +99,12 @@ export default function FellowshipScreen() {
       <Text variant="small" color="textMuted" style={{ marginTop: spacing.lg }}>
         Can't find one near you? Message the fellowship coordinator on WhatsApp.
       </Text>
-      <Button title="Message the coordinator" variant="ghost" icon={MessageCircle} onPress={() => Linking.openURL(CHURCH.fellowshipWhatsapp)} />
+      <Button
+        title="Message the coordinator"
+        variant="ghost"
+        icon={MessageCircle}
+        onPress={() => Linking.openURL(CHURCH.fellowshipWhatsapp)}
+      />
     </Screen>
   );
 }
@@ -119,9 +141,17 @@ function CenterCard({ center: c, km }: { center: FellowshipCenter; km: number | 
         {row(Clock, c.meetingTime)}
       </View>
       <View style={styles.actions}>
-        {directions ? <Button title="Directions" size="sm" icon={Navigation} onPress={() => Linking.openURL(directions)} /> : null}
+        {directions ? (
+          <Button title="Directions" size="sm" icon={Navigation} onPress={() => Linking.openURL(directions)} />
+        ) : null}
         {c.whatsappLink ? (
-          <Button title="WhatsApp" size="sm" variant="secondary" icon={MessageCircle} onPress={() => Linking.openURL(c.whatsappLink)} />
+          <Button
+            title="WhatsApp"
+            size="sm"
+            variant="secondary"
+            icon={MessageCircle}
+            onPress={() => Linking.openURL(c.whatsappLink)}
+          />
         ) : null}
       </View>
     </Card>

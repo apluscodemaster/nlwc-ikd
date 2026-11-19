@@ -23,7 +23,14 @@ function validate(v: TestimonyInput): Errors {
   return e;
 }
 
-const EMPTY: TestimonyInput = { name: "", location: "", phone: "", email: "", testimony: "", displayPreference: "public" };
+const EMPTY: TestimonyInput = {
+  name: "",
+  location: "",
+  phone: "",
+  email: "",
+  testimony: "",
+  displayPreference: "public",
+};
 
 export default function TestimoniesScreen() {
   const [tab, setTab] = useState<"read" | "share">("read");
@@ -55,7 +62,13 @@ function TestimonyFeed({ onShare }: { onShare: () => void }) {
       {q.isLoading ? (
         <ListSkeleton rows={4} />
       ) : !q.data?.length ? (
-        <EmptyState icon={Heart} title="No testimonies yet" message="Be the first to share what God has done." actionLabel="Share a testimony" onAction={onShare} />
+        <EmptyState
+          icon={Heart}
+          title="No testimonies yet"
+          message="Be the first to share what God has done."
+          actionLabel="Share a testimony"
+          onAction={onShare}
+        />
       ) : (
         <View style={{ gap: spacing.sm }}>
           {q.data.map((t) => (
@@ -122,13 +135,49 @@ function ShareForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={90}
+    >
       <Screen>
         <View style={styles.form}>
-          <FormField label="Full name" value={v.name} onChangeText={set("name")} error={errors.name} autoComplete="name" maxLength={100} />
-          <FormField label="Location" value={v.location} onChangeText={set("location")} error={errors.location} placeholder="e.g. Ikorodu, Lagos" maxLength={100} />
-          <FormField label="Phone number" value={v.phone} onChangeText={set("phone")} error={errors.phone} keyboardType="phone-pad" autoComplete="tel" placeholder="+234…" maxLength={30} />
-          <FormField label="Email" value={v.email} onChangeText={set("email")} error={errors.email} keyboardType="email-address" autoCapitalize="none" autoComplete="email" maxLength={254} />
+          <FormField
+            label="Full name"
+            value={v.name}
+            onChangeText={set("name")}
+            error={errors.name}
+            autoComplete="name"
+            maxLength={100}
+          />
+          <FormField
+            label="Location"
+            value={v.location}
+            onChangeText={set("location")}
+            error={errors.location}
+            placeholder="e.g. Ikorodu, Lagos"
+            maxLength={100}
+          />
+          <FormField
+            label="Phone number"
+            value={v.phone}
+            onChangeText={set("phone")}
+            error={errors.phone}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            placeholder="+234…"
+            maxLength={30}
+          />
+          <FormField
+            label="Email"
+            value={v.email}
+            onChangeText={set("email")}
+            error={errors.email}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            maxLength={254}
+          />
           <FormField
             label="Your testimony"
             value={v.testimony}
@@ -142,8 +191,16 @@ function ShareForm({ onDone }: { onDone: () => void }) {
             May we share it publicly?
           </Text>
           <View style={styles.chips}>
-            <Chip label="Yes, share publicly" selected={v.displayPreference === "public"} onPress={() => setV((s) => ({ ...s, displayPreference: "public" }))} />
-            <Chip label="Keep it private" selected={v.displayPreference === "private"} onPress={() => setV((s) => ({ ...s, displayPreference: "private" }))} />
+            <Chip
+              label="Yes, share publicly"
+              selected={v.displayPreference === "public"}
+              onPress={() => setV((s) => ({ ...s, displayPreference: "public" }))}
+            />
+            <Chip
+              label="Keep it private"
+              selected={v.displayPreference === "private"}
+              onPress={() => setV((s) => ({ ...s, displayPreference: "private" }))}
+            />
           </View>
           <Button title="Submit testimony" icon={PenLine} size="lg" fullWidth loading={m.isPending} onPress={submit} />
         </View>

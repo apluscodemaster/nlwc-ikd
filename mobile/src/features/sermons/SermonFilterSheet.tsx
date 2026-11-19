@@ -34,9 +34,9 @@ export function SermonFilterSheet({ kind, value, onChange, onClose }: Props) {
         : kind === "speaker"
           ? speakers.map((s) => ({ id: s.id, label: s.name, count: s.messageCount }))
           : Array.from({ length: thisYear - FIRST_YEAR + 1 }, (_, i) => ({
-                id: thisYear - i,
-                label: String(thisYear - i),
-              }));
+              id: thisYear - i,
+              label: String(thisYear - i),
+            }));
     const needle = q.toLowerCase();
     return needle ? all.filter((o) => o.label.toLowerCase().includes(needle)) : all;
   }, [kind, series, speakers, q]);
@@ -77,7 +77,12 @@ export function SermonFilterSheet({ kind, value, onChange, onClose }: Props) {
         </Text>
       ) : null}
       {selected != null ? (
-        <Button title="Clear filter" variant="ghost" onPress={() => pick(undefined)} style={{ marginTop: spacing.md }} />
+        <Button
+          title="Clear filter"
+          variant="ghost"
+          onPress={() => pick(undefined)}
+          style={{ marginTop: spacing.md }}
+        />
       ) : null}
     </Sheet>
   );

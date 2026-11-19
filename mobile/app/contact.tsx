@@ -25,10 +25,34 @@ export default function ContactScreen() {
     <Screen>
       <Stack.Screen options={{ title: "Contact Us" }} />
       <Card padded={false}>
-        <ListRow icon={MapPin} title="Our location" subtitle={CHURCH.address} onPress={() => Linking.openURL(MAPS)} showChevron />
-        <ListRow icon={Phone} title="Call us" subtitle={CHURCH.phoneDisplay} onPress={() => Linking.openURL(`tel:${CHURCH.phone}`)} showChevron />
-        <ListRow icon={Mail} title="Email" subtitle={CHURCH.email} onPress={() => Linking.openURL(`mailto:${CHURCH.email}`)} showChevron />
-        <ListRow icon={MessageCircle} title="WhatsApp" subtitle={CHURCH.phoneDisplay} onPress={() => Linking.openURL(CHURCH.whatsapp)} showChevron />
+        <ListRow
+          icon={MapPin}
+          title="Our location"
+          subtitle={CHURCH.address}
+          onPress={() => Linking.openURL(MAPS)}
+          showChevron
+        />
+        <ListRow
+          icon={Phone}
+          title="Call us"
+          subtitle={CHURCH.phoneDisplay}
+          onPress={() => Linking.openURL(`tel:${CHURCH.phone}`)}
+          showChevron
+        />
+        <ListRow
+          icon={Mail}
+          title="Email"
+          subtitle={CHURCH.email}
+          onPress={() => Linking.openURL(`mailto:${CHURCH.email}`)}
+          showChevron
+        />
+        <ListRow
+          icon={MessageCircle}
+          title="WhatsApp"
+          subtitle={CHURCH.phoneDisplay}
+          onPress={() => Linking.openURL(CHURCH.whatsapp)}
+          showChevron
+        />
       </Card>
 
       <SectionHeader label="Send a message" />
@@ -36,14 +60,21 @@ export default function ContactScreen() {
         <FormField label="Your name" value={name} onChangeText={setName} autoComplete="name" />
         <FormField label="Message" value={message} onChangeText={setMessage} multiline maxLength={2000} />
         <View style={styles.row}>
-          <Button title="Send on WhatsApp" icon={Send} disabled={!message.trim()} onPress={() => Linking.openURL(whatsappLink(body))} />
+          <Button
+            title="Send on WhatsApp"
+            icon={Send}
+            disabled={!message.trim()}
+            onPress={() => Linking.openURL(whatsappLink(body))}
+          />
           <Button
             title="Email"
             variant="secondary"
             icon={Mail}
             disabled={!message.trim()}
             onPress={() =>
-              Linking.openURL(`mailto:${CHURCH.email}?subject=${encodeURIComponent("Message from the NLWC app")}&body=${encodeURIComponent(body)}`)
+              Linking.openURL(
+                `mailto:${CHURCH.email}?subject=${encodeURIComponent("Message from the NLWC app")}&body=${encodeURIComponent(body)}`,
+              )
             }
           />
         </View>
@@ -58,7 +89,14 @@ export default function ContactScreen() {
             ["YouTube", CHURCH.social.youtube],
           ] as const
         ).map(([label, url]) => (
-          <Button key={label} title={label} size="sm" variant="secondary" icon={ExternalLink} onPress={() => WebBrowser.openBrowserAsync(url)} />
+          <Button
+            key={label}
+            title={label}
+            size="sm"
+            variant="secondary"
+            icon={ExternalLink}
+            onPress={() => WebBrowser.openBrowserAsync(url)}
+          />
         ))}
       </View>
       <Text variant="small" color="textMuted">
@@ -68,4 +106,6 @@ export default function ContactScreen() {
   );
 }
 
-const styles = StyleSheet.create({ row: { flexDirection: "row", gap: spacing.xs, flexWrap: "wrap", alignItems: "center" } });
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", gap: spacing.xs, flexWrap: "wrap", alignItems: "center" },
+});

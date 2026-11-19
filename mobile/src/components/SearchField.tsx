@@ -11,12 +11,7 @@ interface SearchFieldProps {
   delay?: number;
 }
 
-export function SearchField({
-  value,
-  onChangeDebounced,
-  placeholder = "Search…",
-  delay = 300,
-}: SearchFieldProps) {
+export function SearchField({ value, onChangeDebounced, placeholder = "Search…", delay = 300 }: SearchFieldProps) {
   const { colors } = useTheme();
   const [text, setText] = useState(value);
   // Adopt an external change to `value` (e.g. "Clear all") during render.

@@ -36,7 +36,12 @@ export default function SettingsScreen() {
         </Text>
         <View style={styles.row}>
           {(["system", "light", "dark"] as ThemePreference[]).map((p) => (
-            <Chip key={p} label={p === "system" ? "Match device" : p[0].toUpperCase() + p.slice(1)} selected={preference === p} onPress={() => setPreference(p)} />
+            <Chip
+              key={p}
+              label={p === "system" ? "Match device" : p[0].toUpperCase() + p.slice(1)}
+              selected={preference === p}
+              onPress={() => setPreference(p)}
+            />
           ))}
         </View>
         <Text variant="label" color="textSecondary" style={{ marginTop: spacing.md }}>
@@ -52,7 +57,13 @@ export default function SettingsScreen() {
       <SectionHeader label="Storage" />
       <Card>
         <Text color="textSecondary">The app keeps what you've opened so it works offline.</Text>
-        <Button title="Clear saved content" icon={Trash2} variant="secondary" onPress={clearCache} style={{ marginTop: spacing.sm }} />
+        <Button
+          title="Clear saved content"
+          icon={Trash2}
+          variant="secondary"
+          onPress={clearCache}
+          style={{ marginTop: spacing.sm }}
+        />
       </Card>
 
       <SectionHeader label="About this app" />
@@ -68,4 +79,6 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({ row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.xs } });
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.xs },
+});

@@ -22,9 +22,7 @@ export default function DevotionalScreen() {
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   if (!d) return <EmptyState icon={Sun} title="Devotional not found" message="It may not be released yet." />;
 
-  const viewer = d.pdfUrl
-    ? `https://docs.google.com/viewer?url=${encodeURIComponent(d.pdfUrl)}&embedded=true`
-    : null;
+  const viewer = d.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(d.pdfUrl)}&embedded=true` : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

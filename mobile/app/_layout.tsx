@@ -12,26 +12,14 @@ import {
 } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import {
-  Jost_400Regular,
-  Jost_500Medium,
-  Jost_600SemiBold,
-  Jost_700Bold,
-  useFonts,
-} from "@expo-google-fonts/jost";
+import { Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_700Bold, useFonts } from "@expo-google-fonts/jost";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorState, OfflineBanner } from "~/components";
 import { installApiFetch } from "~/lib/apiFetch";
-import {
-  PERSIST_BUSTER,
-  PERSIST_MAX_AGE,
-  queryClient,
-  queryPersister,
-  wireQueryManagers,
-} from "~/lib/queryClient";
+import { PERSIST_BUSTER, PERSIST_MAX_AGE, queryClient, queryPersister, wireQueryManagers } from "~/lib/queryClient";
 import { PlayerProvider } from "~/player/PlayerProvider";
 import { ServiceRemindersBridge } from "~/features/reminders/ServiceRemindersBridge";
 import { fonts, ThemeProvider, useTheme } from "~/theme";

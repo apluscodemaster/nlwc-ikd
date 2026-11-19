@@ -36,8 +36,7 @@ export function EmptyState({ icon: Icon = Inbox, title, message, actionLabel, on
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const offline = error instanceof ApiError && error.isNetwork;
-  const message =
-    error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
   return (
     <EmptyState
       icon={offline ? WifiOff : AlertCircle}

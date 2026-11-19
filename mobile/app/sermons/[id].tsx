@@ -8,13 +8,7 @@ import { usePlaySermon } from "~/features/sermons/playSermon";
 import { useSermonDetail, useSermonList, useTranscriptForSermon } from "~/hooks/useSermons";
 import { SITE_URL } from "~/lib/config";
 import { usePlayer, usePlayerStatus } from "~/player/PlayerProvider";
-import {
-  findAdjacentParts,
-  formatProgressTime,
-  getMediaProgress,
-  parseSermonPart,
-  type AudioSermon,
-} from "~/shared";
+import { findAdjacentParts, formatProgressTime, getMediaProgress, parseSermonPart, type AudioSermon } from "~/shared";
 import { radius, spacing, useTheme } from "~/theme";
 
 /** Audio message detail (web /sermons/audio/[id]). */
@@ -52,7 +46,13 @@ export default function SermonScreen() {
 
   const isCurrent = track?.id === sermon.id;
   const saved = getMediaProgress(sermon.id);
-  const playLabel = isCurrent ? (playing ? "Pause" : "Play") : saved ? `Resume from ${formatProgressTime(saved.currentTime)}` : "Play message";
+  const playLabel = isCurrent
+    ? playing
+      ? "Pause"
+      : "Play"
+    : saved
+      ? `Resume from ${formatProgressTime(saved.currentTime)}`
+      : "Play message";
 
   const share = () =>
     Share.share({ message: `${sermon.title} — ${sermon.speaker}\n${SITE_URL}/sermons/audio/${sermon.id}` });
@@ -114,12 +114,20 @@ export default function SermonScreen() {
       {adjacent.previous || adjacent.next ? (
         <View style={styles.parts}>
           {adjacent.previous ? (
-            <PartLink direction="prev" sermon={adjacent.previous} onPress={() => router.replace(`/sermons/${adjacent.previous!.id}`)} />
+            <PartLink
+              direction="prev"
+              sermon={adjacent.previous}
+              onPress={() => router.replace(`/sermons/${adjacent.previous!.id}`)}
+            />
           ) : (
             <View style={{ flex: 1 }} />
           )}
           {adjacent.next ? (
-            <PartLink direction="next" sermon={adjacent.next} onPress={() => router.replace(`/sermons/${adjacent.next!.id}`)} />
+            <PartLink
+              direction="next"
+              sermon={adjacent.next}
+              onPress={() => router.replace(`/sermons/${adjacent.next!.id}`)}
+            />
           ) : (
             <View style={{ flex: 1 }} />
           )}
@@ -129,12 +137,31 @@ export default function SermonScreen() {
   );
 }
 
-function PartLink({ direction, sermon, onPress }: { direction: "prev" | "next"; sermon: AudioSermon; onPress: () => void }) {
+function PartLink({
+  direction,
+  sermon,
+  onPress,
+}: {
+  direction: "prev" | "next";
+  sermon: AudioSermon;
+  onPress: () => void;
+}) {
   const { colors } = useTheme();
   const p = parseSermonPart(sermon.title);
   return (
-    <Card onPress={onPress} style={{ flex: 1 }} accessibilityLabel={`${direction === "prev" ? "Previous" : "Next"} part: ${sermon.title}`}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, justifyContent: direction === "next" ? "flex-end" : "flex-start" }}>
+    <Card
+      onPress={onPress}
+      style={{ flex: 1 }}
+      accessibilityLabel={`${direction === "prev" ? "Previous" : "Next"} part: ${sermon.title}`}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          justifyContent: direction === "next" ? "flex-end" : "flex-start",
+        }}
+      >
         {direction === "prev" ? <ChevronLeft size={16} color={colors.primary} /> : null}
         <Text variant="caption" color="primary">
           {direction === "prev" ? "Previous" : "Next"} · Part {p?.part}

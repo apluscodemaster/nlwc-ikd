@@ -26,8 +26,7 @@ export const sermonsApi = {
     ),
 
   /** Full detail, including `downloadUrl` (the playable audio). */
-  detail: (id: number, signal?: AbortSignal) =>
-    api.get<AudioSermon>("/api/audio-sermons", { message_id: id }, signal),
+  detail: (id: number, signal?: AbortSignal) => api.get<AudioSermon>("/api/audio-sermons", { message_id: id }, signal),
 
   series: () => api.get<SeriesItem[]>("/api/audio-sermons/filters", { type: "series" }),
   speakers: () => api.get<SpeakerItem[]>("/api/audio-sermons/filters", { type: "speakers" }),

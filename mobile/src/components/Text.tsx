@@ -9,14 +9,7 @@ export interface TextProps extends RNTextProps {
   dense?: boolean;
 }
 
-export function Text({
-  variant = "body",
-  color = "text",
-  align,
-  dense,
-  style,
-  ...rest
-}: TextProps) {
+export function Text({ variant = "body", color = "text", align, dense, style, ...rest }: TextProps) {
   const { colors } = useTheme();
   return (
     <RNText

@@ -18,7 +18,12 @@ export default function AboutScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: "About Us" }} />
-      <Image source={{ uri: STORY.image }} style={styles.hero} contentFit="cover" accessibilityLabel="Church community" />
+      <Image
+        source={{ uri: STORY.image }}
+        style={styles.hero}
+        contentFit="cover"
+        accessibilityLabel="Church community"
+      />
       <Text variant="caption" color="primary" style={{ marginTop: spacing.lg }}>
         Who we are
       </Text>
@@ -66,7 +71,13 @@ export default function AboutScreen() {
       <View style={{ gap: spacing.md }}>
         {team.map((m) => (
           <Card key={m.id} padded={false}>
-            <Image source={{ uri: m.image }} style={styles.portrait} contentFit="cover" contentPosition="top" accessibilityLabel={m.name} />
+            <Image
+              source={{ uri: m.image }}
+              style={styles.portrait}
+              contentFit="cover"
+              contentPosition="top"
+              accessibilityLabel={m.name}
+            />
             <View style={{ padding: spacing.md, gap: spacing.xxs }}>
               <Text variant="heading">{m.name}</Text>
               <Text variant="label" color="primary">
@@ -87,7 +98,10 @@ export default function AboutScreen() {
         {BELIEFS.map((b, i) => {
           const isOpen = open === i;
           return (
-            <View key={b.title} style={i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+            <View
+              key={b.title}
+              style={i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}
+            >
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ expanded: isOpen }}
@@ -97,14 +111,23 @@ export default function AboutScreen() {
                 <Text variant="bodyStrong" color={isOpen ? "primary" : "text"} style={{ flex: 1 }}>
                   {b.title}
                 </Text>
-                <ChevronDown size={18} color={colors.textMuted} style={{ transform: [{ rotate: isOpen ? "180deg" : "0deg" }] }} />
+                <ChevronDown
+                  size={18}
+                  color={colors.textMuted}
+                  style={{ transform: [{ rotate: isOpen ? "180deg" : "0deg" }] }}
+                />
               </Pressable>
               {isOpen ? (
                 <View style={styles.accBody}>
                   <Text color="textSecondary">{b.content}</Text>
                   <View style={styles.refs}>
                     {b.scripture.split(";").map((r) => (
-                      <Pressable key={r} onPress={() => setRef(r.trim().replace(/–/g, "-"))} accessibilityRole="link" hitSlop={6}>
+                      <Pressable
+                        key={r}
+                        onPress={() => setRef(r.trim().replace(/–/g, "-"))}
+                        accessibilityRole="link"
+                        hitSlop={6}
+                      >
                         <Text variant="label" color="primary">
                           {r.trim()}
                         </Text>

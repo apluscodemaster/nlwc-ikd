@@ -26,13 +26,18 @@ export default function GiveScreen() {
       <Stack.Screen options={{ title: "Give" }} />
       <Text variant="title">Partner with us</Text>
       <Text color="textSecondary" style={{ marginBottom: spacing.lg }}>
-        “Every man according as he purposeth in his heart, so let him give… for God loveth a cheerful giver.” 2 Corinthians 9:7
+        “Every man according as he purposeth in his heart, so let him give… for God loveth a cheerful giver.” 2
+        Corinthians 9:7
       </Text>
       <View style={{ gap: spacing.md }}>
         {GIVING_OPTIONS.map((o) => (
           <Card key={o.id}>
             <View style={styles.head}>
-              <Image source={{ uri: o.logo }} style={[styles.logo, { backgroundColor: colors.surfaceMuted }]} contentFit="contain" />
+              <Image
+                source={{ uri: o.logo }}
+                style={[styles.logo, { backgroundColor: colors.surfaceMuted }]}
+                contentFit="contain"
+              />
               <View style={{ flex: 1 }}>
                 <Text variant="heading">{o.title}</Text>
                 <Text variant="small" color="textSecondary">

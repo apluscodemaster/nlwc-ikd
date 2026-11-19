@@ -24,13 +24,21 @@ export default function LeaderboardScreen() {
       data={q.data ?? []}
       keyExtractor={(e) => e.username}
       contentContainerStyle={{ padding: spacing.gutter, gap: spacing.xs, paddingBottom: spacing.huge }}
-      refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.primary} />}
+      refreshControl={
+        <RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} tintColor={colors.primary} />
+      }
       ListEmptyComponent={<EmptyState icon={Trophy} title="No scores yet" message="Be the first on the board!" />}
       renderItem={({ item, index }) => {
         const mine = item.username.toLowerCase() === me;
         return (
           <View
-            style={[styles.row, { backgroundColor: mine ? colors.accentSoft : colors.surface, borderColor: mine ? colors.primary : colors.border }]}
+            style={[
+              styles.row,
+              {
+                backgroundColor: mine ? colors.accentSoft : colors.surface,
+                borderColor: mine ? colors.primary : colors.border,
+              },
+            ]}
             accessible
             accessibilityLabel={`Rank ${index + 1}, ${item.username}${mine ? " (you)" : ""}, ${item.total_score} points`}
           >
@@ -59,6 +67,13 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: spacing.sm, padding: spacing.sm, borderRadius: radius.lg, borderWidth: 1 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+  },
   rank: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
 });

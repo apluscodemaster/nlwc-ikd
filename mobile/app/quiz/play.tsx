@@ -107,7 +107,10 @@ export default function QuizPlay() {
     router.replace("/quiz/results");
   };
 
-  if (!session) return <EmptyState title="Start from the quiz home" actionLabel="Go to quiz" onAction={() => router.replace("/quiz")} />;
+  if (!session)
+    return (
+      <EmptyState title="Start from the quiz home" actionLabel="Go to quiz" onAction={() => router.replace("/quiz")} />
+    );
   if (loading && !question) return <LoadingState label="Loading question…" />;
   if (error && !question) return <ErrorState error={error} onRetry={next} />;
   if (noMore) {
@@ -155,7 +158,13 @@ export default function QuizPlay() {
           const isSel = selected === i;
           const isCorrect = result && result.correct_answer === i;
           const isWrongPick = result && isSel && !result.is_correct;
-          const border = isCorrect ? colors.success : isWrongPick ? colors.danger : isSel ? colors.primary : colors.border;
+          const border = isCorrect
+            ? colors.success
+            : isWrongPick
+              ? colors.danger
+              : isSel
+                ? colors.primary
+                : colors.border;
           return (
             <Pressable
               key={i}
@@ -167,7 +176,10 @@ export default function QuizPlay() {
               accessibilityRole="radio"
               accessibilityState={{ selected: isSel, disabled: !!result }}
               accessibilityLabel={`${LETTERS[i]}. ${opt}${isCorrect ? ", correct answer" : isWrongPick ? ", your answer, incorrect" : ""}`}
-              style={[styles.option, { borderColor: border, backgroundColor: isSel && !result ? colors.accentSoft : colors.surface }]}
+              style={[
+                styles.option,
+                { borderColor: border, backgroundColor: isSel && !result ? colors.accentSoft : colors.surface },
+              ]}
             >
               <View style={[styles.letter, { backgroundColor: isSel || isCorrect ? border : colors.surfaceMuted }]}>
                 <Text variant="label" style={{ color: isSel || isCorrect ? "#FFFFFF" : colors.textSecondary }}>
@@ -175,7 +187,11 @@ export default function QuizPlay() {
                 </Text>
               </View>
               <Text style={{ flex: 1 }}>{opt}</Text>
-              {isCorrect ? <CheckCircle2 color={colors.success} size={20} /> : isWrongPick ? <XCircle color={colors.danger} size={20} /> : null}
+              {isCorrect ? (
+                <CheckCircle2 color={colors.success} size={20} />
+              ) : isWrongPick ? (
+                <XCircle color={colors.danger} size={20} />
+              ) : null}
             </Pressable>
           );
         })}
@@ -216,10 +232,23 @@ export default function QuizPlay() {
                     ) : null}
                     <View style={styles.recRow}>
                       {r.listen_url ? (
-                        <Button title="Listen" size="sm" icon={Headphones} onPress={() => openResource(r.listen_url!)} style={{ flex: 1 }} />
+                        <Button
+                          title="Listen"
+                          size="sm"
+                          icon={Headphones}
+                          onPress={() => openResource(r.listen_url!)}
+                          style={{ flex: 1 }}
+                        />
                       ) : null}
                       {r.read_url ? (
-                        <Button title="Read" size="sm" variant="secondary" icon={BookOpen} onPress={() => openResource(r.read_url!)} style={{ flex: 1 }} />
+                        <Button
+                          title="Read"
+                          size="sm"
+                          variant="secondary"
+                          icon={BookOpen}
+                          onPress={() => openResource(r.read_url!)}
+                          style={{ flex: 1 }}
+                        />
                       ) : null}
                     </View>
                   </View>
@@ -249,7 +278,14 @@ export default function QuizPlay() {
             onPress={next}
           />
         ) : (
-          <Button title="Check answer" size="lg" fullWidth disabled={selected == null} loading={saving} onPress={confirm} />
+          <Button
+            title="Check answer"
+            size="lg"
+            fullWidth
+            disabled={selected == null}
+            loading={saving}
+            onPress={confirm}
+          />
         )}
       </View>
     </Screen>

@@ -41,7 +41,9 @@ export function InfiniteList<T>(p: Props<T>) {
         )
       }
       ListFooterComponent={
-        p.isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: spacing.lg }} color={colors.primary} /> : undefined
+        p.isFetchingNextPage ? (
+          <ActivityIndicator style={{ marginVertical: spacing.lg }} color={colors.primary} />
+        ) : undefined
       }
       onEndReached={() => {
         if (p.hasNextPage && !p.isFetchingNextPage) p.fetchNextPage();

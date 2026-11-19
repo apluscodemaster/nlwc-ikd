@@ -27,8 +27,21 @@ import { radius, spacing, useTheme } from "~/theme";
 export default function PlayerScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { track, upNext, canSkip, repeat, shuffle, toggle, seekBy, seekTo, setRate, next, previous, toggleRepeat, toggleShuffle } =
-    usePlayer();
+  const {
+    track,
+    upNext,
+    canSkip,
+    repeat,
+    shuffle,
+    toggle,
+    seekBy,
+    seekTo,
+    setRate,
+    next,
+    previous,
+    toggleRepeat,
+    toggleShuffle,
+  } = usePlayer();
   const { playing, position, duration, rate, buffering } = usePlayerStatus();
 
   if (!track) {
@@ -78,7 +91,12 @@ export default function PlayerScreen() {
         <View style={styles.controls}>
           {!live ? (
             <>
-              <IconButton icon={SkipBack} accessibilityLabel="Previous message, or restart" onPress={previous} size={24} />
+              <IconButton
+                icon={SkipBack}
+                accessibilityLabel="Previous message, or restart"
+                onPress={previous}
+                size={24}
+              />
               <IconButton icon={RotateCcw} accessibilityLabel="Back 15 seconds" onPress={() => seekBy(-15)} size={26} />
             </>
           ) : null}
@@ -92,7 +110,12 @@ export default function PlayerScreen() {
           />
           {!live ? (
             <>
-              <IconButton icon={RotateCw} accessibilityLabel="Forward 15 seconds" onPress={() => seekBy(15)} size={26} />
+              <IconButton
+                icon={RotateCw}
+                accessibilityLabel="Forward 15 seconds"
+                onPress={() => seekBy(15)}
+                size={26}
+              />
               <IconButton
                 icon={SkipForward}
                 accessibilityLabel="Next message"

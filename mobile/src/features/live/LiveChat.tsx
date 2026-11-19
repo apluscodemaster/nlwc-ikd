@@ -35,7 +35,9 @@ export function LiveChat() {
   }, []);
 
   if (!isFirebaseConfigured) {
-    return <EmptyState icon={MessageCircle} title="Chat unavailable" message="This build isn't connected to live chat." />;
+    return (
+      <EmptyState icon={MessageCircle} title="Chat unavailable" message="This build isn't connected to live chat." />
+    );
   }
 
   const send = async () => {
@@ -119,7 +121,14 @@ export function LiveChat() {
             onSubmitEditing={send}
             accessibilityLabel="Chat message"
           />
-          <IconButton icon={Send} accessibilityLabel="Send message" onPress={send} filled size={18} disabled={sending} />
+          <IconButton
+            icon={Send}
+            accessibilityLabel="Send message"
+            onPress={send}
+            filled
+            size={18}
+            disabled={sending}
+          />
         </View>
       ) : (
         <View style={[styles.composer, { borderTopColor: colors.border }]}>

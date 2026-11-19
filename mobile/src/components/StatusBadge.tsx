@@ -44,9 +44,7 @@ export function StatusBadge({ label, tone = "primary", pulse, solid }: StatusBad
       ]}
     >
       {pulse ? (
-        <Animated.View
-          style={[styles.dot, { backgroundColor: solid ? "#FFFFFF" : color, transform: [{ scale }] }]}
-        />
+        <Animated.View style={[styles.dot, { backgroundColor: solid ? "#FFFFFF" : color, transform: [{ scale }] }]} />
       ) : null}
       <Text variant="caption" dense style={{ color: solid ? "#FFFFFF" : color }}>
         {label}

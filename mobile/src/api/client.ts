@@ -48,7 +48,12 @@ function messageFrom(status: number, body: unknown): string {
 async function request<T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
-  { params, body, signal, timeoutMs = DEFAULT_TIMEOUT_MS }: {
+  {
+    params,
+    body,
+    signal,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  }: {
     params?: QueryParams;
     body?: unknown;
     signal?: AbortSignal;
@@ -103,7 +108,6 @@ export const api = {
   /** `timeoutMs` overrides the 15 s default for known-slow endpoints. */
   get: <T>(path: string, params?: QueryParams, signal?: AbortSignal, timeoutMs?: number) =>
     request<T>("GET", path, { params, signal, timeoutMs }),
-  post: <T>(path: string, body?: unknown, params?: QueryParams) =>
-    request<T>("POST", path, { body, params }),
+  post: <T>(path: string, body?: unknown, params?: QueryParams) => request<T>("POST", path, { body, params }),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, { body }),
 };

@@ -8,7 +8,6 @@ jest.mock("expo-notifications", () => ({
   SchedulableTriggerInputTypes: { DATE: "date" },
 }));
 
-
 beforeAll(async () => {
   const realFetch = global.fetch;
   global.fetch = jest.fn(async () => ({

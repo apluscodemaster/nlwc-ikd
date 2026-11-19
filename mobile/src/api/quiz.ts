@@ -62,7 +62,10 @@ export const quizApi = {
 
   /** Step 2: security answer or admin-issued code → the session to adopt. */
   recover: (username: string, credential: { answer: string } | { code: string }) =>
-    api.post<{ session_id: string; username: string }>("/api/quiz/recover", { username: username.trim(), ...credential }),
+    api.post<{ session_id: string; username: string }>("/api/quiz/recover", {
+      username: username.trim(),
+      ...credential,
+    }),
 
   setSecurity: (sessionId: string, question: string, answer: string) =>
     api.post<{ success: true }>("/api/quiz/security", { session_id: sessionId, question, answer }),

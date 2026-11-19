@@ -22,13 +22,22 @@ export default function QuizResults() {
   });
 
   if (loading) return <LoadingState />;
-  if (!session) return <EmptyState title="No quiz yet" actionLabel="Go to quiz" onAction={() => router.replace("/quiz")} />;
+  if (!session)
+    return <EmptyState title="No quiz yet" actionLabel="Go to quiz" onAction={() => router.replace("/quiz")} />;
   if (q.isLoading) return <LoadingState label="Working out your results… This can take up to a minute." />;
   if (q.isError || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
 
   const r = q.data;
   if (!r.total_questions) {
-    return <EmptyState icon={Brain} title="No answers yet" message="Play a round to see your results." actionLabel="Start quiz" onAction={() => router.replace("/quiz/play")} />;
+    return (
+      <EmptyState
+        icon={Brain}
+        title="No answers yet"
+        message="Play a round to see your results."
+        actionLabel="Start quiz"
+        onAction={() => router.replace("/quiz/play")}
+      />
+    );
   }
 
   return (
@@ -56,7 +65,12 @@ export default function QuizResults() {
                 </Text>
               </View>
               <View style={[styles.track, { backgroundColor: colors.surfaceMuted }]}>
-                <View style={[styles.fill, { width: `${pct * 100}%`, backgroundColor: pct >= 0.7 ? colors.success : colors.primary }]} />
+                <View
+                  style={[
+                    styles.fill,
+                    { width: `${pct * 100}%`, backgroundColor: pct >= 0.7 ? colors.success : colors.primary },
+                  ]}
+                />
               </View>
             </View>
           );
@@ -81,7 +95,12 @@ export default function QuizResults() {
 
       <View style={styles.actions}>
         <Button title="Play again" icon={Brain} onPress={() => router.replace("/quiz/play")} />
-        <Button title="Leaderboard" variant="secondary" icon={Trophy} onPress={() => router.push("/quiz/leaderboard")} />
+        <Button
+          title="Leaderboard"
+          variant="secondary"
+          icon={Trophy}
+          onPress={() => router.push("/quiz/leaderboard")}
+        />
       </View>
     </Screen>
   );

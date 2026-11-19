@@ -14,15 +14,7 @@ export interface IconButtonProps extends Omit<PressableProps, "style" | "childre
   style?: StyleProp<ViewStyle>;
 }
 
-export function IconButton({
-  icon: Icon,
-  size = 20,
-  color = "text",
-  filled,
-  tint,
-  style,
-  ...rest
-}: IconButtonProps) {
+export function IconButton({ icon: Icon, size = 20, color = "text", filled, tint, style, ...rest }: IconButtonProps) {
   const { colors } = useTheme();
   const dim = Math.max(HIT, size + 20);
   return (

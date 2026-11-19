@@ -47,8 +47,7 @@ export interface DevotionalPage {
 }
 
 export const devotionalsApi = {
-  latest: async () =>
-    (await api.get<{ devotional: DevotionalItem | null }>("/api/devotionals/latest")).devotional,
+  latest: async () => (await api.get<{ devotional: DevotionalItem | null }>("/api/devotionals/latest")).devotional,
 
   page: async (cursor: QueryDocumentSnapshot | null, pageSize = 15): Promise<DevotionalPage> => {
     const base = query(

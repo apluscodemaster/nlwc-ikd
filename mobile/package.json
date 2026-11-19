@@ -11,7 +11,9 @@
     "lint": "expo lint",
     "test": "jest",
     "check:shared": "node scripts/check-shared-imports.mjs",
-    "check": "npm run typecheck && npm run lint && npm run check:shared && npm test",
+    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,mjs}\"",
+    "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\"",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:shared && npm test",
     "doctor": "npx expo-doctor",
     "icons": "node scripts/gen-icons.mjs",
     "brand-assets": "node scripts/make-brand-assets.mjs"
@@ -66,6 +68,7 @@
     "eslint-config-expo": "~58.0.4",
     "jest": "~30.5.2",
     "jest-expo": "~58.0.14",
+    "prettier": "^3.9.10",
     "typescript": "~6.0.3"
   },
   "jest": {

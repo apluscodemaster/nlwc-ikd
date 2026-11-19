@@ -49,7 +49,11 @@ export default function WelcomeScreen() {
   );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={90}
+    >
       <Screen>
         <Stack.Screen options={{ title: "First time here?" }} />
         <Text variant="caption" color="primary">
@@ -57,13 +61,33 @@ export default function WelcomeScreen() {
         </Text>
         <Text variant="title">We are honored to have you join us.</Text>
         <Text color="textSecondary" style={{ marginTop: spacing.xs }}>
-          At New and Living Way Church, we believe there are no accidents in the kingdom of God. Your presence today is a blessing to us, and we want to ensure you feel right at home.
+          At New and Living Way Church, we believe there are no accidents in the kingdom of God. Your presence today is
+          a blessing to us, and we want to ensure you feel right at home.
         </Text>
         <Card style={{ marginTop: spacing.lg, gap: spacing.md }}>
           <FormField label="Full name" value={f.fullName} onChangeText={set("fullName")} autoComplete="name" />
-          <FormField label="Phone number" value={f.phone} onChangeText={set("phone")} keyboardType="phone-pad" autoComplete="tel" />
-          <FormField label="Email address" value={f.email} onChangeText={set("email")} keyboardType="email-address" autoCapitalize="none" />
-          <FormField label="Residential address" value={f.address} onChangeText={set("address")} placeholder="Where are you joining us from?" multiline style={{ minHeight: 80 }} />
+          <FormField
+            label="Phone number"
+            value={f.phone}
+            onChangeText={set("phone")}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+          />
+          <FormField
+            label="Email address"
+            value={f.email}
+            onChangeText={set("email")}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <FormField
+            label="Residential address"
+            value={f.address}
+            onChangeText={set("address")}
+            placeholder="Where are you joining us from?"
+            multiline
+            style={{ minHeight: 80 }}
+          />
           <Text variant="label" color="textSecondary">
             Born again?
           </Text>
@@ -72,7 +96,12 @@ export default function WelcomeScreen() {
             Holy Ghost baptized? (with the evidence of speaking in tongues)
           </Text>
           {yesNo(holyGhost, setHolyGhost)}
-          <FormField label="Who invited you to church?" value={f.invitedBy} onChangeText={set("invitedBy")} placeholder="Name of inviter, or 'Social Media', etc." />
+          <FormField
+            label="Who invited you to church?"
+            value={f.invitedBy}
+            onChangeText={set("invitedBy")}
+            placeholder="Name of inviter, or 'Social Media', etc."
+          />
           <Button title="Send my details" icon={Send} size="lg" fullWidth disabled={!complete} onPress={submit} />
           <Text variant="small" color="textMuted">
             Opens WhatsApp with your details ready to send to our welcome team.

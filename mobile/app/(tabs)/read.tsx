@@ -23,7 +23,12 @@ export default function ReadTab() {
       <Tabs.Screen
         options={{
           headerRight: () => (
-            <IconButton icon={Search} accessibilityLabel="Search the Bible" color="primary" onPress={() => router.push("/bible")} />
+            <IconButton
+              icon={Search}
+              accessibilityLabel="Search the Bible"
+              color="primary"
+              onPress={() => router.push("/bible")}
+            />
           ),
         }}
       />

@@ -36,7 +36,7 @@ export function MiniPlayer() {
             {track.title}
           </Text>
           <Text variant="small" color="textSecondary" numberOfLines={1} dense>
-            {track.isLive ? "Live broadcast" : track.artist ?? "NLWC Ikorodu"}
+            {track.isLive ? "Live broadcast" : (track.artist ?? "NLWC Ikorodu")}
           </Text>
         </View>
       </Pressable>

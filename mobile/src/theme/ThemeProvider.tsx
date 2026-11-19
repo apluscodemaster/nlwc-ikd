@@ -30,8 +30,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     kv.setString(PREF_KEY, p);
   }, []);
 
-  const scheme: "light" | "dark" =
-    preference === "system" ? (system === "dark" ? "dark" : "light") : preference;
+  const scheme: "light" | "dark" = preference === "system" ? (system === "dark" ? "dark" : "light") : preference;
 
   const value = useMemo<ThemeContextValue>(() => {
     const colors = palette[scheme];

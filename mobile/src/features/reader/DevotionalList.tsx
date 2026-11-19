@@ -14,7 +14,13 @@ export function DevotionalList() {
   const items = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
 
   if (!isFirebaseConfigured) {
-    return <EmptyState icon={Sun} title="Devotionals unavailable" message="This build isn't connected to the devotionals archive." />;
+    return (
+      <EmptyState
+        icon={Sun}
+        title="Devotionals unavailable"
+        message="This build isn't connected to the devotionals archive."
+      />
+    );
   }
 
   return (

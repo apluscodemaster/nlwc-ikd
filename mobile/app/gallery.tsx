@@ -57,8 +57,18 @@ export default function GalleryScreen() {
             </View>
           }
           renderItem={({ item, index }) => (
-            <Pressable onPress={() => setViewer(index)} accessibilityRole="imagebutton" accessibilityLabel={`Photo ${index + 1} of ${images.length}`}>
-              <Image source={{ uri: sizedGoogleImage(item, 400) }} style={{ width: tile, height: tile, borderRadius: 6 }} contentFit="cover" transition={150} recyclingKey={item} />
+            <Pressable
+              onPress={() => setViewer(index)}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Photo ${index + 1} of ${images.length}`}
+            >
+              <Image
+                source={{ uri: sizedGoogleImage(item, 400) }}
+                style={{ width: tile, height: tile, borderRadius: 6 }}
+                contentFit="cover"
+                transition={150}
+                recyclingKey={item}
+              />
             </Pressable>
           )}
         />
@@ -66,7 +76,13 @@ export default function GalleryScreen() {
 
       <Modal visible={viewer != null} animationType="fade" onRequestClose={() => setViewer(null)} statusBarTranslucent>
         <SafeAreaView style={styles.viewer}>
-          <IconButton icon={X} accessibilityLabel="Close photo" onPress={() => setViewer(null)} tint="#FFFFFF" style={styles.close} />
+          <IconButton
+            icon={X}
+            accessibilityLabel="Close photo"
+            onPress={() => setViewer(null)}
+            tint="#FFFFFF"
+            style={styles.close}
+          />
           <FlatList
             data={images}
             horizontal
@@ -76,7 +92,11 @@ export default function GalleryScreen() {
             keyExtractor={(u, i) => `v-${i}-${u}`}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
-              <Image source={{ uri: sizedGoogleImage(item, 1600) }} style={{ width, height: "100%" }} contentFit="contain" />
+              <Image
+                source={{ uri: sizedGoogleImage(item, 1600) }}
+                style={{ width, height: "100%" }}
+                contentFit="contain"
+              />
             )}
           />
         </SafeAreaView>

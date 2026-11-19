@@ -12,16 +12,7 @@
  * is in the background). Repeat-one wins over the queue; shuffle picks a
  * random other message from it.
  */
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { kv } from "~/lib/storage";
@@ -356,7 +347,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleShuffle,
       stop,
     }),
-    [track, upNext, canSkip, repeat, shuffle, play, toggle, seekTo, seekBy, setRate, next, previous, toggleRepeat, toggleShuffle, stop],
+    [
+      track,
+      upNext,
+      canSkip,
+      repeat,
+      shuffle,
+      play,
+      toggle,
+      seekTo,
+      seekBy,
+      setRate,
+      next,
+      previous,
+      toggleRepeat,
+      toggleShuffle,
+      stop,
+    ],
   );
 
   const status = useMemo<PlayerStatus>(
@@ -364,7 +371,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       playing: raw.playing,
       buffering: raw.isBuffering,
       position: raw.currentTime ?? 0,
-      duration: Number.isFinite(raw.duration) ? raw.duration ?? 0 : 0,
+      duration: Number.isFinite(raw.duration) ? (raw.duration ?? 0) : 0,
       rate,
     }),
     [raw.playing, raw.isBuffering, raw.currentTime, raw.duration, rate],

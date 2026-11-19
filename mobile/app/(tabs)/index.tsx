@@ -15,7 +15,17 @@ import {
   Users,
   type LucideIcon,
 } from "~/components/icons";
-import { Card, IconButton, ListRow, Screen, SectionHeader, SegmentedControl, Skeleton, StatusBadge, Text } from "~/components";
+import {
+  Card,
+  IconButton,
+  ListRow,
+  Screen,
+  SectionHeader,
+  SegmentedControl,
+  Skeleton,
+  StatusBadge,
+  Text,
+} from "~/components";
 import { dayName, formatHour } from "~/api/schedule";
 import { annualMeetingRows, serviceIcon } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
@@ -27,7 +37,13 @@ import { useLatestDevotional } from "~/hooks/useReader";
 import { useSermonList } from "~/hooks/useSermons";
 import { formatCompactDate, formatLongDate, greeting } from "~/lib/dates";
 import { getRecentProgress } from "~/player/recent";
-import { formatProgressTime, sizedGoogleImage, type AudioSermon, type MediaProgress, type SpecialService } from "~/shared";
+import {
+  formatProgressTime,
+  sizedGoogleImage,
+  type AudioSermon,
+  type MediaProgress,
+  type SpecialService,
+} from "~/shared";
 import { radius, spacing, useTheme } from "~/theme";
 
 const QUICK_LINKS: { label: string; icon: LucideIcon; href: Href }[] = [
@@ -63,91 +79,103 @@ export default function HomeTab() {
   const sermons = latest.data?.pages[0]?.data ?? [];
 
   return (
-    <Screen edges={["top", "left", "right"]} padded={false} refreshing={latest.isRefetching} onRefresh={() => void latest.refetch()}>
-          <View style={styles.content}>
-            <View style={styles.top}>
-              {/* Emblem only, on a white badge so its dark artwork reads in dark mode too. */}
-              <View style={[styles.logoBadge, scheme === "light" && styles.logoBadgeLift]}>
-                <Image
-                  source={require("../../assets/images/emblem.png")}
-                  style={styles.logo}
-                  contentFit="contain"
-                  accessibilityLabel="The New & Living Way Church emblem"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="small" color="textSecondary">
-                  {greeting()}
-                </Text>
-                <Text variant="heading" numberOfLines={1}>
-                  {quizName ?? "Dear Beloved"}
-                </Text>
-              </View>
-              <IconButton icon={Settings} accessibilityLabel="Settings" onPress={() => router.push("/settings")} />
-            </View>
-
-            <LiveBanner />
-            <DevotionalCard />
-
-            {recent.length ? (
-              <>
-                <SectionHeader label="Continue listening" />
-                <Card padded={false}>
-                  {recent.map((p) => (
-                    <ListRow
-                      key={String(p.mediaId)}
-                      icon={Play}
-                      title={p.title}
-                      meta={`${formatProgressTime(p.currentTime)} of ${formatProgressTime(p.duration)}`}
-                      progress={p.duration ? p.currentTime / p.duration : undefined}
-                      onPress={() => router.push(`/sermons/${p.mediaId}`)}
-                      showChevron
-                    />
-                  ))}
-                </Card>
-              </>
-            ) : null}
-
-            <SectionHeader label="Latest messages" onAction={() => router.push("/listen")} />
-            <LatestCarousel sermons={sermons} loading={latest.isLoading} />
-
-            <SectionHeader label="Get involved" />
-            <View style={styles.quick}>
-              {QUICK_LINKS.map((q) => (
-                <Pressable
-                  key={q.label}
-                  accessibilityRole="button"
-                  accessibilityLabel={q.label}
-                  onPress={() => router.push(q.href)}
-                  style={({ pressed }) => [styles.quickItem, { backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <View style={[styles.quickIcon, { backgroundColor: colors.accentSoft }]}>
-                    <q.icon size={20} color={colors.primary} />
-                  </View>
-                  <Text variant="label" align="center" dense>
-                    {q.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <ServiceTimes />
-
-            <Card style={{ marginTop: spacing.xl }} onPress={() => router.push("/welcome")} accessibilityLabel="New here? Start here">
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text variant="caption" color="primary">
-                    New here?
-                  </Text>
-                  <Text variant="heading">God wants you here</Text>
-                  <Text color="textSecondary">Find out what to expect and plan your first visit.</Text>
-                </View>
-                <ChevronRight color={colors.textMuted} />
-              </View>
-            </Card>
-
-            <GalleryStrip />
+    <Screen
+      edges={["top", "left", "right"]}
+      padded={false}
+      refreshing={latest.isRefetching}
+      onRefresh={() => void latest.refetch()}
+    >
+      <View style={styles.content}>
+        <View style={styles.top}>
+          {/* Emblem only, on a white badge so its dark artwork reads in dark mode too. */}
+          <View style={[styles.logoBadge, scheme === "light" && styles.logoBadgeLift]}>
+            <Image
+              source={require("../../assets/images/emblem.png")}
+              style={styles.logo}
+              contentFit="contain"
+              accessibilityLabel="The New & Living Way Church emblem"
+            />
           </View>
+          <View style={{ flex: 1 }}>
+            <Text variant="small" color="textSecondary">
+              {greeting()}
+            </Text>
+            <Text variant="heading" numberOfLines={1}>
+              {quizName ?? "Dear Beloved"}
+            </Text>
+          </View>
+          <IconButton icon={Settings} accessibilityLabel="Settings" onPress={() => router.push("/settings")} />
+        </View>
+
+        <LiveBanner />
+        <DevotionalCard />
+
+        {recent.length ? (
+          <>
+            <SectionHeader label="Continue listening" />
+            <Card padded={false}>
+              {recent.map((p) => (
+                <ListRow
+                  key={String(p.mediaId)}
+                  icon={Play}
+                  title={p.title}
+                  meta={`${formatProgressTime(p.currentTime)} of ${formatProgressTime(p.duration)}`}
+                  progress={p.duration ? p.currentTime / p.duration : undefined}
+                  onPress={() => router.push(`/sermons/${p.mediaId}`)}
+                  showChevron
+                />
+              ))}
+            </Card>
+          </>
+        ) : null}
+
+        <SectionHeader label="Latest messages" onAction={() => router.push("/listen")} />
+        <LatestCarousel sermons={sermons} loading={latest.isLoading} />
+
+        <SectionHeader label="Get involved" />
+        <View style={styles.quick}>
+          {QUICK_LINKS.map((q) => (
+            <Pressable
+              key={q.label}
+              accessibilityRole="button"
+              accessibilityLabel={q.label}
+              onPress={() => router.push(q.href)}
+              style={({ pressed }) => [
+                styles.quickItem,
+                { backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <View style={[styles.quickIcon, { backgroundColor: colors.accentSoft }]}>
+                <q.icon size={20} color={colors.primary} />
+              </View>
+              <Text variant="label" align="center" dense>
+                {q.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <ServiceTimes />
+
+        <Card
+          style={{ marginTop: spacing.xl }}
+          onPress={() => router.push("/welcome")}
+          accessibilityLabel="New here? Start here"
+        >
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" color="primary">
+                New here?
+              </Text>
+              <Text variant="heading">God wants you here</Text>
+              <Text color="textSecondary">Find out what to expect and plan your first visit.</Text>
+            </View>
+            <ChevronRight color={colors.textMuted} />
+          </View>
+        </Card>
+
+        <GalleryStrip />
+      </View>
     </Screen>
   );
 }
@@ -294,8 +322,14 @@ function UpcomingEvents({ specials }: { specials: SpecialService[] }) {
       <Card padded={false}>
         {upcoming.map((e, i) => {
           const [y, mo, d] = e.date.split("-").map(Number);
-          const month = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
-          const weekday = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+          const month = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", {
+            month: "short",
+            timeZone: "UTC",
+          });
+          const weekday = new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString("en-GB", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
           const when = [weekday, formatHour(e.startHour), shortLocation(e.location)].filter(Boolean).join(" · ");
           return (
             <View
@@ -399,7 +433,11 @@ function LiveBanner() {
 
   if (status.isLive) {
     return (
-      <Card onPress={() => router.push("/live")} style={{ backgroundColor: colors.live }} accessibilityLabel={`Live now: ${status.currentTitle}. Join`}>
+      <Card
+        onPress={() => router.push("/live")}
+        style={{ backgroundColor: colors.live }}
+        accessibilityLabel={`Live now: ${status.currentTitle}. Join`}
+      >
         <View style={styles.row}>
           <Radio color="#FFFFFF" size={28} />
           <View style={{ flex: 1 }}>
@@ -482,12 +520,22 @@ function LatestCarousel({ sermons, loading }: { sermons: AudioSermon[]; loading:
       ListHeaderComponent={<View style={{ width: spacing.gutter - spacing.sm }} />}
       ListFooterComponent={<View style={{ width: spacing.gutter - spacing.sm }} />}
       renderItem={({ item }) => (
-        <Card padded={false} style={styles.slide} onPress={() => router.push(`/sermons/${item.id}`)} accessibilityLabel={`${item.title} by ${item.speaker}`}>
+        <Card
+          padded={false}
+          style={styles.slide}
+          onPress={() => router.push(`/sermons/${item.id}`)}
+          accessibilityLabel={`${item.title} by ${item.speaker}`}
+        >
           <View>
             {item.thumbnailUrl ? (
               <Image source={{ uri: item.thumbnailUrl }} style={styles.slideImg} contentFit="cover" />
             ) : (
-              <View style={[styles.slideImg, { backgroundColor: colors.accentSoft, alignItems: "center", justifyContent: "center" }]}>
+              <View
+                style={[
+                  styles.slideImg,
+                  { backgroundColor: colors.accentSoft, alignItems: "center", justifyContent: "center" },
+                ]}
+              >
                 <BookOpen color={colors.primary} />
               </View>
             )}

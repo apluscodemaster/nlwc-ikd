@@ -67,7 +67,12 @@ export function ReaderLayout({
           title: screenTitle,
           headerRight: () => (
             <View style={{ flexDirection: "row" }}>
-              <IconButton icon={Type} accessibilityLabel="Text size" onPress={() => setShowPrefs(true)} color="primary" />
+              <IconButton
+                icon={Type}
+                accessibilityLabel="Text size"
+                onPress={() => setShowPrefs(true)}
+                color="primary"
+              />
               <IconButton
                 icon={Share2}
                 accessibilityLabel="Share"
@@ -152,7 +157,11 @@ function NavCard({ dir, link }: { dir: "prev" | "next"; link: ReaderLink }) {
   const { colors } = useTheme();
   const isNext = dir === "next";
   return (
-    <Card onPress={link.onPress} style={{ flex: 1 }} accessibilityLabel={`${isNext ? "Next" : "Previous"}: ${link.title}`}>
+    <Card
+      onPress={link.onPress}
+      style={{ flex: 1 }}
+      accessibilityLabel={`${isNext ? "Next" : "Previous"}: ${link.title}`}
+    >
       <View style={[styles.navHead, { justifyContent: isNext ? "flex-end" : "flex-start" }]}>
         {!isNext ? <ChevronLeft size={16} color={colors.primary} /> : null}
         <Text variant="caption" color="primary">

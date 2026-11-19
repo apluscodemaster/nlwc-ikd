@@ -33,8 +33,18 @@ function HtmlContentBase({ html, fontSize, query, onScripture, inset = spacing.g
       body: { color: colors.text, fontFamily: fonts.regular, fontSize, lineHeight },
       // Body copy only: headings, quotes and the memory-verse card stay left-aligned.
       p: { marginTop: 0, marginBottom: spacing.md, ...(justify ? { textAlign: "justify" as const } : null) },
-      h1: { fontFamily: fonts.semibold, fontSize: fontSize + 6, lineHeight: lineHeight + 6, marginVertical: spacing.md },
-      h2: { fontFamily: fonts.semibold, fontSize: fontSize + 4, lineHeight: lineHeight + 4, marginVertical: spacing.md },
+      h1: {
+        fontFamily: fonts.semibold,
+        fontSize: fontSize + 6,
+        lineHeight: lineHeight + 6,
+        marginVertical: spacing.md,
+      },
+      h2: {
+        fontFamily: fonts.semibold,
+        fontSize: fontSize + 4,
+        lineHeight: lineHeight + 4,
+        marginVertical: spacing.md,
+      },
       h3: { fontFamily: fonts.semibold, fontSize: fontSize + 2, marginVertical: spacing.sm },
       h4: { fontFamily: fonts.semibold, fontSize: fontSize + 1, marginVertical: spacing.sm },
       strong: { fontFamily: fonts.semibold },

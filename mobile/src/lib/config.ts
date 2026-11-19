@@ -8,9 +8,7 @@ function trimSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-export const API_BASE_URL = trimSlash(
-  process.env.EXPO_PUBLIC_API_BASE_URL || "https://ikorodu.nlwc.church",
-);
+export const API_BASE_URL = trimSlash(process.env.EXPO_PUBLIC_API_BASE_URL || "https://ikorodu.nlwc.church");
 
 export const SITE_URL = trimSlash(process.env.EXPO_PUBLIC_SITE_URL || "https://ikorodu.nlwc.church");
 
@@ -58,7 +56,5 @@ export const CHURCH = {
 } as const;
 
 export function whatsappLink(message?: string): string {
-  return message
-    ? `https://wa.me/${CHURCH.whatsappNumber}?text=${encodeURIComponent(message)}`
-    : CHURCH.whatsapp;
+  return message ? `https://wa.me/${CHURCH.whatsappNumber}?text=${encodeURIComponent(message)}` : CHURCH.whatsapp;
 }

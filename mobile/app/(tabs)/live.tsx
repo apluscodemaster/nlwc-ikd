@@ -83,8 +83,8 @@ export default function LiveTab() {
                 {status.isLive && status.stream === "live"
                   ? "Running past the scheduled time. The stream is still live."
                   : status.isLive
-                  ? "Running past the scheduled time. The stream stays open while the service continues."
-                  : "The scheduled time is over. If the stream has ended, close it here."}
+                    ? "Running past the scheduled time. The stream stays open while the service continues."
+                    : "The scheduled time is over. If the stream has ended, close it here."}
               </Text>
               {!status.isLive ? (
                 <Pressable onPress={() => setStayLive(false)} accessibilityRole="button" hitSlop={8}>
@@ -161,7 +161,11 @@ function LiveVideo() {
   if (!stream.data) {
     return (
       <View style={styles.pad}>
-        <EmptyState icon={Video} title="Video starting soon" message="The video stream isn't up yet. Try Listen meanwhile." />
+        <EmptyState
+          icon={Video}
+          title="Video starting soon"
+          message="The video stream isn't up yet. Try Listen meanwhile."
+        />
       </View>
     );
   }
@@ -182,10 +186,7 @@ function LiveAudio({ hidden }: { hidden: boolean }) {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.audio,
-        hidden ? styles.audioHidden : { borderColor: colors.border, backgroundColor: "#1F1F1F" },
-      ]}
+      style={[styles.audio, hidden ? styles.audioHidden : { borderColor: colors.border, backgroundColor: "#1F1F1F" }]}
       importantForAccessibility={hidden ? "no-hide-descendants" : "auto"}
       accessibilityElementsHidden={hidden}
     >
@@ -232,7 +233,11 @@ function OffAir({ status }: { status: ReturnType<typeof useLiveStatus> }) {
             <ReminderToggle />
           </>
         ) : (
-          <EmptyState icon={CalendarClock} title="No upcoming services" message="Check back soon for the service schedule." />
+          <EmptyState
+            icon={CalendarClock}
+            title="No upcoming services"
+            message="Check back soon for the service schedule."
+          />
         )}
 
         {services.length ? (
@@ -242,7 +247,10 @@ function OffAir({ status }: { status: ReturnType<typeof useLiveStatus> }) {
               {services.map((s, i) => (
                 <View
                   key={s.id ?? `${s.dayOfWeek}-${s.startHour}`}
-                  style={[styles.svc, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
+                  style={[
+                    styles.svc,
+                    i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+                  ]}
                 >
                   <View style={{ flex: 1 }}>
                     <Text variant="bodyStrong">{s.label}</Text>
