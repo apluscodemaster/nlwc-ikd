@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 import {
   getWeakAreas,
   getRecommendations,
-  fetchQuestionById,
+  fetchQuestionsByIds,
 } from "@/lib/quizService";
 import type { QuizResult, QuizQuestion } from "@/types/quiz";
 
@@ -64,30 +64,27 @@ export async function GET(req: NextRequest) {
       if (a.is_correct) byCategory[category]!.correct++;
     }
 
-    // Get weak areas and recommendations
-    const weakAreas = await getWeakAreas(session_id);
+    // Weak areas and every failed question, fetched together (the questions
+    // in one Firestore round-trip instead of one read each).
+    const [weakAreas, questions] = await Promise.all([
+      getWeakAreas(session_id),
+      fetchQuestionsByIds(
+        uniqueAttempts.filter((a) => !a.is_correct).map((a) => a.question_id),
+      ),
+    ]);
 
-    // Collect sermon_refs and failed question data in a single pass
     const failedSermonRefs: { slug: string; category: string }[] = [];
     const failedQuestions: Array<{
       question: QuizQuestion;
       explanation?: string;
     }> = [];
-    for (const attempt of uniqueAttempts) {
-      if (!attempt.is_correct) {
-        const question = await fetchQuestionById(attempt.question_id);
-        if (question) {
-          failedQuestions.push({
-            question,
-            explanation: question.explain,
-          });
-          if (question.sermon_ref) {
-            failedSermonRefs.push({
-              slug: question.sermon_ref,
-              category: question.category,
-            });
-          }
-        }
+    for (const question of questions) {
+      failedQuestions.push({ question, explanation: question.explain });
+      if (question.sermon_ref) {
+        failedSermonRefs.push({
+          slug: question.sermon_ref,
+          category: question.category,
+        });
       }
     }
 
