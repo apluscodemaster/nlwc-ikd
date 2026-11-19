@@ -2,6 +2,19 @@ import type { NextConfig } from "next";
 
 const WP_ORIGIN = "https://ikdadmin.nlwc.church";
 
+/**
+ * The sermon-audio CDN (NEXT_PUBLIC_AUDIO_CDN_URL, see utils/audioUrl), added
+ * to the CSP's connect-src so fetches of the audio (not just <audio>) work.
+ */
+const AUDIO_CDN_SOURCE = (() => {
+  try {
+    const base = process.env.NEXT_PUBLIC_AUDIO_CDN_URL?.trim();
+    return base ? ` ${new URL(base).host}` : "";
+  } catch {
+    return "";
+  }
+})();
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
@@ -148,7 +161,9 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com *.cloudinary.com www.gstatic.com api.reftagger.com *.reftagger.com; " +
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
-              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.google-analytics.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com lh3.googleusercontent.com ikdadmin.nlwc.church one.com api.reftagger.com *.reftagger.com *.biblia.com *.bibliacdn.com *.faithlife.com challenges.cloudflare.com *.s3.us-east-2.amazonaws.com; " +
+              "connect-src 'self' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com *.google-analytics.com *.firebase.com *.firebaseio.com *.firebaseapp.com *.supabase.co *.cloudinary.com lh3.googleusercontent.com ikdadmin.nlwc.church one.com api.reftagger.com *.reftagger.com *.biblia.com *.bibliacdn.com *.faithlife.com challenges.cloudflare.com *.s3.us-east-2.amazonaws.com" +
+              AUDIO_CDN_SOURCE +
+              "; " +
               "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io challenges.cloudflare.com *.firebaseapp.com; " +
               "media-src 'self' https: blob:; " +
               "object-src 'none'; " +

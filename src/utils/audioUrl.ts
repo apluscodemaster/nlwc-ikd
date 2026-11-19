@@ -76,3 +76,35 @@ export function toStreamableAudioUrl(
 
   return `${DRIVE_DOWNLOAD_HOST}?id=${id}&export=download&confirm=t`;
 }
+
+/**
+ * The S3 bucket the sermon MP3s live in, in both URL styles
+ * (virtual-hosted `bucket.s3.region…/key` and path-style `s3.region…/bucket/key`).
+ */
+const SERMON_BUCKET_ORIGINS = [
+  /^https?:\/\/nlwc-ikorodu\.s3(?:[.-]us-east-2)?\.amazonaws\.com(?=\/)/i,
+  /^https?:\/\/s3(?:[.-]us-east-2)?\.amazonaws\.com\/nlwc-ikorodu(?=\/)/i,
+];
+
+/**
+ * Serve a sermon MP3 through the CDN (e.g. CloudFront) in front of the S3
+ * bucket, when NEXT_PUBLIC_AUDIO_CDN_URL is set: same path, CDN origin. The
+ * bucket is in Ohio (us-east-2); the CDN serves listeners from a nearby edge.
+ *
+ * Applied when sermons are READ (lib/audioSermons), never when they are
+ * saved, so WordPress keeps the S3 URL and the CDN can be changed or
+ * switched off by changing one setting. Other URLs (Drive, Cloudinary) and
+ * everything when the setting is empty are returned unchanged.
+ */
+export function toCdnAudioUrl(
+  url: string | undefined,
+  cdnBase: string | undefined = process.env.NEXT_PUBLIC_AUDIO_CDN_URL,
+): string | undefined {
+  if (!url || !cdnBase?.trim()) return url;
+  const base = cdnBase.trim().replace(/\/+$/, "");
+  if (!/^https:\/\//i.test(base)) return url;
+  for (const origin of SERMON_BUCKET_ORIGINS) {
+    if (origin.test(url)) return url.replace(origin, base);
+  }
+  return url;
+}

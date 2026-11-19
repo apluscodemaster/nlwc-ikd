@@ -516,6 +516,16 @@ CRON_SECRET=your_cron_secret         # Vercel Cron → /api/cron/* (jobs refuse 
 # Unset = schedule plus a 45-minute grace period.
 YOUTUBE_API_KEY=your_youtube_api_key
 
+# 🎧 Sermon audio CDN (optional). The MP3s are on S3 in Ohio (us-east-2);
+# a CDN in front serves listeners from a nearby edge (Lagos, Johannesburg,
+# Europe). Set this to the CDN's https origin and the site and app stream
+# sermons from it; WordPress keeps the S3 links, so unset = straight from S3.
+# Setup: AWS CloudFront → Create distribution → Origin: the nlwc-ikorodu
+# bucket; Viewer protocol: Redirect HTTP to HTTPS; Cache policy:
+# CachingOptimized; Response headers policy: SimpleCORS; Price class: "Use
+# all edge locations" (includes Lagos). Copy the distribution domain here.
+# NEXT_PUBLIC_AUDIO_CDN_URL=https://dxxxxxxxxxxxxx.cloudfront.net
+
 # 🔔 Service reminders (optional): web push ~30 min before each service.
 # Generate once with `node scripts/generate-vapid-keys.mjs`. Sent by the
 # GitHub Actions workflow .github/workflows/service-reminders.yml (every 10

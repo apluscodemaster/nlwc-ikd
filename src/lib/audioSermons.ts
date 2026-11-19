@@ -18,7 +18,7 @@
 
 import { deduplicatedFetch } from "./requestCache";
 import { logWarn, logDebug } from "./devLog";
-import { toStreamableAudioUrl } from "@/utils/audioUrl";
+import { toCdnAudioUrl, toStreamableAudioUrl } from "@/utils/audioUrl";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church";
@@ -174,7 +174,7 @@ async function fetchFromWpApi(
         listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
         // Google Drive share links must be rewritten to a streamable URL —
         // normalising on read means sermons saved before this fix play too.
-        downloadUrl: toStreamableAudioUrl(item.audioUrl as string) || undefined,
+        downloadUrl: toCdnAudioUrl(toStreamableAudioUrl(item.audioUrl as string)) || undefined,
         thumbnailUrl: fixThumbnailUrl(item.thumbnail as string),
         series: (item.seriesTitle as string) || undefined,
         seriesId: item.seriesId as number,
@@ -246,7 +246,7 @@ async function fetchDetailFromWpApi(
         speaker: item.speaker,
         date: formatDate(item.date),
         listenUrl: `${AUDIO_MESSAGES_URL}?enmse=1&enmse_am=1&enmse_mid=${item.id}&enmse_av=1`,
-        downloadUrl: toStreamableAudioUrl(item.audioUrl) || undefined,
+        downloadUrl: toCdnAudioUrl(toStreamableAudioUrl(item.audioUrl)) || undefined,
         thumbnailUrl: fixThumbnailUrl(item.thumbnail || item.speakerThumbnail),
         series: item.seriesTitle || undefined,
         description: item.description || undefined,
