@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Clock, Radio, Calendar } from "lucide-react";
 import Link from "next/link";
 import { m as motion } from "framer-motion";
+import ServiceReminderButton from "@/components/live/ServiceReminderButton";
 import {
   isServiceLive,
   getNextService,
@@ -152,6 +153,8 @@ export default function ServiceCountdown() {
         <TimeUnit value={timeLeft.minutes} label="Mins" />
         <TimeUnit value={timeLeft.seconds} label="Secs" />
       </div>
+
+      <ServiceReminderButton className="mt-6" />
     </div>
   );
 }

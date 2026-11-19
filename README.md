@@ -516,6 +516,14 @@ CRON_SECRET=your_cron_secret         # Vercel Cron → /api/cron/* (jobs refuse 
 # Unset = schedule plus a 45-minute grace period.
 YOUTUBE_API_KEY=your_youtube_api_key
 
+# 🔔 Service reminders (optional): web push ~30 min before each service.
+# Generate once with `node scripts/generate-vapid-keys.mjs`. Sent by the
+# GitHub Actions workflow .github/workflows/service-reminders.yml (every 10
+# min), which needs the repo secret CRON_SECRET. Unset = no reminder button.
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+# VAPID_SUBJECT=mailto:you@example.org   # defaults to CHURCH_EMAIL_ADDRESS
+
 # 🔐 Admin access (optional)
 # Comma-separated emails allowed to use admin routes. Unset = any Firebase
 # account in the project counts as an admin (see Security below).

@@ -1,0 +1,36 @@
+# Service reminders: every 10 minutes, asks the site to send the "service
+# starts soon" push notification when one is due (src/app/api/cron/
+# service-reminders). The route decides; most runs send nothing.
+#
+# Runs here rather than Vercel Cron because Vercel's Hobby plan only allows
+# daily jobs. GitHub may start a scheduled run a few minutes late; the route
+# allows for that. Scheduled workflows run from the default branch (main).
+#
+# Needs the repository secret CRON_SECRET (same value as on Vercel):
+# Settings → Secrets and variables → Actions → New repository secret.
+name: Service reminders
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Send due reminders
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: https://ikorodu.nlwc.church
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET secret is not set; skipping."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 90 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$SITE_URL/api/cron/service-reminders"

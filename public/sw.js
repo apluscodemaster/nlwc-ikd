@@ -241,3 +241,51 @@ self.addEventListener("message", (event) => {
   // IMPORTANT: Never return true here - that would indicate async response intent
   // which could lead to "listener indicated asynchronous response" errors
 });
+
+/**
+ * Service reminders (web push). Pushes carry no payload (see src/lib/webPush.ts),
+ * so the text to show is fetched from the site when one arrives.
+ */
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    (async () => {
+      let message = {
+        title: "NLWC Ikorodu",
+        body: "A service is starting soon. Tap to join the live stream.",
+        url: "/live",
+      };
+      try {
+        const res = await fetch("/api/push/message", { cache: "no-store" });
+        if (res.ok) message = { ...message, ...(await res.json()) };
+      } catch {
+        // Offline or the site is unreachable: show the generic reminder.
+      }
+      await self.registration.showNotification(message.title, {
+        body: message.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/favicon-48.png",
+        tag: "service-reminder",
+        renotify: true,
+        data: { url: message.url || "/live" },
+      });
+    })(),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/live", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windows) {
+        if (new URL(client.url).origin === self.location.origin && "focus" in client) {
+          await client.focus();
+          if ("navigate" in client) await client.navigate(target).catch(() => {});
+          return;
+        }
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

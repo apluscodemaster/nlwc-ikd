@@ -81,6 +81,42 @@ function parseSpecialDate(entry: SpecialServiceEntry): ParsedSpecial {
 }
 
 /**
+ * Use schedule data (the /api/schedule response shape) directly. The server
+ * calls this with Firestore data, since it can't fetch its own relative URL.
+ */
+export function applySchedule(data: {
+  recurring?: (ScheduledService & { active?: boolean })[];
+  special?: (SpecialServiceEntry & { active?: boolean })[];
+}): void {
+
+  // Only override if we got valid data
+  const recurring: ScheduledService[] = (data.recurring || [])
+    .filter((r: { active?: boolean }) => r.active !== false)
+    .map(
+      (r: {
+        dayOfWeek: number;
+        startHour: number;
+        endHour: number;
+        label: string;
+      }) => ({
+        dayOfWeek: r.dayOfWeek,
+        startHour: r.startHour,
+        endHour: r.endHour,
+        label: r.label,
+      }),
+    );
+
+  // Taken as-is, even when empty: the admin schedule is the only source.
+  LIVE_SERVICES = recurring;
+
+  specialServices = (data.special || [])
+    .filter((s: { active?: boolean }) => s.active !== false)
+    .map((s: SpecialServiceEntry) => parseSpecialDate(s));
+
+  loaded = true;
+}
+
+/**
  * Fetch schedule data from the API and cache it in module scope.
  * Safe to call multiple times — only the first call fetches.
  */
@@ -93,33 +129,7 @@ export async function loadScheduleFromApi(): Promise<void> {
     try {
       const res = await fetch("/api/schedule");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      // Only override if we got valid data
-      const recurring: ScheduledService[] = (data.recurring || [])
-        .filter((r: { active?: boolean }) => r.active !== false)
-        .map(
-          (r: {
-            dayOfWeek: number;
-            startHour: number;
-            endHour: number;
-            label: string;
-          }) => ({
-            dayOfWeek: r.dayOfWeek,
-            startHour: r.startHour,
-            endHour: r.endHour,
-            label: r.label,
-          }),
-        );
-
-      // Taken as-is, even when empty: the admin schedule is the only source.
-      LIVE_SERVICES = recurring;
-
-      specialServices = (data.special || [])
-        .filter((s: { active?: boolean }) => s.active !== false)
-        .map((s: SpecialServiceEntry) => parseSpecialDate(s));
-
-      loaded = true;
+      applySchedule(await res.json());
     } catch (err) {
       console.warn("[liveSchedule] Failed to load the schedule:", err);
       // Not marked loaded, so a later call tries again rather than running
