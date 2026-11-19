@@ -15,6 +15,9 @@
     "format:check": "prettier --check \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\"",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:shared && npm test",
     "doctor": "npx expo-doctor",
+    "build:apk": "npx eas-cli@latest build --platform android --profile preview",
+    "build:android": "npx eas-cli@latest build --platform android --profile production",
+    "build:ios": "npx eas-cli@latest build --platform ios --profile production",
     "icons": "node scripts/gen-icons.mjs",
     "brand-assets": "node scripts/make-brand-assets.mjs"
   },

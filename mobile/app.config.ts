@@ -16,6 +16,9 @@ const VARIANT = (process.env.APP_VARIANT ?? "development") as
   | "production";
 
 const BASE_ID = "church.nlwc.ikorodu";
+
+/** The EAS project this app builds in. Paste the ID `npx eas-cli init` prints. */
+const EAS_PROJECT_ID = "";
 const id = VARIANT === "production" ? BASE_ID : `${BASE_ID}.${VARIANT === "preview" ? "preview" : "dev"}`;
 const name =
   VARIANT === "production" ? "NLWC Ikorodu" : VARIANT === "preview" ? "NLWC (Preview)" : "NLWC (Dev)";
@@ -124,8 +127,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     variant: VARIANT,
     eas: {
-      // Filled in by `eas init`.
-      projectId: process.env.EAS_PROJECT_ID,
+      // From `npx eas-cli init` (see README, "Cloud builds"). The env var wins
+      // so a fork can point at its own EAS project.
+      projectId: process.env.EAS_PROJECT_ID || EAS_PROJECT_ID || undefined,
     },
   },
 });
