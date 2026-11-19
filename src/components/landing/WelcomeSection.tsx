@@ -9,9 +9,9 @@ import Image from "next/image";
 import { cloudinaryLoader } from "@/lib/cloudinaryLoader";
 import { m as motion, Variants } from "framer-motion";
 import {
-  isCurrentlyLive,
+  isServiceLive,
   getNextService,
-  getCurrentMeetingTitle,
+  getLiveTitle,
   loadScheduleFromApi,
   isScheduleLoaded,
   type NextServiceInfo,
@@ -69,9 +69,9 @@ function useNextServiceCountdown() {
       }
       const now = new Date();
 
-      if (isCurrentlyLive(now)) {
+      if (isServiceLive(now)) {
         setIsLive(true);
-        setLiveTitle(getCurrentMeetingTitle(now));
+        setLiveTitle(getLiveTitle(now));
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setNextService(null);
         return;

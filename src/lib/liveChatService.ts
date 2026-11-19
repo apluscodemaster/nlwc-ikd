@@ -20,7 +20,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { getCurrentServiceStartTime } from "./liveSchedule";
+import { getLiveServiceStartTime } from "./liveSchedule";
 
 export interface ChatMessage {
   id: string;
@@ -70,7 +70,7 @@ function getColorForName(name: string): string {
 export function subscribeToChatMessages(
   onMessages: (messages: ChatMessage[]) => void,
 ): () => void {
-  const serviceStart = getCurrentServiceStartTime();
+  const serviceStart = getLiveServiceStartTime();
 
   // No service is live — return empty and provide a no-op unsubscribe
   if (serviceStart === null) {

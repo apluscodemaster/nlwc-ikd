@@ -36,7 +36,7 @@ import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import { MarqueeText } from "@/components/media/MarqueeText";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
-import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
+import { isServiceLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import { useAutoScrollTo } from "@/hooks/useAutoScrollTo";
 
 function formatTime(time: number): string {
@@ -55,7 +55,7 @@ export default function ListenLivePage() {
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsLive(isCurrentlyLive());
+    const check = () => setIsLive(isServiceLive());
     loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);

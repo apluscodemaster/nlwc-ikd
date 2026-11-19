@@ -12,7 +12,7 @@
  */
 
 /* ── Live schedule (Lagos time) ─────────────────────────────────────────── */
-// Calls fetch("/api/schedule"); the relative URL is resolved by
+// Calls fetch("/api/schedule") and fetch("/api/video-stream"); the relative URL is resolved by
 // installApiFetch() in src/lib/apiFetch.ts.
 export {
   loadScheduleFromApi,
@@ -21,8 +21,13 @@ export {
   getCurrentServiceStartTime,
   getNextService,
   getCurrentMeetingTitle,
+  getServiceLiveState,
+  getLiveTitle,
+  getLiveServiceStartTime,
+  setStreamState,
+  LIVE_GRACE_MS,
 } from "@web/lib/liveSchedule";
-export type { ScheduledService, NextServiceInfo } from "@web/lib/liveSchedule";
+export type { ScheduledService, NextServiceInfo, ServiceLiveState, StreamState } from "@web/lib/liveSchedule";
 // Server-only on the web (Firestore admin layer): shapes mirrored locally,
 // because even a type import would type-check firebase-admin code.
 export type { RecurringService, SpecialService } from "~/types/web-server-types";

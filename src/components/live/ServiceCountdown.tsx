@@ -5,7 +5,7 @@ import { Clock, Radio, Calendar } from "lucide-react";
 import Link from "next/link";
 import { m as motion } from "framer-motion";
 import {
-  isCurrentlyLive,
+  isServiceLive,
   getNextService,
   loadScheduleFromApi,
   isScheduleLoaded,
@@ -44,7 +44,7 @@ export default function ServiceCountdown() {
       const now = new Date();
 
       // Check if currently in a live service window
-      if (isCurrentlyLive(now)) {
+      if (isServiceLive(now)) {
         setIsLive(true);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setNextService(null);

@@ -37,6 +37,8 @@ export default function LiveTab() {
   const [title, setTitle] = useState("");
   if (status.isLive && !stayLive) setStayLive(true);
   if (status.isLive && status.currentTitle && status.currentTitle !== title) setTitle(status.currentTitle);
+  // YouTube says the stream is over: no need to keep it open.
+  if (stayLive && !status.isLive && status.stream === "ended") setStayLive(false);
 
   const isLiveRef = useRef(status.isLive);
   useEffect(() => {
@@ -77,7 +79,9 @@ export default function LiveTab() {
             <View style={[styles.overtime, { backgroundColor: colors.surfaceMuted }]}>
               <Clock size={16} color={colors.textSecondary} />
               <Text variant="small" color="textSecondary" style={{ flex: 1 }}>
-                {status.isLive
+                {status.isLive && status.stream === "live"
+                  ? "Running past the scheduled time. The stream is still live."
+                  : status.isLive
                   ? "Running past the scheduled time. The stream stays open while the service continues."
                   : "The scheduled time is over. If the stream has ended, close it here."}
               </Text>

@@ -403,3 +403,167 @@ export function getCurrentMeetingTitle(now = new Date()): string {
 
   return "Worship Experience";
 }
+
+/* ------------------------------------------------------------------ */
+/*  LIVE STATE: SCHEDULE + THE ACTUAL STREAM                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What YouTube says about the stream in the admin's video_stream sheet
+ * (/api/video-stream). "unknown" when the server has no YouTube API key, the
+ * sheet holds a channel link, or the check failed.
+ */
+export type StreamState = "live" | "upcoming" | "ended" | "unknown";
+
+/**
+ * Services often run past their scheduled end. When the stream's real state
+ * is unknown, a service stays live this long after its scheduled end.
+ */
+export const LIVE_GRACE_MS = 45 * 60 * 1000;
+/** How far back a running-over stream is tied to its service (title, chat). */
+const OVERRUN_LOOKBACK_MS = 4 * 60 * 60 * 1000;
+/** A stream that is live this long before a scheduled start counts as early. */
+const EARLY_START_MS = 60 * 60 * 1000;
+const STEP_MS = 5 * 60 * 1000;
+const STREAM_REFRESH_MS = 60 * 1000;
+const STREAM_STALE_MS = 3 * 60 * 1000;
+
+let streamState: StreamState = "unknown";
+let streamCheckedAt = 0;
+/** When streamState was last answered (staleness), vs. last asked (throttle). */
+let streamAnsweredAt = 0;
+let streamPromise: Promise<void> | null = null;
+
+/** The stream state last fetched (tests can set it with setStreamState). */
+export function getStreamState(): StreamState {
+  return streamState;
+}
+
+export function setStreamState(state: StreamState): void {
+  streamState = state;
+  streamCheckedAt = Date.now();
+  streamAnsweredAt = Date.now();
+}
+
+/**
+ * Fetch the stream's state from /api/video-stream, at most once a minute.
+ * Called by getServiceLiveState only around service times, so pages don't
+ * poll YouTube the rest of the week.
+ */
+export function refreshStreamState(): Promise<void> {
+  if (streamPromise) return streamPromise;
+  if (Date.now() - streamCheckedAt < STREAM_REFRESH_MS)
+    return Promise.resolve();
+  if (typeof fetch !== "function") return Promise.resolve();
+  streamCheckedAt = Date.now();
+  streamPromise = (async () => {
+    try {
+      const res = await fetch("/api/video-stream");
+      const data = (await res.json()) as { status?: StreamState };
+      streamState = data.status ?? "unknown";
+    } catch {
+      streamState = "unknown";
+    } finally {
+      streamAnsweredAt = Date.now();
+      streamPromise = null;
+    }
+  })();
+  return streamPromise;
+}
+
+/** Start of the most recent scheduled service that began within `withinMs`. */
+function recentServiceStart(now: Date, withinMs: number): number | null {
+  for (let back = STEP_MS; back <= withinMs; back += STEP_MS) {
+    const start = getCurrentServiceStartTime(new Date(now.getTime() - back));
+    if (start !== null) return start;
+  }
+  return null;
+}
+
+export interface ServiceLiveState {
+  /** Show the live stream, chat and "Live now" badges. */
+  live: boolean;
+  /** Inside the scheduled time on the admin schedule. */
+  scheduled: boolean;
+  /** Live past the scheduled end (stream still on, or the grace period). */
+  overtime: boolean;
+  /** Live before the scheduled start (the stream went live early). */
+  early: boolean;
+  stream: StreamState;
+}
+
+/**
+ * Whether a service is live at `now`:
+ * - inside its scheduled time, always (whatever the stream reports);
+ * - after its scheduled end, while YouTube reports the stream live, or for
+ *   LIVE_GRACE_MS when the stream's state is unknown;
+ * - before its scheduled start, once YouTube reports the stream live.
+ * A stream reported ended or upcoming after the scheduled end ends it at once.
+ */
+export function getServiceLiveState(now = new Date()): ServiceLiveState {
+  const scheduled = isCurrentlyLive(now);
+  const sinceRecent = recentServiceStart(now, OVERRUN_LOOKBACK_MS);
+  const nearNext =
+    loaded && LIVE_SERVICES.length + specialServices.length > 0
+      ? getNextService(now).date.getTime() - now.getTime() <= EARLY_START_MS
+      : false;
+
+  // Only ask YouTube around service times.
+  if (scheduled || sinceRecent !== null || nearNext) void refreshStreamState();
+
+  // A state older than a few minutes (e.g. from last week, in a tab left
+  // open) is treated as unknown until the refresh above answers.
+  const stream: StreamState =
+    Date.now() - streamAnsweredAt < STREAM_STALE_MS ? streamState : "unknown";
+  const result = {
+    live: false,
+    scheduled,
+    overtime: false,
+    early: false,
+    stream,
+  };
+  if (scheduled) return { ...result, live: true };
+
+  if (sinceRecent !== null) {
+    const inGrace = withinGrace(now);
+    if (stream === "live" || (stream === "unknown" && inGrace)) {
+      return { ...result, live: true, overtime: true };
+    }
+  }
+  if (nearNext && stream === "live")
+    return { ...result, live: true, early: true };
+  return result;
+}
+
+/** A scheduled service ended less than LIVE_GRACE_MS ago. */
+function withinGrace(now: Date): boolean {
+  for (let back = STEP_MS; back <= LIVE_GRACE_MS; back += STEP_MS) {
+    if (isCurrentlyLive(new Date(now.getTime() - back))) return true;
+  }
+  return false;
+}
+
+/** Shorthand for getServiceLiveState(now).live. */
+export function isServiceLive(now = new Date()): boolean {
+  return getServiceLiveState(now).live;
+}
+
+/**
+ * Start of the live service's chat window: the scheduled start, or for a
+ * service running over, the start of the one that just ended; for an early
+ * stream, the moment it was first seen live (so the chat isn't empty).
+ */
+export function getLiveServiceStartTime(now = new Date()): number | null {
+  const state = getServiceLiveState(now);
+  if (!state.live) return null;
+  if (state.scheduled) return getCurrentServiceStartTime(now);
+  if (state.overtime) return recentServiceStart(now, OVERRUN_LOOKBACK_MS);
+  return now.getTime() - EARLY_START_MS;
+}
+
+/** Title for the live badge: the next service's when the stream went live early. */
+export function getLiveTitle(now = new Date()): string {
+  const state = getServiceLiveState(now);
+  if (state.early) return getNextService(now).label;
+  return getCurrentMeetingTitle(now);
+}

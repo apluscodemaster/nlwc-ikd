@@ -509,6 +509,13 @@ WP_APPLICATION_PASSWORD=application_password # used for publishing and admin rea
 WEBHOOK_SECRET=your_webhook_secret   # WordPress → /api/revalidate
 CRON_SECRET=your_cron_secret         # Vercel Cron → /api/cron/* (jobs refuse to run without it)
 
+# 📺 Live stream status (optional). YouTube Data API v3 key (Google Cloud →
+# APIs & Services → enable "YouTube Data API v3" → Credentials → API key).
+# Lets the site and app stay live while the stream in the video_stream sheet
+# is still on air (works for unlisted videos), and end as soon as it ends.
+# Unset = schedule plus a 45-minute grace period.
+YOUTUBE_API_KEY=your_youtube_api_key
+
 # 🔐 Admin access (optional)
 # Comma-separated emails allowed to use admin routes. Unset = any Firebase
 # account in the project counts as an admin (see Security below).

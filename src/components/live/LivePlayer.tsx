@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { Radio, Users, Share2, Info, Send, Mail, X } from "lucide-react";
 import {
-  isCurrentlyLive,
-  getCurrentMeetingTitle,
+  isServiceLive,
+  getLiveTitle,
   loadScheduleFromApi,
 } from "@/lib/liveSchedule";
 import {
@@ -59,8 +59,8 @@ export default function LivePlayer() {
   // Load dynamic schedule then check live status every 30 seconds
   useEffect(() => {
     const check = () => {
-      setIsLive(isCurrentlyLive());
-      setMeetingTitle(getCurrentMeetingTitle());
+      setIsLive(isServiceLive());
+      setMeetingTitle(getLiveTitle());
     };
     loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
@@ -280,7 +280,7 @@ function LiveChat() {
   // Check if we're in service hours and update every minute
   useEffect(() => {
     const checkServiceHours = () => {
-      setIsServiceHours(isCurrentlyLive());
+      setIsServiceHours(isServiceLive());
     };
 
     // Check as soon as the admin schedule has loaded

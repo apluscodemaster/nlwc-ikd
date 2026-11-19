@@ -5,7 +5,7 @@
  */
 import { addDoc, collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { getDb } from "~/lib/firebase";
-import { getCurrentServiceStartTime } from "~/shared";
+import { getLiveServiceStartTime } from "~/shared";
 
 export interface ChatMessage {
   id: string;
@@ -35,7 +35,7 @@ export function subscribeToChat(
   onMessages: (m: ChatMessage[]) => void,
   onError?: (e: Error) => void,
 ): () => void {
-  const serviceStart = getCurrentServiceStartTime();
+  const serviceStart = getLiveServiceStartTime();
   if (serviceStart === null) {
     onMessages([]);
     return () => {};

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGoogleSheetsClient } from "@/lib/googleSheets";
+import type { StreamState } from "@/lib/liveSchedule";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 const RANGE = "video_stream!A:A"; // Only the URL column
@@ -9,6 +10,44 @@ const RANGE = "video_stream!A:A"; // Only the URL column
 // call read Google Sheets (per-minute read quota). The stream URL changes at
 // most once per service, and an admin update still shows within 60s.
 export const revalidate = 60;
+
+/**
+ * The stream's live state from the YouTube Data API (videos.list, 1 quota
+ * unit; with the 60 s cache above that's at most ~1,440 units a day of the
+ * free 10,000). Needs YOUTUBE_API_KEY; without it, or for a channel link
+ * (finding a channel's live video costs 100 units), the state is "unknown"
+ * and the site falls back to the schedule plus a grace period.
+ */
+async function youtubeStreamState(
+  videoId: string | null,
+): Promise<StreamState> {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key || !videoId) return "unknown";
+  try {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.searchParams.set("part", "snippet,liveStreamingDetails");
+    url.searchParams.set("id", videoId);
+    url.searchParams.set("key", key);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return "unknown";
+    const data = (await res.json()) as {
+      items?: {
+        snippet?: { liveBroadcastContent?: string };
+        liveStreamingDetails?: { actualEndTime?: string };
+      }[];
+    };
+    const item = data.items?.[0];
+    if (!item) return "unknown";
+    const content = item.snippet?.liveBroadcastContent;
+    if (content === "live") return "live";
+    if (content === "upcoming") return "upcoming";
+    // "none": a finished broadcast has liveStreamingDetails; an ordinary
+    // upload doesn't, and says nothing about a service.
+    return item.liveStreamingDetails ? "ended" : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
 
 export async function GET() {
   if (!SHEET_ID) {
@@ -41,7 +80,7 @@ export async function GET() {
 
     if (!streamUrl) {
       return NextResponse.json(
-        { error: "No stream URL found", url: null },
+        { error: "No stream URL found", url: null, status: "unknown" },
         { status: 404 },
       );
     }
@@ -87,6 +126,7 @@ export async function GET() {
       embedUrl,
       channelId,
       videoId,
+      status: await youtubeStreamState(videoId),
     });
   } catch (err: unknown) {
     console.error("Video Stream API Error:", err);

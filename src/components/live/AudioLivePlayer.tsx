@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Radio, Activity, Maximize2, Minimize2 } from "lucide-react";
 import { m as motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
+import { isServiceLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 
 /** DOM id of the Waystream embed wrapper — the auto-scroll target on phones. */
 export const AUDIO_EMBED_ID = "audio-live-embed";
@@ -19,7 +19,7 @@ export default function AudioLivePlayer() {
 
   // Load dynamic schedule then check live status every 30 seconds
   useEffect(() => {
-    const check = () => setIsLive(isCurrentlyLive());
+    const check = () => setIsLive(isServiceLive());
     loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);

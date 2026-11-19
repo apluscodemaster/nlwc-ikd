@@ -21,7 +21,7 @@ import { m as motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResumePrompt from "@/components/media/ResumePrompt";
 import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
-import { isCurrentlyLive, loadScheduleFromApi } from "@/lib/liveSchedule";
+import { isServiceLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import {
   saveMediaProgress,
   getMediaProgress,
@@ -85,7 +85,7 @@ export default function LivePage() {
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsLive(isCurrentlyLive());
+    const check = () => setIsLive(isServiceLive());
     loadScheduleFromApi().then(check);
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
