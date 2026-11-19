@@ -19,6 +19,7 @@ import { Card, IconButton, ListRow, Screen, SectionHeader, SegmentedControl, Ske
 import { dayName, formatHour } from "~/api/schedule";
 import { annualMeetings, serviceIcon } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
+import { readStoredQuizName } from "~/features/quiz/QuizSessionProvider";
 import { usePlaySermon } from "~/features/sermons/playSermon";
 import { useLiveStatus, useSchedule } from "~/hooks/useLiveStatus";
 import { useGallery } from "~/hooks/useGallery";
@@ -43,8 +44,21 @@ export default function HomeTab() {
   const latest = useSermonList({ perPage: 8 });
   const [recent, setRecent] = useState<MediaProgress[]>([]);
 
-  // Re-read saved progress whenever Home comes back into view.
-  useFocusEffect(useCallback(() => setRecent(getRecentProgress(2)), []));
+  // Greets the player by their quiz name when this device has one.
+  const [quizName, setQuizName] = useState<string | null>(null);
+
+  // Re-read saved progress (and the quiz name, which may have just been set)
+  // whenever Home comes back into view.
+  useFocusEffect(
+    useCallback(() => {
+      setRecent(getRecentProgress(2));
+      let active = true;
+      readStoredQuizName().then((n) => active && setQuizName(n));
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   const sermons = latest.data?.pages[0]?.data ?? [];
 
@@ -65,7 +79,9 @@ export default function HomeTab() {
                 <Text variant="small" color="textSecondary">
                   {greeting()}
                 </Text>
-                <Text variant="heading">NLWC Ikorodu</Text>
+                <Text variant="heading" numberOfLines={1}>
+                  {quizName ?? "Dear Beloved"}
+                </Text>
               </View>
               <IconButton icon={Settings} accessibilityLabel="Settings" onPress={() => router.push("/settings")} />
             </View>
@@ -473,7 +489,7 @@ function LatestCarousel({ sermons, loading }: { sermons: AudioSermon[]; loading:
               filled
               size={16}
               accessibilityLabel={`Play ${item.title}`}
-              onPress={() => playSermon(item)}
+              onPress={() => void playSermon(item, sermons)}
               style={styles.slidePlay}
             />
           </View>

@@ -46,7 +46,13 @@ export const quizApi = {
     }
   },
 
-  progress: (sessionId: string) => api.get<QuizResult>("/api/quiz/progress", { session_id: sessionId }),
+  /**
+   * Slow by design: the server looks up every missed question and searches
+   * WordPress for matching messages one by one, which can take well over the
+   * default 15 s for players with many misses.
+   */
+  progress: (sessionId: string, signal?: AbortSignal) =>
+    api.get<QuizResult>("/api/quiz/progress", { session_id: sessionId }, signal, 90_000),
 
   leaderboard: () => api.get<LeaderboardEntry[]>("/api/quiz/leaderboard"),
 

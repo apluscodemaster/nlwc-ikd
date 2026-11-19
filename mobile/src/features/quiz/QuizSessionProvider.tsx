@@ -22,6 +22,20 @@ interface Ctx {
 
 const QuizSessionContext = createContext<Ctx | null>(null);
 
+/**
+ * The quiz name saved on this device, without a network call (for greetings
+ * outside the quiz). Null when the player has no quiz profile here.
+ */
+export async function readStoredQuizName(): Promise<string | null> {
+  try {
+    const raw = await secure.get(SESSION_KEY);
+    const stored = raw ? (JSON.parse(raw) as { username?: string }) : null;
+    return stored?.username?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export function QuizSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<QuizSession | null>(null);
   const [loading, setLoading] = useState(true);

@@ -13,10 +13,10 @@ import { SermonRow } from "./SermonRow";
 type SheetKind = "series" | "speaker" | "year";
 
 /** Audio messages list: search, filters, infinite scroll (port of AudioSermonsList). */
-export function AudioMessages({ header }: { header?: React.ReactElement }) {
+export function AudioMessages({ header, initialSearch }: { header?: React.ReactElement; initialSearch?: string }) {
   const router = useRouter();
   const { colors } = useTheme();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch ?? "");
   const [filters, setFilters] = useState<SermonFilters>({});
   const [sheet, setSheet] = useState<SheetKind | null>(null);
   const { series, speakers } = useSermonFilters();
@@ -27,6 +27,8 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
   const total = query.data?.pages[0]?.pagination.total;
 
   const open = useCallback((s: AudioSermon) => router.push(`/sermons/${s.id}`), [router]);
+  // The visible list becomes the play queue, so the next message follows on.
+  const playFromList = useCallback((s: AudioSermon) => void playSermon(s, items), [playSermon, items]);
 
   const label = (kind: SheetKind): string => {
     if (kind === "series") return series.find((s) => s.id === filters.seriesId)?.title ?? "Series";
@@ -59,7 +61,7 @@ export function AudioMessages({ header }: { header?: React.ReactElement }) {
         data={items}
         keyExtractor={(s) => String(s.id)}
         renderItem={({ item }) => (
-          <SermonRow sermon={item} onOpen={open} onPlay={playSermon} loading={loadingId === item.id} />
+          <SermonRow sermon={item} onOpen={open} onPlay={playFromList} loading={loadingId === item.id} />
         )}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={

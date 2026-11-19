@@ -11,16 +11,19 @@ import { radius, spacing, useTheme } from "~/theme";
 export default function QuizResults() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { session } = useQuizSession();
+  const { session, loading } = useQuizSession();
   const q = useQuery({
     queryKey: ["quiz-progress", session?.session_id],
     enabled: !!session,
-    queryFn: () => quizApi.progress(session!.session_id),
+    queryFn: ({ signal }) => quizApi.progress(session!.session_id, signal),
     staleTime: 0,
+    // The request has a long timeout of its own; one retry is plenty.
+    retry: 1,
   });
 
+  if (loading) return <LoadingState />;
   if (!session) return <EmptyState title="No quiz yet" actionLabel="Go to quiz" onAction={() => router.replace("/quiz")} />;
-  if (q.isLoading) return <LoadingState />;
+  if (q.isLoading) return <LoadingState label="Working out your results… This can take up to a minute." />;
   if (q.isError || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
 
   const r = q.data;

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
-import { CalendarClock, ChevronDown, ChevronUp, Headphones, MessageCircle, Video } from "~/components/icons";
+import { CalendarClock, ChevronDown, ChevronUp, Clock, Headphones, MessageCircle, Video } from "~/components/icons";
 import { dayName, formatHour } from "~/api/schedule";
 import { Card, EmptyState, LoadingState, SectionHeader, SegmentedControl, StatusBadge, Text } from "~/components";
 import { KeyboardAware } from "~/components/KeyboardAware";
@@ -18,6 +19,9 @@ const WAYSTREAM_EMBED_URL = "https://app.waystream.io/embed/nlwcikorodu?orientat
 
 type Mode = "video" | "audio";
 
+/** Coming back to the tab after this long (with nothing live) shows the countdown again. */
+const RESET_AFTER_AWAY_MS = 30 * 60 * 1000;
+
 /** Live tab (web /live + /listen-live). Countdown off-air; stream + chat when live. */
 export default function LiveTab() {
   const { colors } = useTheme();
@@ -26,9 +30,37 @@ export default function LiveTab() {
   // Listen mode: the player fills the screen and the chat is one tap away.
   const [chatOpen, setChatOpen] = useState(false);
 
+  // Once the stream is on screen it stays there, even past the grace period,
+  // so a service that runs long never cuts anyone off. It closes when the
+  // viewer taps "Close", or when they come back to the tab long after.
+  const [stayLive, setStayLive] = useState(false);
+  const [title, setTitle] = useState("");
+  if (status.isLive && !stayLive) setStayLive(true);
+  if (status.isLive && status.currentTitle && status.currentTitle !== title) setTitle(status.currentTitle);
+
+  const isLiveRef = useRef(status.isLive);
+  useEffect(() => {
+    isLiveRef.current = status.isLive;
+  }, [status.isLive]);
+  const leftAt = useRef<number | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (leftAt.current && Date.now() - leftAt.current > RESET_AFTER_AWAY_MS && !isLiveRef.current) {
+        setStayLive(false);
+      }
+      leftAt.current = null;
+      return () => {
+        leftAt.current = Date.now();
+      };
+    }, []),
+  );
+
   if (!status.loaded) return <LoadingState label="Loading the service schedule…" />;
 
-  if (!status.isLive) return <OffAir status={status} />;
+  if (!status.isLive && !stayLive) return <OffAir status={status} />;
+
+  // Past the scheduled end: in the grace period, or kept open after it.
+  const overtime = status.overtime || !status.isLive;
 
   return (
     <SafeAreaView edges={["left", "right"]} style={{ flex: 1, backgroundColor: colors.background }}>
@@ -38,9 +70,26 @@ export default function LiveTab() {
           <View style={styles.row}>
             <StatusBadge label="Live now" tone="live" pulse solid />
             <Text variant="heading" numberOfLines={1} style={{ flex: 1 }}>
-              {status.currentTitle || "Service"}
+              {status.currentTitle || title || "Service"}
             </Text>
           </View>
+          {overtime ? (
+            <View style={[styles.overtime, { backgroundColor: colors.surfaceMuted }]}>
+              <Clock size={16} color={colors.textSecondary} />
+              <Text variant="small" color="textSecondary" style={{ flex: 1 }}>
+                {status.isLive
+                  ? "Running past the scheduled time. The stream stays open while the service continues."
+                  : "The scheduled time is over. If the stream has ended, close it here."}
+              </Text>
+              {!status.isLive ? (
+                <Pressable onPress={() => setStayLive(false)} accessibilityRole="button" hitSlop={8}>
+                  <Text variant="label" color="primary">
+                    Close
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
           <SegmentedControl
             segments={[
               { value: "video", label: "Watch" },
@@ -213,6 +262,14 @@ function OffAir({ status }: { status: ReturnType<typeof useLiveStatus> }) {
 
 const styles = StyleSheet.create({
   liveHead: { padding: spacing.gutter, gap: spacing.sm },
+  overtime: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 10,
+  },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   pad: { paddingHorizontal: spacing.gutter },
   // Fills the space between the header and the chat bar (was a fixed 220pt).

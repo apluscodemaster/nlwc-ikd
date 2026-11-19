@@ -100,8 +100,9 @@ async function request<T>(
 }
 
 export const api = {
-  get: <T>(path: string, params?: QueryParams, signal?: AbortSignal) =>
-    request<T>("GET", path, { params, signal }),
+  /** `timeoutMs` overrides the 15 s default for known-slow endpoints. */
+  get: <T>(path: string, params?: QueryParams, signal?: AbortSignal, timeoutMs?: number) =>
+    request<T>("GET", path, { params, signal, timeoutMs }),
   post: <T>(path: string, body?: unknown, params?: QueryParams) =>
     request<T>("POST", path, { body, params }),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, { body }),

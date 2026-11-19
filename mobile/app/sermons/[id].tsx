@@ -40,6 +40,13 @@ export default function SermonScreen() {
     return findAdjacentParts<AudioSermon>(sermon.title, all);
   }, [sermon, part, siblings.data]);
 
+  // Multi-part messages play on into the next part; other messages keep
+  // whatever queue they were in (undefined leaves it unchanged).
+  const partQueue = useMemo(() => {
+    if (!sermon || !(adjacent.previous || adjacent.next)) return undefined;
+    return [adjacent.previous, sermon, adjacent.next].filter((s): s is AudioSermon => !!s);
+  }, [sermon, adjacent]);
+
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !sermon) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
 
@@ -80,7 +87,7 @@ export default function SermonScreen() {
         size="lg"
         fullWidth
         loading={loadingId === sermon.id}
-        onPress={() => (isCurrent ? toggle() : playSermon(sermon))}
+        onPress={() => (isCurrent ? toggle() : void playSermon(sermon, partQueue))}
       />
 
       <View style={styles.actions}>

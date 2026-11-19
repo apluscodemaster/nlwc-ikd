@@ -1,6 +1,7 @@
-import { Redirect } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 
-/** Website path /sermons (incl. ?q=…) → the Listen tab. */
+/** Website path /sermons (incl. ?q=…, used by quiz recommendations) → the Listen tab, searched. */
 export default function SermonsLink() {
-  return <Redirect href="/listen" />;
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  return <Redirect href={q ? { pathname: "/listen", params: { q } } : "/listen"} />;
 }

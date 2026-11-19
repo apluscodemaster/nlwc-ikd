@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { BookOpen, CheckCircle2, Flag, Headphones, PartyPopper, XCircle } from "~/components/icons";
@@ -27,6 +27,10 @@ export default function QuizPlay() {
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<SaveAnswerResult | null>(null);
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
+  // After a wrong answer, a recommended message must be opened before moving
+  // on (same rule as the website's FailedQuestionOverlay).
+  const [reviewed, setReviewed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [batch, setBatch] = useState({ answered: 0, correct: 0 });
   const answered = useRef<string[]>([]);
@@ -38,6 +42,7 @@ export default function QuizPlay() {
     setSelected(null);
     setResult(null);
     setRecs([]);
+    setReviewed(false);
     try {
       const qs = await quizApi.questions(session.session_id, { category, exclude: answered.current });
       if (!qs.length) {
@@ -85,7 +90,11 @@ export default function QuizPlay() {
       Haptics.notificationAsync(
         r.is_correct ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
       ).catch(() => {});
-      if (!r.is_correct) setRecs(await quizApi.recommendations(question.category, question.sermon_ref));
+      if (!r.is_correct) {
+        setRecsLoading(true);
+        setRecs(await quizApi.recommendations(question.category, question.sermon_ref));
+        setRecsLoading(false);
+      }
     } catch (e) {
       setError(e);
     } finally {
@@ -115,13 +124,23 @@ export default function QuizPlay() {
   if (!question) return null;
 
   const batchDone = batch.answered > 0 && batch.answered % BATCH_SIZE === 0 && result;
+  // Only gate when there is something to open (some categories have no linked
+  // message); stay locked while the recommendations are still loading.
+  const hasResource = recs.some((r) => r.listen_url || r.read_url);
+  const mustReview = !!result && !result.is_correct && !reviewed && (recsLoading || hasResource);
+  const openResource = (url: string) => {
+    setReviewed(true);
+    router.push(url as Href);
+  };
 
   return (
     <Screen>
       <Stack.Screen
         options={{
           title: `Question ${batch.answered + (result ? 0 : 1)}`,
-          headerRight: () => <Button title="Finish" size="sm" variant="ghost" icon={Flag} onPress={finish} />,
+          headerRight: () => (
+            <Button title="Finish" size="sm" variant="ghost" icon={Flag} onPress={finish} disabled={mustReview} />
+          ),
         }}
       />
       <Text variant="caption" color="primary">
@@ -172,21 +191,39 @@ export default function QuizPlay() {
               {result.explanation}
             </Text>
           ) : null}
-          {recs.length ? (
-            <View style={{ marginTop: spacing.sm, gap: spacing.xs }}>
-              <Text variant="label" color="textSecondary">
-                Learn more
+          {recsLoading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />
+          ) : hasResource ? (
+            <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+              <Text variant="label" color={mustReview ? "primary" : "textSecondary"}>
+                {mustReview ? "Listen to or read the message below to continue" : "Learn more"}
               </Text>
-              {recs.slice(0, 2).map((r, i) => (
-                <View key={i} style={styles.recRow}>
-                  {r.listen_url ? (
-                    <Button title={r.title ? `Listen: ${r.title}` : "Listen"} size="sm" variant="secondary" icon={Headphones} onPress={() => router.push(r.listen_url as Href)} />
-                  ) : null}
-                  {r.read_url ? (
-                    <Button title={r.title ? `Read: ${r.title}` : "Read"} size="sm" variant="secondary" icon={BookOpen} onPress={() => router.push(r.read_url as Href)} />
-                  ) : null}
-                </View>
-              ))}
+              {recs
+                .filter((r) => r.listen_url || r.read_url)
+                .map((r, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.rec,
+                      { borderColor: reviewed ? colors.success : colors.border, backgroundColor: colors.surfaceMuted },
+                    ]}
+                  >
+                    {r.title ? <Text variant="bodyStrong">{r.title}</Text> : null}
+                    {r.reason ? (
+                      <Text variant="small" color="textSecondary">
+                        {r.reason}
+                      </Text>
+                    ) : null}
+                    <View style={styles.recRow}>
+                      {r.listen_url ? (
+                        <Button title="Listen" size="sm" icon={Headphones} onPress={() => openResource(r.listen_url!)} style={{ flex: 1 }} />
+                      ) : null}
+                      {r.read_url ? (
+                        <Button title="Read" size="sm" variant="secondary" icon={BookOpen} onPress={() => openResource(r.read_url!)} style={{ flex: 1 }} />
+                      ) : null}
+                    </View>
+                  </View>
+                ))}
             </View>
           ) : null}
         </Card>
@@ -203,7 +240,14 @@ export default function QuizPlay() {
 
       <View style={{ marginTop: spacing.xl }}>
         {result ? (
-          <Button title="Next question" size="lg" fullWidth loading={loading} onPress={next} />
+          <Button
+            title={mustReview ? "Open a message above first" : "Next question"}
+            size="lg"
+            fullWidth
+            loading={loading}
+            disabled={mustReview}
+            onPress={next}
+          />
         ) : (
           <Button title="Check answer" size="lg" fullWidth disabled={selected == null} loading={saving} onPress={confirm} />
         )}
@@ -223,5 +267,6 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   letter: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  recRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  rec: { gap: spacing.xxs, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1 },
+  recRow: { flexDirection: "row", gap: spacing.xs, marginTop: spacing.xs },
 });
