@@ -81,6 +81,7 @@ export type {
 export { loadMasteryState, saveMasteryState, recordCorrectReview, computeMasteryPercent } from "@web/lib/quizMastery";
 export type { MasteryState } from "@web/lib/quizMastery";
 export { checkMilestones, checkTopScore } from "@web/lib/quizCelebrations";
+export { hasClickableResource, mustReviewBeforeContinuing } from "@web/lib/quizReviewGate";
 export type { MilestoneHit } from "@web/lib/quizCelebrations";
 export {
   SECURITY_QUESTIONS,

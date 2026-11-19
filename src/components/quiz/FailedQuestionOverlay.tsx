@@ -14,6 +14,7 @@ import {
 import { ResourceLink } from "./ResourceLink";
 import { Button } from "@/components/ui/button";
 import type { QuizQuestion, Recommendation } from "@/types/quiz";
+import { mustReviewBeforeContinuing } from "@/lib/quizReviewGate";
 
 interface FailedQuestionOverlayProps {
   question: QuizQuestion;
@@ -37,12 +38,12 @@ export default function FailedQuestionOverlay({
   const [recommendationClicked, setRecommendationClicked] = useState(false);
 
   // Some questions (e.g. the "General Bible Question" category) have no resource
-  // reference, so there are no clickable resources to gate on. Only require a
-  // resource click when at least one actionable resource is actually available.
-  const hasClickableResource = recommendations.some(
-    (rec) => rec.listen_url || rec.read_url
-  );
-  const canContinue = recommendationClicked || !hasClickableResource;
+  // reference, so there is nothing to gate on (shared with the app).
+  const canContinue = !mustReviewBeforeContinuing({
+    answeredWrong: true,
+    reviewed: recommendationClicked,
+    recommendations,
+  });
 
   useEffect(() => {
     document.body.style.overflow = "hidden";

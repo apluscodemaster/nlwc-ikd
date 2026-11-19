@@ -6,7 +6,7 @@ import { BookOpen, CheckCircle2, Flag, Headphones, PartyPopper, XCircle } from "
 import { quizApi, type PublicQuestion, type SaveAnswerResult } from "~/api/quiz";
 import { Button, Card, EmptyState, ErrorState, LoadingState, Screen, Text } from "~/components";
 import { useQuizSession } from "~/features/quiz/QuizSessionProvider";
-import type { Recommendation } from "~/shared";
+import { hasClickableResource, mustReviewBeforeContinuing, type Recommendation } from "~/shared";
 import { radius, spacing, useTheme } from "~/theme";
 
 /** Same cadence as the website's mastery review. */
@@ -129,8 +129,14 @@ export default function QuizPlay() {
   const batchDone = batch.answered > 0 && batch.answered % BATCH_SIZE === 0 && result;
   // Only gate when there is something to open (some categories have no linked
   // message); stay locked while the recommendations are still loading.
-  const hasResource = recs.some((r) => r.listen_url || r.read_url);
-  const mustReview = !!result && !result.is_correct && !reviewed && (recsLoading || hasResource);
+  // Same rule as the website's FailedQuestionOverlay (web lib/quizReviewGate).
+  const hasResource = hasClickableResource(recs);
+  const mustReview = mustReviewBeforeContinuing({
+    answeredWrong: !!result && !result.is_correct,
+    reviewed,
+    recommendations: recs,
+    loading: recsLoading,
+  });
   const openResource = (url: string) => {
     setReviewed(true);
     router.push(url as Href);
