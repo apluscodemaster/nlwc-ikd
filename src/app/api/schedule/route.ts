@@ -11,6 +11,10 @@ import {
   deleteSpecialService,
   getScheduleSettings,
   updateScheduleSettings,
+  getAnnualMeetings,
+  createAnnualMeeting,
+  updateAnnualMeeting,
+  deleteAnnualMeeting,
 } from "@/lib/scheduleService";
 import { requireAuthActor, type AuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
@@ -98,6 +102,52 @@ const DEFAULT_RECURRING = [
     active: true,
   },
 ];
+
+// ── Default annual meetings (seeded once, like the services above) ──
+const DEFAULT_ANNUAL = [
+  {
+    name: "Season of the Spirit",
+    period: "February – March",
+    description:
+      "A special season of spiritual refreshing and prophetic advancement.",
+    imageUrl:
+      "https://res.cloudinary.com/dj7rh8h6r/image/upload/v1774247798/nlwc-ikd-assets/nu4dqvqovsnbodckjmnu.avif",
+    active: true,
+    order: 1,
+  },
+  {
+    name: "Family Life Festival",
+    period: "Sundays in September",
+    description:
+      "A month of Sundays devoted to building strong marriages and families.",
+    imageUrl:
+      "https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1775202695/community-2_vwupj4.jpg",
+    active: true,
+    order: 2,
+  },
+];
+
+/** Annual meeting fields from a request body, validated. */
+function annualFields(data: Record<string, unknown>) {
+  const name = typeof data.name === "string" ? data.name.trim() : "";
+  const period = typeof data.period === "string" ? data.period.trim() : "";
+  const imageUrl =
+    typeof data.imageUrl === "string" ? data.imageUrl.trim() : "";
+  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+    return { error: "Image must be a full http(s) URL" } as const;
+  }
+  return {
+    fields: {
+      name,
+      period,
+      description:
+        typeof data.description === "string" ? data.description.trim() : "",
+      imageUrl,
+      active: data.active !== false,
+      order: Number.isFinite(Number(data.order)) ? Number(data.order) : 0,
+    },
+  } as const;
+}
 
 // ── Compute default special events based on current date ──
 function getDefaultSpecialEvents() {
@@ -201,11 +251,13 @@ export async function GET(req: NextRequest) {
   if (limited) return limited;
 
   try {
-    const [fetchedRecurring, fetchedSpecial, settings] = await Promise.all([
-      getRecurringServices(),
-      getSpecialServices(),
-      getScheduleSettings(),
-    ]);
+    const [fetchedRecurring, fetchedSpecial, fetchedAnnual, settings] =
+      await Promise.all([
+        getRecurringServices(),
+        getSpecialServices(),
+        getAnnualMeetings(),
+        getScheduleSettings(),
+      ]);
 
     // The admin Schedule page is the source of truth. The defaults below are
     // only a starting point for a brand-new site: they are seeded ONCE, the
@@ -226,10 +278,23 @@ export async function GET(req: NextRequest) {
       await updateScheduleSettings({ seeded: true });
     }
 
+    // Annual meetings were hard-coded on the home page; seed them once so
+    // the admin can edit them, and never again (deleting all stays empty).
+    let annual = fetchedAnnual;
+    if (!settings.annualSeeded) {
+      if (annual.length === 0) {
+        annual = await Promise.all(
+          DEFAULT_ANNUAL.map((m) => createAnnualMeeting(m)),
+        );
+      }
+      await updateScheduleSettings({ annualSeeded: true });
+    }
+
     return NextResponse.json(
       {
         recurring,
         special,
+        annual,
         settings: { autoAddSpecials: settings.autoAddSpecials },
       },
       {
@@ -255,6 +320,32 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { type, ...data } = body;
+
+    if (type === "annual") {
+      const parsed = annualFields(data);
+      if ("error" in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+      if (!parsed.fields.name || !parsed.fields.period) {
+        return NextResponse.json(
+          { error: "Missing required fields: name, period" },
+          { status: 400 },
+        );
+      }
+      const result = await createAnnualMeeting(parsed.fields);
+      revalidatePath("/api/schedule");
+      revalidatePath("/");
+      void recordAudit({
+        actor,
+        action: "create",
+        resource: "schedule",
+        target: parsed.fields.name,
+        targetId: result.id ?? null,
+        detail: { type: "annual" },
+        request: req,
+      });
+      return NextResponse.json(result, { status: 201 });
+    }
 
     if (
       !type ||
@@ -428,9 +519,26 @@ export async function PUT(req: NextRequest) {
       await updateRecurringService(id, data);
     } else if (type === "special") {
       await updateSpecialService(id, data);
+    } else if (type === "annual") {
+      // Partial updates (e.g. just { active }) keep the other fields.
+      const parsed = annualFields({ active: true, ...data });
+      if ("error" in parsed) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+      const update = Object.fromEntries(
+        Object.entries(parsed.fields).filter(([k]) => k in data),
+      );
+      if ("name" in update && !update.name) {
+        return NextResponse.json(
+          { error: "name is required" },
+          { status: 400 },
+        );
+      }
+      await updateAnnualMeeting(id, update);
+      revalidatePath("/");
     } else {
       return NextResponse.json(
-        { error: 'type must be "recurring" or "special"' },
+        { error: 'type must be "recurring", "special" or "annual"' },
         { status: 400 },
       );
     }
@@ -440,7 +548,12 @@ export async function PUT(req: NextRequest) {
       actor,
       action: "update",
       resource: "schedule",
-      target: typeof data?.label === "string" ? data.label : `${type} #${id}`,
+      target:
+        typeof data?.label === "string"
+          ? data.label
+          : typeof data?.name === "string"
+            ? data.name
+            : `${type} #${id}`,
       targetId: id,
       detail: { type },
       request: req,
@@ -476,9 +589,12 @@ export async function DELETE(req: NextRequest) {
       await deleteRecurringService(id);
     } else if (type === "special") {
       await deleteSpecialService(id);
+    } else if (type === "annual") {
+      await deleteAnnualMeeting(id);
+      revalidatePath("/");
     } else {
       return NextResponse.json(
-        { error: 'type must be "recurring" or "special"' },
+        { error: 'type must be "recurring", "special" or "annual"' },
         { status: 400 },
       );
     }

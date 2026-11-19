@@ -66,6 +66,28 @@ export interface SpecialService {
   updatedAt: string;
 }
 
+/**
+ * A meeting held once a year over a season (e.g. Family Life Festival, the
+ * Sundays in September). Shown on the home page; not part of the live
+ * schedule, which comes from the weekly and special entries.
+ */
+export interface AnnualMeeting {
+  id?: string;
+  name: string;
+  /** When in the year it holds, e.g. "Sundays in September". */
+  period: string;
+  description?: string;
+  /** Full image URL (the home page shows only http(s) URLs). */
+  imageUrl?: string;
+  active: boolean;
+  /** Display order, lowest first. */
+  order: number;
+  /** ISO timestamp */
+  createdAt: string;
+  /** ISO timestamp */
+  updatedAt: string;
+}
+
 /** Schedule-wide settings, stored as one Firestore document. */
 export interface ScheduleSettings {
   /**
@@ -80,10 +102,13 @@ export interface ScheduleSettings {
    * admin who removes every entry gets an empty schedule, not the defaults.
    */
   seeded: boolean;
+  /** Set once the default annual meetings have been seeded (as `seeded`). */
+  annualSeeded?: boolean;
 }
 
 const RECURRING_COLLECTION = "schedule_recurring";
 const SPECIAL_COLLECTION = "schedule_special";
+const ANNUAL_COLLECTION = "schedule_annual";
 const SETTINGS_DOC = { collection: "schedule_meta", id: "settings" };
 
 const DEFAULT_SETTINGS: ScheduleSettings = {
@@ -190,4 +215,44 @@ export async function updateSpecialService(
 export async function deleteSpecialService(id: string): Promise<void> {
   const db = getAdminDb();
   await db.collection(SPECIAL_COLLECTION).doc(id).delete();
+}
+
+// ── Annual Meetings ──
+
+export async function getAnnualMeetings(): Promise<AnnualMeeting[]> {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection(ANNUAL_COLLECTION)
+    .orderBy("order", "asc")
+    .get();
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<AnnualMeeting, "id">),
+  }));
+}
+
+export async function createAnnualMeeting(
+  data: Omit<AnnualMeeting, "id" | "createdAt" | "updatedAt">,
+): Promise<AnnualMeeting> {
+  const db = getAdminDb();
+  const now = new Date().toISOString();
+  const docData = { ...data, createdAt: now, updatedAt: now };
+  const ref = await db.collection(ANNUAL_COLLECTION).add(docData);
+  return { id: ref.id, ...docData };
+}
+
+export async function updateAnnualMeeting(
+  id: string,
+  data: Partial<Omit<AnnualMeeting, "id" | "createdAt">>,
+): Promise<void> {
+  const db = getAdminDb();
+  await db
+    .collection(ANNUAL_COLLECTION)
+    .doc(id)
+    .update({ ...data, updatedAt: new Date().toISOString() });
+}
+
+export async function deleteAnnualMeeting(id: string): Promise<void> {
+  const db = getAdminDb();
+  await db.collection(ANNUAL_COLLECTION).doc(id).delete();
 }

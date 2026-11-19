@@ -1,13 +1,21 @@
 "use client";
 
 import React, { useRef } from "react";
-import { MapPin, Clock, ChevronLeft, ChevronRight, LucideIcon } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  LucideIcon,
+} from "lucide-react";
 import { m as motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   annualMeetings,
+  annualVisual,
   formatServiceHour,
+  type AdminAnnualMeeting,
   serviceDayLabel,
   serviceVisual,
 } from "@/data/services";
@@ -28,13 +36,25 @@ interface GatheringCard {
   image?: string;
 }
 
-async function fetchWeeklyServices(): Promise<RecurringService[]> {
+async function fetchGatherings(): Promise<{
+  weekly: RecurringService[];
+  /** Undefined when the API predates admin-managed annual meetings. */
+  annual?: AdminAnnualMeeting[];
+}> {
   const res = await fetch("/api/schedule");
   if (!res.ok) throw new Error(`Schedule request failed (${res.status})`);
-  const data = (await res.json()) as { recurring?: RecurringService[] };
-  return (data.recurring ?? [])
-    .filter((s) => s.active !== false)
-    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour);
+  const data = (await res.json()) as {
+    recurring?: RecurringService[];
+    annual?: AdminAnnualMeeting[];
+  };
+  return {
+    weekly: (data.recurring ?? [])
+      .filter((s) => s.active !== false)
+      .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour),
+    annual: data.annual
+      ?.filter((m) => m.active !== false)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+  };
 }
 
 function weeklyCard(s: RecurringService): GatheringCard {
@@ -54,6 +74,23 @@ function weeklyCard(s: RecurringService): GatheringCard {
   };
 }
 
+function annualCard(m: AdminAnnualMeeting): GatheringCard {
+  const v = annualVisual(m);
+  return {
+    id: m.id ?? m.name,
+    name: m.name,
+    badge: "Annual",
+    description: m.description?.trim() || v.description,
+    timeLabel: "When",
+    timeValue: m.period,
+    icon: v.icon,
+    color: v.color,
+    iconColor: v.iconColor,
+    image: m.imageUrl?.startsWith("http") ? m.imageUrl : v.image,
+  };
+}
+
+/** Built-in annual meetings, until the admin-managed ones load. */
 const ANNUAL_CARDS: GatheringCard[] = annualMeetings.map((m) => ({
   id: m.id,
   name: m.name,
@@ -94,12 +131,15 @@ const headingVariants: Variants = {
 export default function ServiceTimes() {
   const scrollRef = useRef<HTMLDivElement>(null);
   // Same source as the admin Schedule page and the live-service countdowns.
-  const { data: weekly, isLoading } = useQuery({
-    queryKey: ["schedule", "weekly"],
-    queryFn: fetchWeeklyServices,
+  const { data, isLoading } = useQuery({
+    queryKey: ["schedule", "gatherings"],
+    queryFn: fetchGatherings,
     staleTime: 5 * 60 * 1000,
   });
-  const cards = [...(weekly ?? []).map(weeklyCard), ...ANNUAL_CARDS];
+  const cards = [
+    ...(data?.weekly ?? []).map(weeklyCard),
+    ...(data?.annual ? data.annual.map(annualCard) : ANNUAL_CARDS),
+  ];
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {

@@ -17,7 +17,7 @@ import {
 } from "~/components/icons";
 import { Card, IconButton, ListRow, Screen, SectionHeader, SegmentedControl, Skeleton, StatusBadge, Text } from "~/components";
 import { dayName, formatHour } from "~/api/schedule";
-import { annualMeetings, serviceIcon } from "~/data/services";
+import { annualMeetingRows, serviceIcon } from "~/data/services";
 import { Countdown } from "~/features/live/Countdown";
 import { readStoredQuizName } from "~/features/quiz/QuizSessionProvider";
 import { usePlaySermon } from "~/features/sermons/playSermon";
@@ -168,7 +168,7 @@ function ScheduleRow({
   icon: LucideIcon;
   title: string;
   subtitle: string;
-  trailing: string;
+  trailing?: string;
   first: boolean;
 }) {
   const { colors } = useTheme();
@@ -176,7 +176,7 @@ function ScheduleRow({
     <View
       style={[styles.svc, !first && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
       accessible
-      accessibilityLabel={`${title}, ${subtitle}, ${trailing}`}
+      accessibilityLabel={[title, subtitle, trailing].filter(Boolean).join(", ")}
     >
       <View style={[styles.svcIcon, { backgroundColor: colors.accentSoft }]}>
         <Icon size={18} color={colors.primary} />
@@ -221,8 +221,15 @@ function ServiceTimes() {
 
       {tab === "annual" ? (
         <Card padded={false}>
-          {annualMeetings.map((m, i) => (
-            <ScheduleRow key={m.id} first={i === 0} icon={m.icon} title={m.name} subtitle={m.period} trailing={m.short} />
+          {annualMeetingRows(schedule.data?.annual).map((m, i) => (
+            <ScheduleRow
+              key={m.id}
+              first={i === 0}
+              icon={m.icon}
+              title={m.name}
+              subtitle={m.period}
+              trailing={m.short || undefined}
+            />
           ))}
         </Card>
       ) : schedule.isLoading && !weekly.length ? (

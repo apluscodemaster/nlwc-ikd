@@ -115,3 +115,26 @@ export const annualMeetings: AnnualMeeting[] = [
     image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1775202695/community-2_vwupj4.jpg",
   },
 ];
+
+/** An annual meeting as the admin Schedule page stores it (/api/schedule). */
+export interface AdminAnnualMeeting {
+  id?: string;
+  name: string;
+  period: string;
+  description?: string;
+  imageUrl?: string;
+  active?: boolean;
+  order?: number;
+}
+
+/**
+ * Icon, colours and fallback image/description for an admin annual meeting:
+ * the built-in look for a known one (matched by name), otherwise a generic one.
+ */
+export function annualVisual(
+  m: Pick<AdminAnnualMeeting, "name">,
+): Pick<AnnualMeeting, "icon" | "color" | "iconColor" | "image" | "description"> {
+  const key = m.name.trim().toLowerCase();
+  const known = annualMeetings.find((a) => a.name.toLowerCase() === key);
+  return known ?? { icon: Sparkles, color: "bg-amber-50", iconColor: "text-amber-600", description: "" };
+}

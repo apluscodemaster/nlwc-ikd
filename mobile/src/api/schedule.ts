@@ -1,9 +1,22 @@
 import type { RecurringService, SpecialService } from "~/shared";
 import { api } from "./client";
 
+/** An annual meeting from the admin Schedule page (web AnnualMeeting). */
+export interface AdminAnnualMeeting {
+  id?: string;
+  name: string;
+  period: string;
+  description?: string;
+  imageUrl?: string;
+  active?: boolean;
+  order?: number;
+}
+
 export interface ScheduleResponse {
   recurring: RecurringService[];
   special: SpecialService[];
+  /** Missing from servers that predate admin-managed annual meetings. */
+  annual?: AdminAnnualMeeting[];
 }
 
 export const scheduleApi = {

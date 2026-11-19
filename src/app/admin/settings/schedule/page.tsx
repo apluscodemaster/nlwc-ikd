@@ -18,13 +18,22 @@ import {
   CalendarPlus,
   BarChart3,
   MapPin,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { showConfirm } from "@/components/shared/CustomDialog";
 import { CustomDatePicker } from "@/components/shared/CustomDatePicker";
 import { StatCard } from "@/components/shared/StatCard";
 import { ModalShell } from "@/components/shared/ModalShell";
-import type { RecurringService, SpecialService } from "@/lib/scheduleService";
+import type {
+  AnnualMeeting,
+  RecurringService,
+  SpecialService,
+} from "@/lib/scheduleService";
+import {
+  AnnualModal,
+  type AnnualDraft,
+} from "@/components/admin/schedule/AnnualModal";
 // The write endpoints require an admin token (GET stays public for the live
 // pages) — authFetch attaches it on every call.
 import { authFetch } from "@/lib/authClient";
@@ -52,7 +61,14 @@ const CATEGORIES = [
   "Youth",
 ];
 
-type ActiveTab = "recurring" | "special";
+type ActiveTab = "recurring" | "special" | "annual";
+type EntryType = "recurring" | "special" | "annual";
+
+const ENTRY_NOUN: Record<EntryType, string> = {
+  recurring: "service",
+  special: "event",
+  annual: "annual meeting",
+};
 type ModalMode = "create" | "edit" | null;
 
 // ──────────────────────────────────────────────
@@ -736,6 +752,7 @@ export default function ScheduleAdminPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("recurring");
   const [recurring, setRecurring] = useState<RecurringService[]>([]);
   const [special, setSpecial] = useState<SpecialService[]>([]);
+  const [annual, setAnnual] = useState<AnnualMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // null until loaded, so the switch never shows a guessed state.
@@ -753,6 +770,12 @@ export default function ScheduleAdminPage() {
     null,
   );
 
+  // Annual meeting modal state
+  const [annualModalMode, setAnnualModalMode] = useState<ModalMode>(null);
+  const [editingAnnual, setEditingAnnual] = useState<AnnualMeeting | null>(
+    null,
+  );
+
   // ── Fetch ──
   const fetchSchedules = useCallback(async () => {
     try {
@@ -761,6 +784,7 @@ export default function ScheduleAdminPage() {
       const data = await res.json();
       setRecurring(data.recurring || []);
       setSpecial(data.special || []);
+      setAnnual(data.annual || []);
       setAutoAddSpecials(data.settings?.autoAddSpecials !== false);
     } catch (err) {
       console.error(err);
@@ -892,10 +916,40 @@ export default function ScheduleAdminPage() {
     }
   };
 
+  // ── Save Annual ──
+  const handleSaveAnnual = async (data: AnnualDraft) => {
+    setSaving(true);
+    try {
+      const { type, ...rest } = data;
+      const editing = annualModalMode === "edit" && rest.id;
+      const res = await authFetch("/api/schedule", {
+        method: editing ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, ...rest }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || (editing ? "Update failed" : "Create failed"));
+      }
+      toast.success(editing ? "Annual meeting updated" : "Annual meeting added", {
+        description: `"${rest.name}" ${editing ? "has been updated" : "now shows on the home page"}.`,
+      });
+      setAnnualModalMode(null);
+      setEditingAnnual(null);
+      await fetchSchedules();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Operation failed", {
+        description: "Please try again or check your connection.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Delete ──
-  const handleDelete = async (type: "recurring" | "special", id: string) => {
+  const handleDelete = async (type: EntryType, id: string) => {
     const confirmed = await showConfirm(
-      `Are you sure you want to delete this ${type === "recurring" ? "service" : "event"}?`,
+      `Are you sure you want to delete this ${ENTRY_NOUN[type]}?`,
       {
         title: "Delete Schedule Entry",
         variant: "warning",
@@ -909,7 +963,8 @@ export default function ScheduleAdminPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
-      toast.success(`${type === "recurring" ? "Service" : "Event"} deleted`, {
+      const noun = ENTRY_NOUN[type];
+      toast.success(`${noun[0].toUpperCase()}${noun.slice(1)} deleted`, {
         description: "The schedule entry has been removed.",
       });
       await fetchSchedules();
@@ -923,7 +978,7 @@ export default function ScheduleAdminPage() {
 
   // ── Quick Toggle Active ──
   const handleToggleActive = async (
-    type: "recurring" | "special",
+    type: EntryType,
     id: string,
     currentActive: boolean,
   ) => {
@@ -972,7 +1027,7 @@ export default function ScheduleAdminPage() {
               Live Schedule
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Manage recurring services &amp; special events
+              Manage recurring services, special events &amp; annual meetings
             </p>
           </div>
         </div>
@@ -1048,6 +1103,26 @@ export default function ScheduleAdminPage() {
                 }`}
               >
                 {special.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("annual")}
+              className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap snap-start ${
+                activeTab === "annual"
+                  ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Annual Meetings
+              <span
+                className={`ml-0.5 sm:ml-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${
+                  activeTab === "annual"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                {annual.length}
               </span>
             </button>
           </div>
@@ -1352,6 +1427,145 @@ export default function ScheduleAdminPage() {
         </div>
       )}
 
+      {/* Annual Meetings Tab */}
+      {activeTab === "annual" && (
+        <div className="space-y-4">
+          <div className="p-4 bg-white rounded-xl border border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">
+              Shown on the home page
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Annual meetings appear after the weekly services in the
+              home page&apos;s &quot;Our Gatherings&quot; section, with their
+              image. They don&apos;t affect the live stream or countdowns;
+              add each day as a Special Event for that.
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => {
+                setEditingAnnual(null);
+                setAnnualModalMode("create");
+              }}
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Add Annual Meeting
+            </button>
+          </div>
+
+          {annual.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-gray-300" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                No annual meetings
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                Add a festival, convention or season held once a year
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:gap-4">
+              <AnimatePresence mode="popLayout">
+                {annual.map((m) => (
+                  <motion.div
+                    key={m.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className={`rounded-2xl border overflow-hidden transition-all ${
+                      m.active
+                        ? "bg-white border-gray-100 shadow-sm hover:shadow-md"
+                        : "bg-gray-50 border-gray-200 opacity-60"
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-3 sm:p-5">
+                      <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 overflow-hidden">
+                          {m.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail of an arbitrary link
+                            <img
+                              src={m.imageUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Sparkles className="w-5 h-5 text-amber-600" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-gray-900 text-sm">
+                              {m.name}
+                            </h3>
+                            {!m.active && (
+                              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full border border-gray-300">
+                                Hidden
+                              </span>
+                            )}
+                            {!m.imageUrl && (
+                              <span className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+                                No image
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] sm:text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3 shrink-0" />
+                            {m.period}
+                          </p>
+                          {m.description && (
+                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 line-clamp-1">
+                              {m.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 self-end sm:self-center">
+                        <button
+                          onClick={() =>
+                            handleToggleActive("annual", m.id!, m.active)
+                          }
+                          className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                          title={m.active ? "Hide" : "Show"}
+                        >
+                          {m.active ? (
+                            <ToggleRight className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                          ) : (
+                            <ToggleLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingAnnual(m);
+                            setAnnualModalMode("edit");
+                          }}
+                          className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete("annual", m.id!)}
+                          className="p-1.5 sm:p-2 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Modals */}
       <AnimatePresence>
         {recurringModalMode && (
@@ -1363,6 +1577,25 @@ export default function ScheduleAdminPage() {
               setEditingRecurring(null);
             }}
             onSave={handleSaveRecurring}
+            saving={saving}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {annualModalMode && (
+          <AnnualModal
+            key={editingAnnual?.id ?? "new"}
+            mode={annualModalMode}
+            meeting={editingAnnual}
+            nextOrder={
+              annual.reduce((max, m) => Math.max(max, m.order ?? 0), 0) + 1
+            }
+            onClose={() => {
+              setAnnualModalMode(null);
+              setEditingAnnual(null);
+            }}
+            onSave={handleSaveAnnual}
             saving={saving}
           />
         )}

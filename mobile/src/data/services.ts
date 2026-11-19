@@ -9,6 +9,7 @@
  */
 import { BookOpen, Calendar, Church, PrayingHands, Sparkles, Users, type LucideIcon } from "~/components/icons";
 import type { RecurringService } from "~/shared";
+import type { AdminAnnualMeeting } from "~/api/schedule";
 
 /** Icon for a weekly service, by its admin category, then by its label. */
 export function serviceIcon(s: Pick<RecurringService, "category" | "label">): LucideIcon {
@@ -48,3 +49,26 @@ export const annualMeetings: AnnualMeeting[] = [
     icon: Users,
   },
 ];
+
+/**
+ * The annual meetings to list: the admin's (active, in their order) when the
+ * server sends them, else the built-in pair. A known meeting keeps its icon,
+ * and its short label while its period is unchanged.
+ */
+export function annualMeetingRows(admin: AdminAnnualMeeting[] | undefined): AnnualMeeting[] {
+  if (!admin) return annualMeetings;
+  return admin
+    .filter((m) => m.active !== false)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((m) => {
+      const known = annualMeetings.find((a) => a.name.toLowerCase() === m.name.trim().toLowerCase());
+      return {
+        id: m.id ?? m.name,
+        name: m.name,
+        period: m.period,
+        short: known && known.period === m.period ? known.short : "",
+        description: m.description?.trim() || known?.description || "",
+        icon: known?.icon ?? Sparkles,
+      };
+    });
+}
