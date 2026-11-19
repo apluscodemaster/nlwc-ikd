@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import {
   BookHeart,
   Brain,
+  Download,
   Church,
   HandCoins,
   Heart,
@@ -26,6 +27,7 @@ const SECTIONS: { label: string; items: Item[] }[] = [
   {
     label: "Grow",
     items: [
+      { label: "Downloads", subtitle: "Messages saved for offline listening", icon: Download, href: "/downloads" },
       { label: "Bible Quiz", subtitle: "Test your knowledge of the messages", icon: Brain, href: "/quiz" },
       { label: "Salvation", subtitle: "Become born again today", icon: BookHeart, href: "/salvation" },
     ],

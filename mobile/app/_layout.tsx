@@ -137,6 +137,7 @@ const ROUTE_TITLES: [string, string][] = [
   ["contact", "Contact Us"],
   ["welcome", "First time here?"],
   ["settings", "Settings"],
+  ["downloads", "Downloads"],
   ["+not-found", "Not found"],
 ];
 

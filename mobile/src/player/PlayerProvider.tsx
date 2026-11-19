@@ -15,6 +15,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, type AudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
+import { getDownload } from "~/features/downloads/downloads";
 import { kv } from "~/lib/storage";
 import { clearMediaProgress, getMediaProgress, saveMediaProgress } from "~/shared";
 import type { PlayerStatus, Track } from "./types";
@@ -73,25 +74,29 @@ const StatusContext = createContext<PlayerStatus>({
   rate: 1,
 });
 
-/** Lock-screen metadata, when the installed expo-audio supports it. */
+/**
+ * Lock-screen / notification controls (play-pause, 15 s skips) and metadata.
+ * On Android these also keep background playback alive past ~3 minutes.
+ */
 function setLockScreen(player: AudioPlayer, track: Track | null) {
-  const p = player as AudioPlayer & {
-    setActiveForLockScreen?: (
-      active: boolean,
-      metadata?: { title?: string; artist?: string; albumTitle?: string; artworkUrl?: string },
-    ) => void;
-  };
   try {
-    if (!p.setActiveForLockScreen) return;
     if (track) {
-      p.setActiveForLockScreen(true, {
-        title: track.title,
-        artist: track.artist,
-        albumTitle: track.album ?? "NLWC Ikorodu",
-        artworkUrl: track.artwork,
-      });
+      player.setActiveForLockScreen(
+        true,
+        {
+          title: track.title,
+          artist: track.artist,
+          albumTitle: track.album ?? "NLWC Ikorodu",
+          artworkUrl: track.artwork,
+        },
+        {
+          showSeekForward: !track.isLive,
+          showSeekBackward: !track.isLive,
+          isLiveStream: !!track.isLive,
+        },
+      );
     } else {
-      p.setActiveForLockScreen(false);
+      player.setActiveForLockScreen(false);
     }
   } catch {
     /* lock-screen controls are a nicety; never break playback over them */
@@ -162,7 +167,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       trackRef.current = next;
       setTrack(next);
       pendingSeek.current = startAt;
-      player.replace({ uri: next.url });
+      // A downloaded message plays from the phone (no data, works offline).
+      const saved = next.isLive ? null : getDownload(next.id);
+      player.replace({ uri: saved?.uri ?? next.url });
       player.setPlaybackRate(next.isLive ? 1 : rate);
       player.play();
       setLockScreen(player, next);
@@ -197,7 +204,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playQueued = useCallback(
     async (candidate: Track | undefined): Promise<boolean> => {
       if (!candidate) return false;
-      let url = candidate.url;
+      let url = candidate.url || getDownload(candidate.id)?.uri || "";
       if (!url && resolverRef.current) url = (await resolverRef.current(candidate.id).catch(() => null)) ?? "";
       if (!url) return false;
       // Auto-advance starts at the beginning, as on the website.

@@ -18,6 +18,7 @@ import {
   SkipForward,
 } from "~/components/icons";
 import { Button, Chip, IconButton, StatusBadge, Text } from "~/components";
+import { DownloadButton } from "~/features/downloads/DownloadButton";
 import { usePlayer, usePlayerStatus } from "~/player/PlayerProvider";
 import { Scrubber } from "~/player/Scrubber";
 import { PLAYBACK_RATES } from "~/player/types";
@@ -64,7 +65,7 @@ export default function PlayerScreen() {
         <Text variant="caption" color="textSecondary">
           {live ? "Live broadcast" : "Now playing"}
         </Text>
-        <View style={{ width: 44 }} />
+        {live ? <View style={{ width: 44 }} /> : <DownloadButton track={track} compact />}
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>

@@ -4,7 +4,8 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { ChevronLeft, ChevronRight, FileText, Headphones, Pause, Play, Share2 } from "~/components/icons";
 import { Button, Card, ErrorState, LoadingState, Screen, StatusBadge, Text } from "~/components";
-import { usePlaySermon } from "~/features/sermons/playSermon";
+import { DownloadButton } from "~/features/downloads/DownloadButton";
+import { sermonToTrack, usePlaySermon } from "~/features/sermons/playSermon";
 import { useSermonDetail, useSermonList, useTranscriptForSermon } from "~/hooks/useSermons";
 import { SITE_URL } from "~/lib/config";
 import { usePlayer, usePlayerStatus } from "~/player/PlayerProvider";
@@ -99,6 +100,7 @@ export default function SermonScreen() {
             onPress={() => router.push(`/transcripts/${transcriptSlug}`)}
           />
         ) : null}
+        <DownloadButton track={sermonToTrack(sermon, sermon.downloadUrl)} />
         <Button title="Share" variant="secondary" icon={Share2} onPress={share} />
       </View>
 
