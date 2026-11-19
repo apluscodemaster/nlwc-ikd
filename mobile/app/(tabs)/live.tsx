@@ -9,6 +9,7 @@ import { Card, EmptyState, LoadingState, SectionHeader, SegmentedControl, Status
 import { KeyboardAware } from "~/components/KeyboardAware";
 import { Countdown } from "~/features/live/Countdown";
 import { LiveChat } from "~/features/live/LiveChat";
+import { ReminderToggle } from "~/features/reminders/ReminderToggle";
 import { YouTubePlayer } from "~/features/video/YouTubePlayer";
 import { useLiveStatus, useSchedule } from "~/hooks/useLiveStatus";
 import { useVideoStream } from "~/hooks/useVideo";
@@ -228,6 +229,7 @@ function OffAir({ status }: { status: ReturnType<typeof useLiveStatus> }) {
                 </Text>
               </View>
             </Card>
+            <ReminderToggle />
           </>
         ) : (
           <EmptyState icon={CalendarClock} title="No upcoming services" message="Check back soon for the service schedule." />

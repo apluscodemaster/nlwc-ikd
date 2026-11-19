@@ -33,6 +33,7 @@ import {
   wireQueryManagers,
 } from "~/lib/queryClient";
 import { PlayerProvider } from "~/player/PlayerProvider";
+import { ServiceRemindersBridge } from "~/features/reminders/ServiceRemindersBridge";
 import { fonts, ThemeProvider, useTheme } from "~/theme";
 
 installApiFetch();
@@ -123,6 +124,7 @@ function AppStack() {
         </Stack>
         {/* After the stack so the floating pill draws above the screens. */}
         <OfflineBanner />
+        <ServiceRemindersBridge />
       </View>
     </NavThemeProvider>
   );
