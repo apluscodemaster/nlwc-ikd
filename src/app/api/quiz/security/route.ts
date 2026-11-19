@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { hashSecurityAnswer } from "@/lib/quizSecurity.server";
+import { saveSecurityAnswer } from "@/lib/quizSecurity.server";
 import { SELF_RESET_COOLDOWN_DAYS } from "@/lib/quizSecurity";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
@@ -76,28 +76,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { error: upErr } = await db.from("session_security").upsert(
-    {
-      session_id: sessionId,
-      question,
-      answer_hash: hashSecurityAnswer(answer),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "session_id" },
-  );
-  if (upErr) {
-    console.error("security upsert error:", upErr);
+  if (!(await saveSecurityAnswer(sessionId, question, answer))) {
     return NextResponse.json(
       { error: "Failed to save security question" },
       { status: 500 },
     );
   }
-
-  // Public, non-sensitive flag so the client knows recovery is configured.
-  await db
-    .from("sessions")
-    .update({ security_set: true })
-    .eq("session_id", sessionId);
 
   return NextResponse.json({ success: true });
 }

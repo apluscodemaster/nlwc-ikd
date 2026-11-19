@@ -21,7 +21,8 @@ export const quizApi = {
   },
 
   /** 409 → the username is taken (`ApiError.status === 409`). */
-  createSession: (username: string) => api.post<QuizSession>("/api/quiz/session", { username: username.trim() }),
+  createSession: (username: string, security?: { question: string; answer: string }) =>
+    api.post<QuizSession>("/api/quiz/session", { username: username.trim(), security }),
 
   /** Next question(s); the server excludes everything this session has answered. */
   questions: (sessionId: string, opts: { category?: string; exclude?: string[]; count?: number } = {}) =>

@@ -63,43 +63,50 @@ export function useQuizSession() {
     setLoading(false);
   }
 
-  const createSession = useCallback(async (username: string) => {
-    const trimmed = username.trim();
+  const createSession = useCallback(
+    async (
+      username: string,
+      /** Saved with the profile so it can be recovered on another device. */
+      security?: { question: string; answer: string },
+    ) => {
+      const trimmed = username.trim();
 
-    const res = await fetch("/api/quiz/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: trimmed }),
-    });
-    const data = (await res
-      .json()
-      .catch(() => ({}))) as Partial<QuizSession> & {
-      error?: string;
-      code?: string;
-    };
+      const res = await fetch("/api/quiz/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: trimmed, security }),
+      });
+      const data = (await res
+        .json()
+        .catch(() => ({}))) as Partial<QuizSession> & {
+        error?: string;
+        code?: string;
+      };
 
-    if (!res.ok || !data.session_id) {
-      const error = new Error(
-        res.status === 409
-          ? "Username already taken"
-          : data.error || "Failed to create session",
-      ) as Error & { code?: string };
-      if (res.status === 409) error.code = "USERNAME_EXISTS";
-      throw error;
-    }
+      if (!res.ok || !data.session_id) {
+        const error = new Error(
+          res.status === 409
+            ? "Username already taken"
+            : data.error || "Failed to create session",
+        ) as Error & { code?: string };
+        if (res.status === 409) error.code = "USERNAME_EXISTS";
+        throw error;
+      }
 
-    const created = data as QuizSession;
-    localStorage.setItem(
-      SESSION_KEY,
-      JSON.stringify({
-        session_id: created.session_id,
-        username: created.username,
-      }),
-    );
-    setSession(created);
-    setNeedsUsername(false);
-    return created;
-  }, []);
+      const created = data as QuizSession;
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          session_id: created.session_id,
+          username: created.username,
+        }),
+      );
+      setSession(created);
+      setNeedsUsername(false);
+      return created;
+    },
+    [],
+  );
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);

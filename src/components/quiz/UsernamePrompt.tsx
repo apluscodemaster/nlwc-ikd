@@ -2,14 +2,26 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { m as motion } from "framer-motion";
-import { User, ArrowRight, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import {
+  User,
+  ArrowRight,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ShieldCheck,
+} from "lucide-react";
+import { SECURITY_QUESTIONS } from "@/lib/quizSecurity";
 import { Button } from "@/components/ui/button";
 import RecoverProgressModal, {
   type RecoveredSession,
 } from "./RecoverProgressModal";
 
 interface UsernamePromptProps {
-  onSubmit: (username: string) => Promise<unknown>;
+  onSubmit: (
+    username: string,
+    security: { question: string; answer: string },
+  ) => Promise<unknown>;
   onRecovered: (session: RecoveredSession) => void;
 }
 
@@ -23,6 +35,10 @@ export default function UsernamePrompt({
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  // Required: it's the only way back to this score on another device.
+  const [question, setQuestion] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [answer, setAnswer] = useState("");
+  const answerValid = answer.trim().length >= 2;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const trimmed = username.trim();
@@ -89,11 +105,15 @@ export default function UsernamePrompt({
       return;
     }
     if (isAvailable === false) return;
+    if (!answerValid) {
+      setError("Please answer the security question (at least 2 characters).");
+      return;
+    }
 
     setError("");
     setLoading(true);
     try {
-      await onSubmit(trimmed);
+      await onSubmit(trimmed, { question, answer });
     } catch (err) {
       const error = err as Error & { code?: string };
       if (error.code === "USERNAME_EXISTS") {
@@ -171,10 +191,50 @@ export default function UsernamePrompt({
             ) : null}
           </div>
 
+          <div className="text-left rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-1">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              Protect your score
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              You&rsquo;ll need this answer to get your score back on another
+              device. Not case-sensitive.
+            </p>
+            <div className="relative mb-2">
+              <select
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                aria-label="Security question"
+                className="w-full h-11 pl-3 pr-9 rounded-xl border border-gray-200 bg-white text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              >
+                {SECURITY_QUESTIONS.map((q) => (
+                  <option key={q} value={q}>
+                    {q}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="Your answer"
+              aria-label="Security answer"
+              maxLength={200}
+              autoComplete="off"
+              className="w-full h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
+
           <Button
             type="submit"
             disabled={
-              loading || !isValidLength || checking || isAvailable !== true
+              loading ||
+              !isValidLength ||
+              checking ||
+              isAvailable !== true ||
+              !answerValid
             }
             className="w-full h-12 rounded-full font-bold cursor-pointer"
           >

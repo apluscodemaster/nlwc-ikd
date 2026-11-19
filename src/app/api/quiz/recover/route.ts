@@ -7,6 +7,23 @@ import {
   verifyClaimToken,
 } from "@/lib/quizRecovery.server";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import {
+  clearFailures,
+  getLockout,
+  recordFailure,
+} from "@/lib/quizRecoverLockout.server";
+
+/** 429 for a name with too many failed attempts. */
+function lockedResponse(until: number) {
+  const minutes = Math.max(1, Math.ceil((until - Date.now()) / 60_000));
+  return NextResponse.json(
+    {
+      error: `Too many attempts for this name. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}, or ask the church admin for a recovery link.`,
+      locked: true,
+    },
+    { status: 429, headers: { "Retry-After": String(minutes * 60) } },
+  );
+}
 
 export const runtime = "nodejs";
 
@@ -38,7 +55,10 @@ export async function GET(req: NextRequest) {
 
   const username = (req.nextUrl.searchParams.get("username") || "").trim();
   if (!username) {
-    return NextResponse.json({ error: "Username is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Username is required" },
+      { status: 400 },
+    );
   }
 
   const session = await findSessionByUsername(username);
@@ -94,7 +114,10 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
 
   // Generic message on failure to avoid leaking which usernames exist.
@@ -110,7 +133,10 @@ export async function POST(req: NextRequest) {
     const claim = verifyClaimToken(token);
     if (!claim) {
       return NextResponse.json(
-        { error: "This recovery link is invalid or has expired. Ask the admin for a new one." },
+        {
+          error:
+            "This recovery link is invalid or has expired. Ask the admin for a new one.",
+        },
         { status: 401 },
       );
     }
@@ -122,7 +148,10 @@ export async function POST(req: NextRequest) {
     if (!session) return genericFail;
     if (!(await redeemRecoveryCode(session.session_id, claim.code))) {
       return NextResponse.json(
-        { error: "This recovery link has already been used or has expired. Ask the admin for a new one." },
+        {
+          error:
+            "This recovery link has already been used or has expired. Ask the admin for a new one.",
+        },
         { status: 401 },
       );
     }
@@ -133,7 +162,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const username = typeof body.username === "string" ? body.username.trim() : "";
+  const username =
+    typeof body.username === "string" ? body.username.trim() : "";
   const answer = typeof body.answer === "string" ? body.answer : "";
   const code = typeof body.code === "string" ? body.code.trim() : "";
   if (!username || (!answer && !code)) {
@@ -143,12 +173,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Guesses are limited per name, not just per network (see the lockout lib).
+  const lockedUntil = await getLockout(username);
+  if (lockedUntil) return lockedResponse(lockedUntil);
+  const fail = async () => {
+    await recordFailure(username);
+    return genericFail;
+  };
+
   const session = await findSessionByUsername(username);
-  if (!session) return genericFail;
+  if (!session) return fail();
 
   // ── Admin-issued code ──────────────────────────────────────────────────
   if (code) {
-    if (!(await redeemRecoveryCode(session.session_id, code))) return genericFail;
+    if (!(await redeemRecoveryCode(session.session_id, code))) return fail();
+    await clearFailures(username);
     return NextResponse.json({
       session_id: session.session_id,
       username: session.username,
@@ -162,10 +201,11 @@ export async function POST(req: NextRequest) {
     .select("answer_hash")
     .eq("session_id", session.session_id)
     .maybeSingle();
-  if (!sec) return genericFail;
+  if (!sec) return fail();
 
-  if (hashSecurityAnswer(answer) !== sec.answer_hash) return genericFail;
+  if (hashSecurityAnswer(answer) !== sec.answer_hash) return fail();
 
+  await clearFailures(username);
   return NextResponse.json({
     session_id: session.session_id,
     username: session.username,

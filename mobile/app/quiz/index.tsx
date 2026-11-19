@@ -95,18 +95,25 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function UsernamePrompt() {
+  const { colors } = useTheme();
   const { createSession } = useQuizSession();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  // Required at sign-up: it's the only way back to this score on another phone.
+  const [question, setQuestion] = useState<string>(SECURITY_QUESTIONS[0]);
+  const [answer, setAnswer] = useState("");
+  const [answerError, setAnswerError] = useState("");
 
   const start = async () => {
     if (name.trim().length < 2) return setError("Please enter at least 2 characters.");
+    if (answer.trim().length < 2) return setAnswerError("Please enter an answer you'll remember.");
     setBusy(true);
     setError("");
+    setAnswerError("");
     try {
-      await createSession(name);
+      await createSession(name, { question, answer });
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 409
@@ -134,6 +141,31 @@ function UsernamePrompt() {
         autoCapitalize="words"
         maxLength={30}
       />
+      <Card style={{ marginTop: spacing.md, gap: spacing.sm }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs }}>
+          <ShieldCheck size={18} color={colors.primary} />
+          <Text variant="label">Protect your score</Text>
+        </View>
+        <Text variant="small" color="textSecondary">
+          You'll need this answer to get your score back on another phone. Not case-sensitive.
+        </Text>
+        <View style={styles.chips}>
+          {SECURITY_QUESTIONS.map((q) => (
+            <Chip key={q} label={q} selected={question === q} onPress={() => setQuestion(q)} />
+          ))}
+        </View>
+        <FormField
+          label="Your answer"
+          value={answer}
+          onChangeText={(v) => {
+            setAnswer(v);
+            setAnswerError("");
+          }}
+          error={answerError}
+          autoCapitalize="none"
+          maxLength={200}
+        />
+      </Card>
       <Button
         title="Start playing"
         icon={Brain}

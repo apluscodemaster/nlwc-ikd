@@ -74,12 +74,18 @@ export default function QuizPageClient() {
   const [showSecurity, setShowSecurity] = useState(false);
   const [securityMode, setSecurityMode] = useState<"set" | "change">("set");
 
-  // New user just created → prompt (skippable) to set a recovery question.
+  // New players set their security question on the sign-up form. Only if
+  // saving it failed is it asked for again here.
   const handleCreateSession = useCallback(
-    async (username: string) => {
-      const created = await createSession(username);
-      setSecurityMode("set");
-      setShowSecurity(true);
+    async (
+      username: string,
+      security: { question: string; answer: string },
+    ) => {
+      const created = await createSession(username, security);
+      if (!created.security_set) {
+        setSecurityMode("set");
+        setShowSecurity(true);
+      }
       return created;
     },
     [createSession],

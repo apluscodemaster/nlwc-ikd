@@ -13,7 +13,8 @@ const SESSION_KEY = "nlwc_quiz_session";
 interface Ctx {
   session: QuizSession | null;
   loading: boolean;
-  createSession: (username: string) => Promise<QuizSession>;
+  /** `security` is saved with the profile so it can be recovered on another phone. */
+  createSession: (username: string, security?: { question: string; answer: string }) => Promise<QuizSession>;
   adoptSession: (sessionId: string, username: string) => Promise<void>;
   refresh: () => Promise<void>;
   clearSession: () => Promise<void>;
@@ -72,8 +73,8 @@ export function QuizSessionProvider({ children }: { children: ReactNode }) {
   const persist = (id: string, username: string) =>
     secure.set(SESSION_KEY, JSON.stringify({ session_id: id, username }));
 
-  const createSession = useCallback(async (username: string) => {
-    const created = await quizApi.createSession(username);
+  const createSession = useCallback(async (username: string, security?: { question: string; answer: string }) => {
+    const created = await quizApi.createSession(username, security);
     await persist(created.session_id, created.username);
     setSession(created);
     return created;

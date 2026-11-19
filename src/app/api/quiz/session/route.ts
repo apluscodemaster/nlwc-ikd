@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { saveSecurityAnswer } from "@/lib/quizSecurity.server";
 import { z } from "zod";
 
 /**
@@ -79,7 +80,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = z.object({ username: usernameSchema }).safeParse(body);
+  // `security` is optional so older app versions (name only) keep working;
+  // the sign-up forms require it.
+  const parsed = z
+    .object({
+      username: usernameSchema,
+      security: z
+        .object({
+          question: z.string().trim().min(1).max(200),
+          answer: z
+            .string()
+            .max(200)
+            .refine((a) => a.trim().length >= 2, {
+              message: "Security answer must be at least 2 characters",
+            }),
+        })
+        .optional(),
+    })
+    .safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || "Invalid data" },
@@ -137,8 +155,24 @@ export async function POST(req: NextRequest) {
     console.error("Failed to increment quizzes_taken:", rpcError);
   }
 
+  // Save the security question with the profile, so it can be recovered on
+  // another device from the start. If this fails the player is still
+  // created; the quiz page then offers to set the question.
+  let securitySet = false;
+  if (parsed.data.security) {
+    securitySet = await saveSecurityAnswer(
+      data.session_id,
+      parsed.data.security.question,
+      parsed.data.security.answer,
+    );
+  }
+
   return NextResponse.json(
-    { ...data, quizzes_taken: (data.quizzes_taken ?? 0) + (rpcError ? 0 : 1) },
+    {
+      ...data,
+      security_set: securitySet || data.security_set === true,
+      quizzes_taken: (data.quizzes_taken ?? 0) + (rpcError ? 0 : 1),
+    },
     { status: 201 },
   );
 }
