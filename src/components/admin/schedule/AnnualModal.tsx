@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import {
-  Image as ImageIcon,
+  Link2,
   Loader2,
   Save,
   Sparkles,
@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModalShell } from "@/components/shared/ModalShell";
+import {
+  ThumbnailField,
+  useThumbnailUpload,
+} from "@/components/admin/content/ThumbnailField";
 import type { AnnualMeeting } from "@/lib/scheduleService";
 
 export type AnnualDraft = Partial<AnnualMeeting> & { type: "annual" };
@@ -47,15 +51,29 @@ export function AnnualModal({
   );
   const [order, setOrder] = useState(editing ? meeting.order : nextOrder);
   const [active, setActive] = useState(editing ? meeting.active : true);
-  const [imageFailed, setImageFailed] = useState(false);
+  // Upload to (or pick from) the WordPress media library; either way the
+  // image's public URL lands in imageUrl, which is what's saved.
+  const image = useThumbnailUpload(
+    (url) => setImageUrl(url ?? ""),
+    editing ? meeting.imageUrl || null : null,
+  );
+  const [showLink, setShowLink] = useState(false);
 
   const trimmedImage = imageUrl.trim();
   const imageValid = !trimmedImage || /^https?:\/\//i.test(trimmedImage);
+
+  /** A pasted link becomes the previewed image once it looks like a URL. */
+  const applyLink = () => {
+    if (trimmedImage && imageValid) image.reset(trimmedImage);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return void toast.error("Name is required");
     if (!period.trim()) return void toast.error("When it holds is required");
+    if (image.state.uploading) {
+      return void toast.error("Please wait for the image to finish uploading");
+    }
     if (!imageValid) {
       return void toast.error(
         "Image must be a full link starting with https://",
@@ -132,43 +150,42 @@ export function AnnualModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <span className="flex items-center gap-1">
-              <ImageIcon className="w-4 h-4" />
-              Image link <span className="text-gray-400">(https://…)</span>
-            </span>
-          </label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => {
-              setImageUrl(e.target.value);
-              setImageFailed(false);
-            }}
-            placeholder="https://res.cloudinary.com/…"
-            className={inputClass}
-          />
-          {!imageValid && (
-            <p className="text-xs text-red-500 mt-1">
-              Use a full link starting with https://
-            </p>
-          )}
-          {trimmedImage && imageValid && (
-            <div className="mt-2 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 aspect-[16/9] flex items-center justify-center">
-              {imageFailed ? (
-                <p className="text-xs text-red-500 px-3 text-center">
-                  This link didn&apos;t load as an image.
+          <ThumbnailField upload={image} compact label="Image" />
+          <p className="text-xs text-gray-400 mt-1.5">
+            New uploads go to the WordPress media library.
+          </p>
+          {showLink ? (
+            <div className="mt-2">
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onBlur={applyLink}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyLink();
+                  }
+                }}
+                placeholder="https://…"
+                aria-label="Image link"
+                className={inputClass}
+              />
+              {!imageValid && (
+                <p className="text-xs text-red-500 mt-1">
+                  Use a full link starting with https://
                 </p>
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element -- admin preview of an arbitrary link
-                <img
-                  src={trimmedImage}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={() => setImageFailed(true)}
-                />
               )}
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowLink(true)}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline cursor-pointer"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Or paste an image link
+            </button>
           )}
         </div>
 
@@ -214,7 +231,7 @@ export function AnnualModal({
           </button>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || image.state.uploading}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition"
           >
             {saving ? (

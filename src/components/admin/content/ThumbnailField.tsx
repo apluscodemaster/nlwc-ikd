@@ -51,83 +51,102 @@ const EMPTY: ThumbnailState = {
  * prefills the preview with a post's current thumbnail without marking it as a
  * new selection.
  */
-export function useThumbnailUpload() {
-  const [state, setState] = useState<ThumbnailState>(EMPTY);
+export function useThumbnailUpload(
+  /** Told the image's public URL whenever it changes (null when removed). */
+  onUrlChange?: (url: string | null) => void,
+  /** Image to show as the current one from the first render. */
+  initialUrl: string | null = null,
+) {
+  const [state, setState] = useState<ThumbnailState>(() =>
+    initialUrl ? { ...EMPTY, preview: initialUrl, source: "existing" } : EMPTY,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const reset = useCallback((existingUrl: string | null = null) => {
-    setState({
-      ...EMPTY,
-      preview: existingUrl,
-      source: existingUrl ? "existing" : null,
-    });
-    if (inputRef.current) inputRef.current.value = "";
-  }, []);
-
-  const select = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () =>
-      setState((s) => ({ ...s, preview: reader.result as string }));
-    reader.readAsDataURL(file);
-
-    setState((s) => ({
-      ...s,
-      fileName: file.name,
-      uploading: true,
-      mediaId: null,
-      mediaUrl: null,
-      source: "upload",
-    }));
-    try {
-      const authHeader = await getAuthorizationHeader();
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/wp/upload-media", {
-        method: "POST",
-        headers: { Authorization: authHeader },
-        body: formData,
+  const reset = useCallback(
+    (existingUrl: string | null = null) => {
+      setState({
+        ...EMPTY,
+        preview: existingUrl,
+        source: existingUrl ? "existing" : null,
       });
-      const data = await res.json();
-      // The route returns the new attachment as `id` (not `mediaId`).
-      if (data.id) {
-        setState((s) => ({
-          ...s,
-          mediaId: data.id,
-          mediaUrl: data.url || null,
-        }));
-        toast.success("Thumbnail uploaded", {
-          description: "Image saved to WordPress media library.",
+      if (inputRef.current) inputRef.current.value = "";
+      onUrlChange?.(existingUrl);
+    },
+    [onUrlChange],
+  );
+
+  const select = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () =>
+        setState((s) => ({ ...s, preview: reader.result as string }));
+      reader.readAsDataURL(file);
+
+      setState((s) => ({
+        ...s,
+        fileName: file.name,
+        uploading: true,
+        mediaId: null,
+        mediaUrl: null,
+        source: "upload",
+      }));
+      try {
+        const authHeader = await getAuthorizationHeader();
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/wp/upload-media", {
+          method: "POST",
+          headers: { Authorization: authHeader },
+          body: formData,
         });
-      } else {
-        toast.error("Thumbnail upload failed", {
-          description: data.error || "Unknown error",
+        const data = await res.json();
+        // The route returns the new attachment as `id` (not `mediaId`).
+        if (data.id) {
+          setState((s) => ({
+            ...s,
+            mediaId: data.id,
+            mediaUrl: data.url || null,
+          }));
+          if (data.url) onUrlChange?.(data.url);
+          toast.success("Thumbnail uploaded", {
+            description: "Image saved to WordPress media library.",
+          });
+        } else {
+          toast.error("Thumbnail upload failed", {
+            description: data.error || "Unknown error",
+          });
+        }
+      } catch {
+        toast.error("Upload error", {
+          description: "Could not upload thumbnail to WordPress.",
         });
+      } finally {
+        setState((s) => ({ ...s, uploading: false }));
       }
-    } catch {
-      toast.error("Upload error", {
-        description: "Could not upload thumbnail to WordPress.",
-      });
-    } finally {
-      setState((s) => ({ ...s, uploading: false }));
-    }
-  }, []);
+    },
+    [onUrlChange],
+  );
 
   /** Adopt an image that is already in the media library — nothing to upload. */
-  const selectFromLibrary = useCallback((item: MediaLibraryItem) => {
-    setState({
-      preview: item.thumbnailUrl || item.url,
-      fileName: item.title,
-      uploading: false,
-      mediaId: item.id,
-      mediaUrl: item.url,
-      source: "library",
-    });
-    if (inputRef.current) inputRef.current.value = "";
-    toast.success("Image selected", { description: item.title });
-  }, []);
+  const selectFromLibrary = useCallback(
+    (item: MediaLibraryItem) => {
+      onUrlChange?.(item.url);
+      setState({
+        preview: item.thumbnailUrl || item.url,
+        fileName: item.title,
+        uploading: false,
+        mediaId: item.id,
+        mediaUrl: item.url,
+        source: "library",
+      });
+      if (inputRef.current) inputRef.current.value = "";
+      toast.success("Image selected", { description: item.title });
+    },
+    [onUrlChange],
+  );
 
   return { state, inputRef, select, selectFromLibrary, reset };
 }
@@ -135,10 +154,12 @@ export function useThumbnailUpload() {
 export function ThumbnailField({
   upload,
   compact,
+  label = "Message Thumbnail",
 }: {
   upload: ReturnType<typeof useThumbnailUpload>;
   /** Slightly shorter preview for the edit modal. */
   compact?: boolean;
+  label?: string;
 }) {
   const { state, inputRef, select, selectFromLibrary, reset } = upload;
   const [showLibrary, setShowLibrary] = useState(false);
@@ -184,9 +205,7 @@ export function ThumbnailField({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-semibold text-gray-700">
-          Message Thumbnail
-        </label>
+        <label className="text-sm font-semibold text-gray-700">{label}</label>
         {state.preview && (
           <button
             type="button"

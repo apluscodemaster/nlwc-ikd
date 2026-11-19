@@ -104,6 +104,27 @@ const ANNUAL_CARDS: GatheringCard[] = annualMeetings.map((m) => ({
   image: m.image,
 }));
 
+/**
+ * Hosts next.config allows for optimised images. An admin can paste an image
+ * link from anywhere; next/image throws for other hosts, so those are shown
+ * unoptimised instead of breaking the section.
+ */
+const OPTIMISED_HOSTS = new Set([
+  "res.cloudinary.com",
+  "ikdadmin.nlwc.church",
+  "ikorodu.nlwc.church",
+  "lh3.googleusercontent.com",
+  "images.unsplash.com",
+]);
+
+function isOptimisedImage(src: string): boolean {
+  try {
+    return OPTIMISED_HOSTS.has(new URL(src).hostname);
+  } catch {
+    return false;
+  }
+}
+
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -236,6 +257,7 @@ export default function ServiceTimes() {
                         src={service.image}
                         alt={service.name}
                         fill
+                        unoptimized={!isOptimisedImage(service.image)}
                         className="object-cover transition-transform duration-500"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 380px, 380px"
                       />
