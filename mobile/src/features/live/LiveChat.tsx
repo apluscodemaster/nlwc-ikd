@@ -28,6 +28,7 @@ export function LiveChat() {
   const [nameDraft, setNameDraft] = useState("");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -49,14 +50,18 @@ export function LiveChat() {
       return;
     }
     setSending(true);
-    const ok = await sendChat(name, text);
+    setSendError("");
+    const result = await sendChat(name, text);
     setSending(false);
-    if (ok) {
+    if (result === "sent") {
       setText("");
       Haptics.selectionAsync().catch(() => {});
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      return;
     }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+    // The text stays, so it can be sent in a moment.
+    if (result === "too-fast") setSendError("Please wait a few seconds between messages.");
+    else if (result === "failed") setSendError("Couldn't send. Check your connection and try again.");
   };
 
   const inputStyle = [
@@ -108,11 +113,19 @@ export function LiveChat() {
         />
       )}
 
+      {name && sendError ? (
+        <Text variant="small" color="primary" style={styles.sendError} accessibilityLiveRegion="polite">
+          {sendError}
+        </Text>
+      ) : null}
       {name ? (
         <View style={[styles.composer, { borderTopColor: colors.border }]}>
           <TextInput
             value={text}
-            onChangeText={setText}
+            onChangeText={(v) => {
+              setText(v);
+              if (sendError) setSendError("");
+            }}
             placeholder={`Message as ${name}`}
             placeholderTextColor={colors.textMuted}
             maxLength={MAX_MESSAGE}
@@ -159,6 +172,7 @@ export function LiveChat() {
 }
 
 const styles = StyleSheet.create({
+  sendError: { paddingHorizontal: spacing.gutter, paddingTop: spacing.xs },
   // No minimum height: the chat must be able to shrink so the composer stays
   // visible above the keyboard.
   root: { flex: 1 },

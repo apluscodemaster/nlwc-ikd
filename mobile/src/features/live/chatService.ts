@@ -3,8 +3,18 @@
  * collection, query, colours and validation; see firestore.rules
  * isValidChatMessage). Shows only the current service's newest 200 messages.
  */
-import { addDoc, collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { getDb } from "~/lib/firebase";
+import {
+  collection,
+  doc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import { getChatUid, getDb } from "~/lib/firebase";
 import { getLiveServiceStartTime } from "~/shared";
 
 export interface ChatMessage {
@@ -16,6 +26,12 @@ export interface ChatMessage {
 }
 
 const CHAT_COLLECTION = "live-chat";
+/** One stamp per sender; the rules allow a new one every 3 s (firestore.rules). */
+const THROTTLE_COLLECTION = "live-chat-throttle";
+export const CHAT_COOLDOWN_MS = 3000;
+let lastSentAt = 0;
+
+export type SendResult = "sent" | "too-fast" | "invalid" | "failed";
 const MAX_MESSAGES = 200;
 export const MAX_NAME = 50;
 export const MAX_MESSAGE = 500;
@@ -72,19 +88,32 @@ export function subscribeToChat(onMessages: (m: ChatMessage[]) => void, onError?
   );
 }
 
-export async function sendChat(name: string, message: string): Promise<boolean> {
+/**
+ * Post a message. It is written together with this phone's throttle stamp,
+ * so the rules can hold each sender to one message every 3 seconds.
+ */
+export async function sendChat(name: string, message: string): Promise<SendResult> {
   const n = name.trim().slice(0, MAX_NAME);
   const m = message.trim();
-  if (!n || !m || m.length > MAX_MESSAGE) return false;
+  if (!n || !m || m.length > MAX_MESSAGE) return "invalid";
+  if (Date.now() - lastSentAt < CHAT_COOLDOWN_MS) return "too-fast";
   try {
-    await addDoc(collection(getDb(), CHAT_COLLECTION), {
+    const uid = await getChatUid();
+    const db = getDb();
+    const batch = writeBatch(db);
+    batch.set(doc(db, THROTTLE_COLLECTION, uid), { lastAt: serverTimestamp() });
+    batch.set(doc(collection(db, CHAT_COLLECTION)), {
       name: n,
       message: m,
       timestamp: Date.now(),
       color: colorForName(n),
+      uid,
     });
-    return true;
-  } catch {
-    return false;
+    await batch.commit();
+    lastSentAt = Date.now();
+    return "sent";
+  } catch (e) {
+    // permission-denied is almost always the 3-second limit.
+    return (e as { code?: string }).code === "permission-denied" ? "too-fast" : "failed";
   }
 }

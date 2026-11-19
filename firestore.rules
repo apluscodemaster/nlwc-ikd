@@ -30,15 +30,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * Only administrators hold Firebase Auth accounts — the public quiz
-     * identifies players with a Supabase session id, not Firebase Auth, and
-     * testimony submission is anonymous. So "signed in" == "admin" here.
+     * Only administrators hold real Firebase Auth accounts. Live chat signs
+     * visitors in ANONYMOUSLY (to rate-limit posting, see below), so a
+     * signed-in request is an admin only when its provider isn't
+     * "anonymous". The server applies the same rule to API tokens
+     * (lib/auth.ts).
      *
-     * If that ever stops being true (e.g. public accounts are introduced),
-     * this MUST become a custom-claim check (request.auth.token.admin == true).
+     * If public accounts are ever introduced, this MUST become a custom-claim
+     * check (request.auth.token.admin == true).
      */
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
     // ── Testimonies ─────────────────────────────────────────────────────────
@@ -90,15 +93,43 @@ service cloud.firestore {
     // 500), and a timestamp of "now". That last check matters: the chat shows
     // messages with timestamp >= the service start, so a future timestamp
     // would let a message reappear in later services.
+    //
+    // Spam protection: every poster is signed in (anonymously, in the
+    // background) and each message must be written in the same batch as the
+    // poster's live-chat-throttle stamp, which can only advance 3 seconds
+    // after the previous one. So one sign-in can post at most once every
+    // 3 seconds, and every message records who sent it (uid) for moderation.
     match /live-chat/{messageId} {
       allow read: if true;
-      allow create: if isValidChatMessage(request.resource.data);
+      allow create: if isValidChatMessage(request.resource.data)
+          && isThrottledChatPost();
       allow update, delete: if isAdmin();
     }
 
+    match /live-chat-throttle/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['lastAt'])
+          && request.resource.data.lastAt == request.time;
+      allow update: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['lastAt'])
+          && request.resource.data.lastAt == request.time
+          && request.time > resource.data.lastAt + duration.value(3, 's');
+      allow delete: if isAdmin();
+    }
+
+    // The message's uid is the poster's, and this same write moved their
+    // throttle stamp to now (which the rule above only allows every 3 s).
+    function isThrottledChatPost() {
+      return request.auth != null
+          && request.resource.data.uid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/live-chat-throttle/$(request.auth.uid)).data.lastAt == request.time;
+    }
+
     function isValidChatMessage(d) {
-      return d.keys().hasOnly(['name', 'message', 'timestamp', 'color'])
-          && d.keys().hasAll(['name', 'message', 'timestamp', 'color'])
+      return d.keys().hasOnly(['name', 'message', 'timestamp', 'color', 'uid'])
+          && d.keys().hasAll(['name', 'message', 'timestamp', 'color', 'uid'])
+          && d.uid is string
           && d.name is string && d.name.size() > 0 && d.name.size() <= 50
           && d.message is string && d.message.size() > 0 && d.message.size() <= 500
           && d.color is string && d.color.size() <= 16

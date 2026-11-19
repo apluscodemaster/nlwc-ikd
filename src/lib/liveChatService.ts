@@ -12,14 +12,17 @@
 
 import {
   collection,
-  addDoc,
+  doc,
   query,
   orderBy,
   onSnapshot,
+  serverTimestamp,
   where,
   limit,
+  writeBatch,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { signInAnonymously } from "firebase/auth";
+import { auth, db } from "./firebase";
 import { getLiveServiceStartTime } from "./liveSchedule";
 
 export interface ChatMessage {
@@ -111,36 +114,65 @@ export function subscribeToChatMessages(
   return unsubscribe;
 }
 
+/** Throttle collection (see firestore.rules: one post per 3 s per sender). */
+const THROTTLE_COLLECTION = "live-chat-throttle";
+/** Matches the rules; the page waits this long itself so it never trips them. */
+export const CHAT_COOLDOWN_MS = 3000;
+let lastSentAt = 0;
+
 /**
- * Send a new chat message to Firestore.
- * Returns the created message or null on error.
+ * The poster's identity for the rate limit: the signed-in user (an admin), or
+ * an anonymous Firebase sign-in made silently the first time someone posts.
+ * Anonymous sign-ins can't use any admin tools (rules + lib/auth.ts).
+ */
+async function chatUid(): Promise<string> {
+  if (auth.currentUser) return auth.currentUser.uid;
+  const cred = await signInAnonymously(auth);
+  return cred.user.uid;
+}
+
+export type SendChatResult =
+  | { ok: true; message: ChatMessage }
+  | { ok: false; reason: "too-fast" | "invalid" | "failed" };
+
+/**
+ * Send a chat message. The message and the sender's throttle stamp are
+ * written together, so the rules can hold each sender to one message every
+ * 3 seconds.
  */
 export async function sendChatMessage(
   name: string,
   message: string,
-): Promise<ChatMessage | null> {
+): Promise<SendChatResult> {
+  const trimmedName = name.trim();
+  const trimmedMessage = message.trim();
+  if (!trimmedName || !trimmedMessage || trimmedMessage.length > 500) {
+    return { ok: false, reason: "invalid" };
+  }
+  if (Date.now() - lastSentAt < CHAT_COOLDOWN_MS) {
+    return { ok: false, reason: "too-fast" };
+  }
+
   try {
-    const trimmedName = name.trim();
-    const trimmedMessage = message.trim();
-
-    if (!trimmedName || !trimmedMessage) return null;
-    if (trimmedMessage.length > 500) return null;
-
+    const uid = await chatUid();
     const chatMsg = {
       name: trimmedName,
       message: trimmedMessage,
       timestamp: Date.now(),
       color: getColorForName(trimmedName),
     };
-
-    const docRef = await addDoc(collection(db, CHAT_COLLECTION), chatMsg);
-
-    return {
-      id: docRef.id,
-      ...chatMsg,
-    };
+    const msgRef = doc(collection(db, CHAT_COLLECTION));
+    const batch = writeBatch(db);
+    batch.set(doc(db, THROTTLE_COLLECTION, uid), { lastAt: serverTimestamp() });
+    batch.set(msgRef, { ...chatMsg, uid });
+    await batch.commit();
+    lastSentAt = Date.now();
+    return { ok: true, message: { id: msgRef.id, ...chatMsg } };
   } catch (error) {
+    // permission-denied here is almost always the 3-second limit.
+    const code = (error as { code?: string }).code;
+    if (code === "permission-denied") return { ok: false, reason: "too-fast" };
     console.warn("Failed to send chat message:", error);
-    return null;
+    return { ok: false, reason: "failed" };
   }
 }

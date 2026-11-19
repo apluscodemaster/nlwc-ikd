@@ -60,12 +60,32 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Rate-limit stamps (one per chatter, see firestore.rules) are only needed
+  // for a few seconds; clear out ones older than a day.
+  let throttles = 0;
+  try {
+    const stale = await db
+      .collection("live-chat-throttle")
+      .where("lastAt", "<", new Date(Date.now() - 24 * 60 * 60 * 1000))
+      .limit(BATCH_SIZE)
+      .get();
+    if (!stale.empty) {
+      const batch = db.batch();
+      stale.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      throttles = stale.size;
+    }
+  } catch (err) {
+    console.error("[cron/purge-live-chat] throttle cleanup failed:", err);
+  }
+
   const more = batches >= MAX_BATCHES;
   console.log(
     `[cron/purge-live-chat] deleted ${deleted} message(s) older than ${RETENTION_DAYS} days${more ? " (more remain)" : ""}`,
   );
   return NextResponse.json({
     deleted,
+    throttlesCleared: throttles,
     retentionDays: RETENTION_DAYS,
     moreRemaining: more,
   });

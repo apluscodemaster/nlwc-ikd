@@ -68,6 +68,16 @@ function hasValidSignature(token: string, certPem: string): boolean {
  * bypassable whenever the Admin SDK failed to initialise. Never accept a token
  * here without verifying its signature.
  */
+/**
+ * Anonymous Firebase sign-ins (used by live chat to rate-limit posters) are
+ * real, validly signed tokens, but never an administrator. Without this check
+ * every chat visitor would pass requireAuth() while ADMIN_EMAILS is unset.
+ */
+const ANONYMOUS = {
+  valid: false,
+  error: "Anonymous sessions can't use admin tools",
+} as const;
+
 async function verifyFirebaseToken(
   token: string,
 ): Promise<{ valid: boolean; error?: string; actor?: AuthActor }> {
@@ -75,6 +85,7 @@ async function verifyFirebaseToken(
   try {
     const auth = getAdminAuth();
     const decoded = await auth.verifyIdToken(token);
+    if (decoded.firebase?.sign_in_provider === "anonymous") return ANONYMOUS;
     return {
       valid: true,
       actor: { uid: decoded.uid, email: decoded.email ?? null },
@@ -159,6 +170,7 @@ async function verifyFirebaseToken(
     if (!payload.sub || typeof payload.sub !== "string") {
       return { valid: false, error: "Missing subject claim" };
     }
+    if (payload.firebase?.sign_in_provider === "anonymous") return ANONYMOUS;
     // Only read identity AFTER the signature and every claim check above have
     // passed — these values become the actor recorded in the audit log, so a
     // forged token must never be able to put someone else's name on an action.

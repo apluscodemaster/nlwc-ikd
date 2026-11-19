@@ -263,6 +263,7 @@ function LiveChat() {
   const [messageInput, setMessageInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const [showInfo, setShowInfo] = useState(false);
   const [isServiceHours, setIsServiceHours] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -328,11 +329,17 @@ function LiveChat() {
     if (!messageInput.trim() || isSending) return;
 
     setIsSending(true);
+    setSendError("");
     try {
-      await sendChatMessage(userName, messageInput.trim());
-      setMessageInput("");
-    } catch {
-      // Silently fail
+      const result = await sendChatMessage(userName, messageInput.trim());
+      if (result.ok) {
+        setMessageInput("");
+      } else if (result.reason === "too-fast") {
+        // Keep the text so they can send it in a moment.
+        setSendError("Please wait a few seconds between messages.");
+      } else if (result.reason === "failed") {
+        setSendError("Couldn't send. Check your connection and try again.");
+      }
     } finally {
       setIsSending(false);
     }
@@ -527,7 +534,10 @@ function LiveChat() {
                 type="text"
                 placeholder="Say something..."
                 value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
+                onChange={(e) => {
+                  setMessageInput(e.target.value);
+                  if (sendError) setSendError("");
+                }}
                 onKeyDown={handleKeyDown}
                 maxLength={500}
                 disabled={!isServiceHours}
@@ -541,6 +551,14 @@ function LiveChat() {
                 <Send className="w-4 h-4" />
               </button>
             </div>
+            {sendError && (
+              <p
+                role="status"
+                className="mt-1.5 px-3 text-[11px] text-amber-700"
+              >
+                {sendError}
+              </p>
+            )}
           </div>
         )}
       </div>
