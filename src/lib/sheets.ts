@@ -89,3 +89,15 @@ export function groupColumnsToDates(
 
   return dates;
 }
+
+/**
+ * The most recent `count` images across all dates, newest date first
+ * (`dates` is sorted oldest first, as groupColumnsToDates returns it).
+ */
+export function latestImages(dates: DateColumns[], count: number): string[] {
+  const out: string[] = [];
+  for (let i = dates.length - 1; i >= 0 && out.length < count; i--) {
+    out.push(...dates[i].images.slice(0, count - out.length));
+  }
+  return out;
+}

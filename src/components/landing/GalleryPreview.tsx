@@ -3,7 +3,7 @@
 import React from "react";
 import SectionLabel from "@/components/shared/SectionLabel";
 import { useQuery } from "@tanstack/react-query";
-import type { DateColumns } from "@/lib/sheets";
+import { latestImages, type DateColumns } from "@/lib/sheets";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart, ZoomIn } from "lucide-react";
@@ -50,9 +50,8 @@ export default function GalleryPreview() {
     queryFn: fetcher,
   });
 
-  // Get the most recent 8 images
-  const allImages = data?.dates.flatMap((d) => d.images) || [];
-  const previewImages = allImages.slice(0, 8);
+  // The 8 most recent photos (newest upload date first).
+  const previewImages = latestImages(data?.dates ?? [], 8);
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-32 overflow-hidden">

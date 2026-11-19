@@ -112,5 +112,6 @@ export const annualMeetings: AnnualMeeting[] = [
     icon: Users,
     color: "bg-rose-50",
     iconColor: "text-rose-600",
+    image: "https://res.cloudinary.com/dj7rh8h6r/image/upload/f_auto,q_auto:eco,w_800/v1775202695/community-2_vwupj4.jpg",
   },
 ];
