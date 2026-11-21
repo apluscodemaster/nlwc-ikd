@@ -1,119 +1,79 @@
 import { NextResponse, NextRequest } from "next/server";
-import crypto from "crypto";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { s3Config } from "@/lib/s3.server";
+import {
+  isS3DevotionalKey,
+  newDevotionalKey,
+  uploadDevotionalPdf,
+} from "@/lib/devotionalFiles.server";
 
-const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const API_KEY = process.env.CLOUDINARY_API_KEY;
-const API_SECRET = process.env.CLOUDINARY_API_SECRET;
-
+/**
+ * POST /api/devotionals/upload — admin only.
+ *
+ * Stores a devotional PDF in S3 (nlwc-ikorodu/Daily_Devotionals/, public
+ * read) and returns { url, publicId }, where publicId is the S3 key (saved as
+ * the devotional's storagePath). Devotional PDFs used to go to Cloudinary;
+ * scripts/migrate-devotionals-to-s3.mts moved the existing ones.
+ *
+ * Form fields: file (PDF); title (names a new file); publicId (replace: the
+ * devotional's current storagePath; an S3 key is overwritten in place, an old
+ * Cloudinary id gets a new S3 key).
+ */
 export async function POST(request: NextRequest) {
-  // Verify authentication
   const auth = await requireAuthActor(request);
-  if (auth.response) {
-    return auth.response;
-  }
+  if (auth.response) return auth.response;
 
-  // Apply rate limiting
   const rateLimitError = await rateLimitMiddleware(request, "authenticated");
-  if (rateLimitError) {
-    return rateLimitError;
+  if (rateLimitError) return rateLimitError;
+
+  const config = s3Config();
+  if (!config) {
+    return NextResponse.json(
+      { error: "S3 credentials not configured" },
+      { status: 500 },
+    );
   }
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const publicId = formData.get("publicId") as string | undefined;
-
+    const file = formData.get("file") as File | null;
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-
-    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+    const isPdf =
+      file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+    if (!isPdf) {
       return NextResponse.json(
-        { error: "Cloudinary credentials not configured" },
-        { status: 500 },
+        { error: "Devotionals must be PDF files" },
+        { status: 400 },
       );
     }
 
-    const timestamp = Math.round(new Date().getTime() / 1000).toString();
-    const title = formData.get("title") as string | undefined;
+    const existing = (formData.get("publicId") as string | null) || "";
+    const title = (formData.get("title") as string | null) || "";
+    const key = isS3DevotionalKey(existing)
+      ? existing
+      : newDevotionalKey(title || file.name || "devotional");
 
-    // Create a sanitized filename from title if no publicId is provided
-    let finalPublicId = publicId;
-    if (!finalPublicId && title) {
-      finalPublicId = title
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "") // Remove non-alphanumeric except spaces/hyphens
-        .replace(/[\s_-]+/g, "-") // Replace spaces/underscores with hyphens
-        .trim();
-
-      // Add a small random suffix to prevent exact duplicate collisions if titles are generic
-      const randomSuffix = Math.random().toString(36).substring(2, 6);
-      finalPublicId = `${finalPublicId}-${randomSuffix}`;
-    }
-
-    // Cloudinary signature params (alphabetical order)
-    let paramsToSign = "";
-    if (finalPublicId) {
-      paramsToSign = `access_mode=public&folder=devotionals&overwrite=true&public_id=${finalPublicId}&timestamp=${timestamp}${API_SECRET}`;
-    } else {
-      paramsToSign = `access_mode=public&folder=devotionals&timestamp=${timestamp}${API_SECRET}`;
-    }
-
-    const signature = crypto
-      .createHash("sha1")
-      .update(paramsToSign)
-      .digest("hex");
-
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append("file", file);
-    cloudinaryFormData.append("api_key", API_KEY);
-    cloudinaryFormData.append("timestamp", timestamp);
-    cloudinaryFormData.append("signature", signature);
-    cloudinaryFormData.append("folder", "devotionals");
-    cloudinaryFormData.append("access_mode", "public");
-
-    if (finalPublicId) {
-      cloudinaryFormData.append("public_id", finalPublicId);
-      cloudinaryFormData.append("overwrite", "true");
-    }
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      {
-        method: "POST",
-        body: cloudinaryFormData,
-      },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: data.error?.message || "Cloudinary upload failed" },
-        { status: response.status },
-      );
-    }
+    const body = Buffer.from(await file.arrayBuffer());
+    const url = await uploadDevotionalPdf(config, key, body);
 
     void recordAudit({
       actor: auth.actor,
       action: "upload",
       resource: "media",
-      target: data.secure_url,
-      targetId: data.public_id,
-      detail: { context: "devotional" },
+      target: url,
+      targetId: key,
+      detail: { context: "devotional", storage: "s3" },
       request,
     });
 
-    return NextResponse.json({
-      url: data.secure_url,
-      publicId: data.public_id,
-    });
+    return NextResponse.json({ url, publicId: key });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Cloudinary upload failed:", error);
+    console.error("Devotional upload failed:", error);
     return NextResponse.json(
       { error: "Upload failed: " + message },
       { status: 500 },

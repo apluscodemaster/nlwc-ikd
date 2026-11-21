@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
+import { deleteObject, s3Config } from "@/lib/s3.server";
+import { isS3DevotionalKey } from "@/lib/devotionalFiles.server";
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -29,6 +31,29 @@ export async function DELETE(request: NextRequest) {
         { error: "No publicId provided" },
         { status: 400 },
       );
+    }
+
+    // Devotionals now live in S3 (storagePath = the S3 key). Ones uploaded
+    // before the move still have a Cloudinary id and are removed there below.
+    if (isS3DevotionalKey(publicId)) {
+      const config = s3Config();
+      if (!config) {
+        return NextResponse.json(
+          { error: "S3 credentials not configured" },
+          { status: 500 },
+        );
+      }
+      await deleteObject(config, publicId);
+      void recordAudit({
+        actor: auth.actor,
+        action: "delete",
+        resource: "media",
+        target: publicId,
+        targetId: publicId,
+        detail: { storage: "s3" },
+        request,
+      });
+      return NextResponse.json({ success: true });
     }
 
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {

@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   getMessageTranscriptBySlug,
-  getMessageTranscripts,
 } from "@/lib/wordpress";
 import SectionContainer from "@/components/shared/SectionContainer";
 import ShareButton from "@/components/shared/ShareButton";
@@ -56,12 +55,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  try {
-    const { transcripts } = await getMessageTranscripts({ perPage: 10 });
-    return transcripts.map((t) => ({ slug: t.slug }));
-  } catch {
-    return [];
-  }
+  // Nothing is pre-built at deploy time: each page is generated on its first
+  // visit and then cached (ISR, see `revalidate`). Pre-building fetched from
+  // WordPress during the Vercel build, and its host's rate limiting (429)
+  // failed whole deploys.
+  return [];
 }
 
 export default async function SermonPage({ params }: Props) {

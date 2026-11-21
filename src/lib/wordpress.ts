@@ -320,10 +320,14 @@ export async function fetchWPPosts(
   let response: Response | null = null;
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < WP_ATTEMPTS; attempt++) {
     if (attempt > 0) {
-      // Exponential backoff: 1s, 3s
-      await new Promise((r) => setTimeout(r, attempt * 2000));
+      await new Promise((r) =>
+        setTimeout(
+          r,
+          retryDelayMs(attempt, response?.headers.get("retry-after") ?? null),
+        ),
+      );
     }
 
     // Admin reads pass noStore so saved edits show immediately; public reads
@@ -366,6 +370,23 @@ export async function fetchWPPosts(
 }
 
 /**
+ * How long to wait before retry `attempt` (1, 2, 3…) after a 429: the
+ * server's Retry-After when it sends one (capped at 15 s), else 2 s, 4 s, 8 s.
+ * The host rate-limits bursts (e.g. many pages building at once).
+ */
+export function retryDelayMs(
+  attempt: number,
+  retryAfter: string | null,
+): number {
+  const seconds = Number(retryAfter);
+  if (retryAfter && Number.isFinite(seconds) && seconds >= 0)
+    return Math.min(15, seconds) * 1000;
+  return 1000 * 2 ** attempt;
+}
+
+const WP_ATTEMPTS = 4;
+
+/**
  * Fetch a single post by ID or slug
  */
 export async function fetchWPPost(
@@ -383,9 +404,14 @@ export async function fetchWPPost(
   let response: Response | null = null;
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < WP_ATTEMPTS; attempt++) {
     if (attempt > 0) {
-      await new Promise((r) => setTimeout(r, attempt * 2000));
+      await new Promise((r) =>
+        setTimeout(
+          r,
+          retryDelayMs(attempt, response?.headers.get("retry-after") ?? null),
+        ),
+      );
     }
 
     response = await fetch(url, {

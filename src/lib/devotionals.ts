@@ -244,14 +244,19 @@ export async function replaceDevotionalPdf(
     throw new Error(error.error || "Replacement failed");
   }
 
-  const { url } = await response.json();
+  const { url, publicId } = await response.json();
   onProgress?.(80);
 
-  await updateDoc(doc(db, COLLECTION, id), { pdfUrl: url });
+  // publicId changes when an old Cloudinary devotional is replaced (it moves
+  // to S3), so store it too.
+  await updateDoc(doc(db, COLLECTION, id), {
+    pdfUrl: url,
+    ...(publicId ? { storagePath: publicId } : {}),
+  });
   onProgress?.(100);
 }
 
-/** Delete both the Firestore document and the Cloudinary file */
+/** Delete both the Firestore document and the stored PDF (S3, or Cloudinary for old ones) */
 export async function deleteDevotional(id: string) {
   const devotional = await getDevotionalById(id);
   if (!devotional) throw new Error("Devotional not found");

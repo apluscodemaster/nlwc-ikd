@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   getTranscriptBySlug,
-  getSundayMessageTranscripts,
   getAdjacentTranscripts,
 } from "@/lib/wordpress";
 import SectionContainer from "@/components/shared/SectionContainer";
@@ -81,15 +80,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  // Pre-generate only first 5 pages to avoid rate limiting
-  // Rest will be generated on-demand with ISR
-  try {
-    const { transcripts } = await getSundayMessageTranscripts({ perPage: 5 });
-    return transcripts.map((t) => ({ slug: t.slug }));
-  } catch {
-    // If API fails during build, generate pages on-demand
-    return [];
-  }
+  // Nothing is pre-built at deploy time: each page is generated on its first
+  // visit and then cached (ISR, see `revalidate`). Pre-building fetched from
+  // WordPress during the Vercel build, and its host's rate limiting (429)
+  // failed whole deploys.
+  return [];
 }
 
 export default async function TranscriptPage({ params }: Props) {
