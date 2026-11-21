@@ -108,3 +108,16 @@ export function toCdnAudioUrl(
   }
   return url;
 }
+
+/**
+ * The audio link if it really is one, else undefined. Sermons edited directly
+ * in WordPress can hold anything in the audio field (one had its title), and
+ * handing that to the player just fails silently; undefined makes the pages
+ * treat the sermon as having no audio instead.
+ */
+export function validAudioUrl(
+  url: string | undefined | null,
+): string | undefined {
+  const trimmed = url?.trim();
+  return trimmed && /^https?:\/\/\S+$/i.test(trimmed) ? trimmed : undefined;
+}

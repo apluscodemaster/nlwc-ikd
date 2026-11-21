@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
-import { toStreamableAudioUrl } from "@/utils/audioUrl";
+import { toStreamableAudioUrl, validAudioUrl } from "@/utils/audioUrl";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { htmlToGutenbergBlocks } from "@/lib/gutenberg";
 import { getTranscriptCategoryIds } from "@/lib/wordpress";
@@ -221,7 +221,15 @@ export async function PUT(request: NextRequest) {
     if (speakerId) seBody.speaker_id = speakerId;
     if (content) seBody.description = content;
     // Audio & thumbnail are URLs in Series Engine, not WP media attachments.
-    if (audioUrl) seBody.audio_url = toStreamableAudioUrl(audioUrl);
+    // Refuse anything that isn't a web link: sermon 673 ended up with its
+    // title saved as the audio URL, and the page had nothing to play.
+    if (audioUrl && !validAudioUrl(audioUrl)) {
+      return NextResponse.json(
+        { error: "Audio URL must be a full link starting with https://" },
+        { status: 400 },
+      );
+    }
+    if (audioUrl) seBody.audio_url = toStreamableAudioUrl(audioUrl.trim());
     if (thumbnailUrl) seBody.message_thumbnail = thumbnailUrl;
 
     const result = await updateSESermon(id, seBody);
