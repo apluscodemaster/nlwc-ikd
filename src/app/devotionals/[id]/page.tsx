@@ -25,6 +25,7 @@ import DevotionalSidebar from "@/components/devotionals/DevotionalSidebar";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_URL, PUBLISHER } from "@/utils/seo";
 import { toast } from "sonner";
+import PdfViewer from "@/components/devotionals/PdfViewer";
 
 export default function DevotionalViewPage({
   params,
@@ -217,11 +218,8 @@ export default function DevotionalViewPage({
                     className="relative w-full rounded-[28px] overflow-hidden bg-gray-100 shadow-inner"
                     style={{ height: "85vh", minHeight: "750px" }}
                   >
-                    <iframe
-                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(devotional.pdfUrl)}&embedded=true`}
-                      className="w-full h-full border-none"
-                      title={devotional.title}
-                    />
+                    {/* Rendered on the page with PDF.js (falls back to Google's viewer). */}
+                    <PdfViewer src={devotional.pdfUrl} title={devotional.title} />
 
                     {/* Floating Expand Tool */}
                     {/* <div className="absolute top-6 right-6 flex items-center gap-3">

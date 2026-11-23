@@ -69,6 +69,14 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [],
       afterFiles: [
+        // PDF.js for the devotional viewer (components/devotionals/PdfViewer),
+        // served from this site's own origin: browsers won't start a worker
+        // script from another site. Pinned version.
+        {
+          source: "/vendor/pdfjs/:file",
+          destination:
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/:file",
+        },
         {
           source: "/wp-login.php",
           destination: `${WP_ORIGIN}/wp-login.php`,
@@ -166,6 +174,8 @@ const nextConfig: NextConfig = {
               "; " +
               "frame-src 'self' *.youtube.com *.google.com *.gstatic.com *.waystream.io challenges.cloudflare.com *.firebaseapp.com; " +
               "media-src 'self' https: blob:; " +
+              // PDF.js (devotionals) runs its worker from /vendor/pdfjs.
+              "worker-src 'self'; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
               "form-action 'self'",
