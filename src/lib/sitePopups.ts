@@ -188,8 +188,17 @@ function pathMatches(pathname: string, pattern: string): boolean {
 }
 
 /** Whether a pop-up may show on `pathname`. */
-export function showsOnPath(popup: Pick<SitePopup, "includePaths" | "excludePaths">, pathname: string): boolean {
+export function showsOnPath(
+  popup: Pick<SitePopup, "includePaths" | "excludePaths"> & { ctaUrl?: string },
+  pathname: string,
+): boolean {
   if (NEVER_ON.some((p) => pathMatches(pathname, p))) return false;
+  // Never advertise the page the visitor is already on (e.g. an event
+  // pop-up linking to the event page).
+  if (popup.ctaUrl?.startsWith("/")) {
+    const target = popup.ctaUrl.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+    if ((pathname.replace(/\/+$/, "") || "/") === target) return false;
+  }
   if (popup.excludePaths.some((p) => pathMatches(pathname, p))) return false;
   return popup.includePaths.length === 0 || popup.includePaths.some((p) => pathMatches(pathname, p));
 }
