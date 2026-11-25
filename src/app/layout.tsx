@@ -99,7 +99,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   const churchSchemaData = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "Church",
     "@id": SITE_URL,
     name: "The New & Living Way Church",
     alternateName: "NLWC Ikorodu",
