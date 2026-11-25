@@ -238,8 +238,9 @@ export default async function ManualPage({ params }: Props) {
             {/* Title */}
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight drop-shadow-sm"
-              dangerouslySetInnerHTML={{ __html: manual.title }}
-            />
+            >
+              {manual.title}
+            </h1>
 
             {/* Meta Info Row */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-white/80">

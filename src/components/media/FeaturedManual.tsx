@@ -99,8 +99,9 @@ export default function FeaturedManual({ manual }: FeaturedManualProps) {
 
             <h2
               className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight group-hover:text-amber-600 transition-colors duration-300 line-clamp-3"
-              dangerouslySetInnerHTML={{ __html: manual.title }}
-            />
+            >
+              {manual.title}
+            </h2>
 
             {manual.lesson && (
               <p className="text-sm font-semibold text-amber-700/90 mb-3">

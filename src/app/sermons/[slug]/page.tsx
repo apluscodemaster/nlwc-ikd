@@ -96,8 +96,9 @@ export default async function SermonPage({ params }: Props) {
             {/* Title */}
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-6 leading-tight wrap-break-word"
-              dangerouslySetInnerHTML={{ __html: sermon.title }}
-            />
+            >
+              {sermon.title}
+            </h1>
 
             {/* Meta Info */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted-foreground bg-gray-50/50 p-4 rounded-2xl sm:bg-transparent sm:p-0">

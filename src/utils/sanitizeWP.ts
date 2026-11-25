@@ -54,7 +54,6 @@ const NUMERIC_HEX_ENTITY_RE = /&#x([0-9a-fA-F]+);/g;
 const NBSP_UNICODE_RE = /\u00A0/g;
 const HTML_TAG_RE = /<[^>]*>/g;
 const MULTI_SPACE_RE = /\s{2,}/g;
-const TEXT_BETWEEN_TAGS_RE = />([^<]+)</g;
 const NBSP_NAMED_RE = /&nbsp;/gi;
 const EMPTY_PARAGRAPH_RE = /<p[^>]*>\s*<\/p>/gi;
 const NBSP_PARAGRAPH_RE = /<p[^>]*>(\s|&nbsp;)*<\/p>/gi;
@@ -178,10 +177,178 @@ export function sanitizeWPText(text: string): string {
   return clean;
 }
 
+// ─── Allow-list HTML sanitizer ────────────────────────────────────────────────
+// Post bodies are rendered with dangerouslySetInnerHTML on the main site, where
+// the admin's Firebase session lives, so anything a WordPress author (or a
+// compromised WP account/plugin) writes must not be able to run script. Only
+// the tags and attributes below survive; everything else is dropped.
+
+const ALLOWED_TAGS = new Set([
+  "p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "b", "em",
+  "i", "u", "s", "strike", "del", "ins", "sub", "sup", "small", "mark", "abbr",
+  "time", "blockquote", "q", "cite", "code", "pre", "kbd", "ul", "ol", "li",
+  "dl", "dt", "dd", "a", "img", "figure", "figcaption", "picture", "source",
+  "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup",
+  "col", "div", "span", "section", "article", "header", "footer", "aside",
+  "audio", "video", "track", "iframe", "details", "summary", "center", "wbr",
+]);
+
+/** Dropped together with everything inside them. */
+const DROP_WITH_CONTENT = new Set([
+  "script", "style", "noscript", "template", "object", "embed", "applet",
+  "frame", "frameset", "textarea", "select", "option", "title", "head", "xmp",
+  "plaintext", "noembed", "noframes", "svg", "math", "iframe",
+]);
+
+const VOID_TAGS = new Set(["br", "hr", "img", "source", "track", "col", "wbr"]);
+
+const ALLOWED_ATTRS = new Set([
+  "class", "id", "style", "title", "lang", "dir", "align", "valign", "width",
+  "height", "colspan", "rowspan", "scope", "headers", "alt", "href", "src",
+  "srcset", "sizes", "target", "rel", "loading", "decoding", "controls",
+  "preload", "poster", "allow", "allowfullscreen", "frameborder", "type",
+  "start", "reversed", "datetime", "cite", "open", "kind", "srclang", "label",
+  "role", "name",
+]);
+
+const URL_ATTRS = new Set(["href", "src", "cite", "poster"]);
+
+/** Embeds WordPress posts are allowed to carry. */
+const IFRAME_HOST_RE =
+  /^(?:www\.)?(?:youtube\.com|youtube-nocookie\.com|player\.vimeo\.com|w\.soundcloud\.com|open\.spotify\.com|drive\.google\.com|docs\.google\.com|www\.google\.com|(?:www\.)?facebook\.com)$/i;
+
+const TOKEN_RE =
+  /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>?|<(\/?)([a-zA-Z][a-zA-Z0-9:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+const ATTR_RE =
+  /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+const UNSAFE_STYLE_RE = /expression\s*\(|javascript:|vbscript:|behavior\s*:|-moz-binding|@import/i;
+
+function escapeText(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeAttr(value: string): string {
+  return escapeText(value).replace(/"/g, "&quot;");
+}
+
+/** http(s), mailto, tel, same-site paths and anchors; never javascript: etc. */
+function isSafeUrl(raw: string, allowDataImage = false): boolean {
+  // Browsers ignore control characters and whitespace inside a scheme
+  // ("java\tscript:"), so strip them before looking at it.
+  const v = decodeHTMLEntities(raw)
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000- \u007F]+/g, "")
+    .toLowerCase();
+  if (/^(?:https?:|mailto:|tel:)/.test(v)) return true;
+  if (allowDataImage && /^data:image\/(?:png|jpe?g|gif|webp);/.test(v)) return true;
+  // No scheme at all (relative URL): the first ':' must come after a / ? or #.
+  const colon = v.indexOf(":");
+  if (colon === -1) return true;
+  const firstDelimiter = v.search(/[/?#]/);
+  return firstDelimiter !== -1 && firstDelimiter < colon;
+}
+
+function isAllowedIframeSrc(raw: string): boolean {
+  try {
+    const url = new URL(decodeHTMLEntities(raw).trim());
+    return url.protocol === "https:" && IFRAME_HOST_RE.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** The kept attributes as ` name="value"`, or null for an iframe that must go. */
+function sanitizeAttributes(tag: string, rawAttrs: string): string | null {
+  const kept = new Map<string, string | null>();
+  ATTR_RE.lastIndex = 0;
+  for (let m = ATTR_RE.exec(rawAttrs); m; m = ATTR_RE.exec(rawAttrs)) {
+    const name = m[1].toLowerCase();
+    const raw = m[2] ?? m[3] ?? m[4];
+    const value = raw === undefined ? null : decodeHTMLEntities(raw);
+    if (kept.has(name) || name.startsWith("on")) continue;
+    if (!ALLOWED_ATTRS.has(name) && !name.startsWith("data-") && !name.startsWith("aria-")) continue;
+    if (URL_ATTRS.has(name)) {
+      const ok =
+        value !== null &&
+        (tag === "iframe" && name === "src"
+          ? isAllowedIframeSrc(value)
+          : isSafeUrl(value, tag === "img" && name === "src"));
+      if (!ok) continue;
+    }
+    if (
+      name === "srcset" &&
+      !(value ?? "").split(",").every((part) => isSafeUrl(part.trim().split(/\s+/)[0] ?? ""))
+    ) {
+      continue;
+    }
+    if (name === "style" && UNSAFE_STYLE_RE.test(value ?? "")) continue;
+    kept.set(name, value);
+  }
+  if (tag === "iframe" && !kept.has("src")) return null;
+  // A new tab must not get a handle on this page (window.opener).
+  if (kept.get("target")?.toLowerCase() === "_blank") kept.set("rel", "noopener noreferrer");
+  let out = "";
+  for (const [name, value] of kept) {
+    out += value === null ? ` ${name}` : ` ${name}="${escapeAttr(value)}"`;
+  }
+  return out;
+}
+
+/**
+ * Keep only allow-listed tags and attributes, drop script-capable content
+ * (script/style/object/unknown iframes, on* handlers, javascript: URLs), and
+ * leave every piece of text escaped. Text entities are decoded for display
+ * except < > &, which stay escaped so encoded text can never become markup.
+ */
+export function sanitizeHtmlAllowList(html: string): string {
+  if (!html) return "";
+  let out = "";
+  let last = 0;
+  let skipUntil: string | null = null;
+  const text = (s: string) => escapeText(decodeHTMLEntities(s));
+
+  TOKEN_RE.lastIndex = 0;
+  for (let m = TOKEN_RE.exec(html); m; m = TOKEN_RE.exec(html)) {
+    const between = html.slice(last, m.index);
+    last = TOKEN_RE.lastIndex;
+    if (skipUntil) {
+      if (m[1] === "/" && m[2]?.toLowerCase() === skipUntil) skipUntil = null;
+      continue;
+    }
+    out += text(between);
+    if (!m[2]) continue; // comment, <!doctype>, <?xml?>
+    const tag = m[2].toLowerCase();
+    const closing = m[1] === "/";
+    const selfClosing = /\/\s*$/.test(m[3]);
+
+    if (tag === "iframe" && !closing) {
+      const attrs = sanitizeAttributes(tag, m[3]);
+      if (attrs !== null) {
+        out += `<iframe${attrs}></iframe>`;
+      }
+      if (!selfClosing) skipUntil = "iframe";
+      continue;
+    }
+    if (DROP_WITH_CONTENT.has(tag)) {
+      if (!closing && !selfClosing) skipUntil = tag;
+      continue;
+    }
+    if (!ALLOWED_TAGS.has(tag)) continue;
+    if (closing) {
+      if (!VOID_TAGS.has(tag)) out += `</${tag}>`;
+      continue;
+    }
+    out += `<${tag}${sanitizeAttributes(tag, m[3]) ?? ""}>`;
+  }
+  if (!skipUntil) out += text(html.slice(last));
+  return out;
+}
+
 /**
  * Sanitize rich HTML content from WordPress (post body).
  *
- * - Decodes HTML entities in text nodes (preserves HTML structure)
+ * - Allow-list sanitizes tags and attributes (no script can survive)
+ * - Decodes HTML entities in text for display, keeping < > & escaped
  * - Removes excessive &nbsp; sequences
  * - Cleans up empty paragraphs
  * - Normalizes whitespace artifacts
@@ -196,11 +363,8 @@ export function sanitizeWPHtml(html: string): string {
   // look, while keeping structure (headings, paragraphs, lists, emphasis).
   clean = stripExternalFormatting(clean);
 
-  // ── Entity decoding (only in text, not in tags) ──
-  // Process text between tags: decode entities
-  clean = clean.replace(TEXT_BETWEEN_TAGS_RE, (match, textContent) => {
-    return ">" + decodeHTMLEntities(textContent) + "<";
-  });
+  // ── Security: allow-listed tags/attributes only, text kept escaped ──
+  clean = sanitizeHtmlAllowList(clean);
 
   // ── Clean up &nbsp; artifacts ──
   // Replace standalone &nbsp; with regular space (in text nodes)

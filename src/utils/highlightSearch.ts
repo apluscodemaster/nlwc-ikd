@@ -7,6 +7,15 @@
 /**
  * Escapes special regex characters in a string
  */
+/** Plain text → safe to put in innerHTML. */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -58,7 +67,8 @@ export function highlightSearchInHtml(html: string, query: string): string {
  * @returns HTML string (safe — the input text is escaped first)
  */
 export function highlightSearchInText(text: string, query: string): string {
-  if (!query || !query.trim() || !text) return text;
+  if (!text) return "";
+  if (!query || !query.trim()) return escapeHtml(text);
 
   const trimmedQuery = query.trim();
   const words = trimmedQuery
@@ -66,15 +76,12 @@ export function highlightSearchInText(text: string, query: string): string {
     .filter((w) => w.length >= 2)
     .map(escapeRegExp);
 
-  if (words.length === 0) return text;
+  if (words.length === 0) return escapeHtml(text);
 
   const pattern = new RegExp(`(${words.join("|")})`, "gi");
 
   // Escape HTML entities in the text first
-  const escaped = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const escaped = escapeHtml(text);
 
   return escaped.replace(pattern, '<mark class="search-highlight">$1</mark>');
 }

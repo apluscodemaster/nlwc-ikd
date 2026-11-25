@@ -335,8 +335,9 @@ export default function ManualThemeBoard({
                       <div className="flex-1 min-w-0">
                         <p
                           className="text-sm font-medium text-gray-900 truncate"
-                          dangerouslySetInnerHTML={{ __html: it.title }}
-                        />
+                        >
+                          {it.title}
+                        </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {it.lesson && (
                             <span className="text-[10px] font-semibold text-amber-600 truncate max-w-[140px]">

@@ -16,7 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ManualThumbnail from "./ManualThumbnail";
 import {
-  highlightSearchInHtml,
+  escapeHtml,
   highlightSearchInText,
 } from "@/utils/highlightSearch";
 
@@ -56,8 +56,8 @@ export default function ManualCard({
   );
   // Highlight title if there's a search query
   const highlightedTitle = searchQuery
-    ? highlightSearchInHtml(manual.title, searchQuery)
-    : manual.title;
+    ? highlightSearchInText(manual.title, searchQuery)
+    : escapeHtml(manual.title);
 
   // Highlight excerpt if there's a search query
   const excerptText =

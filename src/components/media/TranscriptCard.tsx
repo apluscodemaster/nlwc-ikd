@@ -6,7 +6,7 @@ import { BookOpen, User, ChevronRight, Clock, Share2, Check } from "lucide-react
 import type { TranscriptPost } from "@/lib/wordpress";
 import Link from "next/link";
 import {
-  highlightSearchInHtml,
+  escapeHtml,
   highlightSearchInText,
 } from "@/utils/highlightSearch";
 
@@ -123,8 +123,8 @@ export default function TranscriptCard({
 
   // Highlight title if there's a search query
   const highlightedTitle = searchQuery
-    ? highlightSearchInHtml(transcript.title, searchQuery)
-    : transcript.title;
+    ? highlightSearchInText(transcript.title, searchQuery)
+    : escapeHtml(transcript.title);
 
   // Highlight excerpt if there's a search query
   const excerptText =
