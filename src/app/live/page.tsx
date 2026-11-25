@@ -20,7 +20,6 @@ import { useQuery } from "@tanstack/react-query";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResumePrompt from "@/components/media/ResumePrompt";
-import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import { isServiceLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import {
   saveMediaProgress,
@@ -538,7 +537,6 @@ export default function LivePage() {
       </AnimatePresence>
 
       {/* First Time Streaming User Popup */}
-      <FirstTimeStreamingForm isLive={isLive} />
     </main>
   );
 }

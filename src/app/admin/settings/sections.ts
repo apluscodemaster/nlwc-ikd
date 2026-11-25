@@ -1,4 +1,4 @@
-import { Calendar, ScrollText } from "lucide-react";
+import { Calendar, Megaphone, ScrollText } from "lucide-react";
 import type React from "react";
 
 /**
@@ -21,6 +21,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     href: "/admin/settings/schedule",
     icon: Calendar,
     description: "Recurring services & special events that drive the live pages",
+  },
+  {
+    slug: "popups",
+    label: "Pop-ups",
+    href: "/admin/settings/popups",
+    icon: Megaphone,
+    description: "Announcements & site pop-ups: wording, pages, timing and dates",
   },
   {
     slug: "audit-log",

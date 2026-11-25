@@ -35,7 +35,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AudioSermon } from "@/lib/audioSermons";
 import MobileFullPlayer from "@/components/media/MobileFullPlayer";
 import { MarqueeText } from "@/components/media/MarqueeText";
-import FirstTimeStreamingForm from "@/components/live/FirstTimeStreamingForm";
 import { isServiceLive, loadScheduleFromApi } from "@/lib/liveSchedule";
 import { useAutoScrollTo } from "@/hooks/useAutoScrollTo";
 
@@ -705,7 +704,6 @@ export default function ListenLivePage() {
       )}
 
       {/* First Time Streaming User Popup */}
-      <FirstTimeStreamingForm isLive={isLive} />
     </main>
   );
 }

@@ -1,42 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, MapPin, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { SitePopup } from "@/lib/sitePopups";
+import type { PopupCloseReason } from "./SitePopups";
 
-const STORAGE_KEY = "nlwc-ikd-first-time-streamer";
-const POPUP_DELAY_MS = 15_000; // 15 seconds
+/**
+ * First-time live stream viewer form: sends the details to the church's
+ * WhatsApp. When and where it shows (live pages, during services) and its
+ * wording are managed in Admin → Settings → Pop-ups.
+ */
+export default function FirstTimeVisitorPopup({
+  popup,
+  open,
+  onClose,
+}: {
+  popup: SitePopup;
+  open: boolean;
+  onClose: (reason: PopupCloseReason) => void;
+}) {
+  const isVisible = open;
+  const whatsapp = popup.whatsapp || "2348137436770";
 
-interface FirstTimeStreamingFormProps {
-  /** Only show the popup when a service is currently live */
-  isLive?: boolean;
-}
-
-export default function FirstTimeStreamingForm({
-  isLive = false,
-}: FirstTimeStreamingFormProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    // Only show during service hours
-    if (!isLive) return;
-
-    // Don't show if user has already submitted
-    if (typeof window === "undefined") return;
-    const hasSubmitted = localStorage.getItem(STORAGE_KEY);
-    if (hasSubmitted) return;
-
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, POPUP_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [isLive]);
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false);
-  }, []);
+  const handleClose = useCallback(() => onClose("closed"), [onClose]);
 
   const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,19 +36,16 @@ export default function FirstTimeStreamingForm({
 
     const text = `Hello NLWC Ikorodu Admin, a first-time streaming viewer just connected!\n\n*Name:* ${name}\n*Phone Number:* ${phone}\n*Location:* ${location}\n\n_Sent from the Live Streaming Page_`;
 
-    // Mark as submitted so popup doesn't appear again
-    localStorage.setItem(STORAGE_KEY, "true");
-
-    // Close the popup immediately — streaming page stays untouched
-    setIsVisible(false);
+    // Submitted: it won't be shown again. The streaming page stays untouched.
+    onClose("completed");
 
     // Open WhatsApp in a new tab — browser switches focus to it.
     // The streaming page remains intact in the background tab.
     window.open(
-      `https://wa.me/2348137436770?text=${encodeURIComponent(text)}`,
+      `https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`,
       "_blank",
     );
-  }, []);
+  }, [onClose, whatsapp]);
 
   return (
     <AnimatePresence>
@@ -101,15 +86,13 @@ export default function FirstTimeStreamingForm({
               <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-700 text-xs font-bold uppercase tracking-widest mb-4">
                   <Sparkles className="w-3.5 h-3.5" />
-                  First Time Here?
+                  {popup.eyebrow || "First Time Here?"}
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-                  Welcome to Our
-                  <span className="text-primary"> Live Stream!</span>
+                  {popup.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                  We&apos;d love to know you better. Please share your details
-                  so we can stay connected.
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed whitespace-pre-line">
+                  {popup.message}
                 </p>
               </div>
 
@@ -179,7 +162,7 @@ export default function FirstTimeStreamingForm({
                   className="w-full h-12 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all mt-2"
                 >
                   <span className="flex items-center gap-2">
-                    Connect with Us <Send className="w-4 h-4" />
+                    {popup.ctaLabel || "Connect with Us"} <Send className="w-4 h-4" />
                   </span>
                 </Button>
 
@@ -189,7 +172,7 @@ export default function FirstTimeStreamingForm({
                   onClick={handleClose}
                   className="w-full text-center cursor-pointer text-xs text-muted-foreground hover:text-gray-700 font-medium py-1 transition-colors"
                 >
-                  Cancel, this is not my first time!
+                  {popup.dismissLabel || "Cancel, this is not my first time!"}
                 </button>
               </form>
             </div>

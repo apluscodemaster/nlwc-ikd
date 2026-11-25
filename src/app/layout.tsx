@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
 import WhatsAppButtonWrapper from "@/components/WhatsAppButtonWrapper";
-import FellowshipPrompt from "@/components/shared/FellowshipPrompt";
+import SitePopups from "@/components/popups/SitePopups";
 import RefTaggerReloader from "@/components/shared/RefTaggerReloader";
 import MotionProvider from "@/components/providers/MotionProvider";
 import CustomDialog from "@/components/shared/CustomDialog";
@@ -199,7 +199,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <ScrollToTop />
                 <WhatsAppButtonWrapper />
                 <GoogleTranslate />
-                <FellowshipPrompt />
+                <SitePopups />
                 <RefTaggerReloader />
                 <CustomDialog />
               </Providers>

@@ -55,6 +55,7 @@ const RESOURCES: readonly AuditResource[] = [
   "series",
   "transcript-category",
   "media",
+  "popup",
   "session",
 ];
 

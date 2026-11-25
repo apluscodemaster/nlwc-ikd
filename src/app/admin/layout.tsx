@@ -99,7 +99,7 @@ const NAV_ITEMS = [
     label: "Settings",
     href: "/admin/settings",
     icon: Settings,
-    description: "Schedule & Audit Log",
+    description: "Schedule, Pop-ups & Audit Log",
   },
 ];
 

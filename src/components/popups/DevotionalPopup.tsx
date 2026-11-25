@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { BookOpen, X, Sparkles } from "lucide-react";
-const SESSION_KEY = "devotional_prompt_dismissed";
+import type { SitePopup } from "@/lib/sitePopups";
+import type { PopupCloseReason } from "./SitePopups";
 
 /** Shape returned by /api/devotionals/latest. */
 interface LatestDevotional {
@@ -15,38 +16,44 @@ interface LatestDevotional {
 }
 
 /**
- * Homepage prompt for the latest devotional. Reads it from a cached API
- * route rather than querying Firestore in the browser, which kept the whole
- * Firebase client SDK out of the homepage bundle.
+ * The latest devotional, as a card in the corner. Reads it from a cached API
+ * route rather than querying Firestore in the browser, which keeps the
+ * Firebase client SDK out of the homepage bundle. When and where it shows is
+ * managed in Admin → Settings → Pop-ups (components/popups/SitePopups); if
+ * there's no devotional to show, it tells the manager to skip it.
  */
-export default function DevotionalPrompt() {
+export default function DevotionalPopup({
+  popup,
+  open,
+  onClose,
+  onUnavailable,
+}: {
+  popup: SitePopup;
+  open: boolean;
+  onClose: (reason: PopupCloseReason) => void;
+  onUnavailable: () => void;
+}) {
   const [devotional, setDevotional] = useState<LatestDevotional | null>(null);
-  const [visible, setVisible] = useState(false);
+  const visible = open && !!devotional;
 
   useEffect(() => {
-    // If already dismissed this session, bail out
-    if (sessionStorage.getItem(SESSION_KEY)) return;
-
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
     fetch("/api/devotionals/latest")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { devotional?: LatestDevotional | null } | null) => {
-        if (data?.devotional) {
-          setDevotional(data.devotional);
-          // Small delay so it slides in smoothly after page renders
-          timer = setTimeout(() => setVisible(true), 1200);
-        }
+        if (cancelled) return;
+        if (data?.devotional) setDevotional(data.devotional);
+        else onUnavailable();
       })
       .catch(() => {
-        // No prompt if it can't load — it's optional.
+        if (!cancelled) onUnavailable();
       });
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [onUnavailable]);
 
-  const dismiss = () => {
-    setVisible(false);
-    sessionStorage.setItem(SESSION_KEY, "true");
-  };
+  const dismiss = () => onClose("closed");
 
   if (!devotional) return null;
 
@@ -88,7 +95,7 @@ export default function DevotionalPrompt() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
                   <Sparkles className="w-3 h-3" />
-                  Today&apos;s Devotional
+                  {popup.eyebrow || "Today's Devotional"}
                 </span>
               </div>
 
@@ -106,17 +113,17 @@ export default function DevotionalPrompt() {
               <div className="flex items-center gap-3">
                 <Link
                   href={`/devotionals/${devotional.id}`}
-                  onClick={dismiss}
+                  onClick={() => onClose("completed")}
                   className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   <BookOpen className="w-4 h-4" />
-                  Read Now
+                  {popup.ctaLabel || "Read Now"}
                 </Link>
                 <button
                   onClick={dismiss}
                   className="h-11 px-5 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
                 >
-                  Later
+                  {popup.dismissLabel || "Later"}
                 </button>
               </div>
             </div>

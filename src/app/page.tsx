@@ -9,7 +9,6 @@ import LeadershipGrid from "@/components/about/LeadershipGrid";
 import ServiceTimes from "@/components/landing/ServiceTimes";
 import MediaHub from "@/components/landing/MediaHub";
 import GalleryPreview from "@/components/landing/GalleryPreview";
-import DevotionalPrompt from "@/components/devotionals/DevotionalPrompt";
 
 export default function HomePage() {
   return (
@@ -40,7 +39,6 @@ export default function HomePage() {
       </main>
 
       {/* Daily Devotional Invitation */}
-      <DevotionalPrompt />
     </div>
   );
 }

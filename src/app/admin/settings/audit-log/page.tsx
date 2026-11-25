@@ -50,6 +50,7 @@ const RESOURCE_OPTIONS = [
   "series",
   "transcript-category",
   "media",
+  "popup",
   "session",
 ] as const;
 

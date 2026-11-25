@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useCallback } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -20,12 +19,8 @@ import Link from "next/link";
 import type { FellowshipCenter } from "@/data/centers";
 import { haversineKm } from "@/utils/mapCoordinates";
 import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-const STORAGE_KEY = "nlwc-fellowship-prompt-dismissed";
-const DISMISS_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const PROMPT_DELAY_MS = 30_000; // 30 seconds
-const SKIP_PATHS = ["/fellowship", "/admin", "/welcome"];
+import type { SitePopup } from "@/lib/sitePopups";
+import type { PopupCloseReason } from "./SitePopups";
 
 
 function findNearestCenters(
@@ -47,9 +42,23 @@ function findNearestCenters(
 type Step = "ask" | "locating" | "result" | "no-match";
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function FellowshipPrompt() {
-  const pathname = usePathname();
-  const [visible, setVisible] = useState(false);
+/**
+ * The house fellowship pop-up ("Join a Family Near You"). When and where it
+ * appears, and its wording, are managed in Admin → Settings → Pop-ups
+ * (components/popups/SitePopups); this is its look and the "find the
+ * nearest centre" behaviour.
+ */
+export default function FellowshipPopup({
+  popup,
+  open,
+  onClose,
+}: {
+  popup: SitePopup;
+  open: boolean;
+  onClose: (reason: PopupCloseReason) => void;
+}) {
+  const visible = open;
+  const coordinatorWhatsapp = popup.whatsapp || "2347066644051";
   const [step, setStep] = useState<Step>("ask");
   const [nearestCenters, setNearestCenters] = useState<
     { center: FellowshipCenter; distanceKm: number }[]
@@ -59,38 +68,10 @@ export default function FellowshipPrompt() {
   // this component mounts on every page.
   const { centers } = useFellowshipCenters({ enabled: visible });
 
-  // Check if prompt should be shown
-  useEffect(() => {
-    // Skip certain paths
-    if (SKIP_PATHS.some((p) => pathname?.startsWith(p))) return;
+  const dismiss = useCallback(() => onClose("closed"), [onClose]);
 
-    // Check localStorage for dismissal
-    try {
-      const dismissed = localStorage.getItem(STORAGE_KEY);
-      if (dismissed) {
-        const timestamp = parseInt(dismissed, 10);
-        if (Date.now() - timestamp < DISMISS_DURATION_MS) return;
-      }
-    } catch {
-      // localStorage not available
-    }
-
-    const timer = setTimeout(() => setVisible(true), PROMPT_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [pathname]);
-
-  const dismiss = useCallback(() => {
-    setVisible(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, Date.now().toString());
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const handleAlreadyMember = useCallback(() => {
-    dismiss();
-  }, [dismiss]);
+  // "Yes, I belong to one" answers the question.
+  const handleAlreadyMember = useCallback(() => onClose("completed"), [onClose]);
 
   const handleFindCenter = useCallback(() => {
     setStep("locating");
@@ -140,8 +121,6 @@ export default function FellowshipPrompt() {
     );
   }, [centers]);
 
-  if (!visible) return null;
-
   return (
     <AnimatePresence>
       {visible && (
@@ -184,18 +163,18 @@ export default function FellowshipPrompt() {
                         <Users className="w-7 h-7" />
                       </div>
                       <div>
-                        <p className="text-white/80 text-xs font-bold uppercase tracking-widest">
-                          House Fellowship
-                        </p>
+                        {popup.eyebrow && (
+                          <p className="text-white/80 text-xs font-bold uppercase tracking-widest">
+                            {popup.eyebrow}
+                          </p>
+                        )}
                         <h3 className="text-xl font-bold leading-tight">
-                          Join a Family Near You
+                          {popup.title}
                         </h3>
                       </div>
                     </div>
-                    <p className="text-white/85 text-sm leading-relaxed">
-                      Our house fellowship centers are places of deep
-                      connection, prayer, and spiritual growth. Do you already
-                      belong to one?
+                    <p className="text-white/85 text-sm leading-relaxed whitespace-pre-line">
+                      {popup.message}
                     </p>
                   </div>
 
@@ -206,14 +185,14 @@ export default function FellowshipPrompt() {
                       className="w-full flex items-center justify-center gap-3 h-14 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition-all active:scale-[0.98]"
                     >
                       <Home className="w-5 h-5" />
-                      Yes, I belong to one
+                      {popup.dismissLabel || "Yes, I belong to one"}
                     </button>
                     <button
                       onClick={handleFindCenter}
                       className="w-full flex items-center justify-center gap-3 h-14 rounded-2xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
                     >
                       <Navigation className="w-5 h-5" />
-                      Find a Center Near Me
+                      {popup.ctaLabel || "Find a Center Near Me"}
                     </button>
                     <p className="text-center text-[11px] text-gray-400 pt-1">
                       We&apos;ll use your location to find the nearest
@@ -350,7 +329,7 @@ export default function FellowshipPrompt() {
 
                     <Link
                       href="/fellowship"
-                      onClick={dismiss}
+                      onClick={() => onClose("completed")}
                       className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all active:scale-[0.98]"
                     >
                       View All Centers
@@ -398,14 +377,14 @@ export default function FellowshipPrompt() {
                     <div className="space-y-3">
                       <Link
                         href="/fellowship"
-                        onClick={dismiss}
+                        onClick={() => onClose("completed")}
                         className="flex items-center justify-center gap-2 w-full h-14 rounded-2xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98]"
                       >
                         <Home className="w-5 h-5" />
                         Browse All Centers
                       </Link>
                       <Link
-                        href="https://wa.me/2347066644051"
+                        href={`https://wa.me/${coordinatorWhatsapp}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full h-14 rounded-2xl bg-green-50 text-green-700 font-bold text-sm border border-green-100 hover:bg-green-100 transition-all active:scale-[0.98]"

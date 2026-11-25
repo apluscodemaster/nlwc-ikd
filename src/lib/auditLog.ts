@@ -43,6 +43,7 @@ export type AuditResource =
   | "series"
   | "transcript-category"
   | "media"
+  | "popup"
   | "session";
 
 export interface AuditEntry {
