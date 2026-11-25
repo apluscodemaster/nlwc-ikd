@@ -1,0 +1,53 @@
+# Scheduled maintenance jobs. These used to be Vercel Cron entries in
+# vercel.json, which Netlify (where the site is hosted) ignores, so they never
+# ran there: live chat was never purged, scheduled manuals/transcripts waited
+# for a visitor, and next month's special services were never added.
+#
+# Each job is a GET to a route under src/app/api/cron/, authorised with
+# CRON_SECRET (the same repository secret service-reminders.yml uses). All
+# three are safe to re-run. Scheduled workflows run from the default branch
+# (main); "Run workflow" on the Actions tab runs one by hand.
+name: Scheduled jobs
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 01:00 WAT daily: publish due WordPress posts, refresh pages
+    - cron: "0 2 * * *" # 03:00 WAT daily: delete old live-chat messages
+    - cron: "0 7 15 * *" # 15th of the month: add next month's special services
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to run
+        required: true
+        type: choice
+        options: [release-refresh, purge-live-chat, special-services]
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the cron route
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: https://ikorodu.nlwc.church
+          SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_JOB: ${{ inputs.job }}
+        run: |
+          case "$SCHEDULE" in
+            "0 0 * * *") JOB=release-refresh ;;
+            "0 2 * * *") JOB=purge-live-chat ;;
+            "0 7 15 * *") JOB=special-services ;;
+            *) JOB="$MANUAL_JOB" ;;
+          esac
+          if [ -z "$JOB" ]; then echo "No job selected."; exit 1; fi
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET secret is not set; skipping."
+            exit 0
+          fi
+          echo "Running $JOB"
+          curl --fail-with-body --silent --show-error --max-time 240 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$SITE_URL/api/cron/$JOB"

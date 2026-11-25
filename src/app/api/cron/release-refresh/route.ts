@@ -10,7 +10,7 @@ const WP_URL =
 
 /**
  * GET /api/cron/release-refresh — daily, shortly after the 00:30 WAT release
- * slot (see utils/publishSchedule and vercel.json).
+ * slot (see utils/publishSchedule and .github/workflows/daily-jobs.yml).
  *
  * Scheduled manuals/transcripts are released by WordPress itself, flipping
  * "future" → "publish". But wp-cron only runs when something requests the

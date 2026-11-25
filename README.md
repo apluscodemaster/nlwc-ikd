@@ -107,7 +107,7 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - **Database**: Supabase (quiz sessions, leaderboard) + Firebase Firestore (quiz questions, testimonies, schedule, fellowship, live chat, devotionals)
 - **Auth**: Firebase Authentication — admin routes verify the Firebase ID token (`Authorization: Bearer <token>`), and only accounts carrying the `admin: true` custom claim pass
 - **Rate limiting**: Upstash Redis (shared across server instances) with an in-memory fallback
-- **Scheduled jobs**: Vercel Cron (`vercel.json`)
+- **Scheduled jobs**: GitHub Actions (`.github/workflows/daily-jobs.yml`, `service-reminders.yml`)
 - **CI**: GitHub Actions — lint, type-check and tests on every push/PR
 - **Word import**: mammoth (`.docx` → HTML, in the browser)
 - **Forms**: React Hook Form + Zod validation
@@ -121,7 +121,6 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 
 ```
 firestore.rules                 # Firestore security rules (publish via Firebase Console)
-vercel.json                     # Scheduled jobs (Vercel Cron)
 .github/workflows/ci.yml        # CI: lint, type-check, tests
 supabase/migrations/            # Quiz database schema
 src/
@@ -700,7 +699,7 @@ const manual = await getManualBySlug("manual-slug");
 
 ## ⏰ Scheduled Jobs
 
-Defined in `vercel.json` and run by Vercel Cron (times in UTC; Lagos is UTC+1). Each route lives under `src/app/api/cron/` and requires `CRON_SECRET`. They appear under Vercel → Settings → **Cron Jobs**, where each can also be run by hand.
+Run by GitHub Actions (`.github/workflows/daily-jobs.yml` and `service-reminders.yml`; times in UTC, Lagos is UTC+1), since Netlify has no equivalent of Vercel Cron. Each route lives under `src/app/api/cron/` and requires `CRON_SECRET`, stored as a repository secret (Settings → Secrets and variables → Actions) with the same value as on the host. Any job can be run by hand from the Actions tab → **Scheduled jobs** → Run workflow.
 
 | Job                | Schedule (UTC) | What it does                                                                                                                        |
 | ------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -920,7 +919,7 @@ Admin Login (Firebase Authentication; API calls carry the ID token)
 ## 📚 Documentation
 
 - **[firestore.rules](./firestore.rules)** — Firestore security rules (publish via the Firebase Console; see Security)
-- **[vercel.json](./vercel.json)** — scheduled jobs
+- **[.github/workflows/daily-jobs.yml](./.github/workflows/daily-jobs.yml)** — scheduled jobs
 - **[.github/workflows/ci.yml](./.github/workflows/ci.yml)** — CI pipeline
 - **[supabase/migrations/](./supabase/migrations/)** — quiz database schema
 - Most design decisions are documented in comments next to the code they explain
