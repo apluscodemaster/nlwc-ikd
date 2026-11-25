@@ -1,6 +1,10 @@
-# Continuous integration: every push to main and every pull request is
-# linted, type-checked and tested. Vercel still does the production build and
-# deploy; this catches broken code before (or as) it reaches Vercel.
+# Continuous integration: every push to main or mobile-dev and every pull
+# request is linted, type-checked and tested. Netlify does the production
+# build and deploy; this catches broken code before (or as) it reaches it.
+#
+# Lint fails on any error, and on more warnings than today's count (106, from
+# rules the older code predates): fix warnings and lower the number in
+# package.json "lint:ci", never raise it.
 #
 # None of these steps talk to WordPress, Firebase, Supabase or Cloudinary, so
 # no secrets are needed here.
@@ -8,7 +12,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, mobile-dev]
   pull_request:
   workflow_dispatch:
 
@@ -38,10 +42,17 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint:ci
 
       - name: Type-check
         run: npm run typecheck
 
       - name: Test
         run: npm test
+
+      # Known vulnerabilities in production dependencies. Reported, not
+      # blocking: a new advisory shouldn't fail an unrelated change.
+      # Dependabot (.github/dependabot.yml) opens the update PRs.
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const revalidated = revalidateTargets(targets);
 
-  console.log(`[Revalidate] type=${type ?? "-"} →`, revalidated.join(", "));
+  console.info(`[Revalidate] type=${type ?? "-"} →`, revalidated.join(", "));
   return NextResponse.json({ message: "Revalidation triggered", revalidated });
 }
 

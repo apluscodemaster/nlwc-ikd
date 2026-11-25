@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { X, AlertCircle, CheckCircle2, MessageSquare } from "lucide-react";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DialogType = "alert" | "confirm" | "prompt";
@@ -172,6 +173,10 @@ export default function CustomDialog() {
     return () => window.removeEventListener("keydown", handler);
   }, [state.isOpen, handleConfirm, handleCancel]);
 
+  // Focus moves into the dialog and stays there; Escape cancels (and is
+  // stopped before the window handler above, so it fires once).
+  const panelRef = useDialogA11y(state.isOpen, handleCancel);
+
   const variantConfig = {
     success: {
       icon: CheckCircle2,
@@ -215,6 +220,11 @@ export default function CustomDialog() {
             exit={{ scale: 0.92, opacity: 0, y: 10 }}
             transition={{ type: "spring", damping: 28, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
+            ref={panelRef}
+            role={state.type === "alert" ? "alertdialog" : "dialog"}
+            aria-modal="true"
+            aria-labelledby="custom-dialog-title"
+            aria-describedby="custom-dialog-message"
             className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
           >
             {/* Header */}
@@ -225,14 +235,21 @@ export default function CustomDialog() {
                 <Icon className={`w-5 h-5 ${config.iconColor}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gray-900">
+                <h3
+                  id="custom-dialog-title"
+                  className="text-base font-bold text-gray-900"
+                >
                   {state.title}
                 </h3>
-                <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                <p
+                  id="custom-dialog-message"
+                  className="text-sm text-gray-500 mt-1 leading-relaxed"
+                >
                   {state.message}
                 </p>
               </div>
               <button
+                aria-label="Close"
                 onClick={handleCancel}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
               >
@@ -266,6 +283,7 @@ export default function CustomDialog() {
               )}
               <button
                 onClick={handleConfirm}
+                data-autofocus
                 className={`h-10 px-5 rounded-xl text-sm font-semibold text-white ${config.buttonBg} shadow-sm transition-colors`}
               >
                 {state.confirmLabel || "OK"}

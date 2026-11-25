@@ -3,7 +3,6 @@ import {
   TRANSCRIPT_TYPE_TO_CATEGORY,
   CATEGORY_TO_TRANSCRIPT_TYPE,
 } from "@/components/admin/content/types";
-import type { ContentType, TranscriptType } from "@/components/admin/content/types";
 
 describe("admin content types", () => {
   describe("TRANSCRIPT_TYPE_TO_CATEGORY", () => {

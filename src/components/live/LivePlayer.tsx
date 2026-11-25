@@ -171,9 +171,9 @@ export default function LivePlayer() {
             break onto two lines, at any screen width. */}
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-2">
           <div className="min-w-0 flex-[1_1_18rem]">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
               {meetingTitle}
-            </h1>
+            </h2>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {/* Join Community → Telegram */}
@@ -470,6 +470,7 @@ function LiveChat() {
             <div className="relative pointer-events-none">
               <input
                 type="text"
+                aria-label="Chat message"
                 placeholder="Chat is inactive outside service hours..."
                 value=""
                 onChange={() => {}}
@@ -477,6 +478,7 @@ function LiveChat() {
                 className="w-full h-12 pl-6 pr-12 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-sm disabled:cursor-not-allowed"
               />
               <button
+                aria-label="Send message"
                 disabled
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center disabled:opacity-40"
               >
@@ -493,6 +495,7 @@ function LiveChat() {
             <div className="relative">
               <input
                 type="text"
+                aria-label="Your name for the chat"
                 placeholder="Your name (e.g. Bro. John)"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
@@ -532,6 +535,7 @@ function LiveChat() {
             <div className="relative">
               <input
                 type="text"
+                aria-label="Chat message"
                 placeholder="Say something..."
                 value={messageInput}
                 onChange={(e) => {
@@ -544,6 +548,7 @@ function LiveChat() {
                 className="w-full h-12 pl-6 pr-12 rounded-full bg-gray-50 border-none focus:ring-2 focus:ring-primary/20 outline-none text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
               <button
+                aria-label="Send message"
                 onClick={handleSend}
                 disabled={!messageInput.trim() || isSending || !isServiceHours}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"

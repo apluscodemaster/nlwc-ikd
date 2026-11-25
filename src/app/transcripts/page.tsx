@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function TranscriptsPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Message Transcripts"
         subtitle="Read the Transcript of all our Teachings."
@@ -48,6 +48,6 @@ export default function TranscriptsPage() {
           <TranscriptsList perPage={9} />
         </Suspense>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

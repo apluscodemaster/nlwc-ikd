@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
   }
 
   const more = batches >= MAX_BATCHES;
-  console.log(
+  console.info(
     `[cron/purge-live-chat] deleted ${deleted} message(s) older than ${RETENTION_DAYS} days${more ? " (more remain)" : ""}`,
   );
   return NextResponse.json({

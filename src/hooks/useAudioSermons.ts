@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import type {
   AudioSermon,
   AudioSermonsResponse,
-  AudioSermonsFilters,
   SeriesItem,
   SpeakerItem,
   TopicItem,

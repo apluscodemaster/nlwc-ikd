@@ -304,7 +304,7 @@ export default function AudioPlayerClient({
   }, [sermon]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
       {/* The <audio> element now lives in GlobalAudioProvider (root layout) so
           playback continues when this page unmounts. Progress clearing and
           repeat-one are handled there too. */}
@@ -705,6 +705,6 @@ export default function AudioPlayerClient({
           </button>
         </div>
       </motion.div>
-    </main>
+    </div>
   );
 }

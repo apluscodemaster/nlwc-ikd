@@ -9,11 +9,12 @@ export const metadata: Metadata = {
   title: "Sunday School Manuals",
   description:
     "Access Sunday School study materials and teaching resources from New and Living Way Church, Ikorodu.",
+  alternates: { canonical: "/manuals" },
 };
 
 export default function ManualsPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Sunday School Manuals"
         subtitle="Access study materials and teaching resources for our Sunday School sessions."
@@ -34,6 +35,6 @@ export default function ManualsPage() {
           <ManualsList perPage={9} />
         </Suspense>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

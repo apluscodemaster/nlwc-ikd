@@ -1,6 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
+import { logDebug } from "@/lib/devLog";
 import { toast } from "sonner";
 
 interface ShareButtonProps {
@@ -27,7 +28,7 @@ export default function ShareButton({
         })
         .catch((error) => {
           // User cancelled or error occurred
-          console.log("Share cancelled or failed:", error);
+          logDebug("Share cancelled or failed:", error);
         });
     } else {
       // Fallback: Copy to clipboard

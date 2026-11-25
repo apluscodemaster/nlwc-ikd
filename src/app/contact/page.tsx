@@ -12,7 +12,7 @@ import { PenLine, BookOpen } from "lucide-react";
 
 export default function ContactPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Get in Touch"
         subtitle="We're here to listen, pray for you, and welcome you into our community. Reach out to us anytime."
@@ -109,6 +109,6 @@ export default function ContactPage() {
           <MapEmbed />
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

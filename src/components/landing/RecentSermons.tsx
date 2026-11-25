@@ -9,14 +9,7 @@ import {
   Pause,
   ArrowRight,
   Headphones,
-  X,
-  SkipBack,
-  SkipForward,
-  Volume2,
-  VolumeX,
   Loader2,
-  Download,
-  ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
 import { m as motion, Variants } from "framer-motion";

@@ -6,6 +6,7 @@ import { m as motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Megaphone, X } from "lucide-react";
 import type { SitePopup } from "@/lib/sitePopups";
 import type { PopupCloseReason } from "./SitePopups";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 /**
  * An admin-created announcement (Admin → Settings → Pop-ups): optional
@@ -26,6 +27,11 @@ export default function AnnouncementPopup({
   const corner = popup.layout !== "modal";
   // Just an image (a flyer or cut-out design): no card, no text, no buttons.
   const imageOnly = !!popup.imageUrl && !popup.title && !popup.message;
+  // Escape closes it; a centred dialog also takes and keeps focus, a corner
+  // card doesn't. (ImageOnly has its own.)
+  const panelRef = useDialogA11y(open && !imageOnly, () => onClose("closed"), {
+    modal: !corner,
+  });
 
   if (imageOnly) {
     return <ImageOnly popup={popup} open={open} onClose={onClose} corner={corner} external={external} />;
@@ -37,6 +43,7 @@ export default function AnnouncementPopup({
         corner ? "rounded-3xl border border-primary/20" : "w-full max-w-md rounded-t-3xl sm:rounded-3xl"
       }`}
       onClick={(e) => e.stopPropagation()}
+      ref={panelRef}
       role="dialog"
       aria-modal={!corner}
       aria-labelledby={`popup-${popup.id}-title`}
@@ -152,7 +159,11 @@ function ImageOnly({
   external: boolean;
 }) {
   const local = popup.imageUrl.startsWith("/");
-  const alt = popup.name || popup.eyebrow || "Announcement";
+  // The admin's image description; the internal name is only a fallback.
+  const alt = popup.imageAlt?.trim() || popup.name || popup.eyebrow || "Announcement";
+  const panelRef = useDialogA11y(open, () => onClose("closed"), {
+    modal: !corner && popup.layout !== "walk",
+  });
   const picture = (
     <Image
       src={popup.imageUrl}
@@ -207,6 +218,7 @@ function ImageOnly({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-x-0 bottom-2 sm:bottom-4 z-50 overflow-hidden pointer-events-none"
+            ref={panelRef}
             role="dialog"
             aria-label={alt}
           >
@@ -232,6 +244,7 @@ function ImageOnly({
             exit={{ x: -80, opacity: 0 }}
             transition={{ type: "spring", damping: 24, stiffness: 260 }}
             className="fixed bottom-4 left-3 right-3 sm:right-auto z-50 sm:w-[440px]"
+            ref={panelRef}
             role="dialog"
             aria-label={alt}
           >
@@ -255,6 +268,7 @@ function ImageOnly({
               transition={{ type: "spring", damping: 26, stiffness: 320 }}
               className="relative w-full max-w-[820px]"
               onClick={(e) => e.stopPropagation()}
+              ref={panelRef}
               role="dialog"
               aria-modal="true"
               aria-label={alt}

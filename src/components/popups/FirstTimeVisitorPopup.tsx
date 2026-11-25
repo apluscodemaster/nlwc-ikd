@@ -5,6 +5,7 @@ import { m as motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, MapPin, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SitePopup } from "@/lib/sitePopups";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { PopupCloseReason } from "./SitePopups";
 
 /**
@@ -25,6 +26,7 @@ export default function FirstTimeVisitorPopup({
   const whatsapp = popup.whatsapp || "2348137436770";
 
   const handleClose = useCallback(() => onClose("closed"), [onClose]);
+  const panelRef = useDialogA11y(isVisible, handleClose);
 
   const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,6 +60,7 @@ export default function FirstTimeVisitorPopup({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={handleClose}
+            aria-hidden="true"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
 
@@ -67,6 +70,10 @@ export default function FirstTimeVisitorPopup({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Welcome! Tell us about your visit"
             className="relative w-full max-w-md bg-white rounded-[28px] shadow-2xl shadow-black/20 overflow-hidden"
           >
             {/* Top Accent Gradient */}

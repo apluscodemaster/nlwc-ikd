@@ -81,18 +81,30 @@ export function logError(
 }
 
 /**
- * Report error to monitoring service (not implemented yet)
- * This is where you would send production errors to services like Sentry, LogRocket, etc.
+ * Report an error that was caught and handled, so it isn't silently lost.
+ *
+ * Production: one line of JSON on console.error, which on the server lands
+ * in the host's function logs (as src/instrumentation.ts does for uncaught
+ * ones). An error-tracking service (e.g. Sentry.captureException) would be
+ * called here too.
  */
 export function reportError(
   error: Error | unknown,
   context?: Record<string, unknown>,
 ): void {
-  // In production, send to error tracking service
-  // Example: Sentry.captureException(error, { contexts: { custom: context } });
-
-  // For now, just dev log
   if (process.env.NODE_ENV === "development") {
     console.error("Error reported:", error, context);
+    return;
   }
+  const e = error instanceof Error ? error : new Error(String(error));
+  console.error(
+    JSON.stringify({
+      level: "error",
+      source: "reportError",
+      message: e.message,
+      context,
+      stack: e.stack?.split("\n").slice(0, 8).join("\n"),
+      at: new Date().toISOString(),
+    }),
+  );
 }

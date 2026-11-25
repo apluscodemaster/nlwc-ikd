@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import {
   HydrationBoundary,
@@ -18,6 +19,13 @@ const MediaHub = dynamic(() => import("@/components/landing/MediaHub"));
 const GalleryPreview = dynamic(
   () => import("@/components/landing/GalleryPreview"),
 );
+
+// The canonical URL lives here, not in the root layout: every page inherits
+// the layout's metadata, so one there told Google that any page without its
+// own canonical was a copy of the home page.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 // Rebuilt at most every 5 minutes, and straight away when an admin changes
 // the schedule (its cache tag is expired on every write).
@@ -41,7 +49,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
+      <div>
         {/* 1. Hero Section */}
         <Hero />
 
@@ -63,7 +71,7 @@ export default async function HomePage() {
 
         {/* 6. Gallery Preview */}
         <GalleryPreview />
-      </main>
+      </div>
     </div>
   );
 }

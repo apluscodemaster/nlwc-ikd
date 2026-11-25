@@ -121,7 +121,7 @@ export async function resolveGooglePhotosShareLink(
     if (shouldStart && !shouldStart()) return undefined;
 
     try {
-      console.log("🔍 Resolving Google Photos share link:", shareUrl);
+      console.info("🔍 Resolving Google Photos share link:", shareUrl);
 
       // ── Strategy: GET with a browser-like User-Agent ──
       // Google serves different content based on User-Agent.
@@ -150,7 +150,7 @@ export async function resolveGooglePhotosShareLink(
       if (response.url.includes("lh3.googleusercontent.com")) {
         const cleanUrl = response.url.split("?")[0];
         resolvedCache.set(shareUrl, cleanUrl);
-        console.log("✅ Resolved (redirect URL):", cleanUrl);
+        console.info("✅ Resolved (redirect URL):", cleanUrl);
         return cleanUrl;
       }
 
@@ -190,7 +190,7 @@ export async function resolveGooglePhotosShareLink(
 
           if (url.includes("lh3.googleusercontent.com")) {
             resolvedCache.set(shareUrl, url);
-            console.log("✅ Resolved (og:image):", url);
+            console.info("✅ Resolved (og:image):", url);
             return url;
           }
         }
@@ -208,7 +208,7 @@ export async function resolveGooglePhotosShareLink(
           // Pick the longest match (most complete URL)
           const best = matches.sort((a, b) => b.length - a.length)[0];
           resolvedCache.set(shareUrl, best);
-          console.log("✅ Resolved (HTML scan):", best);
+          console.info("✅ Resolved (HTML scan):", best);
           return best;
         }
       }

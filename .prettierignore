@@ -1,0 +1,6 @@
+.next/
+node_modules/
+mobile/
+public/
+package-lock.json
+src/app/admin/admin-theme.css

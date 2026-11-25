@@ -37,6 +37,8 @@ export interface SitePopup {
   message: string;
   /** Full image URL (announcements). */
   imageUrl: string;
+  /** What the image shows, for screen readers (image-only pop-ups). */
+  imageAlt?: string;
   /** Main button. Announcements: opens ctaUrl. Built-ins: their own action. */
   ctaLabel: string;
   ctaUrl: string;
@@ -77,6 +79,7 @@ const BLANK: Omit<SitePopupInput, "kind" | "name"> = {
   title: "",
   message: "",
   imageUrl: "",
+  imageAlt: "",
   ctaLabel: "",
   ctaUrl: "",
   dismissLabel: "",

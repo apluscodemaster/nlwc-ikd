@@ -1,0 +1,9 @@
+#!/bin/sh
+# Lints the web files being committed (errors block the commit; warnings
+# don't). Enabled by `npm install` (the "prepare" script points git at
+# .githooks). Skip once with: git commit --no-verify
+files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.mjs' | grep -v '^mobile/')
+[ -z "$files" ] && exit 0
+echo "pre-commit: eslint on $(echo "$files" | wc -l | tr -d ' ') staged file(s)"
+# shellcheck disable=SC2086
+npx --no-install eslint --no-warn-ignored $files

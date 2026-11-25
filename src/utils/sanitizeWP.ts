@@ -236,7 +236,7 @@ function isSafeUrl(raw: string, allowDataImage = false): boolean {
   // Browsers ignore control characters and whitespace inside a scheme
   // ("java\tscript:"), so strip them before looking at it.
   const v = decodeHTMLEntities(raw)
-    // eslint-disable-next-line no-control-regex
+     
     .replace(/[\u0000- \u007F]+/g, "")
     .toLowerCase();
   if (/^(?:https?:|mailto:|tel:)/.test(v)) return true;

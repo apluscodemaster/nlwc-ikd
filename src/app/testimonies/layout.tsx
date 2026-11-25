@@ -4,10 +4,12 @@ export const metadata: Metadata = {
   title: "Testimonies",
   description:
     "Share your testimony of God's faithfulness and read inspiring stories from the NLWC Ikorodu community. Submit your own testimony and be a blessing to others.",
+  alternates: { canonical: "/testimonies" },
   openGraph: {
     title: "Testimonies | NLWC Ikorodu",
     description:
-      "Share your testimony of God's faithfulness and read inspiring God's faithfulness from the NLWC Ikorodu community.",
+      "Share your testimony of God's faithfulness and read inspiring stories from the NLWC Ikorodu community.",
+    url: "/testimonies",
     type: "website",
   },
 };

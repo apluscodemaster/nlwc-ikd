@@ -67,6 +67,7 @@ export default function ReviewExplanationOverlay({
               <h2 className="text-2xl font-bold">Deepen Your Understanding</h2>
             </div>
             <button
+              aria-label="Close"
               onClick={onClose}
               className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
             >

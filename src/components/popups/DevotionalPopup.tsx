@@ -5,6 +5,7 @@ import Link from "next/link";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { BookOpen, X, Sparkles } from "lucide-react";
 import type { SitePopup } from "@/lib/sitePopups";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { PopupCloseReason } from "./SitePopups";
 
 /** Shape returned by /api/devotionals/latest. */
@@ -54,6 +55,8 @@ export default function DevotionalPopup({
   }, [onUnavailable]);
 
   const dismiss = () => onClose("closed");
+  // A corner card: Escape closes it, but it never takes focus from the page.
+  const panelRef = useDialogA11y(visible, dismiss, { modal: false });
 
   if (!devotional) return null;
 
@@ -76,6 +79,9 @@ export default function DevotionalPopup({
           exit={{ y: 100, opacity: 0, scale: 0.95 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="fixed bottom-6 right-6 left-6 sm:left-auto z-50 sm:w-[420px]"
+          ref={panelRef}
+          role="dialog"
+          aria-label="Today's devotional"
         >
           <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-white/95 backdrop-blur-xl shadow-2xl shadow-primary/10">
             {/* Decorative gradient bar */}

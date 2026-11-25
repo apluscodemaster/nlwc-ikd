@@ -185,7 +185,7 @@ export default function QuizPageClient() {
 
   if (loading) {
     return (
-      <main>
+      <div>
         <PageHeader
           title="Bible Quiz"
           subtitle="Test your knowledge from services and messages"
@@ -195,13 +195,13 @@ export default function QuizPageClient() {
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         </SectionContainer>
-      </main>
+      </div>
     );
   }
 
   return (
     <CelebrationProvider>
-      <main>
+      <div>
         <TopScoreCelebration
           active={phase === "results"}
           leaderboard={leaderboard}
@@ -301,7 +301,7 @@ export default function QuizPageClient() {
             onSaved={markSecuritySet}
           />
         )}
-      </main>
+      </div>
     </CelebrationProvider>
   );
 }

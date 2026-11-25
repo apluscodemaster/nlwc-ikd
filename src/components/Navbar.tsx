@@ -298,6 +298,7 @@ export default function Navbar() {
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
+                    aria-label="Open menu"
                     className={cn(
                       "p-2.5 rounded-xl transition-all active:scale-90",
                       isScrolled
@@ -458,6 +459,7 @@ export default function Navbar() {
                       {SOCIAL_LINKS.map((social) => (
                         <a
                           key={social.label}
+                          aria-label={social.label}
                           href={social.href}
                           target="_blank"
                           rel="noopener noreferrer"

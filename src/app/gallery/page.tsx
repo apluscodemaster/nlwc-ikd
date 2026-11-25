@@ -34,7 +34,7 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="pt-0">
+      <div className="pt-0">
         <PageHeader
           title="Our Worship Experience"
           subtitle="Relive moments from our Church Services and Special Gatherings."
@@ -117,7 +117,7 @@ export default function GalleryPage() {
         </section>
 
         <AutoScrollGallery />
-      </main>
+      </div>
     </div>
   );
 }

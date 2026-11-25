@@ -8,7 +8,15 @@ import ShareButton from "@/components/shared/ShareButton";
 import TranscriptContent from "@/components/shared/TranscriptContent";
 import { Calendar, User, ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
-import { SITE_URL, OG_IMAGE, stripHtml, metaDescription } from "@/utils/seo";
+import {
+  SITE_URL,
+  OG_IMAGE,
+  PUBLISHER,
+  stripHtml,
+  metaDescription,
+  toIsoDate,
+} from "@/utils/seo";
+import JsonLd from "@/components/seo/JsonLd";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -70,8 +78,44 @@ export default async function SermonPage({ params }: Props) {
     notFound();
   }
 
+  const cleanTitle = stripHtml(sermon.title);
+  const pageUrl = `${SITE_URL}/sermons/${slug}`;
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: cleanTitle,
+    description: metaDescription(
+      sermon.excerpt || `Read the Sunday message "${cleanTitle}".`,
+    ),
+    datePublished: toIsoDate(sermon.date),
+    dateModified: toIsoDate(sermon.date),
+    inLanguage: "en",
+    author: sermon.speaker
+      ? { "@type": "Person", name: sermon.speaker }
+      : PUBLISHER,
+    publisher: PUBLISHER,
+    image: OG_IMAGE,
+    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+    url: pageUrl,
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Sermons",
+        item: `${SITE_URL}/sermons`,
+      },
+      { "@type": "ListItem", position: 3, name: cleanTitle, item: pageUrl },
+    ],
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <JsonLd data={[articleLd, breadcrumbLd]} />
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
         <SectionContainer className="py-8 md:py-12">
@@ -147,6 +191,6 @@ export default async function SermonPage({ params }: Props) {
           </a> */}
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

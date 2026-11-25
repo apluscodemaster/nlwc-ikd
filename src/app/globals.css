@@ -316,6 +316,13 @@ a.rtTag,
     animation: none;
     transform: none;
   }
+  /* Decorative loops stop for visitors who ask for less motion. Spinners
+     (animate-spin) keep turning: they mean "loading", not decoration. */
+  .animate-bounce,
+  .animate-ping,
+  .animate-pulse {
+    animation: none;
+  }
 }
 
 /*

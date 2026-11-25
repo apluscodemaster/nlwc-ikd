@@ -199,6 +199,17 @@ export function PopupModal({
                   placeholder="/FJR-flag-caricature.png"
                 />
               </Field>
+              <Field
+                label="Image description"
+                hint="What the image says or shows, read aloud by screen readers, e.g. “Festival of Jesus' Reign, 23 December 2026, 5pm at Life Theological Seminary”."
+              >
+                <input
+                  className={INPUT}
+                  value={p.imageAlt ?? ""}
+                  onChange={(e) => set("imageAlt", e.target.value)}
+                  maxLength={200}
+                />
+              </Field>
               <Field label="Layout">
                 <select className={INPUT} value={p.layout} onChange={(e) => set("layout", e.target.value as SitePopup["layout"])}>
                   <option value="modal">Centred dialog (dims the page)</option>

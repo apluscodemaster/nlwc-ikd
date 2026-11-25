@@ -27,7 +27,6 @@ import {
 import {
   fetchVideoMessages,
   VIDEO_MESSAGES_QUERY_KEY,
-  type VideoMessage,
 } from "@/lib/videoMessagesClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -220,7 +219,7 @@ export default function MediaPage() {
   ];
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="Media Resources"
         subtitle="Grow in your faith with our collection of sermon videos, audio messages, and spiritual study resources."
@@ -349,6 +348,6 @@ export default function MediaPage() {
           ))}
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

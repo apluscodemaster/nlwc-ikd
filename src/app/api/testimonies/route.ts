@@ -60,7 +60,7 @@ function createTransporter() {
   const port = Number(process.env.SMTP_PORT) || 465;
   const user = process.env.CHURCH_EMAIL_ADDRESS;
 
-  console.log(`📡 Initializing SMTP transporter: ${host}:${port} (${user})`);
+  console.info(`📡 Initializing SMTP transporter: ${host}:${port} (${user})`);
 
   return nodemailer.createTransport({
     host,
@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
             : `[Bot check not passed] ${adminEmail.subject}`,
         });
         emails.adminNotified = true;
-        console.log(
+        console.info(
           `✅ Admin notification sent for testimony from ${data.name}`,
         );
       } catch (adminError) {
@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
             ...replyEmail,
           });
           emails.autoReplySent = true;
-          console.log(`✅ Auto-reply sent to ${data.email}`);
+          console.info(`✅ Auto-reply sent to ${data.email}`);
         } catch (replyError) {
           emails.autoReplySkipped = "send-failed";
           console.error(

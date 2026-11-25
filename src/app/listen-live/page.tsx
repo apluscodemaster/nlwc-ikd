@@ -22,8 +22,6 @@ import {
   Volume2,
   VolumeX,
   Loader2,
-  Download,
-  ChevronDown,
   Sparkles,
   Repeat2,
   Shuffle,
@@ -252,7 +250,7 @@ export default function ListenLivePage() {
   }, []);
 
   return (
-    <main>
+    <div>
       {/* Hidden Audio Element */}
       <audio
         ref={audioRef}
@@ -704,6 +702,6 @@ export default function ListenLivePage() {
       )}
 
       {/* First Time Streaming User Popup */}
-    </main>
+    </div>
   );
 }

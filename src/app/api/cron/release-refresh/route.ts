@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     ...TARGETS_BY_TYPE.transcript,
   ]);
 
-  console.log(
+  console.info(
     `[cron/release-refresh] wp-cron ${wpCron}; revalidated`,
     revalidated.join(", "),
   );

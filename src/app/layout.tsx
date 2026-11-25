@@ -16,6 +16,7 @@ import Providers from "@/components/Providers";
 import { ServiceWorkerProvider } from "@/components/ServiceWorkerProvider";
 import { OfflineDetector } from "@/components/OfflineDetector";
 import GoogleTranslate from "@/components/GoogleTranslate";
+import JsonLd from "@/components/seo/JsonLd";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -80,9 +81,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
   icons: {
     // Square PNG icons (see public/icons) — the apple-touch icon previously
     // pointed at a 512x221 wordmark, which iOS stretched into a blurry square.
@@ -99,7 +97,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   const churchSchemaData = {
     "@context": "https://schema.org",
-    "@type": "Church",
+    // A church (a place of worship) and the organisation behind it, so both the
+    // place fields (address, hours) and the organisation ones (email,
+    // founder) are valid.
+    "@type": ["Church", "Organization"],
     "@id": SITE_URL,
     name: "The New & Living Way Church",
     alternateName: "NLWC Ikorodu",
@@ -113,7 +114,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       streetAddress: "15, Alhaji Jimoh Olosugbo Close, Off Kokoro Abu Street",
       addressLocality: "Ikorodu",
       addressRegion: "Lagos",
-      postalCode: "234",
       addressCountry: "NG",
     },
     openingHoursSpecification: [
@@ -141,7 +141,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       "https://www.facebook.com/nlwcikorodu",
       "https://www.youtube.com/@nlwcikorodu",
       "https://www.instagram.com/nlwcikorodu",
-      "https://www.whatsapp.com",
     ],
     foundingDate: "2016",
     founder: {
@@ -153,14 +152,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={jost.variable} suppressHydrationWarning={true}>
       <head>
-        {/* Schema.org JSON-LD for Local Business & Church */}
-        <Script
-          id="church-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(churchSchemaData),
-          }}
-        />
+        {/* Schema.org JSON-LD: a plain <script> in the server HTML (next/script
+            injected it from the browser, where crawlers may not see it). */}
+        <JsonLd data={churchSchemaData} />
       </head>
       {/* Google tag (gtag.js) - deferred to lazyOnload for better page performance */}
       <Script

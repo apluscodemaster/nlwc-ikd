@@ -57,6 +57,7 @@ export function FilterTag({
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
       {label}
       <button
+        aria-label={`Remove ${label} filter`}
         onClick={onRemove}
         className="w-4 h-4 rounded-full bg-primary/20 hover:bg-primary/30 flex items-center justify-center transition-colors"
       >

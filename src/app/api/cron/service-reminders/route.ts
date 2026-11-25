@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         }),
       );
     }
-    console.log("[cron/service-reminders]", reminder.title, counts);
+    console.info("[cron/service-reminders]", reminder.title, counts);
     return NextResponse.json({ due: true, reminder: reminder.title, ...counts });
   } catch (err) {
     console.error("[cron/service-reminders] failed:", err);

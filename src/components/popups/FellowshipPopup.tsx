@@ -20,6 +20,7 @@ import type { FellowshipCenter } from "@/data/centers";
 import { haversineKm } from "@/utils/mapCoordinates";
 import { useFellowshipCenters } from "@/hooks/useFellowshipCenters";
 import type { SitePopup } from "@/lib/sitePopups";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { PopupCloseReason } from "./SitePopups";
 
 
@@ -69,6 +70,7 @@ export default function FellowshipPopup({
   const { centers } = useFellowshipCenters({ enabled: visible });
 
   const dismiss = useCallback(() => onClose("closed"), [onClose]);
+  const panelRef = useDialogA11y(visible, dismiss);
 
   // "Yes, I belong to one" answers the question.
   const handleAlreadyMember = useCallback(() => onClose("completed"), [onClose]);
@@ -137,6 +139,10 @@ export default function FellowshipPopup({
             exit={{ scale: 0.92, opacity: 0, y: 40 }}
             transition={{ type: "spring", damping: 28, stiffness: 380 }}
             onClick={(e) => e.stopPropagation()}
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Find a house fellowship near you"
             className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden"
           >
             {/* ─── Step: Ask ──────────────────────────────────────── */}

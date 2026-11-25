@@ -460,7 +460,7 @@ export default function AdminLayout({
             {/* Logged-in user */}
             <div className="flex items-center gap-3 px-3 py-2">
               {user.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element -- avatar
+                 
                 // comes from an arbitrary provider host; not worth a
                 // next.config remotePatterns entry for one 32px image.
                 <img
@@ -628,9 +628,9 @@ export default function AdminLayout({
         </AnimatePresence>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
+        <div className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
           {children}
-        </main>
+        </div>
 
         {/* ── Session Expired Overlay ── */}
         <AnimatePresence>

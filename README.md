@@ -495,7 +495,7 @@ npm install
 ```
 
 3. Set up environment variables:
-   Create a `.env.local` file in the root directory with the following variables:
+   Copy `.env.example` to `.env.local` and fill it in (`.env.example` lists every variable the app reads, grouped and commented). The main ones:
 
 ```env
 # 🌐 Site & WordPress
@@ -923,6 +923,14 @@ Admin Login (Firebase Authentication; API calls carry the ID token)
 - **[.github/workflows/ci.yml](./.github/workflows/ci.yml)** — CI pipeline
 - **[supabase/migrations/](./supabase/migrations/)** — quiz database schema
 - Most design decisions are documented in comments next to the code they explain
+
+## 🧰 Development checks
+
+- `npm run lint` / `npm run typecheck` / `npm test`: what CI runs on every push to main or mobile-dev and on every PR (`.github/workflows/ci.yml`). CI fails on any lint error, or on more warnings than the current count in `lint:ci`: when you fix warnings, lower that number.
+- `npm install` turns on the pre-commit hook in `.githooks/`, which lints the files you commit (skip once with `git commit --no-verify`).
+- `npm run format` formats with Prettier (`format:check` to only check).
+- Server errors: every uncaught error in a page, route or server action is written to the function logs as one JSON line (`src/instrumentation.ts`); handled ones can use `reportError` from `lib/devLog`. An error tracker such as Sentry plugs into the same two places.
+- Dependabot opens grouped dependency-update PRs weekly.
 
 ## 🤝 Contributing
 

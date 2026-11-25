@@ -105,6 +105,7 @@ export default function DevotionalArchiveGrid() {
             </div>
             <input
               type="text"
+              aria-label="Search devotionals"
               placeholder="Search devotionals by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

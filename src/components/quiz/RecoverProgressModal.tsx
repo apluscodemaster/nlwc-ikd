@@ -147,6 +147,7 @@ export default function RecoverProgressModal({
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                aria-label="Your name"
                 placeholder="Your name"
                 autoFocus
                 maxLength={30}
@@ -186,6 +187,7 @@ export default function RecoverProgressModal({
                 type="text"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
+                aria-label="Your answer to the security question"
                 placeholder="Your answer"
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && verify()}
@@ -226,6 +228,7 @@ export default function RecoverProgressModal({
                 type="text"
                 value={code}
                 onChange={(e) => setCode(formatRecoveryCode(e.target.value))}
+                aria-label="Recovery code"
                 placeholder="e.g. KJ7Q-4PXW"
                 autoFocus
                 autoCapitalize="characters"

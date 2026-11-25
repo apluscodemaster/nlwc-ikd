@@ -159,6 +159,7 @@ export default function UsernamePrompt({
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                aria-label="Your name"
                 placeholder="Your name"
                 autoFocus
                 maxLength={30}

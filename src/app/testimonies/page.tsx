@@ -6,7 +6,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import PageHeader from "@/components/shared/PageHeader";
 import SectionContainer from "@/components/shared/SectionContainer";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Send,
@@ -488,7 +488,7 @@ export default function TestimoniesPage() {
   }, []);
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="Testimonies"
         subtitle="Share what God has done and be inspired by the testimonies of others in the NLWC Ikorodu family."
@@ -659,6 +659,6 @@ export default function TestimoniesPage() {
           </>
         )}
       </SectionContainer>
-    </main>
+    </div>
   );
 }

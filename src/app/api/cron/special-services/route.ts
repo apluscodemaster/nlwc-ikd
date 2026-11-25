@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // by hand instead.
     const settings = await getScheduleSettings();
     if (!settings.autoAddSpecials) {
-      console.log("[cron/special-services] auto-add is switched off; skipped");
+      console.info("[cron/special-services] auto-add is switched off; skipped");
       return NextResponse.json({ skipped: "auto-add is switched off" });
     }
 
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     const summary = created.map((c) => `${c.date} ${c.label}`);
-    console.log(
+    console.info(
       `[cron/special-services] ${target.year}-${String(target.month + 1).padStart(2, "0")}: added ${created.length}`,
       summary,
     );
