@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getDevotionalById } from "@/lib/devotionals";
+import { loadDevotional } from "./data";
 import { SITE_URL, OG_IMAGE, stripHtml, metaDescription } from "@/utils/seo";
 
 export async function generateMetadata({
@@ -11,7 +11,7 @@ export async function generateMetadata({
 
   let devotional = null;
   try {
-    devotional = await getDevotionalById(id);
+    devotional = await loadDevotional(id);
   } catch {
     // Firestore unavailable — fall back to generic metadata below.
   }
