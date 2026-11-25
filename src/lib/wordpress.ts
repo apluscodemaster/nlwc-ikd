@@ -6,6 +6,7 @@
 const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmin.nlwc.church"}/wp-json/wp/v2`;
 
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
+import { formatDate } from "@/lib/date-utils";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { logError } from "@/lib/devLog";
 import { retryDelayMs } from "@/utils/retryDelay";
@@ -626,17 +627,6 @@ export function extractSpeaker(content: string): string | undefined {
   return undefined;
 }
 
-/**
- * Format date for display
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 /**
  * Get featured image URL from embedded data

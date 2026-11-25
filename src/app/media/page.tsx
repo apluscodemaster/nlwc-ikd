@@ -24,6 +24,11 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import {
+  fetchVideoMessages,
+  VIDEO_MESSAGES_QUERY_KEY,
+  type VideoMessage,
+} from "@/lib/videoMessagesClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MediaItem {
@@ -34,22 +39,6 @@ interface MediaItem {
   thumbnail?: string;
   type: "audio" | "video";
   href: string;
-}
-
-interface VideoMessage {
-  id: string;
-  title?: string;
-  minister?: string;
-  date: string;
-  youtubeUrl: string;
-}
-
-// ─── Fetchers ─────────────────────────────────────────────────────────────────
-async function fetchVideoMessages(): Promise<VideoMessage[]> {
-  const res = await fetch("/api/video-messages");
-  if (!res.ok) throw new Error("Failed to fetch video messages");
-  const data = await res.json();
-  return data.messages ?? [];
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
@@ -152,7 +141,7 @@ export default function MediaPage() {
     isLoading: videoLoading,
     error: videoError,
   } = useQuery({
-    queryKey: ["video-messages"],
+    queryKey: VIDEO_MESSAGES_QUERY_KEY,
     queryFn: fetchVideoMessages,
     staleTime: 5 * 60 * 1000,
   });

@@ -28,24 +28,13 @@ import {
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
 import { videoSlug, findVideoBySlug } from "@/lib/videoSlug";
-
-interface VideoMessage {
-  date: string;
-  youtubeUrl: string;
-  title?: string;
-  minister?: string;
-  serviceCategory?: string;
-  id: string;
-}
+import {
+  fetchVideoMessages,
+  VIDEO_MESSAGES_QUERY_KEY,
+  type VideoMessage,
+} from "@/lib/videoMessagesClient";
 
 const VIDEOS_PER_PAGE = 12;
-
-async function fetchVideoMessages(): Promise<VideoMessage[]> {
-  const response = await fetch("/api/video-messages");
-  if (!response.ok) throw new Error("Failed to fetch video messages");
-  const data = await response.json();
-  return data.messages;
-}
 
 // =============================================================================
 // Progress bar indicator on video cards
@@ -117,7 +106,7 @@ export default function VideoMessagesContent({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["video-messages"],
+    queryKey: VIDEO_MESSAGES_QUERY_KEY,
     queryFn: fetchVideoMessages,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

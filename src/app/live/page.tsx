@@ -29,22 +29,11 @@ import {
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
-
-interface VideoMessage {
-  date: string;
-  youtubeUrl: string;
-  title?: string;
-  minister?: string;
-  serviceCategory?: string;
-  id: string;
-}
-
-async function fetchVideoMessages(): Promise<VideoMessage[]> {
-  const response = await fetch("/api/video-messages");
-  if (!response.ok) throw new Error("Failed to fetch video messages");
-  const data = await response.json();
-  return data.messages;
-}
+import {
+  fetchVideoMessages,
+  VIDEO_MESSAGES_QUERY_KEY,
+  type VideoMessage,
+} from "@/lib/videoMessagesClient";
 
 // =============================================================================
 // Progress bar overlay for video cards
@@ -95,7 +84,7 @@ export default function LivePage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["video-messages"],
+    queryKey: VIDEO_MESSAGES_QUERY_KEY,
     queryFn: fetchVideoMessages,
     staleTime: 5 * 60 * 1000,
   });

@@ -48,25 +48,15 @@ import {
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
+import {
+  fetchVideoMessages,
+  VIDEO_MESSAGES_QUERY_KEY,
+  type VideoMessage,
+} from "@/lib/videoMessagesClient";
 
 // =============================================================================
 // Video Messages fetch
 // =============================================================================
-interface VideoMessage {
-  date: string;
-  youtubeUrl: string;
-  title?: string;
-  minister?: string;
-  serviceCategory?: string;
-  id: string;
-}
-
-async function fetchVideoMessages(): Promise<VideoMessage[]> {
-  const response = await fetch("/api/video-messages");
-  if (!response.ok) throw new Error("Failed to fetch video messages");
-  const data = await response.json();
-  return data.messages;
-}
 
 // =============================================================================
 // Tabs config
@@ -180,7 +170,7 @@ export default function MediaHub() {
     isLoading: isVideoLoading,
     error: videoError,
   } = useQuery({
-    queryKey: ["video-messages"],
+    queryKey: VIDEO_MESSAGES_QUERY_KEY,
     queryFn: fetchVideoMessages,
     staleTime: 5 * 60 * 1000,
     enabled: activeTab === "video" || openedTabs.has("video"),
