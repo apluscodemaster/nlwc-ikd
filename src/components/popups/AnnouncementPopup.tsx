@@ -183,6 +183,10 @@ function ImageOnly({
       draggable={false}
     />
   );
+  // A visible button (the pop-up's "Main button text") on the image, so it's
+  // clear the image leads somewhere. It sits inside the moving container, so
+  // it travels with the image.
+  const hasButton = !!popup.ctaUrl && !!popup.ctaLabel;
   const linked = popup.ctaUrl ? (
     <Link
       href={popup.ctaUrl}
@@ -190,6 +194,9 @@ function ImageOnly({
       rel={external ? "noopener noreferrer" : undefined}
       onClick={() => onClose("completed")}
       aria-label={popup.ctaLabel || alt}
+      // With the button below, the image is a second (mouse-only) way in.
+      tabIndex={hasButton ? -1 : undefined}
+      aria-hidden={hasButton || undefined}
       className="block"
     >
       {picture}
@@ -197,6 +204,18 @@ function ImageOnly({
   ) : (
     picture
   );
+  const button = hasButton ? (
+    <Link
+      href={popup.ctaUrl}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      onClick={() => onClose("completed")}
+      className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs sm:text-sm font-bold text-white shadow-lg shadow-black/30 ring-2 ring-white/90 hover:bg-primary/90 active:scale-95 transition"
+    >
+      {popup.ctaLabel}
+      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    </Link>
+  ) : null;
   const close = (
     <button
       onClick={() => onClose("closed")}
@@ -226,6 +245,7 @@ function ImageOnly({
               <div className="popup-walk-bob relative pt-3">
                 {close}
                 {linked}
+                {button}
               </div>
             </div>
           </motion.div>
@@ -251,6 +271,7 @@ function ImageOnly({
             <div className="relative">
               {close}
               {linked}
+              {button}
             </div>
           </motion.div>
         ) : (
@@ -275,6 +296,7 @@ function ImageOnly({
             >
               {close}
               {linked}
+              {button}
             </motion.div>
           </motion.div>
         ))}
