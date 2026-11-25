@@ -41,6 +41,8 @@ import {
   Timer,
 } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
+import { AdminThemeToggle, useAdminTheme } from "@/components/admin/AdminThemeToggle";
+import "./admin-theme.css";
 
 // ──────────────────────────────────────────────
 // Auth Context — shared across all /admin routes
@@ -156,6 +158,8 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Light / dark / system, admin pages only (see AdminThemeToggle).
+  const theme = useAdminTheme();
 
   // ── Auth state ──
   const [user, setUser] = useState<User | null>(null);
@@ -431,6 +435,7 @@ export default function AdminLayout({
 
           {/* User info + footer */}
           <div className="p-4 border-t border-gray-100 space-y-3">
+            <AdminThemeToggle mode={theme.mode} setMode={theme.setMode} />
             {/* Logged-in user */}
             <div className="flex items-center gap-3 px-3 py-2">
               {user.photoURL ? (
@@ -495,6 +500,7 @@ export default function AdminLayout({
             <span className="text-sm font-bold text-gray-900">NLWC Admin</span>
           </div>
           <div className="flex items-center gap-2">
+            <AdminThemeToggle mode={theme.mode} setMode={theme.setMode} compact />
             <button
               onClick={logout}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"

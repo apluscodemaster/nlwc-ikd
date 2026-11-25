@@ -273,7 +273,9 @@ export default function PopupsAdminPage() {
         />
       )}
 
-      {/* The real pop-up, as visitors see it (nothing is recorded). */}
+      {/* The real pop-up, as visitors see it (nothing is recorded); kept in
+          the site's light look when the admin is in dark mode. */}
+      <div data-admin-light>
       {preview &&
         (preview.kind === "fellowship" ? (
           <FellowshipPopup popup={preview} open onClose={closePreview} />
@@ -287,6 +289,7 @@ export default function PopupsAdminPage() {
         ) : (
           <AnnouncementPopup popup={preview} open onClose={closePreview} />
         ))}
+      </div>
     </div>
   );
 }
