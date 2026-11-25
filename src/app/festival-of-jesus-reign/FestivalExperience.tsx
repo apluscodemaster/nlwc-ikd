@@ -6,6 +6,7 @@ import { m as motion } from "framer-motion";
 import {
   CalendarPlus,
   MapPin,
+  Loader2,
   Music2,
   Pause,
   Phone,
@@ -108,7 +109,7 @@ function useCountdown() {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function FestivalExperience({ venueLine }: { venueLine: string }) {
-  const { playing, toggle, analyserRef } = useOverture();
+  const { playing, loading, toggle, analyserRef } = useOverture(FESTIVAL.soundtrack);
   const countdown = useCountdown();
   const bars = useMemo(() => Array.from({ length: BARS }, (_, i) => skyline(i)), []);
   const barRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -226,8 +227,14 @@ export default function FestivalExperience({ venueLine }: { venueLine: string })
                 aria-pressed={playing}
                 className={`${styles.btn} ${styles.btnGold}`}
               >
-                {playing ? <Pause className="w-5 h-5" /> : <Music2 className="w-5 h-5" />}
-                {playing ? "Stop the sound" : "Play the sound"}
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : playing ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Music2 className="w-5 h-5" />
+                )}
+                {playing ? "Pause the sound" : "Play the sound"}
               </button>
               <button
                 type="button"

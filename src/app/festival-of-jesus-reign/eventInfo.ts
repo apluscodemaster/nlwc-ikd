@@ -23,6 +23,9 @@ export const FESTIVAL = {
   phoneTel: "+2348137436770",
   hosts: ["Life in the Spirit Ministries", "The New & Living Way Church, Ikorodu"],
   banner: "/FJR-flag-caricature.png",
+  /** "Unreserved Praise" by Toluwanisings: the page's Play the sound track (loops). */
+  soundtrack:
+    "https://res.cloudinary.com/ds83mhjcm/video/upload/v1795636769/Unreserved_Praise_-_Toluwanisings_xuktgk.mp3",
   /** The banner on its pole, transparent around it (3:2). */
   flag: "https://res.cloudinary.com/ds83mhjcm/image/upload/v1795635145/festival_flag_sweeping_billowing_transparent_edxswl.webp",
   /** Cut-out characters on their way to the festival (2:3, transparent). */
