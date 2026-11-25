@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: ErrorBoundaryProps) {
   }, [error]);
 
   return (
-    <html>
+    <html lang="en">
       <body>
         <div className="min-h-screen bg-linear-to-br from-red-50 to-red-100 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">

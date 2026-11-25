@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Sunday School Manuals",
   description:
     "Access Sunday School study materials and teaching resources from New and Living Way Church, Ikorodu.",
+  alternates: { canonical: "/manuals" },
 };
 
 export default function ManualsPage() {
