@@ -191,10 +191,12 @@ export default function SermonsPageContent() {
   // GlobalAudioProvider now — it owns the element, so it can save reliably even
   // after this list unmounts.
 
-  // Debounce search
+  // Debounce search. The box keeps exactly what was typed (cleaning it on
+  // every keystroke trimmed the space just typed, so a second word could
+  // never be started); the query is cleaned up when it's sent.
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(search);
+      setDebouncedSearch(normalizeSearchQuery(search));
       setPage(1);
     }, 400);
     return () => clearTimeout(timer);
@@ -516,7 +518,7 @@ export default function SermonsPageContent() {
               type="text"
               placeholder="Search messages by title or speaker..."
               value={search}
-              onChange={(e) => setSearch(normalizeSearchQuery(e.target.value))}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-xl sm:rounded-2xl border border-gray-200 bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 shadow-sm placeholder:text-gray-400 text-sm sm:text-base"
               id="sermon-search"
             />
