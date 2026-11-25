@@ -44,8 +44,10 @@ export function isGoogleMapsUrl(url: string): boolean {
   const host = u.hostname.toLowerCase();
   if (host === "maps.app.goo.gl") return true;
   if (host === "goo.gl") return u.pathname.startsWith("/maps");
-  if (/^maps\.google\.[a-z.]+$/.test(host)) return true;
-  if (/^(www\.)?google\.[a-z.]+$/.test(host)) {
+  // google.<country domain> only (google.com, google.ng, google.co.uk,
+  // google.com.ng). "[a-z.]+" also let through maps.google.evil.com.
+  if (/^maps\.google\.(?:com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/.test(host)) return true;
+  if (/^(www\.)?google\.(?:com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})$/.test(host)) {
     return u.pathname.startsWith("/maps");
   }
   // Google's cookie-consent interstitial, which wraps the real maps URL.

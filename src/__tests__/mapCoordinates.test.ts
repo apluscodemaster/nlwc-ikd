@@ -70,6 +70,8 @@ describe("isGoogleMapsUrl", () => {
     "https://example.com/maps",
     "https://www.google.com/search?q=maps",
     "https://goo.gl/xyz",
+    "https://maps.google.evil.com/x",
+    "https://www.google.com.evil.io/maps/x",
     "file:///etc/passwd",
     "not a url",
   ])("rejects %s", (url) => expect(isGoogleMapsUrl(url)).toBe(false));

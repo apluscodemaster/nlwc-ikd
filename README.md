@@ -114,7 +114,7 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - **Email**: Nodemailer (SMTP via One.com)
 - **UI Components**: Radix UI primitives + shadcn/ui + Lucide React icons
 - **Bot Protection**: Cloudflare Turnstile
-- **Media**: Cloudinary (image hosting) + Unsplash API
+- **Media**: Cloudinary (image hosting) + Unsplash (placeholder images)
 - **PWA**: Service Worker with offline fallback
 
 ## 📂 Project Structure
@@ -603,7 +603,6 @@ BIBLE_API_BASE=https://rest.api.bible   # optional; this is the default
 # 🎥 Live stream & misc
 NEXT_PUBLIC_YOUTUBE_CHANNEL_ID=your_channel_id   # fallback when the sheet has no stream link
 NEXT_PUBLIC_WAYSTREAM_EMBED_URL=your_waystream_embed_url
-NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_key
 ```
 
 **Security Notes:**
