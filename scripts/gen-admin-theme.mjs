@@ -139,6 +139,36 @@ html.admin-dark body :where(.via-white):not(:where([data-admin-light] *)) {
 html.admin-dark body :where(.to-white):not(:where([data-admin-light] *)) {
   --tw-gradient-to: ${SURFACE};
 }
+/*
+ * Charts drawn in SVG with fixed colours (components/admin/dashboard/charts:
+ * INK, INK2, MUTED, GRID, BASELINE, SURFACE; the quiz ring track). CSS beats
+ * SVG presentation attributes, so these follow the dark theme.
+ */
+html.admin-dark body svg :is([fill="#0b0b0b"], [fill="#111827"]):not(:where([data-admin-light] *)) {
+  fill: #eceef2;
+}
+html.admin-dark body svg [fill="#52514e"]:not(:where([data-admin-light] *)) {
+  fill: #c3c7cf;
+}
+html.admin-dark body svg [fill="#898781"]:not(:where([data-admin-light] *)) {
+  fill: #9aa1ae;
+}
+html.admin-dark body svg [fill="#e1e0d9"]:not(:where([data-admin-light] *)) {
+  fill: #2a2f39;
+}
+html.admin-dark body svg :is([stroke="#e1e0d9"], [stroke="#f1f5f9"], [stroke="#e5e7eb"]):not(:where([data-admin-light] *)) {
+  stroke: #2a2f39;
+}
+html.admin-dark body svg [stroke="#c3c2b7"]:not(:where([data-admin-light] *)) {
+  stroke: #3a404c;
+}
+html.admin-dark body svg :is([stroke="#ffffff"], [stroke="#fff"]):not(:where([data-admin-light] *)) {
+  stroke: ${SURFACE};
+}
+/* SVG text with no colour of its own is drawn black. */
+html.admin-dark body svg text:not([fill]):not(:where([data-admin-light] *)) {
+  fill: #cdd1d9;
+}
 html.admin-dark body :where(input, select, textarea)::placeholder {
   color: #6b7280;
 }
