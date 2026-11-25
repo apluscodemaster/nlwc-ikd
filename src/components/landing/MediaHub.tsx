@@ -5,7 +5,6 @@ import React, {
   useRef,
   useCallback,
   useEffect,
-  useMemo,
 } from "react";
 import Link from "next/link";
 import SectionLabel from "@/components/shared/SectionLabel";
@@ -15,10 +14,6 @@ import {
   ArrowRight,
   Headphones,
   X,
-  SkipBack,
-  SkipForward,
-  Volume2,
-  VolumeX,
   Loader2,
   Youtube,
   FileText,
@@ -44,7 +39,6 @@ import {
   saveMediaProgress,
   getMediaProgress,
   clearMediaProgress,
-  formatProgressTime,
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";

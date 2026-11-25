@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { m as motion } from "framer-motion";
-import { Clock, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface QuizTimerProps {
   totalSeconds: number;

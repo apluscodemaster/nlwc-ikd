@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { ResourceLink } from "./ResourceLink";
 import { Button } from "@/components/ui/button";
-import type { AnsweredQuestion, Recommendation } from "@/types/quiz";
+import type { AnsweredQuestion } from "@/types/quiz";
 
 interface MasteryReviewScreenProps {
   /** Only the correct questions from the batch */

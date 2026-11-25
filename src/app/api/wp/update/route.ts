@@ -61,7 +61,7 @@ async function updateWPPost(
       },
       body: JSON.stringify(updateBody),
     });
-  } catch (err) {
+  } catch {
     return {
       ok: false,
       status: 502,
@@ -111,7 +111,7 @@ async function updateSESermon(
       },
       body: JSON.stringify(updateBody),
     });
-  } catch (err) {
+  } catch {
     return {
       ok: false,
       status: 502,

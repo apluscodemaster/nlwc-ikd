@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, m as motion } from "framer-motion";
-import { ArrowRight, Loader2, RefreshCw, Send, Square } from "lucide-react";
+import { ArrowRight, Loader2, RefreshCw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QuestionCard from "./QuestionCard";
 import QuizProgressBar from "./QuizProgressBar";
@@ -22,7 +22,6 @@ import type {
 } from "@/types/quiz";
 import {
   loadMasteryState,
-  saveMasteryState,
   recordCorrectReview,
   computeMasteryPercent,
   type MasteryState,

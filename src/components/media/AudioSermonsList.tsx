@@ -3,7 +3,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { AnimatePresence, m as motion } from "framer-motion";
 import {
-  Search,
   Loader2,
   Headphones,
   ChevronLeft,

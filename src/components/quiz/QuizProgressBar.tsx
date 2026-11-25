@@ -2,7 +2,7 @@
 
 import React from "react";
 import { m as motion } from "framer-motion";
-import { Trophy, Target } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 interface QuizProgressBarProps {
   correct: number;

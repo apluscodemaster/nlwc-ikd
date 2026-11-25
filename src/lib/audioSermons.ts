@@ -568,7 +568,7 @@ async function searchRecentSermons(
   messageId: number,
 ): Promise<AudioSermon | null> {
   try {
-    console.log(
+    console.info(
       `[AudioSermons] Searching for sermon ${messageId} in recent sermons`,
     );
     // Only fetch first page (12 items) to minimize API load
@@ -606,7 +606,7 @@ export async function getAudioSermonDetail(
   // Not a message id at all (e.g. /sermons/audio/abc) — nothing to look up.
   if (!Number.isInteger(messageId) || messageId <= 0) return null;
 
-  console.log(`[AudioSermons] Fetching detail for sermon ${messageId}`);
+  console.info(`[AudioSermons] Fetching detail for sermon ${messageId}`);
 
   // Try WP REST API first
   const apiResult = await fetchDetailFromWpApi(messageId);
@@ -617,26 +617,26 @@ export async function getAudioSermonDetail(
   // cached "Message #<id>" page.
   if (apiResult === SERMON_NOT_FOUND) return null;
   if (apiResult) {
-    console.log(
+    console.info(
       `[AudioSermons] Successfully fetched sermon ${messageId} from API`,
     );
     return apiResult;
   }
 
-  console.log(
+  console.info(
     `[AudioSermons] API failed, falling back to scraping for sermon ${messageId}`,
   );
 
   // Fall back to scraping
   const scrapedResult = await fetchDetailFromScraping(messageId);
   if (scrapedResult) {
-    console.log(
+    console.info(
       `[AudioSermons] Successfully fetched sermon ${messageId} via scraping`,
     );
     return scrapedResult;
   }
 
-  console.log(
+  console.info(
     `[AudioSermons] Scraping failed, searching recent sermons for sermon ${messageId}`,
   );
 

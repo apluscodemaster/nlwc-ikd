@@ -460,7 +460,7 @@ export default function AdminLayout({
             {/* Logged-in user */}
             <div className="flex items-center gap-3 px-3 py-2">
               {user.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element -- avatar
+                 
                 // comes from an arbitrary provider host; not worth a
                 // next.config remotePatterns entry for one 32px image.
                 <img

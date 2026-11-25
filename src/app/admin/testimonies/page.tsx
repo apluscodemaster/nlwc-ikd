@@ -14,7 +14,6 @@ import {
   Eye,
   EyeOff,
   Calendar,
-  User,
   MessageCircleHeart,
   ShieldCheck,
   ShieldX,

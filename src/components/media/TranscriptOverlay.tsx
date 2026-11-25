@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
 import TranscriptContent from "@/components/shared/TranscriptContent";

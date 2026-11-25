@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { m as motion } from "framer-motion";
 import {
-  X,
   AlertCircle,
   Headphones,
   FileText,
   ArrowRight,
-  ChevronRight,
   CheckCircle2,
 } from "lucide-react";
 import { ResourceLink } from "./ResourceLink";

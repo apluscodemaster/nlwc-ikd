@@ -14,9 +14,7 @@ import {
   X,
   Check,
   AlertCircle,
-  GripVertical,
   BookOpen,
-  Filter,
 } from "lucide-react";
 import {
   Dialog,

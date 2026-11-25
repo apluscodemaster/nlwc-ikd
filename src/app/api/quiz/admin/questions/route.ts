@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuthActor } from "@/lib/auth";
 import { recordAudit } from "@/lib/auditLog";
-import type { QuizCategory } from "@/types/quiz";
 
 /**
  * Every handler here requires a valid admin token. The /admin UI is gated

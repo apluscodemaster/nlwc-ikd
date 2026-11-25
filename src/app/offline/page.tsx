@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { m as motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Home, Wifi, WifiOff, RotateCw, HelpCircle } from "lucide-react";
+import { Home, WifiOff, RotateCw, HelpCircle } from "lucide-react";
+import { logDebug } from "@/lib/devLog";
 import { useEffect, useState } from "react";
 
 /**
@@ -46,7 +47,7 @@ export default function OfflinePage() {
       connectivityCheckInterval = setInterval(async () => {
         const isConnected = await verifyConnectivity();
         if (isConnected) {
-          console.log(`Connection restored - navigating to ${previousPage || previousPage}`);
+          logDebug(`Connection restored - navigating to ${previousPage || previousPage}`);
           setIsOnline(true);
           if (connectivityCheckInterval) {
             clearInterval(connectivityCheckInterval);
@@ -60,14 +61,14 @@ export default function OfflinePage() {
     };
 
     const handleOnline = async () => {
-      console.log("Online event detected, verifying connectivity...");
+      logDebug("Online event detected, verifying connectivity...");
       setCheckingConnection(true);
       const isConnected = await verifyConnectivity();
       setCheckingConnection(false);
 
       if (isConnected) {
         setIsOnline(true);
-        console.log(`Connection verified - navigating to ${previousPage}`);
+        logDebug(`Connection verified - navigating to ${previousPage}`);
         setTimeout(() => {
           sessionStorage.removeItem("previousPage");
           window.location.href = previousPage || "/";

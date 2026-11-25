@@ -16,10 +16,6 @@ import {
   Play,
   Pause,
   Download,
-  Volume2,
-  VolumeX,
-  SkipBack,
-  SkipForward,
   X,
   User,
   Calendar,
@@ -33,8 +29,6 @@ import {
   RotateCcw,
   FastForward,
   Share2,
-  Repeat2,
-  Shuffle,
 } from "lucide-react";
 import { useAudioSermons, useFilterOptions } from "@/hooks/useAudioSermons";
 import { useQuery } from "@tanstack/react-query";

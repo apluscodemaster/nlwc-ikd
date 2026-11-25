@@ -27,7 +27,6 @@ import {
 import {
   fetchVideoMessages,
   VIDEO_MESSAGES_QUERY_KEY,
-  type VideoMessage,
 } from "@/lib/videoMessagesClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -15,10 +15,6 @@ if (!admin.apps.length) {
       "\n",
     );
 
-    console.log("[Firebase Admin] Initializing with config:");
-    console.log("  - projectId:", projectId ? "✓ set" : "✗ MISSING");
-    console.log("  - clientEmail:", clientEmail ? "✓ set" : "✗ MISSING");
-    console.log("  - privateKey:", privateKey ? "✓ set" : "✗ MISSING");
 
     if (!projectId || !clientEmail || !privateKey) {
       throw new Error(`Missing Firebase Admin credentials:
@@ -38,7 +34,6 @@ if (!admin.apps.length) {
 
     adminDb = admin.firestore();
     adminAuth = admin.auth();
-    console.log("✓ Firebase Admin initialized successfully");
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("✗ Firebase admin initialization failed:", errorMsg);

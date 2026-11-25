@@ -16,7 +16,6 @@ import {
   Image as ImageIcon,
   RepeatIcon,
   CalendarPlus,
-  BarChart3,
   MapPin,
   Sparkles,
 } from "lucide-react";

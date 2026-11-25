@@ -10,7 +10,6 @@ import {
   MessageCircle,
   Home,
   ExternalLink,
-  FileText,
   User,
   Clock,
 } from "lucide-react";

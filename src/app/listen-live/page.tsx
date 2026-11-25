@@ -22,8 +22,6 @@ import {
   Volume2,
   VolumeX,
   Loader2,
-  Download,
-  ChevronDown,
   Sparkles,
   Repeat2,
   Shuffle,

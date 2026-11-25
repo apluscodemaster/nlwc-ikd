@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logDebug } from "@/lib/devLog";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 /**
@@ -41,11 +42,11 @@ export function OfflineDetector({ children }: { children: React.ReactNode }) {
 
     // If connection is restored and we're on the offline page, redirect to previous page
     if (isOnline && window.location.pathname === "/offline") {
-      console.log("Connection restored, verifying connectivity...");
+      logDebug("Connection restored, verifying connectivity...");
       verifyConnectivity().then((isConnected) => {
         if (isConnected) {
           const previousPage = sessionStorage.getItem("previousPage") || "/";
-          console.log(`Connectivity verified, redirecting to ${previousPage}`);
+          logDebug(`Connectivity verified, redirecting to ${previousPage}`);
           sessionStorage.removeItem("previousPage");
           window.location.href = previousPage;
         }

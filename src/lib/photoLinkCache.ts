@@ -158,7 +158,7 @@ export async function resolveImageUrls(
 
   const pending = shareLinks.filter((l) => !urls.get(l)).length;
   if (attempted > 0 || pending > 0) {
-    console.log(
+    console.info(
       `[photoLinkCache] ${shareLinks.length} share links: resolved ${attempted} this request, ${pending} not available yet`,
     );
   }
