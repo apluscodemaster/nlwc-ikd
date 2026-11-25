@@ -1,0 +1,434 @@
+/*
+ * Festival of Jesus' Reign: "a concert at dusk".
+ * Palette from the banner: royal-indigo night, banner crimson, flagpole gold,
+ * gele blue, lace white.
+ */
+.root {
+  --night: #1b1446;
+  --night-deep: #0d0927;
+  --crimson: #e3262e;
+  --gold: #f5c451;
+  --gele: #2e5bff;
+  --lace: #fff7ec;
+  --lace-dim: rgba(255, 247, 236, 0.72);
+  --hairline: rgba(255, 247, 236, 0.14);
+
+  background: var(--night-deep);
+  color: var(--lace);
+  font-family: var(--fjr-body), system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.display {
+  font-family: var(--fjr-display), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: var(--fjr-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Stage (hero) ─────────────────────────────────────────────────────── */
+.stage {
+  position: relative;
+  isolation: isolate;
+  /* Keeps the beams and film grain on the stage. */
+  overflow: hidden;
+  min-height: calc(100svh - 4rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background:
+    radial-gradient(120% 70% at 50% 110%, rgba(227, 38, 46, 0.45), transparent 60%),
+    radial-gradient(80% 60% at 50% 0%, rgba(46, 91, 255, 0.28), transparent 70%),
+    linear-gradient(180deg, var(--night-deep) 0%, var(--night) 55%, #2a0f3a 100%);
+}
+
+/* Letterbox bars that part on load, like a film starting. */
+.letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18vh;
+  background: #05030f;
+  z-index: 30;
+  animation: letterbox-open 1.6s cubic-bezier(0.7, 0, 0.2, 1) 0.2s forwards;
+}
+.letterboxTop {
+  top: 0;
+  transform-origin: top;
+}
+.letterboxBottom {
+  bottom: 0;
+  transform-origin: bottom;
+}
+@keyframes letterbox-open {
+  to {
+    transform: scaleY(0);
+  }
+}
+
+/* Two spotlights sweeping from the floor of the stage. */
+.beam {
+  position: absolute;
+  bottom: -10%;
+  width: 70vmax;
+  height: 120vmax;
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  background: conic-gradient(
+    from 180deg at 50% 100%,
+    transparent 0deg,
+    transparent 168deg,
+    rgba(245, 196, 81, 0.55) 178deg,
+    rgba(255, 247, 236, 0.75) 180deg,
+    rgba(245, 196, 81, 0.55) 182deg,
+    transparent 192deg,
+    transparent 360deg
+  );
+  filter: blur(18px);
+  transform-origin: 50% 100%;
+}
+.beamLeft {
+  left: -25vmax;
+  animation: sweep-left 9s ease-in-out infinite alternate;
+}
+.beamRight {
+  right: -25vmax;
+  animation: sweep-right 11s ease-in-out infinite alternate;
+  background: conic-gradient(
+    from 180deg at 50% 100%,
+    transparent 0deg,
+    transparent 168deg,
+    rgba(46, 91, 255, 0.5) 178deg,
+    rgba(255, 247, 236, 0.6) 180deg,
+    rgba(46, 91, 255, 0.5) 182deg,
+    transparent 192deg,
+    transparent 360deg
+  );
+}
+@keyframes sweep-left {
+  from {
+    transform: rotate(18deg);
+  }
+  to {
+    transform: rotate(48deg);
+  }
+}
+@keyframes sweep-right {
+  from {
+    transform: rotate(-16deg);
+  }
+  to {
+    transform: rotate(-46deg);
+  }
+}
+
+/* Stage haze drifting through the lights. */
+.haze {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 25% at 30% 70%, rgba(255, 247, 236, 0.08), transparent 70%),
+    radial-gradient(35% 20% at 70% 60%, rgba(245, 196, 81, 0.07), transparent 70%);
+  animation: haze-drift 18s ease-in-out infinite alternate;
+}
+@keyframes haze-drift {
+  to {
+    transform: translate3d(4%, -3%, 0) scale(1.08);
+  }
+}
+
+/* Film grain over everything on the stage. */
+.grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 0.8s steps(4) infinite;
+}
+@keyframes grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-3%, 2%);
+  }
+  50% {
+    transform: translate(2%, -3%);
+  }
+  75% {
+    transform: translate(-2%, -1%);
+  }
+}
+
+.titleGlow {
+  /* Room for descenders (the g of Reign) inside the clipped gradient. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  background: linear-gradient(100deg, var(--gold) 0%, #ffd98a 30%, var(--crimson) 75%, #ff5a4f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 6px 30px rgba(227, 38, 46, 0.35));
+}
+
+/* ── Equalizer skyline ───────────────────────────────────────────────── */
+.eq {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26vh;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 0 2px;
+  z-index: 1;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(0deg, #000 35%, transparent);
+  mask-image: linear-gradient(0deg, #000 35%, transparent);
+}
+.eqBar {
+  flex: 1;
+  height: 100%;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(0deg, var(--crimson), var(--gold));
+  transform-origin: bottom;
+  opacity: 0.85;
+  will-change: transform;
+}
+.eqIdle .eqBar {
+  animation: eq-idle 2.4s ease-in-out infinite alternate;
+}
+@keyframes eq-idle {
+  from {
+    transform: scaleY(var(--h));
+  }
+  to {
+    transform: scaleY(calc(var(--h) * 0.7));
+  }
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3.25rem;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.btnGold {
+  background: var(--gold);
+  color: var(--night-deep);
+  box-shadow: 0 10px 40px -10px rgba(245, 196, 81, 0.7);
+}
+.btnGold:hover {
+  background: #ffd46a;
+}
+.btnGhost {
+  border: 1px solid rgba(255, 247, 236, 0.35);
+  color: var(--lace);
+}
+.btnGhost:hover {
+  background: rgba(255, 247, 236, 0.08);
+}
+
+/* ── Timecode countdown ──────────────────────────────────────────────── */
+.timecodeStrip {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(90deg, rgba(227, 38, 46, 0.12), rgba(46, 91, 255, 0.12));
+}
+.rec {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--crimson);
+  box-shadow: 0 0 12px var(--crimson);
+  animation: rec 1.2s steps(2) infinite;
+}
+@keyframes rec {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ── Ticket ──────────────────────────────────────────────────────────── */
+.ticket {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: 1.5rem;
+  background: var(--lace);
+  color: var(--night-deep);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.6);
+}
+@media (min-width: 768px) {
+  .ticket {
+    grid-template-columns: 15rem 1fr;
+  }
+}
+.stub {
+  position: relative;
+  padding: 2rem;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--crimson);
+  color: var(--lace);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+/* Perforation: a dashed tear line with half-circle notches. */
+.stub::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: -1px;
+  border-bottom: 2px dashed rgba(255, 247, 236, 0.6);
+}
+@media (min-width: 768px) {
+  .stub {
+    border-radius: 1.5rem 0 0 1.5rem;
+  }
+  .stub::after {
+    left: auto;
+    right: -1px;
+    top: 1rem;
+    bottom: 1rem;
+    border-bottom: 0;
+    border-right: 2px dashed rgba(255, 247, 236, 0.6);
+  }
+}
+.notch {
+  position: absolute;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: var(--night);
+}
+
+.label {
+  font-family: var(--fjr-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ── Banner showcase & marquee ───────────────────────────────────────── */
+.spotlightFloor {
+  background:
+    radial-gradient(50% 40% at 50% 85%, rgba(245, 196, 81, 0.22), transparent 70%),
+    radial-gradient(70% 60% at 50% 40%, rgba(46, 91, 255, 0.18), transparent 70%),
+    var(--night);
+}
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── The crowd on stage ──────────────────────────────────────────────── */
+.crowdFloor {
+  position: relative;
+  /* Own stacking context, so the glow below sits under the people but
+     above the section background. */
+  isolation: isolate;
+  padding: 0 1rem;
+}
+/* A lit stage edge for them to stand on. */
+.crowdFloor::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.75rem;
+  height: 4.5rem;
+  z-index: -1;
+  background: radial-gradient(50% 100% at 50% 50%, rgba(245, 196, 81, 0.35), transparent 70%);
+  filter: blur(6px);
+}
+.person {
+  position: relative;
+  width: min(38vw, 17rem);
+  /* The cut-outs have wide transparent sides: overlap them into a group. */
+  margin: 0 -2.5vw;
+}
+@media (min-width: 768px) {
+  .person {
+    margin: 0 -1.75rem;
+  }
+}
+/* A small spotlight pool at each person's feet. */
+.person::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -0.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+  z-index: -1;
+}
+.personBob {
+  animation: person-bob 3.4s ease-in-out infinite;
+}
+@keyframes person-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.mapFrame {
+  filter: saturate(0.85) contrast(1.05);
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letterbox {
+    display: none;
+  }
+  .beam,
+  .haze,
+  .grain,
+  .eqIdle .eqBar,
+  .rec,
+  .marquee,
+  .personBob {
+    animation: none;
+  }
+  .eqIdle .eqBar {
+    transform: scaleY(var(--h));
+  }
+}
