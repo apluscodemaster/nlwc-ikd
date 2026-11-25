@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getSpeakersList, getSeriesList } from "@/lib/audioSermons";
 import { requireAuthActor } from "@/lib/auth";
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const headers = fresh
     ? { "Cache-Control": "no-store" }
-    : { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" };
+    : { "Cache-Control": perQueryCache(600) };
 
   try {
     if (type === "series") {

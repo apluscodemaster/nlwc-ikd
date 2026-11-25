@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import {
   getSeriesList,
   getSpeakersList,
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(series, {
           headers: {
             "Cache-Control":
-              "public, s-maxage=3600, stale-while-revalidate=600",
+              perQueryCache(600),
           },
         });
       }
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(speakers, {
           headers: {
             "Cache-Control":
-              "public, s-maxage=3600, stale-while-revalidate=600",
+              perQueryCache(600),
           },
         });
       }
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(topics, {
           headers: {
             "Cache-Control":
-              "public, s-maxage=3600, stale-while-revalidate=600",
+              perQueryCache(600),
           },
         });
       }

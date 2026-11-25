@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getAllTranscripts, getTranscriptsByCategory } from "@/lib/wordpress";
 
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          "Cache-Control": perQueryCache(300),
         },
       }
     );

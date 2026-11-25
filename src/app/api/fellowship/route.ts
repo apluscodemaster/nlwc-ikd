@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 import {
@@ -130,7 +131,7 @@ export async function GET(req: NextRequest) {
       {
         headers: includeInactive
           ? { "Cache-Control": "no-store" }
-          : { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+          : { "Cache-Control": perQueryCache(60) },
       },
     );
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { getSundaySchoolManuals } from "@/lib/wordpress";
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
           // Week's Lesson" hero within ~1 minute. Pairs with the 60s Data Cache
           // window on the underlying WP fetch (getSundaySchoolManuals), so the
           // edge refetch picks up fresh data instead of a stale cache entry.
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+          "Cache-Control": perQueryCache(60),
         },
       }
     );

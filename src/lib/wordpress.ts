@@ -8,6 +8,7 @@ const WP_API_BASE = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://ikdadmi
 import { sanitizeWPText, sanitizeWPHtml } from "@/utils/sanitizeWP";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { logError } from "@/lib/devLog";
+import { retryDelayMs } from "@/utils/retryDelay";
 
 // WordPress Category IDs
 export const WP_CATEGORIES = {
@@ -369,20 +370,7 @@ export async function fetchWPPosts(
   return { posts, totalPages, total };
 }
 
-/**
- * How long to wait before retry `attempt` (1, 2, 3…) after a 429: the
- * server's Retry-After when it sends one (capped at 15 s), else 2 s, 4 s, 8 s.
- * The host rate-limits bursts (e.g. many pages building at once).
- */
-export function retryDelayMs(
-  attempt: number,
-  retryAfter: string | null,
-): number {
-  const seconds = Number(retryAfter);
-  if (retryAfter && Number.isFinite(seconds) && seconds >= 0)
-    return Math.min(15, seconds) * 1000;
-  return 1000 * 2 ** attempt;
-}
+export { retryDelayMs };
 
 const WP_ATTEMPTS = 4;
 

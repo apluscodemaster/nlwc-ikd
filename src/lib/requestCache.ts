@@ -1,3 +1,4 @@
+import { retryDelayMs } from "@/utils/retryDelay";
 /**
  * Request Deduplication Cache
  *
@@ -40,6 +41,17 @@ function isCacheValid(entry: CacheEntry): boolean {
  * the body independently. The original Response is kept in the cache as the
  * clone source and is never consumed directly.
  */
+const ATTEMPTS_ON_429 = 3;
+
+async function fetchRetrying429(url: string, options?: RequestInit): Promise<Response> {
+  let res = await fetch(url, options);
+  for (let attempt = 1; attempt < ATTEMPTS_ON_429 && res.status === 429; attempt++) {
+    await new Promise((r) => setTimeout(r, retryDelayMs(attempt, res.headers.get("retry-after"))));
+    res = await fetch(url, options);
+  }
+  return res;
+}
+
 export async function deduplicatedFetch(
   url: string,
   options?: RequestInit,
@@ -60,12 +72,18 @@ export async function deduplicatedFetch(
     REQUEST_CACHE.delete(cacheKey);
   }
 
-  // Create new promise and cache it
-  const promise = fetch(url, options).catch((error) => {
-    // Remove from cache on error to allow retries
-    REQUEST_CACHE.delete(cacheKey);
-    throw error;
-  });
+  // Create new promise and cache it. A 429 (WordPress's host rate-limits
+  // bursts) is retried a few times; a failed response is never kept, so the
+  // next caller tries again instead of reusing the failure.
+  const promise = fetchRetrying429(url, options)
+    .then((res) => {
+      if (!res.ok) REQUEST_CACHE.delete(cacheKey);
+      return res;
+    })
+    .catch((error) => {
+      REQUEST_CACHE.delete(cacheKey);
+      throw error;
+    });
 
   REQUEST_CACHE.set(cacheKey, {
     promise,

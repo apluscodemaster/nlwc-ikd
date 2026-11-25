@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 
 /**
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         ...(size ? { "Content-Length": String(size) } : {}),
-        "Cache-Control": "public, max-age=3600, s-maxage=604800",
+        "Cache-Control": perQueryCache(86400),
         "X-Content-Type-Options": "nosniff",
       },
     });

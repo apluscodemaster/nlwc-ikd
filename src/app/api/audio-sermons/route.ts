@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { getAudioSermons, getAudioSermonDetail } from "@/lib/audioSermons";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { normalizeSearchQuery } from "@/lib/utils";
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       const response = NextResponse.json(sermon);
       response.headers.set(
         "Cache-Control",
-        "public, s-maxage=3600, stale-while-revalidate=600",
+        perQueryCache(600),
       );
       return response;
     }
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=60",
+        "Cache-Control": perQueryCache(120),
       },
     });
   } catch (error) {

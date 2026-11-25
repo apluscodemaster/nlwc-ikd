@@ -32,8 +32,12 @@ export const queryPersister = createAsyncStoragePersister({
   throttleTime: 2000,
 });
 
-/** Bump to drop persisted caches whose shape changed. */
-export const PERSIST_BUSTER = "v1";
+/**
+ * Bump to drop persisted caches whose shape changed (or that hold bad data).
+ * v2: the live site's CDN had served one sermon for every /api/audio-sermons
+ * request, so phones may have saved the wrong details for many sermons.
+ */
+export const PERSIST_BUSTER = "v2";
 export const PERSIST_MAX_AGE = 7 * 24 * HOUR;
 
 let wired = false;

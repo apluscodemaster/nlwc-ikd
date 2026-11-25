@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { perQueryCache } from "@/lib/cacheHeaders";
 import { rateLimitMiddleware } from "@/lib/rateLimit";
 import { normalizeApiBibleResults } from "@/lib/bibleApi";
 
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
     {
       headers: {
         "Cache-Control":
-          "public, s-maxage=86400, stale-while-revalidate=604800",
+          perQueryCache(3600),
       },
     },
   );
