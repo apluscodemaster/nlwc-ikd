@@ -30,18 +30,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * Only administrators hold real Firebase Auth accounts. Live chat signs
-     * visitors in ANONYMOUSLY (to rate-limit posting, see below), so a
-     * signed-in request is an admin only when its provider isn't
-     * "anonymous". The server applies the same rule to API tokens
-     * (lib/auth.ts).
-     *
-     * If public accounts are ever introduced, this MUST become a custom-claim
-     * check (request.auth.token.admin == true).
+     * An administrator is an account carrying the `admin: true` custom claim
+     * (granted with scripts/admin-claims.ts). Being signed in is not enough:
+     * anyone can create an email/password account with the public API key,
+     * and live chat signs every visitor in anonymously. The server applies
+     * the same rule to API tokens (lib/auth.ts).
      */
     function isAdmin() {
-      return request.auth != null
-          && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     // ── Testimonies ─────────────────────────────────────────────────────────

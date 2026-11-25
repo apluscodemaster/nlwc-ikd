@@ -17,9 +17,8 @@ const request = {
   },
 } as unknown as NextRequest;
 
-describe("admin auth vs anonymous chat sign-ins", () => {
-  it("rejects an anonymous Firebase session (live chat), even with no ADMIN_EMAILS", async () => {
-    delete process.env.ADMIN_EMAILS;
+describe("admin auth: only accounts with the admin claim", () => {
+  it("rejects an anonymous Firebase session (live chat)", async () => {
     verifyIdToken.mockResolvedValueOnce({
       uid: "anon-1",
       firebase: { sign_in_provider: "anonymous" },
@@ -27,17 +26,38 @@ describe("admin auth vs anonymous chat sign-ins", () => {
     expect((await verifyAuthHeader(request)).isValid).toBe(false);
   });
 
-  it("still accepts a real (password) account", async () => {
-    delete process.env.ADMIN_EMAILS;
+  it("rejects a real account without the admin claim (e.g. a public sign-up)", async () => {
+    verifyIdToken.mockResolvedValueOnce({
+      uid: "stranger-1",
+      email: "stranger@example.org",
+      firebase: { sign_in_provider: "password" },
+    });
+    const result = await verifyAuthHeader(request);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toMatch(/not an administrator/);
+  });
+
+  it("does not accept a truthy-but-not-true claim", async () => {
+    verifyIdToken.mockResolvedValueOnce({
+      uid: "odd-1",
+      email: "odd@example.org",
+      admin: "yes",
+      firebase: { sign_in_provider: "password" },
+    });
+    expect((await verifyAuthHeader(request)).isValid).toBe(false);
+  });
+
+  it("accepts an account with admin: true", async () => {
     verifyIdToken.mockResolvedValueOnce({
       uid: "admin-1",
       email: "admin@example.org",
+      admin: true,
       firebase: { sign_in_provider: "password" },
     });
     const result = await verifyAuthHeader(request);
     expect(result).toMatchObject({
       isValid: true,
-      actor: { uid: "admin-1", email: "admin@example.org" },
+      actor: { uid: "admin-1", email: "admin@example.org", admin: true },
     });
   });
 });

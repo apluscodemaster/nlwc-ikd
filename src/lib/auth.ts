@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createVerify, createPublicKey } from "node:crypto";
+import { createVerify, createPublicKey, timingSafeEqual } from "node:crypto";
 import { getAdminAuth } from "@/lib/firebase-admin";
 
 /**
@@ -22,6 +22,8 @@ let certCache: { certs: Record<string, string>; expiresAt: number } | null =
 export interface AuthActor {
   uid: string;
   email: string | null;
+  /** The `admin: true` custom claim (scripts/admin-claims.ts). */
+  admin: boolean;
 }
 
 async function getGoogleSigningCerts(): Promise<Record<string, string>> {
@@ -71,7 +73,7 @@ function hasValidSignature(token: string, certPem: string): boolean {
 /**
  * Anonymous Firebase sign-ins (used by live chat to rate-limit posters) are
  * real, validly signed tokens, but never an administrator. Without this check
- * every chat visitor would pass requireAuth() while ADMIN_EMAILS is unset.
+ * a chat visitor could reach the admin check at all.
  */
 const ANONYMOUS = {
   valid: false,
@@ -88,7 +90,11 @@ async function verifyFirebaseToken(
     if (decoded.firebase?.sign_in_provider === "anonymous") return ANONYMOUS;
     return {
       valid: true,
-      actor: { uid: decoded.uid, email: decoded.email ?? null },
+      actor: {
+        uid: decoded.uid,
+        email: decoded.email ?? null,
+        admin: decoded.admin === true,
+      },
     };
   } catch (adminError) {
     const msg =
@@ -179,6 +185,7 @@ async function verifyFirebaseToken(
       actor: {
         uid: payload.sub,
         email: typeof payload.email === "string" ? payload.email : null,
+        admin: payload.admin === true,
       },
     };
   } catch {
@@ -217,31 +224,25 @@ export async function verifyAuthHeader(
   }
 
   const result = await verifyFirebaseToken(token);
-  if (result.valid && result.actor && !isAllowedAdmin(result.actor.email)) {
+  if (result.valid && result.actor && !isAllowedAdmin(result.actor)) {
     return { isValid: false, error: "This account is not an administrator" };
   }
   return { isValid: result.valid, error: result.error, actor: result.actor };
 }
 
 /**
- * Optional admin allowlist: ADMIN_EMAILS="a@x.org, b@y.org".
+ * Who counts as an administrator.
  *
  * A valid Firebase ID token only proves someone has an account in the
- * project — and Firebase lets anyone create an email/password account through
- * its public REST API (using the API key shipped to every browser) unless
- * sign-up is disabled in the console. With ADMIN_EMAILS set, only the listed
- * accounts pass. Unset keeps the previous "any account" behaviour so setting
- * this up can never lock the admins out by surprise.
+ * project, and Firebase lets anyone create an email/password account through
+ * its public REST API (the API key ships to every browser). So an account is
+ * an admin only when it carries the `admin: true` custom claim (granted with
+ * scripts/admin-claims.ts). The claim is the single source of truth:
+ * firestore.rules checks the same claim for the writes the admin pages make
+ * straight from the browser, and the admin login refuses accounts without it.
  */
-function isAllowedAdmin(email: string | null): boolean {
-  const list = process.env.ADMIN_EMAILS;
-  if (!list || !list.trim()) return true;
-  if (!email) return false;
-  const allowed = list
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return allowed.includes(email.toLowerCase());
+export function isAllowedAdmin(actor: Pick<AuthActor, "admin">): boolean {
+  return actor.admin === true;
 }
 
 /**
@@ -324,7 +325,10 @@ export function verifyWebhookSecret(request: NextRequest): {
     return { isValid: false, error: "Server configuration error" };
   }
 
-  const isValid = secret === webhookSecret;
+  const given = Buffer.from(secret);
+  const expected = Buffer.from(webhookSecret);
+  const isValid =
+    given.length === expected.length && timingSafeEqual(given, expected);
   if (!isValid) {
     return { isValid: false, error: "Invalid webhook secret" };
   }

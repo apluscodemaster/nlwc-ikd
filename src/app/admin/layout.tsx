@@ -212,7 +212,19 @@ export default function AdminLayout({
       // synchronously off the sign-in and would otherwise find no marker and
       // immediately reject the credential we just obtained.
       beginTabSession();
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      // A correct password isn't enough: anyone can create an account with
+      // the public API key. Only accounts with the admin claim get in (the
+      // API and firestore.rules check the same claim).
+      const { claims } = await cred.user.getIdTokenResult(true);
+      if (claims.admin !== true) {
+        endTabSession();
+        await signOut(auth);
+        setLoginError(
+          "This account doesn't have admin access. Ask an existing administrator to grant it.",
+        );
+        return;
+      }
       setSessionExpired(false);
       void reportAudit({ action: "login", resource: "session" });
     } catch (err: unknown) {

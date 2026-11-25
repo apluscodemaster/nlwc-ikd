@@ -105,7 +105,7 @@ A modern, fast, and beautiful web application for New and Living Way Church, Iko
 - **Data Fetching**: React Query (TanStack Query v5)
 - **Backend / CMS**: WordPress REST API (headless) + Google Sheets API
 - **Database**: Supabase (quiz sessions, leaderboard) + Firebase Firestore (quiz questions, testimonies, schedule, fellowship, live chat, devotionals)
-- **Auth**: Firebase Authentication — admin routes verify the Firebase ID token (`Authorization: Bearer <token>`), optionally restricted to `ADMIN_EMAILS`
+- **Auth**: Firebase Authentication — admin routes verify the Firebase ID token (`Authorization: Bearer <token>`), and only accounts carrying the `admin: true` custom claim pass
 - **Rate limiting**: Upstash Redis (shared across server instances) with an in-memory fallback
 - **Scheduled jobs**: Vercel Cron (`vercel.json`)
 - **CI**: GitHub Actions — lint, type-check and tests on every push/PR
@@ -543,11 +543,6 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
 VAPID_PRIVATE_KEY=your_vapid_private_key
 # VAPID_SUBJECT=mailto:you@example.org   # defaults to CHURCH_EMAIL_ADDRESS
 
-# 🔐 Admin access (optional)
-# Comma-separated emails allowed to use admin routes. Unset = any Firebase
-# account in the project counts as an admin (see Security below).
-ADMIN_EMAILS=admin1@example.org,admin2@example.org
-
 # 📊 Google Sheets API (gallery, video messages, live stream link)
 GOOGLE_SHEETS_ID=your_spreadsheet_id
 GOOGLE_SHEETS_NAME=church_gallery   # optional; gallery tab name (default shown)
@@ -643,7 +638,7 @@ CI runs `lint`, `typecheck` and `test` on every push to `main` and every pull re
 
 The app has been hardened with comprehensive security measures:
 
-- **Authentication**: admin API routes require a Firebase ID token (`Authorization: Bearer <token>`); set `ADMIN_EMAILS` to restrict them to named accounts
+- **Authentication**: admin API routes require a Firebase ID token (`Authorization: Bearer <token>`); and the account must carry the `admin: true` custom claim
 - **Rate Limiting**: per-IP sliding windows (100 req/min public, 1000 req/min authenticated, 10 req/min sensitive). With Upstash configured the counts are shared by every server instance; without it each instance counts on its own. Dynamic routes charge one shared counter (e.g. all `/api/scripture/*` lookups)
 - **Input Validation**: Zod schema validation on all forms and API inputs
 - **Database rules**: `firestore.rules` restricts what browsers may write — e.g. chat messages and testimonies must have exactly the expected fields, sizes and a current timestamp
@@ -660,7 +655,7 @@ The app has been hardened with comprehensive security measures:
 These are configured in dashboards, not in the repo:
 
 1. **Publish `firestore.rules`** — there is no Firebase deploy config in the repo. Firebase Console → Firestore → **Rules**: paste the file, test in the **Rules Playground**, then Publish.
-2. **Disable public sign-up** — Firebase Console → Authentication → **Settings → User actions**: untick **"Enable create (sign-up)"**. Firebase's REST API otherwise lets anyone create an account with the public API key, and the database rules treat any signed-in user as an admin (they can't read `ADMIN_EMAILS`).
+2. **Grant admin access** — an account is an administrator only with the `admin: true` custom claim, checked by the API, `firestore.rules` and the admin login. Manage it with `npx jiti scripts/admin-claims.ts --list | --grant <email…> | --revoke <email…>` (reads Firebase Admin credentials from `.env.local`). A change applies when the person next signs in. Accounts created through the public API key get no access.
 3. **Turnstile hostnames** — Cloudflare → Turnstile → your widget → **Hostnames**: include `ikorodu.nlwc.church` (and `localhost` for local testing).
 4. **Upstash (optional)** — Vercel → Marketplace → **Upstash Redis**, connected to the project, for shared rate limits.
 5. **`CRON_SECRET`** — required for the scheduled jobs below.
@@ -749,7 +744,7 @@ const response = await authFetch("/api/wp/publish", {
 });
 ```
 
-Equivalent raw request: `Authorization: Bearer <Firebase ID token>`. With `ADMIN_EMAILS` set, only those accounts are accepted.
+Equivalent raw request: `Authorization: Bearer <Firebase ID token>`. Only accounts with the `admin: true` custom claim are accepted.
 
 **Admin-only routes:**
 
