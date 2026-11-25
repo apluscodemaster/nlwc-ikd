@@ -35,7 +35,10 @@ export const popupInputSchema = z
       .string()
       .trim()
       .max(2000)
-      .refine((s) => s === "" || /^https:\/\/\S+$/i.test(s), "Image must be a full https:// link"),
+      .refine(
+        (s) => s === "" || /^https:\/\/\S+$/i.test(s) || /^\/[^\s?#]+\.(png|jpe?g|webp|gif|avif|svg)$/i.test(s),
+        "Image: a full https:// link, or a site file like /flyer.png",
+      ),
     ctaLabel: z.string().trim().max(60),
     ctaUrl: urlOrEmpty,
     dismissLabel: z.string().trim().max(80),
@@ -43,7 +46,7 @@ export const popupInputSchema = z
       .string()
       .trim()
       .regex(/^\d{0,15}$/, "WhatsApp number: digits only, with country code (e.g. 2348012345678)"),
-    layout: z.enum(["modal", "corner"]),
+    layout: z.enum(["modal", "corner", "walk"]),
     includePaths: z.array(path).max(30),
     excludePaths: z.array(path).max(30),
     liveOnly: z.boolean(),
@@ -55,10 +58,12 @@ export const popupInputSchema = z
     priority: z.number().int().min(-100).max(100),
   })
   .superRefine((p, ctx) => {
-    if (p.kind === "announcement" && !p.title) {
-      ctx.addIssue({ code: "custom", path: ["title"], message: "An announcement needs a title" });
+    // An announcement needs something to show: a title, or just an image.
+    if (p.kind === "announcement" && !p.title && !p.imageUrl) {
+      ctx.addIssue({ code: "custom", path: ["title"], message: "Add a title or an image" });
     }
-    if (p.kind === "announcement" && p.ctaLabel && !p.ctaUrl) {
+    // (An image-only pop-up shows no button; its image is the link, if any.)
+    if (p.kind === "announcement" && (p.title || p.message) && p.ctaLabel && !p.ctaUrl) {
       ctx.addIssue({ code: "custom", path: ["ctaUrl"], message: "Add the link the button opens (or clear the button text)" });
     }
     if (p.startsAt && p.endsAt && Date.parse(p.endsAt) <= Date.parse(p.startsAt)) {

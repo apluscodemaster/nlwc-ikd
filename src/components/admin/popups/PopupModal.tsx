@@ -111,7 +111,12 @@ export function PopupModal({
     if (image.state.uploading) return void toast.error("Please wait for the image to finish uploading");
     const data = { ...collect(), ...(publish === undefined ? {} : { active: publish }) };
     if (!data.name.trim()) return void toast.error("Give the pop-up a name");
-    if (isAnnouncement && !data.title.trim()) return void toast.error("An announcement needs a title");
+    if (isAnnouncement && !data.title.trim() && !data.imageUrl.trim()) {
+      return void toast.error("Add a title, or an image for an image-only pop-up");
+    }
+    if (data.layout === "walk" && (data.title.trim() || data.message.trim() || !data.imageUrl)) {
+      return void toast.error("“Moves across the bottom” is for image-only pop-ups: add an image and clear the title and message");
+    }
     if (!allPages && data.includePaths.length === 0) {
       return void toast.error("Add at least one page, or choose “Every page”");
     }
@@ -182,10 +187,23 @@ export function PopupModal({
           {isAnnouncement && (
             <>
               <ThumbnailField upload={image} compact label="Image (optional)" />
+              <Field
+                label="…or an image link"
+                hint="A full https:// link, or a file in the site's public folder like /FJR-flag-caricature.png. With no title or message, the pop-up is just the image."
+              >
+                <input
+                  className={INPUT}
+                  value={p.imageUrl}
+                  onChange={(e) => set("imageUrl", e.target.value.trim())}
+                  onBlur={() => p.imageUrl && image.reset(p.imageUrl)}
+                  placeholder="/FJR-flag-caricature.png"
+                />
+              </Field>
               <Field label="Layout">
                 <select className={INPUT} value={p.layout} onChange={(e) => set("layout", e.target.value as SitePopup["layout"])}>
                   <option value="modal">Centred dialog (dims the page)</option>
                   <option value="corner">Card in the bottom corner</option>
+                  <option value="walk">Moves across the bottom, left to right (image only)</option>
                 </select>
               </Field>
             </>

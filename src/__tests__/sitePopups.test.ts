@@ -65,6 +65,13 @@ describe("site pop-ups", () => {
     expect(previewPath({ includePaths: [] })).toBe("/");
   });
 
+  it("allows image-only announcements, including site files, moving across the bottom", () => {
+    const imageOnly = { ...newAnnouncement(), name: "FJR", title: "", ctaLabel: "", imageUrl: "/FJR-flag-caricature.png", layout: "walk" as const };
+    expect(popupInputSchema.safeParse(imageOnly).success).toBe(true);
+    expect(popupInputSchema.safeParse({ ...imageOnly, imageUrl: "/not-an-image.txt" }).success).toBe(false);
+    expect(popupInputSchema.safeParse({ ...imageOnly, imageUrl: "" }).success).toBe(false);
+  });
+
   it("validates admin input", () => {
     const ok = { ...newAnnouncement(), name: "Easter", title: "Easter Conference", ctaUrl: "/live" };
     expect(popupInputSchema.safeParse(ok).success).toBe(true);

@@ -44,8 +44,9 @@ export interface SitePopup {
   dismissLabel: string;
   /** WhatsApp number (digits, with country code) the built-ins contact. */
   whatsapp: string;
-  /** Centred dialog, or a card in the bottom corner. */
-  layout: "modal" | "corner";
+  /** Centred dialog, a card in the bottom corner, or (image-only) moving
+   *  across the bottom of the screen, left to right. */
+  layout: "modal" | "corner" | "walk";
 
   /** Paths it shows on ("/" is the home page only; others match the path
    *  and everything under it). Empty = every page. */

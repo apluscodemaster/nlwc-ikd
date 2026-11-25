@@ -317,3 +317,50 @@ a.rtTag,
     transform: none;
   }
 }
+
+/*
+ * Image-only pop-up with the "walk" layout (components/popups/AnnouncementPopup):
+ * it travels along the bottom of the screen from off the left edge to off the
+ * right edge, then starts again, with a slight walking bob. Hovering pauses it;
+ * with reduced motion it sits still at the bottom left.
+ */
+@keyframes popup-walk-across {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100vw);
+  }
+}
+@keyframes popup-walk-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-5px);
+  }
+}
+.popup-walk {
+  animation: popup-walk-across var(--popup-walk-duration, 22s) linear infinite;
+  will-change: transform;
+}
+.popup-walk:hover,
+.popup-walk:focus-within {
+  animation-play-state: paused;
+}
+.popup-walk-bob {
+  animation: popup-walk-bob 0.45s ease-in-out infinite alternate;
+}
+.popup-walk:hover .popup-walk-bob,
+.popup-walk:focus-within .popup-walk-bob {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .popup-walk {
+    animation: none;
+    transform: translateX(12px);
+  }
+  .popup-walk-bob {
+    animation: none;
+  }
+}
