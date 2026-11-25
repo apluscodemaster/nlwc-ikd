@@ -529,10 +529,11 @@ YOUTUBE_API_KEY=your_youtube_api_key
 # 📄 Daily devotional PDFs: S3 (nlwc-ikorodu/Daily_Devotionals/). Key of an
 # IAM user allowed s3:PutObject/GetObject/DeleteObject (+ PutObjectAcl) on
 # Daily_Devotionals/*. The bucket's region has its own setting.
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-# AWS_S3_REGION=us-east-2   # default
-# AWS_S3_BUCKET=nlwc-ikorodu # default
+# Not AWS_ACCESS_KEY_ID etc.: Netlify reserves the AWS_* names.
+S3_ACCESS_KEY_ID=your_access_key_id
+S3_SECRET_ACCESS_KEY=your_secret_access_key
+# S3_REGION=us-east-2   # default
+# S3_BUCKET=nlwc-ikorodu # default
 
 # 🔔 Service reminders (optional): web push ~30 min before each service.
 # Generate once with `node scripts/generate-vapid-keys.mjs`. Sent by the

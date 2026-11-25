@@ -52,7 +52,7 @@ async function main() {
   const s3 = s3Config();
   if (!s3)
     throw new Error(
-      "AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY missing from .env.local",
+      "S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY missing from .env.local",
     );
 
   admin.initializeApp({

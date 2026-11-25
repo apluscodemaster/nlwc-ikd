@@ -1,8 +1,10 @@
 // Server-only: minimal Amazon S3 client (PUT / DELETE / HEAD) with AWS
 // Signature Version 4, using Node's crypto, so no AWS SDK dependency.
 //
-// Config: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_REGION (default
-// us-east-2) and AWS_S3_BUCKET (default nlwc-ikorodu). The key's IAM user
+// Config: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_REGION (default
+// us-east-2) and S3_BUCKET (default nlwc-ikorodu). Not the standard AWS_*
+// names: Netlify (which runs the site on AWS Lambda) reserves those. The
+// AWS_* names are still read as a fallback for local .env files. The key's IAM user
 // only needs s3:PutObject / GetObject / DeleteObject on the prefixes it
 // writes (e.g. Daily_Devotionals/*).
 import { createHash, createHmac } from "crypto";
@@ -15,16 +17,18 @@ export interface S3Config {
 }
 
 export function s3Config(): S3Config | null {
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+  const env = (name: string) =>
+    process.env[`S3_${name}`]?.trim() || process.env[`AWS_${name}`]?.trim() || "";
+  const accessKeyId = env("ACCESS_KEY_ID");
+  const secretAccessKey = env("SECRET_ACCESS_KEY");
   if (!accessKeyId || !secretAccessKey) return null;
   return {
     accessKeyId,
     secretAccessKey,
     // The bucket is in Ohio. Its own setting, so a general AWS_REGION meant
     // for something else can never send uploads to the wrong region.
-    region: process.env.AWS_S3_REGION?.trim() || "us-east-2",
-    bucket: process.env.AWS_S3_BUCKET?.trim() || "nlwc-ikorodu",
+    region: process.env.S3_REGION?.trim() || process.env.AWS_S3_REGION?.trim() || "us-east-2",
+    bucket: process.env.S3_BUCKET?.trim() || process.env.AWS_S3_BUCKET?.trim() || "nlwc-ikorodu",
   };
 }
 
