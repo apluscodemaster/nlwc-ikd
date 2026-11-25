@@ -7,6 +7,8 @@ vi.mock("@/lib/audioSermons", () => ({
 }));
 vi.mock("@/lib/supabase", () => ({ getSupabaseAdmin: () => ({}) }));
 vi.mock("@/lib/firebase-admin", () => ({ getAdminDb: () => ({}) }));
+// No transcript title from WordPress: the title comes from the slug.
+vi.mock("@/lib/wordpress", () => ({ getTranscriptBySlug: async () => null }));
 
 import { getRecommendations } from "@/lib/quizService";
 
@@ -46,7 +48,10 @@ describe("getRecommendations", () => {
     const missing = `not-found-${Date.now()}`;
     search.mockResolvedValue({ data: [] });
     const [first] = await getRecommendations([], [{ slug: missing, category: "Bible Study" }]);
-    expect(first.listen_url).toMatch(/^\/sermons\?q=/);
+    // No matching audio: no audio link (it used to be a search page, or worse,
+    // the first search result), but the transcript is still offered.
+    expect(first.listen_url).toBeUndefined();
+    expect(first.read_url).toBe(`/transcripts/${missing}`);
     await delay(0);
     await getRecommendations([], [{ slug: missing, category: "Bible Study" }]);
     expect(search).toHaveBeenCalledTimes(3);

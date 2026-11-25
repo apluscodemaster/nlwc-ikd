@@ -1,8 +1,14 @@
 import * as admin from "firebase-admin";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { normalizeSearchQuery } from "@/lib/utils";
 import { getAudioSermonDetail, getAudioSermons } from "@/lib/audioSermons";
+import { getTranscriptBySlug } from "@/lib/wordpress";
+import {
+  matchSermonTitle,
+  plainTitle,
+  titleFromSlug,
+  titleKey,
+} from "@/lib/sermonMatch";
 import type {
   QuizQuestion,
   QuizAttempt,
@@ -148,6 +154,7 @@ export async function getRecommendations(
     // Deduplicate by slug
     const seen = new Set<string>();
     const uniqueRefs = sermonRefs.filter((r) => {
+      if (!isUsableSermonRef(r.slug)) return false;
       if (seen.has(r.slug)) return false;
       seen.add(r.slug);
       return true;
@@ -188,9 +195,7 @@ function cachedRecommendation(ref: {
   recommendationCache.set(key, { at: Date.now(), value });
   // Don't keep a fallback (WordPress was down or found nothing): retry next time.
   void value.then((r) => {
-    const fallback =
-      r.listen_url?.startsWith("/sermons?q=") ||
-      r.title?.startsWith("Audio Message #");
+    const fallback = !r.listen_url || r.title?.startsWith("Audio Message #");
     if (fallback && recommendationCache.get(key)?.value === value) {
       recommendationCache.delete(key);
     }
@@ -202,124 +207,80 @@ function cachedRecommendation(ref: {
   return value;
 }
 
+/**
+ * A sermon_ref the recommendation can be built from: a numeric audio id or a
+ * transcript slug. Some questions have a sentence in that field instead (a
+ * data-entry slip); those get no targeted recommendation.
+ */
+export function isUsableSermonRef(ref: string): boolean {
+  return /^\d+$/.test(ref) || (/^[a-z0-9][a-z0-9-]*$/i.test(ref) && ref.length <= 150);
+}
+
+const STOP_WORDS = new Set(
+  "a an the of in on at to for and or but is are was were be by with from as its it that this not no".split(" "),
+);
+
+/** The transcript's real title (the audio message has the same title). */
+async function transcriptTitle(slug: string): Promise<string | null> {
+  try {
+    const t = await getTranscriptBySlug(slug);
+    return t?.title ? plainTitle(t.title) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function recommendationForRef(ref: {
   slug: string;
   category: string;
 }): Promise<Recommendation> {
-  const isNumericId = /^\d+$/.test(ref.slug);
-
-  if (isNumericId) {
-    // sermon_ref is a numeric audio sermon ID — link directly
+  if (/^\d+$/.test(ref.slug)) {
+    // sermon_ref is a numeric audio sermon ID: link directly.
     const audioId = parseInt(ref.slug, 10);
-    const title = `Audio Message #${audioId}`;
-
-    // Try to get the actual title from WP
-    let resolvedTitle = title;
+    let title = `Audio Message #${audioId}`;
     try {
       const sermon = await getAudioSermonDetail(audioId);
-      if (sermon && sermon.title) {
-        resolvedTitle = sermon.title;
-      }
+      if (sermon?.title) title = sermon.title;
     } catch {
-      // Use fallback title
+      // keep the fallback title
     }
-
     return {
       category: ref.category as QuizCategory,
-      title: resolvedTitle,
+      title,
       reason: "Listen to this sermon — you missed questions from it",
       listen_url: `/sermons/audio/${audioId}`,
     };
-  } else {
-    // sermon_ref is a transcript slug — generate transcript link
-    // and try to find matching audio
-    const title = ref.slug
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    // Build a simplified search query: drop common stop words and
-    // limit to key content words so the WP API can match flexibly
-    const STOP_WORDS = new Set([
-      "a",
-      "an",
-      "the",
-      "of",
-      "in",
-      "on",
-      "at",
-      "to",
-      "for",
-      "and",
-      "or",
-      "but",
-      "is",
-      "are",
-      "was",
-      "were",
-      "be",
-      "by",
-      "with",
-      "from",
-      "as",
-      "its",
-      "it",
-      "that",
-      "this",
-      "not",
-      "no",
-    ]);
-    const searchQuery = title
-      .split(/\s+/)
-      .filter((w) => !STOP_WORDS.has(w.toLowerCase()))
-      .slice(0, 6)
-      .join(" ");
-
-    // Try to find matching audio sermon by searching WP API
-    let audioUrl: string | null = null;
-    let audioTitle: string = title;
-    try {
-      const searchResult = await getAudioSermons({
-        search: searchQuery,
-        perPage: 5,
-        page: 1,
-      });
-      if (searchResult.data.length > 0) {
-        // Try fuzzy match first
-        const match = searchResult.data.find((s) => {
-          const sermonTitle = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-          const refTitle = title.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-          return (
-            sermonTitle.includes(refTitle) ||
-            refTitle.includes(sermonTitle) ||
-            sermonTitle === refTitle
-          );
-        });
-        // Use fuzzy match, or fall back to first search result
-        const foundSermon = match || searchResult.data[0];
-        audioUrl = `/sermons/audio/${foundSermon.id}`;
-        audioTitle = foundSermon.title || title;
-      }
-    } catch (error) {
-      // Audio search failed — we'll use fallback URL below
-      console.warn("Audio sermon search failed for:", ref.slug, error);
-    }
-
-    // Fallback: link to sermons page with normalized title if no direct match
-    // Normalize punctuation (commas, colons, etc.) to ensure better search matching
-    if (!audioUrl) {
-      const normalizedTitle = normalizeSearchQuery(title);
-      audioUrl = `/sermons?q=${encodeURIComponent(normalizedTitle)}`;
-    }
-
-    // Combined recommendation with both audio and transcript links
-    return {
-      category: ref.category as QuizCategory,
-      title: audioTitle,
-      reason: "You missed questions from this sermon — listen or read",
-      listen_url: audioUrl,
-      read_url: `/transcripts/${ref.slug}`,
-    };
   }
+
+  // sermon_ref is a transcript slug, and the audio message carries the
+  // transcript's title. Find the audio with THAT title (lib/sermonMatch):
+  // same part number, exact or near-exact words, never just the first result.
+  const title = (await transcriptTitle(ref.slug)) ?? titleFromSlug(ref.slug);
+  const base = titleKey(title).base;
+  const searchQuery = base
+    .split(" ")
+    .filter((w) => !STOP_WORDS.has(w))
+    .slice(0, 6)
+    .join(" ");
+
+  let match: { id: number; title: string } | null = null;
+  try {
+    const { data } = await getAudioSermons({ search: searchQuery, perPage: 20, page: 1 });
+    match = matchSermonTitle(title, data);
+  } catch (error) {
+    console.warn("Audio sermon search failed for:", ref.slug, error);
+  }
+
+  return {
+    category: ref.category as QuizCategory,
+    title: match?.title.trim() || title,
+    reason: match
+      ? "You missed questions from this sermon — listen or read"
+      : "You missed questions from this sermon — read the transcript",
+    // No audio link rather than a wrong one.
+    listen_url: match ? `/sermons/audio/${match.id}` : undefined,
+    read_url: `/transcripts/${ref.slug}`,
+  };
 }
 
 /** Category-based fallback (content_mapping), up to six recommendations in all. */
