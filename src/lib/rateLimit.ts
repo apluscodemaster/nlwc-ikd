@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { getClientIp } from "@/lib/clientIp";
 
 // Simple in-memory store for rate limit tracking
 // Format: { "ip:endpoint": [timestamp1, timestamp2, ...] }
@@ -24,17 +25,9 @@ const DEFAULT_CONFIGS: Record<string, RateLimitConfig> = {
   strict: { windowMs: 60000, maxRequests: 10 }, // 10 requests per minute for sensitive endpoints like auth
 };
 
-/**
- * Get client IP from request
- * Checks X-Forwarded-For header first (for proxies), then connection IP
- */
-function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  return (
-    (forwarded
-      ? forwarded.split(",")[0].trim()
-      : request.headers.get("x-real-ip")) || "unknown"
-  );
+/** Client IP for the rate-limit key (see lib/clientIp.ts for why not the first x-forwarded-for). */
+function rateLimitIp(request: NextRequest): string {
+  return getClientIp(request) || "unknown";
 }
 
 /**
@@ -157,7 +150,7 @@ export async function rateLimitMiddleware(
   bucket?: string,
 ): Promise<NextResponse | null> {
   const config = DEFAULT_CONFIGS[configKey];
-  const clientIp = getClientIp(request);
+  const clientIp = rateLimitIp(request);
   const pathname = bucket ?? new URL(request.url).pathname;
   const key = `${clientIp}:${pathname}`;
 

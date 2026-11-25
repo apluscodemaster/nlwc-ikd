@@ -15,6 +15,7 @@
 
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { AuthActor } from "@/lib/auth";
+import { getClientIp } from "@/lib/clientIp";
 
 export const AUDIT_COLLECTION = "admin_audit_logs";
 
@@ -87,15 +88,9 @@ function clip(value: string | null | undefined): string | null {
   return s.length > MAX_STR ? `${s.slice(0, MAX_STR - 1)}…` : s;
 }
 
-/**
- * Best-effort client IP. Behind Vercel/Cloudflare the left-most entry of
- * x-forwarded-for is the original client; everything after is proxy hops.
- */
+/** Best-effort client IP, as the hosting platform reports it (lib/clientIp.ts). */
 function clientIp(request?: Request): string | null {
-  if (!request) return null;
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) return clip(fwd.split(",")[0]);
-  return clip(request.headers.get("x-real-ip"));
+  return request ? clip(getClientIp(request)) : null;
 }
 
 /** Strip anything that looks like a secret before it reaches the log. */
