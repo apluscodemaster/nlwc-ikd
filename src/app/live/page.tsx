@@ -29,6 +29,7 @@ import {
   type MediaProgress,
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
   fetchVideoMessages,
   VIDEO_MESSAGES_QUERY_KEY,
@@ -292,8 +293,11 @@ export default function LivePage() {
     setResumeStartTime(0);
   }, [saveCurrentProgress, stopProgressInterval]);
 
+  // The player is a modal dialog: Escape closes it, focus stays inside it.
+  const videoDialogRef = useDialogA11y(!!selectedVideo, handleClosePlayer);
+
   return (
-    <main>
+    <div>
       <PageHeader
         title="Video Broadcast"
         subtitle="Experience the glory in high definition. Watch our live services and special events from anywhere in the world."
@@ -483,15 +487,21 @@ export default function LivePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
+              aria-hidden="true"
             />
 
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
+              ref={videoDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={selectedVideo.title || "Video message"}
               className="relative w-full max-w-5xl aspect-video bg-black rounded-none sm:rounded-3xl overflow-hidden shadow-2xl"
             >
               <button
+                aria-label="Close video"
                 onClick={handleClosePlayer}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >
@@ -526,6 +536,6 @@ export default function LivePage() {
       </AnimatePresence>
 
       {/* First Time Streaming User Popup */}
-    </main>
+    </div>
   );
 }

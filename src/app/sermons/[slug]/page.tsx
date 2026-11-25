@@ -114,7 +114,7 @@ export default async function SermonPage({ params }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <JsonLd data={[articleLd, breadcrumbLd]} />
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
@@ -191,6 +191,6 @@ export default async function SermonPage({ params }: Props) {
           </a> */}
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

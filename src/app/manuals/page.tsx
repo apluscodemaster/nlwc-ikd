@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function ManualsPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Sunday School Manuals"
         subtitle="Access study materials and teaching resources for our Sunday School sessions."
@@ -35,6 +35,6 @@ export default function ManualsPage() {
           <ManualsList perPage={9} />
         </Suspense>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

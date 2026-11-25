@@ -212,6 +212,7 @@ export default function ManualsList({
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <input
           type="text"
+          aria-label="Search manuals"
           placeholder="Search manuals..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}

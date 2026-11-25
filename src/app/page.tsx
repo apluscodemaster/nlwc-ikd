@@ -49,7 +49,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main>
+      <div>
         {/* 1. Hero Section */}
         <Hero />
 
@@ -71,7 +71,7 @@ export default async function HomePage() {
 
         {/* 6. Gallery Preview */}
         <GalleryPreview />
-      </main>
+      </div>
     </div>
   );
 }

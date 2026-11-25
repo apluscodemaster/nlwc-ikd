@@ -23,7 +23,7 @@ export const revalidate = 60;
 
 export default function DevotionalsArchivePage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Daily Devotionals"
         subtitle="Browse our collection of daily devotional materials to enrich your walk with God."
@@ -44,6 +44,6 @@ export default function DevotionalsArchivePage() {
           <DevotionalArchiveGrid />
         </Suspense>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

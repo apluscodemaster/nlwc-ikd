@@ -516,6 +516,7 @@ export default function SermonsPageContent() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
+              aria-label="Search audio messages"
               placeholder="Search messages by title or speaker..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -892,6 +893,7 @@ function FilterTag({
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
       {label}
       <button
+        aria-label={`Remove ${label} filter`}
         onClick={onRemove}
         className="w-4 h-4 rounded-full bg-primary/20 hover:bg-primary/30 flex items-center justify-center transition-colors"
       >

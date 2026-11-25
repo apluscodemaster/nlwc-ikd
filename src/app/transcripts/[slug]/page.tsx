@@ -138,7 +138,7 @@ export default async function TranscriptPage({ params }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <JsonLd data={[articleLd, breadcrumbLd]} />
 
       {/* Search Highlight Banner */}
@@ -304,6 +304,6 @@ export default async function TranscriptPage({ params }: Props) {
           </div>
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

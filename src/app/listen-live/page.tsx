@@ -252,7 +252,7 @@ export default function ListenLivePage() {
   }, []);
 
   return (
-    <main>
+    <div>
       {/* Hidden Audio Element */}
       <audio
         ref={audioRef}
@@ -704,6 +704,6 @@ export default function ListenLivePage() {
       )}
 
       {/* First Time Streaming User Popup */}
-    </main>
+    </div>
   );
 }

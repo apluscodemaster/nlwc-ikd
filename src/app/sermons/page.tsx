@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function SermonsPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Audio Messages"
         subtitle="Listen and Listen Again! Play and download spiritually edifying messages. Search by speaker, category, or topic to find the message you need."
@@ -64,6 +64,6 @@ export default function SermonsPage() {
           <SermonsPageContent />
         </Suspense>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

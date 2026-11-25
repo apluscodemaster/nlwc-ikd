@@ -28,6 +28,7 @@ import {
 } from "@/lib/mediaProgress";
 import { loadYouTubeIframeAPI } from "@/lib/youtubePlayer";
 import { videoSlug, findVideoBySlug } from "@/lib/videoSlug";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
   fetchVideoMessages,
   VIDEO_MESSAGES_QUERY_KEY,
@@ -341,6 +342,9 @@ export default function VideoMessagesContent({
     setResumeStartTime(0);
   }, [saveCurrentProgress, stopProgressInterval]);
 
+  // The player is a modal dialog: Escape closes it, focus stays inside it.
+  const videoDialogRef = useDialogA11y(!!selectedVideo, handleClosePlayer);
+
   // ===========================================================================
   // Deep linking — a shared /video-messages?v=<id> link opens that video, and
   // the URL stays in sync with whichever video is open so it can be re-shared.
@@ -440,6 +444,7 @@ export default function VideoMessagesContent({
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
+            aria-label="Search video messages"
             placeholder="Search by title, date, minister, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -701,16 +706,22 @@ export default function VideoMessagesContent({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/95 backdrop-blur-md"
+              aria-hidden="true"
             />
 
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
+              ref={videoDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={selectedVideo.title || "Video message"}
               className="relative w-full max-w-5xl aspect-video bg-black rounded-none sm:rounded-3xl overflow-hidden shadow-2xl"
             >
               {/* Close Button */}
               <button
+                aria-label="Close video"
                 onClick={handleClosePlayer}
                 className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-all hover:scale-110 active:scale-90 border border-white/10"
               >

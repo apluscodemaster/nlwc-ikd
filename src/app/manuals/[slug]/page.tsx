@@ -191,7 +191,7 @@ export default async function ManualPage({ params }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <JsonLd data={[articleLd, breadcrumbLd]} />
 
       {/* Reading Progress Bar */}
@@ -355,6 +355,6 @@ export default async function ManualPage({ params }: Props) {
           </div>
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

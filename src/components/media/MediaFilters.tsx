@@ -48,6 +48,7 @@ export default function MediaFilters({
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <input
             type="text"
+            aria-label="Search messages and topics"
             placeholder="Search messages, topics..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}

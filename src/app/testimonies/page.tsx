@@ -488,7 +488,7 @@ export default function TestimoniesPage() {
   }, []);
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="Testimonies"
         subtitle="Share what God has done and be inspired by the testimonies of others in the NLWC Ikorodu family."
@@ -659,6 +659,6 @@ export default function TestimoniesPage() {
           </>
         )}
       </SectionContainer>
-    </main>
+    </div>
   );
 }

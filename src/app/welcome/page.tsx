@@ -47,7 +47,7 @@ export default function WelcomePage() {
 
   if (submitted) {
     return (
-      <main className="bg-gray-50/30 min-h-screen">
+      <div className="bg-gray-50/30 min-h-screen">
         <PageHeader
           title="Welcome Home!"
           subtitle="We are so glad you joined us today."
@@ -80,12 +80,12 @@ export default function WelcomePage() {
             </div>
           </motion.div>
         </SectionContainer>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="bg-gray-50/30 min-h-screen">
+    <div className="bg-gray-50/30 min-h-screen">
       <PageHeader
         title="First Time Here?"
         subtitle="You are a special guest and we would love to know you better."
@@ -159,10 +159,11 @@ export default function WelcomePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                    <label htmlFor="welcome-fullName" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                       <User className="w-4 h-4 text-primary/60" /> Full Name
                     </label>
                     <input
+                      id="welcome-fullName"
                       name="fullName"
                       required
                       type="text"
@@ -171,10 +172,11 @@ export default function WelcomePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                    <label htmlFor="welcome-phone" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                       <Phone className="w-4 h-4 text-primary/60" /> Phone Number
                     </label>
                     <input
+                      id="welcome-phone"
                       name="phone"
                       required
                       type="tel"
@@ -185,10 +187,11 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                  <label htmlFor="welcome-email" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary/60" /> Email Address
                   </label>
                   <input
+                    id="welcome-email"
                     name="email"
                     required
                     type="email"
@@ -198,11 +201,12 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                  <label htmlFor="welcome-address" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-primary/60" /> Residential
                     Address
                   </label>
                   <textarea
+                    id="welcome-address"
                     name="address"
                     required
                     placeholder="Where are you joining us from?"
@@ -213,11 +217,12 @@ export default function WelcomePage() {
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                    <label htmlFor="welcome-bornAgain" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                       <Heart className="w-4 h-4 text-primary/60" /> Born Again?
                     </label>
                     <div className="relative">
                       <select
+                        id="welcome-bornAgain"
                         name="bornAgain"
                         required
                         defaultValue=""
@@ -247,12 +252,13 @@ export default function WelcomePage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                    <label htmlFor="welcome-holyGhost" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                       <Flame className="w-4 h-4 text-primary/60" /> Holy Ghost
                       Baptized?
                     </label>
                     <div className="relative">
                       <select
+                        id="welcome-holyGhost"
                         name="holyGhost"
                         required
                         defaultValue=""
@@ -287,11 +293,12 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
+                  <label htmlFor="welcome-invitedBy" className="text-sm font-bold text-gray-700 ml-1 flex items-center gap-2">
                     <Users className="w-4 h-4 text-primary/60" /> Who invited
                     you to church?
                   </label>
                   <input
+                    id="welcome-invitedBy"
                     name="invitedBy"
                     required
                     type="text"
@@ -326,6 +333,6 @@ export default function WelcomePage() {
           </motion.div>
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

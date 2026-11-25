@@ -220,7 +220,7 @@ export default function MediaPage() {
   ];
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="Media Resources"
         subtitle="Grow in your faith with our collection of sermon videos, audio messages, and spiritual study resources."
@@ -349,6 +349,6 @@ export default function MediaPage() {
           ))}
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

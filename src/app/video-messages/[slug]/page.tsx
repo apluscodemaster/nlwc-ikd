@@ -142,7 +142,7 @@ export default async function SharedVideoMessagePage({ params }: Props) {
     : null;
 
   return (
-    <main>
+    <div>
       {jsonLd && <JsonLd data={jsonLd} />}
       <PageHeader
         title="Video Messages"
@@ -153,6 +153,6 @@ export default async function SharedVideoMessagePage({ params }: Props) {
       <SectionContainer className="py-12 sm:py-20">
         <VideoMessagesContent openSlug={decodeURIComponent(slug)} />
       </SectionContainer>
-    </main>
+    </div>
   );
 }

@@ -78,7 +78,7 @@ export default function DevotionalView({
   };
 
   return (
-    <main className="bg-gray-50/30 min-h-screen">
+    <div className="bg-gray-50/30 min-h-screen">
       <JsonLd data={devotionalLd} />
       <PageHeader
         title={devotional.title}
@@ -242,6 +242,6 @@ export default function DevotionalView({
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

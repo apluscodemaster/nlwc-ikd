@@ -23,7 +23,7 @@ export default function FellowshipPage() {
   const { centers } = useFellowshipCenters();
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="House Fellowship"
         subtitle="Connect with a family of believers near you. Our house fellowship centers are places of deep fellowship, prayer, and spiritual growth."
@@ -164,6 +164,6 @@ export default function FellowshipPage() {
           </div>
         </div>
       </SectionContainer>
-    </main>
+    </div>
   );
 }

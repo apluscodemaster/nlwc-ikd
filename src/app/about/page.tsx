@@ -8,7 +8,7 @@ import UpcomingEvents from "@/components/landing/UpcomingEvents";
 
 export default function AboutPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Our Story & Mission"
         subtitle="Discover who we are, what we believe, and the heart behind everything we do at The New & Living Way Church."
@@ -26,6 +26,6 @@ export default function AboutPage() {
       <UpcomingEvents />
 
       <CTASection />
-    </main>
+    </div>
   );
 }

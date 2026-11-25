@@ -198,6 +198,7 @@ export default function TranscriptsList({
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
+              aria-label="Search transcripts"
               placeholder="Search transcripts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}

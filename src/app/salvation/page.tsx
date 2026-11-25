@@ -31,7 +31,7 @@ export default function SalvationPage() {
   const scriptureScopeRef = useRef<HTMLElement>(null);
 
   return (
-    <main>
+    <div>
       <PageHeader
         title="Become Born-Again Today"
         subtitle="Receive Jesus into your heart and begin your eternal journey with God."
@@ -220,6 +220,6 @@ export default function SalvationPage() {
           </motion.div>
         </section>
       </ScriptureProvider>
-    </main>
+    </div>
   );
 }

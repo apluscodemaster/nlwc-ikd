@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function VideoMessagesPage() {
   return (
-    <main>
+    <div>
       <PageHeader
         title="Video Messages"
         subtitle="Watch the Video Format of all our teachings. Search by speaker, category, or topic to find the message you need."
@@ -28,6 +28,6 @@ export default function VideoMessagesPage() {
       <SectionContainer className="py-12 sm:py-20">
         <VideoMessagesContent />
       </SectionContainer>
-    </main>
+    </div>
   );
 }

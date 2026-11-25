@@ -628,9 +628,9 @@ export default function AdminLayout({
         </AnimatePresence>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
+        <div className="flex-1 min-w-0 lg:ml-72 pt-14 lg:pt-0 min-h-screen overflow-x-hidden">
           {children}
-        </main>
+        </div>
 
         {/* ── Session Expired Overlay ── */}
         <AnimatePresence>
