@@ -160,12 +160,16 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          // Content Security Policy to prevent XSS attacks
+          // Content Security Policy to limit what an injected script could do.
+          // 'unsafe-inline' stays for scripts: a nonce-based policy would make
+          // Next render every page per request, giving up the ISR/CDN caching
+          // the content pages rely on. HTML from WordPress is sanitized
+          // instead (utils/sanitizeWP.ts), so injected markup can't add script.
           {
             key: "Content-Security-Policy",
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' *.youtube.com cdn.jsdelivr.net cdn.raindrop.io unpkg.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com api.reftagger.com *.reftagger.com *.bibliacdn.com challenges.cloudflare.com; " +
+              "script-src 'self' 'unsafe-inline' *.youtube.com *.google.com *.gstatic.com *.googleapis.com *.googletagmanager.com api.reftagger.com *.reftagger.com *.bibliacdn.com challenges.cloudflare.com; " +
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com *.cloudinary.com www.gstatic.com api.reftagger.com *.reftagger.com; " +
               "img-src 'self' data: https: blob:; " +
               "font-src 'self' data: fonts.gstatic.com; " +
@@ -178,7 +182,9 @@ const nextConfig: NextConfig = {
               "worker-src 'self'; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
-              "form-action 'self'",
+              "form-action 'self'; " +
+              // Only this site may frame its pages (clickjacking).
+              "frame-ancestors 'self'",
           },
           // Prevent X-Frame-Options (clickjacking) attacks
           {
@@ -190,10 +196,10 @@ const nextConfig: NextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
-          // Enable XSS protection in older browsers
+          // HTTPS only, for two years, on every subdomain too.
           {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
           },
           // Referrer policy for privacy
           {
