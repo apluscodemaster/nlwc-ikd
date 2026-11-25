@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -281,10 +282,18 @@ export default function AdminLayout({
             <div className="h-1.5 bg-linear-to-r from-primary via-amber-400 to-primary" />
 
             <div className="p-8 sm:p-10">
-              {/* Logo */}
+              {/* Church emblem: on a fixed white tile (bg-[#fff], not
+                  bg-white) so its black tree stays visible in dark mode. */}
               <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Lock className="w-8 h-8 text-primary" />
+                <div className="w-20 h-20 rounded-2xl bg-[#fff] ring-1 ring-black/5 shadow-sm flex items-center justify-center">
+                  <Image
+                    src="/nlwc-emblem.png"
+                    alt="The New & Living Way Church, Ikorodu"
+                    width={172}
+                    height={208}
+                    priority
+                    className="h-14 w-auto"
+                  />
                 </div>
               </div>
 
