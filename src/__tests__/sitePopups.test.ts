@@ -38,6 +38,14 @@ describe("site pop-ups", () => {
     expect(showsOnPath(byId("first-time-visitor"), "/liveliness")).toBe(false);
   });
 
+  it("never shows a pop-up on the page it links to", () => {
+    const event = { includePaths: [], excludePaths: [], ctaUrl: "/festival-of-jesus-reign?from=popup" };
+    expect(showsOnPath(event, "/festival-of-jesus-reign")).toBe(false);
+    expect(showsOnPath(event, "/festival-of-jesus-reign/")).toBe(false);
+    expect(showsOnPath(event, "/")).toBe(true);
+    expect(showsOnPath({ ...event, ctaUrl: "https://example.org/x" }, "/x")).toBe(true);
+  });
+
   it("respects start and end dates", () => {
     const p = { startsAt: "2026-12-01T00:00:00Z", endsAt: "2026-12-25T00:00:00Z" };
     expect(isWithinDates(p, new Date("2026-11-30T12:00:00Z"))).toBe(false);
