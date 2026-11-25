@@ -1,16 +1,44 @@
-"use client";
-
-import React from "react";
+import dynamic from "next/dynamic";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
 import Hero from "@/components/landing/Hero";
 import WelcomeSection from "@/components/landing/WelcomeSection";
 import GodWantsYou from "@/components/landing/GodWantsYou";
 import OurJourney from "@/components/landing/OurJourney";
-import LeadershipGrid from "@/components/about/LeadershipGrid";
 import ServiceTimes from "@/components/landing/ServiceTimes";
-import MediaHub from "@/components/landing/MediaHub";
-import GalleryPreview from "@/components/landing/GalleryPreview";
+import { GATHERINGS_QUERY_KEY, toGatherings } from "@/lib/gatherings";
+import { getPublicSchedule } from "@/lib/publicSchedule.server";
 
-export default function HomePage() {
+// Below the fold: still server-rendered, but their JavaScript (YouTube player,
+// gallery carousel) loads as separate chunks instead of in the page bundle.
+const MediaHub = dynamic(() => import("@/components/landing/MediaHub"));
+const GalleryPreview = dynamic(
+  () => import("@/components/landing/GalleryPreview"),
+);
+
+// Rebuilt at most every 5 minutes, and straight away when an admin changes
+// the schedule (its cache tag is expired on every write).
+export const revalidate = 300;
+
+/**
+ * Server component: the sections are client components, but the schedule
+ * data is fetched here so the Weekly Meetings cards are in the first HTML
+ * instead of appearing after the page loads and calls /api/schedule.
+ */
+export default async function HomePage() {
+  const queryClient = new QueryClient();
+  try {
+    const schedule = await getPublicSchedule();
+    queryClient.setQueryData(GATHERINGS_QUERY_KEY, toGatherings(schedule));
+  } catch (err) {
+    // Firestore unreachable (e.g. at build time): the section fetches it in
+    // the browser instead, as before.
+    console.warn("[home] schedule prefetch skipped:", err);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main>
@@ -25,20 +53,17 @@ export default function HomePage() {
         {/* 3. Our Journey — Faith, Hope, Charity */}
         <OurJourney />
 
-        {/* 4. Meet Our Pastors 
-        <LeadershipGrid />*/}
+        {/* 4. Weekly Meetings */}
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <ServiceTimes />
+        </HydrationBoundary>
 
-        {/* 5. Weekly Meetings */}
-        <ServiceTimes />
-
-        {/* 6. Spiritual Nourishment (Audio, Video, Transcripts, Manuals) */}
+        {/* 5. Spiritual Nourishment (Audio, Video, Transcripts, Manuals) */}
         <MediaHub />
 
-        {/* 7. Gallery Preview */}
+        {/* 6. Gallery Preview */}
         <GalleryPreview />
       </main>
-
-      {/* Daily Devotional Invitation */}
     </div>
   );
 }

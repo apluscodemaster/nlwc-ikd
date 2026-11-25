@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { rejectUnlessCron } from "@/lib/cronAuth";
+import { expireSchedule } from "@/lib/publicSchedule.server";
 import {
   createSpecialService,
   getScheduleSettings,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     if (created.length > 0) {
       try {
-        revalidatePath("/api/schedule");
+        expireSchedule();
       } catch (err) {
         console.warn("[cron/special-services] revalidate failed:", err);
       }

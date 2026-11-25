@@ -20,6 +20,7 @@ import {
   serviceVisual,
 } from "@/data/services";
 import type { RecurringService } from "@/lib/scheduleService";
+import { GATHERINGS_QUERY_KEY, toGatherings, type Gatherings } from "@/lib/gatherings";
 
 /** One card in the carousel: a weekly service (admin schedule) or an annual meeting. */
 interface GatheringCard {
@@ -36,25 +37,17 @@ interface GatheringCard {
   image?: string;
 }
 
-async function fetchGatherings(): Promise<{
-  weekly: RecurringService[];
-  /** Undefined when the API predates admin-managed annual meetings. */
-  annual?: AdminAnnualMeeting[];
-}> {
+// The home page prefetches this on the server (app/page.tsx), so the cards
+// are in the first HTML; this fetch only runs when that data goes stale.
+async function fetchGatherings(): Promise<Gatherings> {
   const res = await fetch("/api/schedule");
   if (!res.ok) throw new Error(`Schedule request failed (${res.status})`);
-  const data = (await res.json()) as {
-    recurring?: RecurringService[];
-    annual?: AdminAnnualMeeting[];
-  };
-  return {
-    weekly: (data.recurring ?? [])
-      .filter((s) => s.active !== false)
-      .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startHour - b.startHour),
-    annual: data.annual
-      ?.filter((m) => m.active !== false)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-  };
+  return toGatherings(
+    (await res.json()) as {
+      recurring?: RecurringService[];
+      annual?: AdminAnnualMeeting[];
+    },
+  );
 }
 
 function weeklyCard(s: RecurringService): GatheringCard {
@@ -153,7 +146,7 @@ export default function ServiceTimes() {
   const scrollRef = useRef<HTMLDivElement>(null);
   // Same source as the admin Schedule page and the live-service countdowns.
   const { data, isLoading } = useQuery({
-    queryKey: ["schedule", "gatherings"],
+    queryKey: GATHERINGS_QUERY_KEY,
     queryFn: fetchGatherings,
     staleTime: 5 * 60 * 1000,
   });

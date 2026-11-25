@@ -1,6 +1,3 @@
-"use client";
-
-import React from "react";
 import PageHeader from "@/components/shared/PageHeader";
 import StorySection from "@/components/about/StorySection";
 import LeadershipGrid from "@/components/about/LeadershipGrid";
