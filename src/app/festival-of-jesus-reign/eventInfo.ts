@@ -23,6 +23,23 @@ export const FESTIVAL = {
   phoneTel: "+2348137436770",
   hosts: ["Life in the Spirit Ministries", "The New & Living Way Church, Ikorodu"],
   banner: "/FJR-flag-caricature.png",
+  /** The banner on its pole, transparent around it (3:2). */
+  flag: "https://res.cloudinary.com/ds83mhjcm/image/upload/v1795635145/festival_flag_sweeping_billowing_transparent_edxswl.webp",
+  /** Cut-out characters on their way to the festival (2:3, transparent). */
+  crowd: [
+    {
+      src: "https://res.cloudinary.com/ds83mhjcm/image/upload/v1795635219/Cheerful_Backpacker_in_Blue_and_Lime-1_dhnzpy.png",
+      alt: "A smiling young man in a blue cap, lime T-shirt and backpack",
+    },
+    {
+      src: "https://res.cloudinary.com/ds83mhjcm/image/upload/v1795635219/Smiling_Woman_in_Vibrant_Ankara_Dress-3_xzbysk.png",
+      alt: "A smiling woman with long braids in a purple and gold Ankara dress",
+    },
+    {
+      src: "https://res.cloudinary.com/ds83mhjcm/image/upload/v1795635219/Vibrant_Cartoon_Traveler_in_Purple-2_p4en2j.png",
+      alt: "A smiling young woman in a headwrap, yellow top and purple joggers with a backpack",
+    },
+  ],
 } as const;
 
 export const VENUE_ONE_LINE = `${FESTIVAL.venue.name}, ${FESTIVAL.venue.street}, ${FESTIVAL.venue.area}, ${FESTIVAL.venue.city}, ${FESTIVAL.venue.region}`;

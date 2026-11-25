@@ -358,6 +358,58 @@
   }
 }
 
+/* ── The crowd on stage ──────────────────────────────────────────────── */
+.crowdFloor {
+  position: relative;
+  /* Own stacking context, so the glow below sits under the people but
+     above the section background. */
+  isolation: isolate;
+  padding: 0 1rem;
+}
+/* A lit stage edge for them to stand on. */
+.crowdFloor::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.75rem;
+  height: 4.5rem;
+  z-index: -1;
+  background: radial-gradient(50% 100% at 50% 50%, rgba(245, 196, 81, 0.35), transparent 70%);
+  filter: blur(6px);
+}
+.person {
+  position: relative;
+  width: min(38vw, 17rem);
+  /* The cut-outs have wide transparent sides: overlap them into a group. */
+  margin: 0 -2.5vw;
+}
+@media (min-width: 768px) {
+  .person {
+    margin: 0 -1.75rem;
+  }
+}
+/* A small spotlight pool at each person's feet. */
+.person::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -0.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+  z-index: -1;
+}
+.personBob {
+  animation: person-bob 3.4s ease-in-out infinite;
+}
+@keyframes person-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 .mapFrame {
   filter: saturate(0.85) contrast(1.05);
   border: 0;
@@ -372,7 +424,8 @@
   .grain,
   .eqIdle .eqBar,
   .rec,
-  .marquee {
+  .marquee,
+  .personBob {
     animation: none;
   }
   .eqIdle .eqBar {

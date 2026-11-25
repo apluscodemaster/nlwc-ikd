@@ -78,7 +78,8 @@ const eventLd = {
 
 export default function FestivalPage() {
   return (
-    <div className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    // -mb-12 cancels the footer's top margin, so the dark page meets it.
+    <div className={`${display.variable} ${body.variable} ${mono.variable} -mb-12`}>
       <JsonLd data={eventLd} />
       <FestivalExperience venueLine={VENUE_ONE_LINE} />
     </div>

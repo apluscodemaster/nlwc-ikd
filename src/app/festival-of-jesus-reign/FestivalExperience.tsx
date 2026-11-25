@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import Image, { type ImageLoader } from "next/image";
 import { m as motion } from "framer-motion";
 import {
   CalendarPlus,
@@ -16,6 +16,23 @@ import { toast } from "sonner";
 import styles from "./festival.module.css";
 import { FESTIVAL, MAPS_QUERY } from "./eventInfo";
 import { useOverture } from "./useOverture";
+
+/**
+ * Cloudinary resizes and converts these images itself (WebP/AVIF with
+ * transparency, sized to each screen): the originals are 1.5–6 MB, too big
+ * for Next's own optimizer to fetch in time.
+ */
+const cloudinaryLoader: ImageLoader = ({ src, width, quality }) =>
+  src.replace("/upload/", `/upload/f_auto,q_${quality ?? "auto"},w_${width},c_limit/`);
+
+/** The animated flag at a width; still = its first frame only. */
+const flagUrl = (width: number, still = false) =>
+  FESTIVAL.flag.replace(
+    "/upload/",
+    still
+      ? `/upload/f_webp,pg_1,q_auto,w_${width}/`
+      : `/upload/f_webp,fl_awebp,q_70,w_${width}/`,
+  );
 
 const START = new Date(FESTIVAL.startsAt).getTime();
 const END = new Date(FESTIVAL.endsAt).getTime();
@@ -362,14 +379,29 @@ export default function FestivalExperience({ venueLine }: { venueLine: string })
             viewport={{ once: true, margin: "-15%" }}
             transition={{ duration: 0.9, ease: [0.2, 0.7, 0.2, 1] }}
           >
-            <Image
-              src={FESTIVAL.banner}
-              alt={`${FESTIVAL.name} banner: Join us as the City of Ikorodu celebrates. 23rd December 2026, 5PM at Life Theological Seminary, Oke Otta-Ona, Ikorodu. Attendance is free. Enquiries 0813 743 6770.`}
-              width={1000}
-              height={553}
-              sizes="(max-width: 1024px) 92vw, 960px"
-              className="mx-auto h-auto w-full drop-shadow-[0_30px_60px_rgba(0,0,0,0.55)]"
-            />
+            {/* The flag is an animated WebP (it billows on a loop). Cloudinary
+                resizes it with the animation kept (fl_awebp); visitors who ask
+                for less motion get its first frame as a still. A plain
+                <picture> because next/image can't switch on a media query. */}
+            <picture>
+              <source
+                media="(prefers-reduced-motion: reduce)"
+                srcSet={[480, 720, 960].map((w) => `${flagUrl(w, true)} ${w}w`).join(", ")}
+                sizes="(max-width: 1024px) 92vw, 960px"
+              />
+              { }
+              <img
+                src={flagUrl(720)}
+                srcSet={[480, 720, 960].map((w) => `${flagUrl(w)} ${w}w`).join(", ")}
+                sizes="(max-width: 1024px) 92vw, 960px"
+                width={1536}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+                alt={`${FESTIVAL.name} banner carried on a flag: Join us as the City of Ikorodu celebrates. 23rd December 2026, 5PM at Life Theological Seminary, Oke Otta-Ona, Ikorodu. Attendance is free. Enquiries 0813 743 6770.`}
+                className="mx-auto h-auto w-full drop-shadow-[0_30px_60px_rgba(0,0,0,0.55)]"
+              />
+            </picture>
           </motion.div>
         </div>
         <div className="mt-14 border-y border-(--hairline) py-4" aria-hidden="true">
@@ -413,7 +445,37 @@ export default function FestivalExperience({ venueLine }: { venueLine: string })
               Share the invitation
             </button>
           </div>
-          <p className={`${styles.label} mt-14 text-(--lace-dim)`}>
+        </div>
+
+        {/* The city on its way: three festival-goers step onto the stage. */}
+        <div className={`${styles.crowdFloor} mx-auto mt-16 flex max-w-4xl items-end justify-center`}>
+          {FESTIVAL.crowd.map((person, i) => (
+            <motion.figure
+              key={person.src}
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-10%" }}
+              transition={{ delay: 0.15 + i * 0.18, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
+              className={`${styles.person} ${i === 1 ? "z-10" : "z-0"}`}
+            >
+              <div className={styles.personBob} style={{ animationDelay: `${i * -1.1}s` }}>
+                <Image
+                  src={person.src}
+                  loader={cloudinaryLoader}
+                  alt={person.alt}
+                  width={800}
+                  height={1200}
+                  sizes="(max-width: 640px) 34vw, 260px"
+                  className={`h-auto w-full select-none ${i === 1 ? "scale-105" : ""}`}
+                  draggable={false}
+                />
+              </div>
+            </motion.figure>
+          ))}
+        </div>
+
+        <div className="mx-auto max-w-2xl">
+          <p className={`${styles.label} mt-12 text-(--lace-dim)`}>
             In partnership: {FESTIVAL.hosts[0]} · {FESTIVAL.hosts[1]}
           </p>
         </div>
