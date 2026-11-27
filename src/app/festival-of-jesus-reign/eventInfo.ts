@@ -14,14 +14,18 @@ export const FESTIVAL = {
   timeLabel: "5:00 PM",
   venue: {
     name: "Life Theological Seminary",
-    street: "79, Off Grammar School Junction / Filling Station",
-    area: "Oke Otta-Ona",
+    street:
+      "79, Obafemi Awolowo Road, Off Grammar School Junction / MRS Filling Station",
+    area: "Oke Ota-Ona",
     city: "Ikorodu",
     region: "Lagos",
   },
   phoneDisplay: "0813 743 6770",
   phoneTel: "+2348137436770",
-  hosts: ["Life in the Spirit Ministries", "The New & Living Way Church, Ikorodu"],
+  hosts: [
+    "Life in the Spirit Ministries",
+    "The New & Living Way Church, Ikorodu",
+  ],
   banner: "/FJR-flag-caricature.png",
   /** "Unreserved Praise" by Toluwanisings: the page's Play the sound track (loops). */
   soundtrack:
